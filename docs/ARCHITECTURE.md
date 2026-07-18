@@ -1,21 +1,29 @@
 # Architecture
 
-## Milestone 2 boundary
+## Milestone 3 boundary
 
-Milestone 2 adds typed, model-independent analysis contracts to the Milestone 1
-repository foundation. It intentionally contains no real NLP model, persistence,
-platform connector, batch workflow, or user interface.
+Milestone 3 adds one licensed English sentiment provider behind the existing
+model-independent contract. It intentionally adds no emotion model, combined
+sentiment/emotion workflow, persistence, platform connector, batch workflow, or
+user interface.
 
 The current package contains:
 
 - `foundation.py`: immutable project status and capability metadata;
-- `cli.py`: a dependency-free local diagnostic command;
+- `cli.py`: diagnostics and one single-text sentiment command;
 - `contracts/`: normalized input, result, provenance, and error contracts;
-- `providers/`: stable protocols and deterministic testing implementations;
+- `providers/`: stable protocols, deterministic testing implementations, and a
+  pinned Cardiff NLP sentiment adapter;
 - `services/`: provider-neutral analysis orchestration.
 
 Dependency direction is `services -> providers -> contracts`. Contracts do not
 depend on providers, model libraries, persistence, or UI code.
+
+The optional Transformers/PyTorch runtime is imported lazily inside the concrete
+provider. Installing the core or running fast tests therefore does not require a
+model library or weight download. `SentimentAnalysisService` invokes only the
+sentiment provider; the pre-existing combined mock service remains available for
+future orchestration tests and is not used by the Milestone 3 workflow.
 
 ## Intended layers
 
@@ -37,6 +45,7 @@ optional adapters.
 
 ## Testing strategy
 
-Fast tests must run without network access or model downloads. Model integration
-tests, when introduced, will be marked and separated from deterministic unit
-tests. Private user text must never become a test fixture.
+Fast tests run without network access or model downloads by injecting a small
+runtime stub. The opt-in test under `tests/integration/` loads the immutable real
+model revision only when `STI_RUN_MODEL_TESTS=1`. All fixtures are synthetic.
+Private user text must never become a test fixture.

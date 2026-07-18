@@ -5,9 +5,9 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 2 — text analysis core contracts.** The project provides
-> normalized input and result schemas, provider interfaces, deterministic mock
-> providers, and analysis orchestration. It does not yet include a real NLP model.
+> **Status: Milestone 3 — licensed local sentiment analysis.** The project can
+> analyze one English text locally with an immutable, attributed Cardiff NLP
+> model revision. Emotion analysis and batch workflows are not yet implemented.
 
 ## Principles
 
@@ -40,6 +40,18 @@ sti about
 sti contracts
 ```
 
+Install the optional local sentiment runtime when you want real inference:
+
+```text
+python -m pip install -e ".[sentiment]"
+sti sentiment "I am pleased with this synthetic example."
+```
+
+The first command invocation downloads the approved model revision from its
+original Hugging Face repository into the ignored `model_cache/` directory.
+Inference then runs on the local machine; input text is not sent to an inference
+API. Use `--offline` after the model is cached to forbid network retrieval.
+
 Run the dependency-free test suite:
 
 ```text
@@ -49,6 +61,17 @@ python -m compileall -q src tests
 
 For the complete contributor workflow, see
 [Development](docs/DEVELOPMENT.md).
+
+## Local sentiment analysis
+
+Milestone 3 adds a single-text English workflow through the existing normalized
+contracts and provider boundary. Each result includes negative, neutral, and
+positive scores, the selected label, confidence, model identity, and immutable
+revision. Output is an estimate that still requires contextual human judgment.
+
+The selected model, alternatives, license evidence, mapping, supply-chain
+controls, and limitations are documented in the
+[Milestone 3 Model Audit](docs/MODEL_AUDIT.md).
 
 ## Core contracts
 
@@ -62,8 +85,8 @@ Milestone 2 introduces a model-library-independent core:
 - deterministic mock providers for fast tests;
 - `AnalysisService` for provider-neutral orchestration.
 
-The mock providers return configured test values. They do not inspect meaning and
-must never be presented as real sentiment or emotion predictions. See
+The mock providers remain available for fast tests. They do not inspect meaning
+and must never be presented as real predictions. See
 [Core Contracts](docs/CONTRACTS.md) for the contract boundaries.
 
 ## Privacy and data

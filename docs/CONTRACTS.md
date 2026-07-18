@@ -1,7 +1,7 @@
 # Core Contracts
 
-Milestone 2 defines stable application contracts without selecting or downloading
-an NLP model.
+Milestone 2 defined stable application contracts. Milestone 3 uses the sentiment
+portion without changing or invoking the emotion contract.
 
 ## Normalized input
 
@@ -23,9 +23,10 @@ as a literal emotion or psychological conclusion.
 
 ## Providers
 
-`SentimentProvider` and `EmotionProvider` are runtime-checkable protocols. Future
-model integrations must implement these interfaces and map raw output into the
-typed result contracts.
+`SentimentProvider` and `EmotionProvider` are runtime-checkable protocols. The
+Cardiff sentiment provider implements `SentimentProvider` and maps the native
+negative, neutral, and positive probabilities one-to-one. No real
+`EmotionProvider` is added in Milestone 3.
 
 The included deterministic providers exist only for unit and orchestration tests.
 They return configured values, do not interpret text, and are not NLP models.
