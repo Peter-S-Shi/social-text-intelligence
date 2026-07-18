@@ -1,0 +1,72 @@
+# Python environments and bytecode
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Test, type-check, and coverage output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Packaging output
+build/
+dist/
+*.egg-info/
+
+# Local application data
+data/*
+!data/README.md
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/**/*.db
+data/**/*.sqlite
+data/**/*.sqlite3
+uploads/
+exports/
+local_data/
+private_data/
+
+# Models, caches, and generated artifacts
+models/
+model_cache/
+.cache/
+.huggingface/
+artifacts/
+reports/generated/
+
+# Logs
+logs/
+*.log
+
+# Local notebooks and exported tables
+.ipynb_checkpoints/
+*.csv
+*.tsv
+*.xlsx
+*.xls
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local tooling
+.codex/
+.agents/
