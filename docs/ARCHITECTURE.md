@@ -1,19 +1,21 @@
 # Architecture
 
-## Milestone 1 boundary
+## Milestone 2 boundary
 
-Milestone 1 establishes repository governance and a minimal executable package.
-It intentionally contains no NLP model, text input contract, persistence,
-analysis workflow, or user-interface implementation.
+Milestone 2 adds typed, model-independent analysis contracts to the Milestone 1
+repository foundation. It intentionally contains no real NLP model, persistence,
+platform connector, batch workflow, or user interface.
 
-The current package contains only:
+The current package contains:
 
 - `foundation.py`: immutable project status and capability metadata;
 - `cli.py`: a dependency-free local diagnostic command;
-- `__main__.py`: module execution support.
+- `contracts/`: normalized input, result, provenance, and error contracts;
+- `providers/`: stable protocols and deterministic testing implementations;
+- `services/`: provider-neutral analysis orchestration.
 
-This small vertical slice proves packaging and test execution without creating
-premature product abstractions.
+Dependency direction is `services -> providers -> contracts`. Contracts do not
+depend on providers, model libraries, persistence, or UI code.
 
 ## Intended layers
 

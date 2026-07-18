@@ -5,9 +5,9 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 1 — independent local project foundation.** The project
-> currently provides a runnable package, privacy protections, documentation, and
-> automated quality checks. It does not yet perform text analysis.
+> **Status: Milestone 2 — text analysis core contracts.** The project provides
+> normalized input and result schemas, provider interfaces, deterministic mock
+> providers, and analysis orchestration. It does not yet include a real NLP model.
 
 ## Principles
 
@@ -37,6 +37,7 @@ then install the package:
 python -m pip install --upgrade pip
 python -m pip install -e .
 sti about
+sti contracts
 ```
 
 Run the dependency-free test suite:
@@ -48,6 +49,22 @@ python -m compileall -q src tests
 
 For the complete contributor workflow, see
 [Development](docs/DEVELOPMENT.md).
+
+## Core contracts
+
+Milestone 2 introduces a model-library-independent core:
+
+- `NormalizedTextInput` for platform-neutral text and safe metadata;
+- compact sentiment and emotion taxonomies;
+- normalized and model-native scores kept separately;
+- traceable provider/model/revision metadata;
+- `SentimentProvider` and `EmotionProvider` protocols;
+- deterministic mock providers for fast tests;
+- `AnalysisService` for provider-neutral orchestration.
+
+The mock providers return configured test values. They do not inspect meaning and
+must never be presented as real sentiment or emotion predictions. See
+[Core Contracts](docs/CONTRACTS.md) for the contract boundaries.
 
 ## Privacy and data
 

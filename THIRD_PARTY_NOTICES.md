@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-## Milestone 1
+## Milestone 2
 
 The runtime package has no third-party dependencies and includes no models,
 model weights, or datasets.

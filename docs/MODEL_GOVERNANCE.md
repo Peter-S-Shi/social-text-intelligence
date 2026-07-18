@@ -1,6 +1,7 @@
 # Model Governance
 
-Milestone 1 does not include model dependencies or model weights.
+Milestone 2 does not include model dependencies or model weights. Its built-in
+deterministic providers are test doubles, not NLP models.
 
 Before any model is approved, record and review:
 

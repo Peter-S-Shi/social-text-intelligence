@@ -6,6 +6,7 @@ import argparse
 from collections.abc import Sequence
 
 from . import __version__
+from .contracts.results import EmotionLabel, SentimentLabel
 from .foundation import PROJECT_STATUS
 
 
@@ -19,6 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("about", help="Show the current project milestone.")
+    subparsers.add_parser("contracts", help="Show normalized analysis labels.")
     return parser
 
 
@@ -32,9 +34,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.print_help()
         return 0
 
+    if args.command == "contracts":
+        print("Sentiment labels: " + ", ".join(SentimentLabel))
+        print("Emotion labels: " + ", ".join(EmotionLabel))
+        print("Providers: interfaces and deterministic mocks only")
+        return 0
+
     print(PROJECT_STATUS.name)
     print(f"Milestone: {PROJECT_STATUS.milestone}")
     print("Local-first: yes")
-    print("Analysis contracts available: no")
+    print("Analysis contracts available: yes")
     print("Model inference available: no")
     return 0
