@@ -1,5 +1,32 @@
 # Third-Party Notices
 
+## Milestone 4 approved model
+
+### Sam Lowe RoBERTa GoEmotions model
+
+- Model: `SamLowe/roberta-base-go_emotions`
+- Revision: `d75048347613a25d77de8cf6412eaae9fa7b26be`
+- Author/provider: Sam Lowe
+- Source: https://huggingface.co/SamLowe/roberta-base-go_emotions
+- License declared and included by the model repository: MIT
+- Documented base model: `FacebookAI/roberta-base`
+- Base-model revision: `e2da8e2f811d1448a5b465c236feacd80ffbac7b`
+- Base-model license declared by its repository: MIT
+- Fine-tuning dataset: `google-research-datasets/go_emotions`
+- Dataset revision: `add492243ff905527e67aeb8b80c082af02207c3`
+- Dataset license declared by its repository: Apache License 2.0
+- Approved weights: `model.safetensors`
+- Upstream weights SHA-256:
+  `84d6d338b4cf63f0ed3c990a0ce748d32d1d2965c072f4645accaa71af3888c0`
+- Purpose: local English fine-grained multi-label emotion inference
+
+The project uses the model unchanged for inference and does not redistribute its
+weights or GoEmotions records. Sam Lowe, Meta, Google Research, Reddit, and
+Hugging Face do not endorse this project. The model, base model, dataset, and
+runtime dependencies retain their own licenses. See the
+[Milestone 4 model audit](docs/EMOTION_MODEL_AUDIT.md) for provenance, candidate
+decisions, mapping, threshold semantics, and limitations.
+
 ## Milestone 3 approved model
 
 ### Cardiff NLP Twitter-roBERTa sentiment model
@@ -30,8 +57,8 @@ limitations.
   distributed under its upstream BSD-style project license and bundled
   third-party notices, used for local tensor inference.
 
-These optional dependencies are installed through the `sentiment` extra and are
-not bundled in the repository.
+These optional dependencies are installed through the `sentiment` and `emotion`
+extras and are not bundled in the repository.
 
 The approved model card identifies the TweetEval sentiment dataset as its
 fine-tuning benchmark. The project does not download or redistribute that

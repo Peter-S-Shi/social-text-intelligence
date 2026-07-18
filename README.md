@@ -5,9 +5,10 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 3 — licensed local sentiment analysis.** The project can
-> analyze one English text locally with an immutable, attributed Cardiff NLP
-> model revision. Emotion analysis and batch workflows are not yet implemented.
+> **Status: Milestone 4 — licensed fine-grained emotion analysis.** The project
+> can produce one local combined English sentiment and compact multi-label
+> emotion report with immutable, attributed model revisions. UI and batch
+> workflows are not yet implemented.
 
 ## Principles
 
@@ -47,10 +48,17 @@ python -m pip install -e ".[sentiment]"
 sti sentiment "I am pleased with this synthetic example."
 ```
 
+Install both model extras for a combined single-text report:
+
+```text
+python -m pip install -e ".[sentiment,emotion]"
+sti analyze "Thank you so much for the thoughtful help!"
+```
+
 The first command invocation downloads the approved model revision from its
 original Hugging Face repository into the ignored `model_cache/` directory.
 Inference then runs on the local machine; input text is not sent to an inference
-API. Use `--offline` after the model is cached to forbid network retrieval.
+API. Use `--offline` after both models are cached to forbid network retrieval.
 
 Run the dependency-free test suite:
 
@@ -72,6 +80,20 @@ revision. Output is an estimate that still requires contextual human judgment.
 The selected model, alternatives, license evidence, mapping, supply-chain
 controls, and limitations are documented in the
 [Milestone 3 Model Audit](docs/MODEL_AUDIT.md).
+
+## Fine-grained emotion analysis
+
+Milestone 4 adds an immutable English GoEmotions provider and connects it to the
+sentiment provider through the existing `AnalysisService`. The combined report
+preserves all 28 native emotion probabilities, compact scores, an inclusive
+threshold, dominant emotion, ordered secondary emotions, model identities, and
+revisions.
+
+Compact neutral means no mapped non-neutral emotion reached the threshold. It is
+not a psychological conclusion. Scores are independent multi-label probabilities
+and do not sum to one. See the
+[Milestone 4 Emotion Model Audit](docs/EMOTION_MODEL_AUDIT.md) for the full
+candidate review, mapping, threshold rules, licenses, and limitations.
 
 ## Core contracts
 

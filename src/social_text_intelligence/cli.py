@@ -12,7 +12,11 @@ from .contracts.inputs import NormalizedTextInput
 from .contracts.results import EmotionLabel, SentimentLabel
 from .foundation import PROJECT_STATUS
 from .providers.cardiff_sentiment import CardiffSentimentProvider
-from .services.analysis import SentimentAnalysisService
+from .providers.samlowe_emotion import (
+    DEFAULT_EMOTION_THRESHOLD,
+    SamLoweEmotionProvider,
+)
+from .services.analysis import AnalysisService, SentimentAnalysisService
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -42,6 +46,28 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Require the pinned model revision to already exist in the cache.",
     )
+    analyze = subparsers.add_parser(
+        "analyze",
+        help="Analyze sentiment and compact emotions for one English text locally.",
+    )
+    analyze.add_argument("text", help="One text to analyze locally.")
+    analyze.add_argument("--language", default="en", help="BCP 47 language tag.")
+    analyze.add_argument(
+        "--cache-dir",
+        default="model_cache",
+        help="Ignored directory used for downloaded model files.",
+    )
+    analyze.add_argument(
+        "--offline",
+        action="store_true",
+        help="Require both pinned model revisions to exist in the local cache.",
+    )
+    analyze.add_argument(
+        "--emotion-threshold",
+        type=float,
+        default=DEFAULT_EMOTION_THRESHOLD,
+        help="Inclusive threshold for compact non-neutral emotions (default: 0.5).",
+    )
     return parser
 
 
@@ -59,7 +85,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("Sentiment labels: " + ", ".join(SentimentLabel))
         print("Emotion labels: " + ", ".join(EmotionLabel))
         print("Sentiment provider: licensed local model available")
-        print("Emotion providers: interfaces and deterministic mocks only")
+        print("Emotion provider: licensed local multi-label model available")
         return 0
 
     if args.command == "sentiment":
@@ -88,10 +114,77 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("Estimate only: review context before relying on this prediction.")
         return 0
 
+    if args.command == "analyze":
+        try:
+            record = NormalizedTextInput.from_text(
+                args.text,
+                language=args.language,
+            )
+            cache_dir = Path(args.cache_dir)
+            analysis_service = AnalysisService(
+                sentiment_provider=CardiffSentimentProvider(
+                    cache_dir=cache_dir,
+                    offline=args.offline,
+                ),
+                emotion_provider=SamLoweEmotionProvider(
+                    threshold=args.emotion_threshold,
+                    cache_dir=cache_dir,
+                    offline=args.offline,
+                ),
+            )
+            analysis_report = analysis_service.analyze(record)
+        except SocialTextIntelligenceError as error:
+            parser.error(str(error))
+
+        sentiment = analysis_report.sentiment
+        emotion = analysis_report.emotion
+        emotion_scores = {item.label: item.score for item in emotion.scores}
+        native_active = tuple(
+            item for item in emotion.native_scores if item.score >= emotion.threshold
+        )
+        print(f"Sentiment: {sentiment.label}")
+        print(f"Sentiment confidence: {sentiment.confidence:.6f}")
+        print(f"Dominant emotion: {emotion.dominant_emotion}")
+        print(f"Emotion confidence: {emotion.confidence:.6f}")
+        print(f"Emotion threshold: {emotion.threshold:.6f} (inclusive)")
+        print(
+            "Secondary emotions: "
+            + (
+                ", ".join(
+                    f"{label}={emotion_scores[label]:.6f}"
+                    for label in emotion.secondary_emotions
+                )
+                or "none"
+            )
+        )
+        print(
+            "Compact emotion scores: "
+            + ", ".join(
+                f"{item.label}={item.score:.6f}" for item in emotion.scores
+            )
+        )
+        print(
+            "Native emotions at/above threshold: "
+            + (
+                ", ".join(f"{item.label}={item.score:.6f}" for item in native_active)
+                or "none"
+            )
+        )
+        print(
+            "Models: "
+            f"sentiment={sentiment.provider.model_name}@{sentiment.provider.revision}; "
+            f"emotion={emotion.provider.model_name}@{emotion.provider.revision}"
+        )
+        print(
+            "Estimates only: emotions are not psychological diagnoses; review context."
+        )
+        return 0
+
     print(PROJECT_STATUS.name)
     print(f"Milestone: {PROJECT_STATUS.milestone}")
     print("Local-first: yes")
     print("Analysis contracts available: yes")
     print("Local sentiment inference available: yes")
-    print("Emotion model inference available: no")
+    print("Local emotion inference available: yes")
+    print("Combined single-text report available: yes")
     return 0

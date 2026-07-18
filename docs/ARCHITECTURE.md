@@ -1,29 +1,30 @@
 # Architecture
 
-## Milestone 3 boundary
+## Milestone 4 boundary
 
-Milestone 3 adds one licensed English sentiment provider behind the existing
-model-independent contract. It intentionally adds no emotion model, combined
-sentiment/emotion workflow, persistence, platform connector, batch workflow, or
-user interface.
+Milestone 4 adds one licensed English multi-label emotion provider and combines
+it with the Milestone 3 sentiment provider for one normalized text. It
+intentionally adds no persistence, platform connector, batch workflow, French
+capability, or user interface.
 
 The current package contains:
 
 - `foundation.py`: immutable project status and capability metadata;
 - `cli.py`: diagnostics and one single-text sentiment command;
 - `contracts/`: normalized input, result, provenance, and error contracts;
-- `providers/`: stable protocols, deterministic testing implementations, and a
-  pinned Cardiff NLP sentiment adapter;
+- `providers/`: stable protocols, deterministic test implementations, a pinned
+  Cardiff NLP sentiment adapter, and a pinned Sam Lowe emotion adapter;
 - `services/`: provider-neutral analysis orchestration.
 
 Dependency direction is `services -> providers -> contracts`. Contracts do not
 depend on providers, model libraries, persistence, or UI code.
 
 The optional Transformers/PyTorch runtime is imported lazily inside the concrete
-provider. Installing the core or running fast tests therefore does not require a
-model library or weight download. `SentimentAnalysisService` invokes only the
-sentiment provider; the pre-existing combined mock service remains available for
-future orchestration tests and is not used by the Milestone 3 workflow.
+providers. Installing the core or running fast tests therefore does not require
+a model library or weight download. `SentimentAnalysisService` remains
+sentiment-only. `AnalysisService` produces one `AnalysisReport` by invoking the
+sentiment and emotion providers for the same normalized record without logging
+or persistence.
 
 ## Intended layers
 
@@ -47,5 +48,5 @@ optional adapters.
 
 Fast tests run without network access or model downloads by injecting a small
 runtime stub. The opt-in test under `tests/integration/` loads the immutable real
-model revision only when `STI_RUN_MODEL_TESTS=1`. All fixtures are synthetic.
+model revisions only when `STI_RUN_MODEL_TESTS=1`. All fixtures are synthetic.
 Private user text must never become a test fixture.
