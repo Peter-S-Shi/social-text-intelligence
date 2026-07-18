@@ -16,7 +16,7 @@ class ProjectStatus:
 
 PROJECT_STATUS = ProjectStatus(
     name="Social Text Intelligence",
-    milestone=3,
+    milestone=4,
     local_first=True,
     analysis_contracts_available=True,
     model_inference_available=True,

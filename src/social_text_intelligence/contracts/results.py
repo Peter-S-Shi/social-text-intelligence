@@ -161,36 +161,77 @@ class EmotionScore:
 class EmotionResult:
     record_id: str
     dominant_emotion: EmotionLabel
+    confidence: float
+    threshold: float
+    secondary_emotions: tuple[EmotionLabel, ...]
     scores: tuple[EmotionScore, ...]
     native_scores: tuple[NativeScore, ...]
     provider: ProviderMetadata
 
     def __post_init__(self) -> None:
         _validate_required_text(self.record_id, field="record_id")
+        _validate_score(self.confidence, field="emotion_confidence")
+        if not math.isfinite(self.threshold) or not 0.0 < self.threshold <= 1.0:
+            raise ValidationError(
+                field="emotion_threshold",
+                code="invalid_threshold",
+                message="emotion_threshold must be greater than 0 and at most 1.",
+            )
         if self.provider.task is not TaskType.EMOTION:
             raise InvalidProviderOutputError(
                 provider=self.provider.provider,
                 message="Emotion results require emotion provider metadata.",
             )
         labels = tuple(item.label for item in self.scores)
-        if (
-            not labels
-            or len(labels) != len(set(labels))
-            or self.dominant_emotion not in labels
-        ):
+        if len(labels) != len(set(labels)) or set(labels) != set(EmotionLabel):
             raise InvalidProviderOutputError(
                 provider=self.provider.provider,
                 message=(
-                    "Emotion scores must be unique and include the dominant emotion."
+                    "Emotion scores must contain each compact emotion exactly once."
                 ),
             )
-        dominant_score = next(
-            item.score for item in self.scores if item.label is self.dominant_emotion
-        )
-        if dominant_score != max(item.score for item in self.scores):
+        native_labels = tuple(item.label for item in self.native_scores)
+        if native_labels != self.provider.native_labels:
             raise InvalidProviderOutputError(
                 provider=self.provider.provider,
-                message="The dominant emotion must have a highest score.",
+                message="Native emotion scores must match provider metadata order.",
+            )
+
+        score_by_label = {item.label: item.score for item in self.scores}
+        if self.confidence != score_by_label[self.dominant_emotion]:
+            raise InvalidProviderOutputError(
+                provider=self.provider.provider,
+                message="Emotion confidence must equal the dominant emotion score.",
+            )
+
+        activated = tuple(
+            sorted(
+                (
+                    label
+                    for label in EmotionLabel
+                    if label is not EmotionLabel.NEUTRAL
+                    and score_by_label[label] >= self.threshold
+                ),
+                key=lambda label: (-score_by_label[label], label.value),
+            )
+        )
+        expected_dominant = activated[0] if activated else EmotionLabel.NEUTRAL
+        expected_secondary = activated[1:] if activated else ()
+        if self.dominant_emotion is not expected_dominant:
+            raise InvalidProviderOutputError(
+                provider=self.provider.provider,
+                message=(
+                    "The dominant emotion must be the highest compact emotion at "
+                    "or above threshold, or neutral when none qualifies."
+                ),
+            )
+        if self.secondary_emotions != expected_secondary:
+            raise InvalidProviderOutputError(
+                provider=self.provider.provider,
+                message=(
+                    "Secondary emotions must contain the remaining above-threshold "
+                    "compact emotions in descending score order."
+                ),
             )
 
 

@@ -10,16 +10,36 @@ from .cardiff_sentiment import (
     preprocess_social_text,
 )
 from .mock import DeterministicEmotionProvider, DeterministicSentimentProvider
+from .samlowe_emotion import (
+    COMPACT_EMOTION_MAPPING,
+    DEFAULT_EMOTION_THRESHOLD,
+    EMOTION_MODEL_ID,
+    EMOTION_MODEL_REVISION,
+    NATIVE_EMOTION_LABELS,
+    UNMAPPED_NATIVE_LABELS,
+    EmotionRuntime,
+    SamLoweEmotionProvider,
+    TransformersEmotionRuntime,
+)
 
 __all__ = [
+    "COMPACT_EMOTION_MAPPING",
     "CardiffSentimentProvider",
+    "DEFAULT_EMOTION_THRESHOLD",
     "DeterministicEmotionProvider",
     "DeterministicSentimentProvider",
+    "EMOTION_MODEL_ID",
+    "EMOTION_MODEL_REVISION",
     "EmotionProvider",
+    "EmotionRuntime",
     "MODEL_ID",
     "MODEL_REVISION",
+    "NATIVE_EMOTION_LABELS",
+    "SamLoweEmotionProvider",
     "SentimentRuntime",
     "SentimentProvider",
+    "TransformersEmotionRuntime",
     "TransformersSentimentRuntime",
+    "UNMAPPED_NATIVE_LABELS",
     "preprocess_social_text",
 ]

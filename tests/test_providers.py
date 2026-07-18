@@ -43,7 +43,8 @@ class ProviderContractTests(unittest.TestCase):
         result = DeterministicEmotionProvider(EmotionLabel.GRATITUDE).analyze(record)
 
         self.assertEqual(result.dominant_emotion, EmotionLabel.GRATITUDE)
-        self.assertEqual(len(result.scores), 2)
+        self.assertEqual(len(result.scores), len(EmotionLabel))
+        self.assertEqual(result.secondary_emotions, (EmotionLabel.JOY,))
 
     def test_mock_rejects_unsupported_language(self) -> None:
         record = NormalizedTextInput.from_text(

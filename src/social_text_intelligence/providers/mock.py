@@ -94,13 +94,28 @@ class DeterministicEmotionProvider:
             if self.dominant_emotion is not EmotionLabel.JOY
             else EmotionLabel.GRATITUDE
         )
-        scores = (
-            EmotionScore(self.dominant_emotion, 0.8),
-            EmotionScore(secondary, 0.2),
+        threshold = 0.5
+        scores = tuple(
+            EmotionScore(
+                label,
+                0.8
+                if label is self.dominant_emotion
+                else 0.6
+                if self.dominant_emotion is not EmotionLabel.NEUTRAL
+                and label is secondary
+                else 0.1,
+            )
+            for label in EmotionLabel
+        )
+        secondary_emotions = (
+            (secondary,) if self.dominant_emotion is not EmotionLabel.NEUTRAL else ()
         )
         return EmotionResult(
             record_id=record.record_id,
             dominant_emotion=self.dominant_emotion,
+            confidence=0.8,
+            threshold=threshold,
+            secondary_emotions=secondary_emotions,
             scores=scores,
             native_scores=tuple(
                 NativeScore(label=item.label.value, score=item.score) for item in scores

@@ -1,5 +1,21 @@
 # Development Log
 
+## Milestone 4 — Licensed fine-grained emotion analysis
+
+Audited English social-text emotion models for license clarity, provenance,
+base model, immutable revision, native labels, multi-label support, neutral
+semantics, loading format, and technical fit. Approved the MIT-licensed Sam Lowe
+GoEmotions model and its Safetensors artifact; documented rejected candidates.
+
+Added local multi-label inference, preservation of all 28 native probabilities,
+conservative compact taxonomy mapping, explicit inclusive threshold semantics,
+dominant and ordered secondary emotions, neutral fallback, typed validation, and
+a single-text combined sentiment/emotion report. Added deterministic tests and
+an opt-in real-model combined smoke test.
+
+This milestone adds no UI, batch input, persistence, French capability, platform
+connector, remote inference, real user text, dataset, or model weights.
+
 ## Milestone 3 — Licensed local sentiment analysis
 
 Audited locally executable sentiment models for license clarity, provenance,

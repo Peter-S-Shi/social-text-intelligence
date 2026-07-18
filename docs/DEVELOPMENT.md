@@ -36,13 +36,13 @@ model weights.
 To validate the approved immutable revision locally:
 
 ```text
-python -m pip install -e ".[dev,sentiment]"
+python -m pip install -e ".[dev,sentiment,emotion]"
 STI_RUN_MODEL_TESTS=1 python -m pytest tests/integration
 ```
 
-The first run downloads weights into ignored `model_cache/`. Set
-`STI_MODEL_OFFLINE=1` after the cache exists to require offline loading. Never
-commit model weights or caches.
+The first run downloads both immutable model revisions into ignored
+`model_cache/`. Set `STI_MODEL_OFFLINE=1` after the cache exists to require
+offline loading. Never commit model weights or caches.
 
 ## Milestone discipline
 
