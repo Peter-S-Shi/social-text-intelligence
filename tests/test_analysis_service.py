@@ -7,7 +7,7 @@ from social_text_intelligence.providers import (
     DeterministicEmotionProvider,
     DeterministicSentimentProvider,
 )
-from social_text_intelligence.services import AnalysisService
+from social_text_intelligence.services import AnalysisService, SentimentAnalysisService
 
 
 class AnalysisServiceTests(unittest.TestCase):
@@ -27,6 +27,18 @@ class AnalysisServiceTests(unittest.TestCase):
         self.assertEqual(report.record, record)
         self.assertEqual(report.sentiment.record_id, record.record_id)
         self.assertEqual(report.emotion.record_id, record.record_id)
+
+    def test_sentiment_service_does_not_require_emotion_provider(self) -> None:
+        record = NormalizedTextInput.from_text(
+            "A single project-authored text.",
+            record_id="record-2",
+            language="en",
+        )
+        service = SentimentAnalysisService(DeterministicSentimentProvider())
+
+        result = service.analyze(record)
+
+        self.assertEqual(result.record_id, record.record_id)
 
 
 if __name__ == "__main__":

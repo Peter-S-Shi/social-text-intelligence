@@ -1,5 +1,21 @@
 # Development Log
 
+## Milestone 3 — Licensed local sentiment analysis
+
+Audited locally executable sentiment models for license clarity, provenance,
+native-label compatibility, loading safety, language, and technical fit. Approved
+the Cardiff NLP Twitter-roBERTa sentiment model at an immutable revision and
+documented rejected candidates.
+
+Added lazy local inference, model-specific social-text preprocessing, one-to-one
+negative/neutral/positive mapping, normalized native and application scores,
+single-text service and CLI workflows, explicit unsupported-language and invalid
+output handling, deterministic provider tests, and an opt-in real-model smoke
+test. Updated licensing, setup, architecture, limitations, and privacy guidance.
+
+This milestone does not add emotion inference, batch input, persistence, a user
+interface, remote inference, telemetry, real user text, or model weights.
+
 ## Milestone 2 — Text analysis core contracts
 
 Added the model-independent analysis core:

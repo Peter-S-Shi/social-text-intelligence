@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from ..contracts.inputs import NormalizedTextInput
-from ..contracts.results import AnalysisReport
+from ..contracts.results import AnalysisReport, SentimentResult
 from ..providers.base import EmotionProvider, SentimentProvider
 
 
@@ -20,3 +20,13 @@ class AnalysisService:
         sentiment = self.sentiment_provider.analyze(record)
         emotion = self.emotion_provider.analyze(record)
         return AnalysisReport(record=record, sentiment=sentiment, emotion=emotion)
+
+
+@dataclass(frozen=True, slots=True)
+class SentimentAnalysisService:
+    """Orchestrate one sentiment prediction without invoking emotion analysis."""
+
+    sentiment_provider: SentimentProvider
+
+    def analyze(self, record: NormalizedTextInput) -> SentimentResult:
+        return self.sentiment_provider.analyze(record)

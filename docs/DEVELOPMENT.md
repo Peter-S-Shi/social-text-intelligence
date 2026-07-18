@@ -27,8 +27,22 @@ ruff check .
 mypy
 ```
 
-The unit tests and compile check do not require third-party packages. GitHub
-Actions runs the complete test, lint, type-check, and compile suite.
+The fast tests and compile check do not require model dependencies. GitHub
+Actions runs the test, lint, type-check, and compile suite without downloading
+model weights.
+
+## Optional real-model validation
+
+To validate the approved immutable revision locally:
+
+```text
+python -m pip install -e ".[dev,sentiment]"
+STI_RUN_MODEL_TESTS=1 python -m pytest tests/integration
+```
+
+The first run downloads weights into ignored `model_cache/`. Set
+`STI_MODEL_OFFLINE=1` after the cache exists to require offline loading. Never
+commit model weights or caches.
 
 ## Milestone discipline
 
