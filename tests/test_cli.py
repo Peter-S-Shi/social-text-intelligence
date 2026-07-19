@@ -21,7 +21,7 @@ class CliTests(unittest.TestCase):
             exit_code = main(["about"])
 
         self.assertEqual(exit_code, 0)
-        self.assertIn("Milestone: 4", output.getvalue())
+        self.assertIn("Milestone: 5", output.getvalue())
         self.assertIn("Analysis contracts available: yes", output.getvalue())
         self.assertIn("Local sentiment inference available: yes", output.getvalue())
         self.assertIn("Local emotion inference available: yes", output.getvalue())

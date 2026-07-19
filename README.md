@@ -5,10 +5,9 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 4 — licensed fine-grained emotion analysis.** The project
-> can produce one local combined English sentiment and compact multi-label
-> emotion report with immutable, attributed model revisions. UI and batch
-> workflows are not yet implemented.
+> **Status: Milestone 5 — local analysis interface.** The project provides a
+> local Flask interface for one English sentiment-and-emotion report with
+> immutable, attributed model revisions. Batch workflows are not yet implemented.
 
 ## Principles
 
@@ -60,6 +59,16 @@ original Hugging Face repository into the ignored `model_cache/` directory.
 Inference then runs on the local machine; input text is not sent to an inference
 API. Use `--offline` after both models are cached to forbid network retrieval.
 
+Run the local interface after installing the web and model extras:
+
+```text
+python -m pip install -e ".[web,sentiment,emotion]"
+sti-web
+```
+
+Open `http://127.0.0.1:5000`. Use `sti-web --offline` after both pinned model
+revisions are cached. The server binds only to the local loopback interface.
+
 Run the dependency-free test suite:
 
 ```text
@@ -94,6 +103,15 @@ not a psychological conclusion. Scores are independent multi-label probabilities
 and do not sum to one. See the
 [Milestone 4 Emotion Model Audit](docs/EMOTION_MODEL_AUDIT.md) for the full
 candidate review, mapping, threshold rules, licenses, and limitations.
+
+## Local analysis interface
+
+Milestone 5 presents the combined analysis through a small, accessible Flask
+interface. It shows all sentiment scores, compact and optional native emotion
+scores, threshold semantics, immutable model identities, operating mode, and
+prominent limitations. Both providers load only on first analysis and are reused
+for later requests in the same process. User text is neither logged nor stored by
+the application.
 
 ## Core contracts
 

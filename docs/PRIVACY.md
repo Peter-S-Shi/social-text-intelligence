@@ -25,8 +25,14 @@ publicly visible.
 
 ## Logging
 
-Future logging must exclude full user text by default. Any diagnostic mode that
-can expose text must be explicit, temporary, and documented.
+The local Flask application uses ordinary request-line logging only and never
+adds submitted text to log messages. It keeps direct input only for the current
+request and response; no analysis history is created. Any future diagnostic mode
+that can expose text must be explicit, temporary, and documented.
+
+The web server binds to `127.0.0.1` by default. Normal mode may download pinned
+model files from their documented sources, but inference text is not sent to a
+remote model API. Offline mode requires both model revisions to be cached.
 
 ## Persistence
 

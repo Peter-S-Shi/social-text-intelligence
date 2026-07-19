@@ -1,5 +1,20 @@
 # Development Log
 
+## Milestone 5 — Local analysis interface
+
+Added an original local Flask interface for direct English text analysis. The
+page displays normalized sentiment and emotion results, optional native scores,
+threshold and provenance details, operating mode, first-load guidance, and
+plain-language limitations.
+
+Added a thread-safe lazy analysis-service container so both model providers are
+constructed once and reused across requests. Expected validation, language,
+cache, dependency, and provider failures become safe user-facing messages. The
+server binds to loopback and does not log or persist submitted text.
+
+This milestone adds no batch input, history, persistence, accounts, French,
+platform connectors, hosted deployment, or separate frontend application.
+
 ## Milestone 4 — Licensed fine-grained emotion analysis
 
 Audited English social-text emotion models for license clarity, provenance,

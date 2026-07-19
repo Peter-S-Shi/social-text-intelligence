@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Social Text Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Local-first NLP workbench</p>
+      <h1>Social Text Intelligence</h1>
+    </div>
+    <span class="mode-badge">{{ 'Offline' if offline else 'Normal' }} mode</span>
+  </header>
+
+  <main>
+    <section class="panel intro">
+      <h2>Analyze one English text</h2>
+      <p>Sentiment and emotion inference runs locally. The first analysis can take longer while the two approved models load; later requests reuse them.</p>
+      <form method="post" novalidate>
+        <label for="text">Text</label>
+        <textarea id="text" name="text" maxlength="{{ max_text_length }}" required>{{ submitted_text }}</textarea>
+        <div class="form-row">
+          <small>English only · up to {{ max_text_length }} characters · models {{ 'ready' if initialized else 'load on first analysis' }}</small>
+          <button type="submit">Analyze locally</button>
+        </div>
+      </form>
+      {% if error_message %}<div class="error" role="alert">{{ error_message }}</div>{% endif %}
+    </section>
+
+    {% if report %}
+    <section class="result-grid" aria-label="Analysis results">
+      <article class="panel">
+        <p class="eyebrow">Sentiment</p>
+        <h2>{{ report.sentiment.label }}</h2>
+        <p>Confidence {{ '%.1f'|format(report.sentiment.confidence * 100) }}%</p>
+        <div class="scores">
+          {% for item in report.sentiment.scores %}
+          <div><span>{{ item.label }}</span><strong>{{ '%.3f'|format(item.score) }}</strong></div>
+          {% endfor %}
+        </div>
+      </article>
+      <article class="panel">
+        <p class="eyebrow">Dominant emotion</p>
+        <h2>{{ report.emotion.dominant_emotion }}</h2>
+        <p>Threshold ≥ {{ '%.2f'|format(report.emotion.threshold) }}</p>
+        <p>Secondary: {{ report.emotion.secondary_emotions|join(', ') if report.emotion.secondary_emotions else 'none' }}</p>
+        <div class="scores">
+          {% for item in report.emotion.scores %}
+          <div><span>{{ item.label }}</span><strong>{{ '%.3f'|format(item.score) }}</strong></div>
+          {% endfor %}
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <details>
+        <summary>Inspect all model-native emotion scores</summary>
+        <div class="scores native-scores">
+          {% for item in report.emotion.native_scores %}
+          <div><span>{{ item.label }}</span><strong>{{ '%.3f'|format(item.score) }}</strong></div>
+          {% endfor %}
+        </div>
+      </details>
+    </section>
+
+    <section class="panel provenance">
+      <h2>Models and provenance</h2>
+      <code>{{ report.sentiment.provider.model_name }}@{{ report.sentiment.provider.revision }}</code>
+      <code>{{ report.emotion.provider.model_name }}@{{ report.emotion.provider.revision }}</code>
+    </section>
+    {% endif %}
+
+    <section class="limitations" aria-label="Limitations">
+      <strong>Estimate, not diagnosis.</strong> Labels and scores can be wrong. Sarcasm, humor, slang, cultural context, and domain shift remain difficult. Emotion output does not reveal a person's true feelings or psychological state.
+    </section>
+  </main>
+</body>
+</html>

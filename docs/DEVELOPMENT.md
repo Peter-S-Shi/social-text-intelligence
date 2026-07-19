@@ -59,3 +59,16 @@ Before every commit or push:
    user content;
 4. run the relevant checks;
 5. stage only the intended files.
+
+## Local web interface
+
+Install the local interface and model runtimes, then bind to loopback:
+
+```text
+python -m pip install -e ".[web,sentiment,emotion]"
+sti-web
+```
+
+The first analysis lazily loads both models. Use `sti-web --offline` to require
+an existing cache. Flask route tests inject deterministic providers and do not
+download weights.

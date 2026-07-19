@@ -1,20 +1,20 @@
 # Architecture
 
-## Milestone 4 boundary
+## Milestone 5 boundary
 
-Milestone 4 adds one licensed English multi-label emotion provider and combines
-it with the Milestone 3 sentiment provider for one normalized text. It
-intentionally adds no persistence, platform connector, batch workflow, French
-capability, or user interface.
+Milestone 5 adds a local Flask interface around the existing one-record combined
+analysis service. It intentionally adds no persistence, platform connector,
+batch workflow, French capability, accounts, or hosted deployment.
 
 The current package contains:
 
 - `foundation.py`: immutable project status and capability metadata;
-- `cli.py`: diagnostics and one single-text sentiment command;
+- `cli.py`: diagnostics and single-text model commands;
 - `contracts/`: normalized input, result, provenance, and error contracts;
 - `providers/`: stable protocols, deterministic test implementations, a pinned
   Cardiff NLP sentiment adapter, and a pinned Sam Lowe emotion adapter;
-- `services/`: provider-neutral analysis orchestration.
+- `services/`: provider-neutral orchestration and thread-safe lazy reuse;
+- `interface/`: local Flask routes, templates, and static presentation only.
 
 Dependency direction is `services -> providers -> contracts`. Contracts do not
 depend on providers, model libraries, persistence, or UI code.
@@ -24,7 +24,9 @@ providers. Installing the core or running fast tests therefore does not require
 a model library or weight download. `SentimentAnalysisService` remains
 sentiment-only. `AnalysisService` produces one `AnalysisReport` by invoking the
 sentiment and emotion providers for the same normalized record without logging
-or persistence.
+or persistence. `LazyAnalysisService` owns one lazily built `AnalysisService` per
+application process. Flask routes create normalized records and render results;
+they do not load models, map labels, or write data.
 
 ## Intended layers
 
