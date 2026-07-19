@@ -59,3 +59,25 @@ Before every commit or push:
    user content;
 4. run the relevant checks;
 5. stage only the intended files.
+
+## Local web interface
+
+Install the local interface and model runtimes, then bind to loopback:
+
+```text
+python -m pip install -e ".[web,sentiment,emotion]"
+sti-web
+```
+
+The first analysis lazily loads both models. Use `sti-web --offline` to require
+an existing cache. Flask route tests inject deterministic providers and do not
+download weights.
+
+Use `sti-web --help` to configure `--max-batch-bytes`, `--max-batch-rows`, and
+`--max-text-length` for a local run. Defaults are 2 MiB, 500 rows, and 20,000
+characters.
+
+Batch service and route tests use only project-authored CSV bytes held in memory.
+They cover column selection, validation, duplicate IDs, partial failure,
+aggregates, filters, compact/native export, expiry, and file/row limits. Never
+place real CSV uploads or generated exports in the repository.

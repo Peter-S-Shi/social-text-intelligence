@@ -1,20 +1,22 @@
 # Architecture
 
-## Milestone 4 boundary
+## Milestone 6 boundary
 
-Milestone 4 adds one licensed English multi-label emotion provider and combines
-it with the Milestone 3 sentiment provider for one normalized text. It
-intentionally adds no persistence, platform connector, batch workflow, French
-capability, or user interface.
+Milestone 6 adds CSV preparation, resilient row analysis, aggregates, filtering,
+and explicit export to the Milestone 5 Flask application. It intentionally adds
+no durable persistence, platform connector, French capability, accounts, or
+hosted deployment.
 
 The current package contains:
 
 - `foundation.py`: immutable project status and capability metadata;
-- `cli.py`: diagnostics and one single-text sentiment command;
+- `cli.py`: diagnostics and single-text model commands;
 - `contracts/`: normalized input, result, provenance, and error contracts;
 - `providers/`: stable protocols, deterministic test implementations, a pinned
   Cardiff NLP sentiment adapter, and a pinned Sam Lowe emotion adapter;
-- `services/`: provider-neutral analysis orchestration.
+- `services/`: provider-neutral orchestration, thread-safe lazy reuse, and CSV
+  batch preparation, analysis, aggregates, and export;
+- `interface/`: local Flask routes, templates, and static presentation only.
 
 Dependency direction is `services -> providers -> contracts`. Contracts do not
 depend on providers, model libraries, persistence, or UI code.
@@ -24,7 +26,15 @@ providers. Installing the core or running fast tests therefore does not require
 a model library or weight download. `SentimentAnalysisService` remains
 sentiment-only. `AnalysisService` produces one `AnalysisReport` by invoking the
 sentiment and emotion providers for the same normalized record without logging
-or persistence.
+or persistence. `LazyAnalysisService` owns one lazily built `AnalysisService` per
+application process. Flask routes create normalized records and render results;
+they do not load models, map labels, or write data.
+
+Batch business rules remain in `services/batch.py`, independent of Flask. The
+interface keeps each active upload in a random-token, capacity-limited,
+time-limited in-memory workspace. Preview replaces raw upload bytes with typed
+rows; analysis adds normalized outcomes. Clearing or expiry removes the
+workspace. No temporary file or database is created.
 
 ## Intended layers
 

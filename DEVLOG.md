@@ -1,5 +1,36 @@
 # Development Log
 
+## Milestone 6 — Batch input and export
+
+Added an explicit CSV upload, column-selection, preview, and validation workflow.
+Supported normalized metadata is trusted only by name; unknown columns are
+reported and ignored. Missing IDs receive deterministic row identities, while
+duplicate supplied IDs and invalid rows remain visible typed outcomes.
+
+Added resilient sequential batch analysis using the same lazily reused providers,
+one outcome per input row, filters, semantically distinct aggregate views, and
+explicit normalized CSV export with optional native emotion scores. CSV cells
+that could trigger spreadsheet formulas are safely escaped.
+
+Uploads and results use a bounded, expiring in-memory workspace and no durable
+storage. This milestone adds no database, automatic export, history, accounts,
+French model support, platform connector, or hosted deployment.
+
+## Milestone 5 — Local analysis interface
+
+Added an original local Flask interface for direct English text analysis. The
+page displays normalized sentiment and emotion results, optional native scores,
+threshold and provenance details, operating mode, first-load guidance, and
+plain-language limitations.
+
+Added a thread-safe lazy analysis-service container so both model providers are
+constructed once and reused across requests. Expected validation, language,
+cache, dependency, and provider failures become safe user-facing messages. The
+server binds to loopback and does not log or persist submitted text.
+
+This milestone adds no batch input, history, persistence, accounts, French,
+platform connectors, hosted deployment, or separate frontend application.
+
 ## Milestone 4 — Licensed fine-grained emotion analysis
 
 Audited English social-text emotion models for license clarity, provenance,

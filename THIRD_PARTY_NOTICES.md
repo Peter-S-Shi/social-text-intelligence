@@ -1,5 +1,14 @@
 # Third-Party Notices
 
+## Local web interface dependency
+
+- Flask: https://palletsprojects.com/projects/flask/
+- License: BSD-3-Clause
+- Purpose: local HTTP routing and server-rendered interface
+
+Flask is installed only through the `web` or `dev` optional extra and is not
+bundled in this repository. Its transitive dependencies retain their own terms.
+
 ## Milestone 4 approved model
 
 ### Sam Lowe RoBERTa GoEmotions model

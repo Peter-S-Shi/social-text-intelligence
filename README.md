@@ -5,10 +5,9 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 4 — licensed fine-grained emotion analysis.** The project
-> can produce one local combined English sentiment and compact multi-label
-> emotion report with immutable, attributed model revisions. UI and batch
-> workflows are not yet implemented.
+> **Status: Milestone 6 — batch input and export.** The local Flask application
+> supports direct English analysis plus explicit CSV preview, validation,
+> resilient batch analysis, aggregate views, filtering, and normalized export.
 
 ## Principles
 
@@ -60,6 +59,16 @@ original Hugging Face repository into the ignored `model_cache/` directory.
 Inference then runs on the local machine; input text is not sent to an inference
 API. Use `--offline` after both models are cached to forbid network retrieval.
 
+Run the local interface after installing the web and model extras:
+
+```text
+python -m pip install -e ".[web,sentiment,emotion]"
+sti-web
+```
+
+Open `http://127.0.0.1:5000`. Use `sti-web --offline` after both pinned model
+revisions are cached. The server binds only to the local loopback interface.
+
 Run the dependency-free test suite:
 
 ```text
@@ -94,6 +103,35 @@ not a psychological conclusion. Scores are independent multi-label probabilities
 and do not sum to one. See the
 [Milestone 4 Emotion Model Audit](docs/EMOTION_MODEL_AUDIT.md) for the full
 candidate review, mapping, threshold rules, licenses, and limitations.
+
+## Local analysis interface
+
+Milestone 5 presents the combined analysis through a small, accessible Flask
+interface. It shows all sentiment scores, compact and optional native emotion
+scores, threshold semantics, immutable model identities, operating mode, and
+prominent limitations. Both providers load only on first analysis and are reused
+for later requests in the same process. User text is neither logged nor stored by
+the application.
+
+## Batch CSV workflow
+
+Milestone 6 adds a separate Batch CSV mode:
+
+1. upload a UTF-8 CSV for preview and validation;
+2. select the text column if `text` is absent;
+3. explicitly start local analysis;
+4. inspect distinct sentiment, dominant-emotion, and multi-label activation
+   aggregates;
+5. filter row outcomes and explicitly export normalized CSV results.
+
+The default limits are 2 MiB, 500 rows, and 20,000 characters per text. Required
+and supported metadata fields are documented in [Contracts](docs/CONTRACTS.md).
+Duplicate supplied IDs, invalid metadata, empty text, unsupported languages, and
+provider failures remain row-level outcomes and do not abort the batch. Uploaded
+content is held only in bounded, expiring process memory; there is no database,
+automatic save, or upload history. Native emotion scores are an optional export.
+Use `sti-web --help` to configure the file-byte, row-count, and per-text limits
+for a local session.
 
 ## Core contracts
 

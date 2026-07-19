@@ -187,4 +187,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     print("Local sentiment inference available: yes")
     print("Local emotion inference available: yes")
     print("Combined single-text report available: yes")
+    print("Local Flask interface available: yes")
+    print("CSV batch preview, analysis, filtering, and export available: yes")
     return 0

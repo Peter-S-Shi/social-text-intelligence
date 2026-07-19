@@ -38,6 +38,23 @@ maps documented native groups into the nine compact labels.
 The included deterministic providers exist only for unit and orchestration tests.
 They return configured values, do not interpret text, and are not NLP models.
 
+## Batch CSV
+
+The required logical field is `text`; the interface supports selecting another
+column as the text source. Optional trusted fields are `record_id`, `source_type`,
+`source_label`, `language`, `timestamp`, `topic`, `community`,
+`parent_record_id`, and `notes`. Other columns are reported and ignored.
+
+Missing IDs become deterministic `batch-row-NNNNNN` identities. Duplicate
+supplied IDs are explicit `duplicate_record_id` row errors. Each input row yields
+one `ok` or `error` outcome with a typed error code and message. File size, row
+count, and per-text length limits are enforced before or during preview.
+
+Sentiment distribution counts mutually exclusive selected labels. Dominant
+emotion distribution counts one selected compact label per successful row.
+Compact activation rates independently count scores at or above each result's
+threshold and therefore do not sum to 100 percent.
+
 ## Errors
 
 Expected contract failures use typed exceptions:
