@@ -21,11 +21,13 @@ class CliTests(unittest.TestCase):
             exit_code = main(["about"])
 
         self.assertEqual(exit_code, 0)
-        self.assertIn("Milestone: 5", output.getvalue())
+        self.assertIn("Milestone: 6", output.getvalue())
         self.assertIn("Analysis contracts available: yes", output.getvalue())
         self.assertIn("Local sentiment inference available: yes", output.getvalue())
         self.assertIn("Local emotion inference available: yes", output.getvalue())
         self.assertIn("Combined single-text report available: yes", output.getvalue())
+        self.assertIn("Local Flask interface available: yes", output.getvalue())
+        self.assertIn("CSV batch preview", output.getvalue())
 
     def test_contracts_lists_normalized_taxonomies(self) -> None:
         output = io.StringIO()

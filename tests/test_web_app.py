@@ -50,6 +50,7 @@ class WebAppTests(unittest.TestCase):
         self.assertIn(b"Offline mode", response.data)
         self.assertIn(b"load on first analysis", response.data)
         self.assertIn(b"Estimate, not diagnosis", response.data)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
 
     def test_post_renders_complete_combined_report(self) -> None:
         gateway = deterministic_gateway()

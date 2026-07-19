@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Batch CSV · Social Text Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script defer src="{{ url_for('static', filename='batch.js') }}"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div><p class="eyebrow">Local-first NLP workbench</p><h1>Batch CSV</h1></div>
+    <span class="mode-badge">{{ 'Offline' if offline else 'Normal' }} mode</span>
+  </header>
+  <main>
+    <nav class="mode-nav" aria-label="Analysis modes">
+      <a href="{{ url_for('analyze_text') }}">Direct analysis</a>
+      <a class="active" href="{{ url_for('batch_home') }}">Batch CSV</a>
+    </nav>
+
+    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+
+    {% if not workspace %}
+    <section class="panel">
+      <h2>1. Upload for preview</h2>
+      <p>Choose a UTF-8 CSV. Nothing is analyzed or written to disk at this step.</p>
+      <form method="post" action="{{ url_for('batch_upload') }}" enctype="multipart/form-data">
+        <label for="file">CSV file</label>
+        <input id="file" name="file" type="file" accept=".csv,text/csv" required>
+        <p><small>Limits: {{ max_batch_bytes }} bytes, {{ max_batch_rows }} rows, {{ max_text_length }} characters per text.</small></p>
+        <button type="submit">Preview and validate</button>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if workspace and workspace.pending %}
+    <section class="panel">
+      <h2>Select the text column</h2>
+      <p>No column named <code>text</code> was found. Choose the column containing text.</p>
+      <form method="post" action="{{ url_for('batch_select_column', token=token) }}">
+        <label for="text_column">Text column</label>
+        <select id="text_column" name="text_column">
+          {% for header in workspace.pending.headers %}<option value="{{ header }}">{{ header }}</option>{% endfor %}
+        </select>
+        <button type="submit">Validate preview</button>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if workspace and workspace.preview %}
+    <section class="panel">
+      <h2>2. Preview and validation</h2>
+      <p><strong>{{ workspace.preview.rows|length }}</strong> rows · <strong>{{ workspace.preview.valid_count }}</strong> valid · <strong>{{ workspace.preview.invalid_count }}</strong> invalid</p>
+      <p>Text column: <code>{{ workspace.preview.text_column }}</code>{% if workspace.preview.ignored_columns %} · Ignored untrusted columns: {{ workspace.preview.ignored_columns|join(', ') }}{% endif %}</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Row</th><th>Record ID</th><th>Text preview</th><th>Validation</th></tr></thead>
+        <tbody>{% for row in workspace.preview.rows[:25] %}<tr>
+          <td>{{ row.row_number }}</td><td>{{ row.identity }}</td>
+          <td>{{ row.value_map.text[:120] }}</td>
+          <td class="status-{{ 'ok' if row.record else 'error' }}">{{ 'ready' if row.record else row.error_code ~ ': ' ~ row.error_message }}</td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% if not workspace.result %}
+      <form class="analysis-form" method="post" action="{{ url_for('batch_analyze', token=token) }}">
+        <button type="submit">Analyze {{ workspace.preview.valid_count }} valid rows locally</button>
+        <div class="progress-message" hidden role="status"><progress></progress> Analysis is running locally. Keep this page open.</div>
+      </form>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if workspace and workspace.result %}
+    <section class="aggregate-grid">
+      <article class="panel"><h2>Sentiment distribution</h2><p>Mutually exclusive dominant labels, shown as row counts.</p>{% for label, count in workspace.result.aggregates.sentiment_counts %}<div class="metric"><span>{{ label }}</span><strong>{{ count }}</strong></div>{% endfor %}</article>
+      <article class="panel"><h2>Dominant emotion distribution</h2><p>One selected dominant compact label per successful row.</p>{% for label, count in workspace.result.aggregates.dominant_emotion_counts %}<div class="metric"><span>{{ label }}</span><strong>{{ count }}</strong></div>{% endfor %}</article>
+      <article class="panel"><h2>Compact activation rate</h2><p>Independent multi-label threshold activations; rates do not sum to 100%.</p>{% for item in workspace.result.aggregates.activation_rates %}<div class="metric"><span>{{ item.label }}</span><strong>{{ '%.1f'|format(item.rate * 100) }}%</strong></div>{% endfor %}</article>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading"><div><h2>3. Results</h2><p>{{ workspace.result.aggregates.analyzed_count }} analyzed · {{ workspace.result.aggregates.failed_count }} failed</p></div>
+        <div class="export-actions"><a class="button-link" href="{{ url_for('batch_export', token=token) }}">Export normalized CSV</a><a class="button-link secondary" href="{{ url_for('batch_export', token=token, native=1) }}">Export CSV with native scores</a></div>
+      </div>
+      <p class="privacy-note">Exports are created only when selected and include the original text. Store them carefully.</p>
+      <form class="filters" method="get">
+        <label>Status <select name="status"><option value="all">all</option><option value="ok" {% if status_filter == 'ok' %}selected{% endif %}>ok</option><option value="error" {% if status_filter == 'error' %}selected{% endif %}>error</option></select></label>
+        <label>Sentiment <select name="sentiment"><option value="all">all</option>{% for label in ['positive','negative','neutral'] %}<option value="{{ label }}" {% if sentiment_filter == label %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <label>Dominant emotion <select name="emotion"><option value="all">all</option>{% for label in ['joy','amusement','admiration','gratitude','anger','sadness','fear','disgust','neutral'] %}<option value="{{ label }}" {% if emotion_filter == label %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        <button type="submit">Apply filters</button>
+      </form>
+      <div class="table-wrap"><table><thead><tr><th>Row</th><th>Record ID</th><th>Status</th><th>Sentiment</th><th>Dominant emotion</th><th>Secondary / error</th></tr></thead>
+        <tbody>{% for outcome in filtered_outcomes %}<tr><td>{{ outcome.prepared.row_number }}</td><td>{{ outcome.prepared.identity }}</td><td class="status-{{ outcome.status }}">{{ outcome.status }}</td>{% if outcome.report %}<td>{{ outcome.report.sentiment.label }}</td><td>{{ outcome.report.emotion.dominant_emotion }}</td><td>{{ outcome.report.emotion.secondary_emotions|join(', ') or 'none' }}</td>{% else %}<td>—</td><td>—</td><td>{{ outcome.error_code }}: {{ outcome.error_message }}</td>{% endif %}</tr>{% endfor %}</tbody>
+      </table></div>
+    </section>
+    {% endif %}
+
+    {% if workspace %}<form method="post" action="{{ url_for('batch_clear', token=token) }}"><button class="danger-button" type="submit">Clear this temporary batch</button></form>{% endif %}
+    <section class="limitations"><strong>Local and temporary.</strong> Uploaded rows and results remain only in bounded, expiring process memory. No database or upload history is created. Model outputs are estimates, not objective truth or psychological diagnosis.</section>
+  </main>
+</body>
+</html>

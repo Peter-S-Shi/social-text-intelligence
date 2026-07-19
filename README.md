@@ -5,9 +5,9 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 5 — local analysis interface.** The project provides a
-> local Flask interface for one English sentiment-and-emotion report with
-> immutable, attributed model revisions. Batch workflows are not yet implemented.
+> **Status: Milestone 6 — batch input and export.** The local Flask application
+> supports direct English analysis plus explicit CSV preview, validation,
+> resilient batch analysis, aggregate views, filtering, and normalized export.
 
 ## Principles
 
@@ -112,6 +112,26 @@ scores, threshold semantics, immutable model identities, operating mode, and
 prominent limitations. Both providers load only on first analysis and are reused
 for later requests in the same process. User text is neither logged nor stored by
 the application.
+
+## Batch CSV workflow
+
+Milestone 6 adds a separate Batch CSV mode:
+
+1. upload a UTF-8 CSV for preview and validation;
+2. select the text column if `text` is absent;
+3. explicitly start local analysis;
+4. inspect distinct sentiment, dominant-emotion, and multi-label activation
+   aggregates;
+5. filter row outcomes and explicitly export normalized CSV results.
+
+The default limits are 2 MiB, 500 rows, and 20,000 characters per text. Required
+and supported metadata fields are documented in [Contracts](docs/CONTRACTS.md).
+Duplicate supplied IDs, invalid metadata, empty text, unsupported languages, and
+provider failures remain row-level outcomes and do not abort the batch. Uploaded
+content is held only in bounded, expiring process memory; there is no database,
+automatic save, or upload history. Native emotion scores are an optional export.
+Use `sti-web --help` to configure the file-byte, row-count, and per-text limits
+for a local session.
 
 ## Core contracts
 

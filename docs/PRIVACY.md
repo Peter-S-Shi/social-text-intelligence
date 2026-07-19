@@ -34,6 +34,12 @@ The web server binds to `127.0.0.1` by default. Normal mode may download pinned
 model files from their documented sources, but inference text is not sent to a
 remote model API. Offline mode requires both model revisions to be cached.
 
+CSV uploads are read into a bounded, expiring in-memory workspace. The batch
+workflow creates no upload directory, temporary file, database, automatic
+export, or history. Responses use `Cache-Control: no-store`. Users explicitly
+initiate each export; exported CSV includes original text and must be protected
+as private local data. Spreadsheet-formula-like text is escaped on export.
+
 ## Persistence
 
 Future persistence must remain local and ignored by Git. Schema migrations must

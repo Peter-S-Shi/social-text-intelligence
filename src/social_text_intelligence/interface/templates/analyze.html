@@ -16,6 +16,10 @@
   </header>
 
   <main>
+    <nav class="mode-nav" aria-label="Analysis modes">
+      <a class="active" href="{{ url_for('analyze_text') }}">Direct analysis</a>
+      <a href="{{ url_for('batch_home') }}">Batch CSV</a>
+    </nav>
     <section class="panel intro">
       <h2>Analyze one English text</h2>
       <p>Sentiment and emotion inference runs locally. The first analysis can take longer while the two approved models load; later requests reuse them.</p>

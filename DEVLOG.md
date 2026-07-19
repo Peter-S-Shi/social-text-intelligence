@@ -1,5 +1,21 @@
 # Development Log
 
+## Milestone 6 — Batch input and export
+
+Added an explicit CSV upload, column-selection, preview, and validation workflow.
+Supported normalized metadata is trusted only by name; unknown columns are
+reported and ignored. Missing IDs receive deterministic row identities, while
+duplicate supplied IDs and invalid rows remain visible typed outcomes.
+
+Added resilient sequential batch analysis using the same lazily reused providers,
+one outcome per input row, filters, semantically distinct aggregate views, and
+explicit normalized CSV export with optional native emotion scores. CSV cells
+that could trigger spreadsheet formulas are safely escaped.
+
+Uploads and results use a bounded, expiring in-memory workspace and no durable
+storage. This milestone adds no database, automatic export, history, accounts,
+French model support, platform connector, or hosted deployment.
+
 ## Milestone 5 — Local analysis interface
 
 Added an original local Flask interface for direct English text analysis. The
