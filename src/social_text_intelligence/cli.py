@@ -189,4 +189,5 @@ def main(argv: Sequence[str] | None = None) -> int:
     print("Combined single-text report available: yes")
     print("Local Flask interface available: yes")
     print("CSV batch preview, analysis, filtering, and export available: yes")
+    print("Temporary human review and reviewed export available: yes")
     return 0

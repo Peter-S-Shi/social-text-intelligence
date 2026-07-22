@@ -1,11 +1,12 @@
 # Architecture
 
-## Milestone 6 boundary
+## Milestone 7 boundary
 
-Milestone 6 adds CSV preparation, resilient row analysis, aggregates, filtering,
-and explicit export to the Milestone 5 Flask application. It intentionally adds
-no durable persistence, platform connector, French capability, accounts, or
-hosted deployment.
+Milestone 7 attaches human review to successful Milestone 6 batch outcomes. It
+adds separate human judgments and labels, review filtering and navigation,
+agreement summaries, and explicit reviewed export. It intentionally adds no
+durable persistence, training, reviewer accounts, platform connector, French
+capability, Milestone 8 insights, or hosted deployment.
 
 The current package contains:
 
@@ -14,8 +15,9 @@ The current package contains:
 - `contracts/`: normalized input, result, provenance, and error contracts;
 - `providers/`: stable protocols, deterministic test implementations, a pinned
   Cardiff NLP sentiment adapter, and a pinned Sam Lowe emotion adapter;
-- `services/`: provider-neutral orchestration, thread-safe lazy reuse, and CSV
-  batch preparation, analysis, aggregates, and export;
+- `services/`: provider-neutral orchestration, thread-safe lazy reuse, CSV batch
+  processing, and reusable human-review validation, navigation, summary, and
+  export rules;
 - `interface/`: local Flask routes, templates, and static presentation only.
 
 Dependency direction is `services -> providers -> contracts`. Contracts do not
@@ -35,6 +37,14 @@ interface keeps each active upload in a random-token, capacity-limited,
 time-limited in-memory workspace. Preview replaces raw upload bytes with typed
 rows; analysis adds normalized outcomes. Clearing or expiry removes the
 workspace. No temporary file or database is created.
+
+`services/review.py` owns the human-review contracts and all label validation,
+record-status semantics, navigation selection, agreement calculations, summary
+denominators, and reviewed export shaping. `HumanReview` never contains or
+replaces an `AnalysisReport`; it references the record identity and stores only
+human fields. Each update returns a new `ReviewState`, while the original frozen
+batch result remains unchanged. Flask parses forms and replaces the review state
+inside the existing random-token workspace.
 
 ## Intended layers
 

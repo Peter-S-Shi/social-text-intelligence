@@ -1,5 +1,27 @@
 # Development Log
 
+## Milestone 7 — Human-in-the-loop review
+
+Added a focused review queue for successful batch outcomes. Sentiment and
+multi-label emotion use separate accept, correct, and uncertain judgments;
+partial work remains unreviewed until both dimensions are decided. Corrected
+emotion labels enforce compact-taxonomy membership, uniqueness, dominant versus
+secondary separation, stable ordering, and neutral exclusivity. Human fields are
+replaced immutably without rewriting the original AI report or provenance.
+
+Added review-state and AI-label filters, safe queue navigation, per-record Accept
+Both, optional notes, honest model-human agreement summaries, sentiment confusion,
+emotion set comparisons, and bounded confidence-band descriptions. Agreement
+denominators exclude whole-record partial reviews, failures, and the uncertain
+dimension. No result is described as model accuracy or calibrated confidence.
+
+Added explicit reviewed CSV export with separate human fields, agreement values,
+UTC timestamps, failures, AI results, model revisions, and optional native scores.
+Spreadsheet formula protection covers review notes and existing user-controlled
+cells. Reviews share the bounded, expiring in-memory batch workspace and add no
+database, autosave, re-import, training, accounts, cloud service, or Milestone 8
+analytics.
+
 ## Milestone 6 — Batch input and export
 
 Added an explicit CSV upload, column-selection, preview, and validation workflow.

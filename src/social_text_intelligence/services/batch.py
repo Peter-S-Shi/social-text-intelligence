@@ -386,7 +386,7 @@ def analyze_batch(preview: BatchPreview, analyzer: CombinedAnalyzer) -> BatchRes
     return BatchResult(preview, tuple(outcomes), aggregates)
 
 
-def _safe_spreadsheet_text(value: str) -> str:
+def safe_spreadsheet_text(value: str) -> str:
     if value.startswith(("=", "+", "-", "@")):
         return "'" + value
     return value
@@ -435,7 +435,7 @@ def export_batch_csv(result: BatchResult, *, include_native: bool) -> str:
         row: dict[str, object] = {
             "row_number": outcome.prepared.row_number,
             **{
-                field: _safe_spreadsheet_text(values.get(field, ""))
+                field: safe_spreadsheet_text(values.get(field, ""))
                 for field in input_fields
             },
             "status": outcome.status,

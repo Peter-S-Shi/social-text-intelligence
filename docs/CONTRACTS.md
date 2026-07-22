@@ -55,6 +55,26 @@ emotion distribution counts one selected compact label per successful row.
 Compact activation rates independently count scores at or above each result's
 threshold and therefore do not sum to 100 percent.
 
+## Human review
+
+Only outcomes with an `AnalysisReport` receive a `HumanReview`. Sentiment and
+emotion judgments are independently `accept`, `correct`, or `uncertain`. A review
+is whole-record complete only when both judgments exist. Accept copies the
+corresponding compact AI labels, correct requires valid human labels, and
+uncertain clears the human labels for that dimension. Human confidence scores are
+not collected.
+
+Corrected emotion review requires one dominant compact label and zero or more
+unique secondary labels. The dominant label cannot repeat as secondary, neutral
+cannot coexist with any non-neutral label, and secondaries are stored in compact
+taxonomy order. Review notes are optional and bounded to 2,000 characters.
+Completed timestamps are timezone-aware UTC ISO 8601 values.
+
+Agreement is `true` or `false` only for a whole-record reviewed, definitive
+dimension; it is blank for partial or uncertain review. Emotion-set agreement is
+exact set equality across dominant plus secondary compact labels. Failures have
+blank review fields but remain in reviewed export alongside their original error.
+
 ## Errors
 
 Expected contract failures use typed exceptions:

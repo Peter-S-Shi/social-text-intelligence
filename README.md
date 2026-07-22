@@ -5,9 +5,9 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 6 — batch input and export.** The local Flask application
-> supports direct English analysis plus explicit CSV preview, validation,
-> resilient batch analysis, aggregate views, filtering, and normalized export.
+> **Status: Milestone 7 — human-in-the-loop review.** The local Flask application
+> supports direct English analysis, bounded CSV batch workspaces, independent
+> sentiment and emotion review, honest agreement summaries, and explicit export.
 
 ## Principles
 
@@ -132,6 +132,28 @@ content is held only in bounded, expiring process memory; there is no database,
 automatic save, or upload history. Native emotion scores are an optional export.
 Use `sti-web --help` to configure the file-byte, row-count, and per-text limits
 for a local session.
+
+## Human-in-the-loop review
+
+Milestone 7 adds a focused queue for successfully analyzed batch rows. Sentiment
+and emotion are judged independently as `accept`, `correct`, or `uncertain`.
+Human labels and notes remain separate from immutable AI predictions and pinned
+model provenance. A row becomes reviewed only after both dimensions have a
+judgment; partially reviewed and uncertain dimensions do not enter formal
+agreement denominators.
+
+The review page supports previous, save-and-next, next-unreviewed, per-record
+Accept Both, and All/Unreviewed/Reviewed/Corrected/Uncertain filters. Its summary
+reports progress, sentiment confusion, exact emotion-set agreement, label
+additions/removals, and a descriptive confidence-band comparison only after five
+definitive reviews. It uses the term agreement rather than accuracy and makes no
+confidence-calibration claim.
+
+Reviewed CSV export preserves every original AI field, errors, provider/model
+revisions, separate human fields, timestamps, and true/false/blank agreement
+semantics. Native emotion scores are optional. Reviews remain in bounded,
+expiring process memory until the user exports them; there is no review database,
+background save, import, training, or reviewer account system.
 
 ## Core contracts
 
