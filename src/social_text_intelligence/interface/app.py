@@ -10,7 +10,12 @@ from typing import Any, Protocol
 from flask import Flask, Response, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
 
-from ..contracts import AnalysisReport, NormalizedTextInput
+from ..contracts import (
+    AnalysisReport,
+    EmotionLabel,
+    NormalizedTextInput,
+    SentimentLabel,
+)
 from ..contracts.errors import (
     ProviderError,
     SocialTextIntelligenceError,
@@ -20,23 +25,58 @@ from ..providers import CardiffSentimentProvider, SamLoweEmotionProvider
 from ..providers.samlowe_emotion import DEFAULT_EMOTION_THRESHOLD
 from ..services import (
     AnalysisService,
+    ContextAssociation,
+    ContextTag,
+    ExampleMode,
+    GroupingDimension,
     HumanReview,
+    InsightMetric,
+    InsightPerspective,
+    InsightSelection,
+    InsightState,
     LazyAnalysisService,
     accept_both,
+    add_context_note,
     analyze_batch,
+    available_group_values,
+    build_group_metrics,
     create_review_state,
+    delete_context_note,
     export_batch_csv,
+    export_insights_csv,
     export_reviewed_csv,
     filter_review_cases,
     inspect_csv_upload,
+    parse_insight_filters,
     prepare_csv_batch,
     review_cases,
     review_navigation,
+    select_representative_examples,
     summarize_reviews,
     update_review,
 )
 from ..services.batch import DEFAULT_MAX_BATCH_BYTES, DEFAULT_MAX_BATCH_ROWS
+from ..services.insights import METRIC_DEFINITIONS
 from .batch_state import BatchWorkspace, EphemeralBatchStore
+
+INSIGHT_METRICS_BY_PERSPECTIVE = {
+    InsightPerspective.AI: (
+        InsightMetric.AI_SENTIMENT,
+        InsightMetric.AI_DOMINANT_EMOTION,
+        InsightMetric.AI_EMOTION_ACTIVATION,
+    ),
+    InsightPerspective.HUMAN: (
+        InsightMetric.HUMAN_SENTIMENT,
+        InsightMetric.HUMAN_DOMINANT_EMOTION,
+        InsightMetric.HUMAN_EMOTION_INCLUSION,
+    ),
+    InsightPerspective.AGREEMENT: (
+        InsightMetric.SENTIMENT_DISAGREEMENT,
+        InsightMetric.DOMINANT_EMOTION_DISAGREEMENT,
+        InsightMetric.EMOTION_SET_DISAGREEMENT,
+        InsightMetric.REVIEW_COVERAGE,
+    ),
+}
 
 
 class AnalysisGateway(Protocol):
@@ -279,6 +319,7 @@ def create_app(
                 preview=workspace.preview,
                 result=result,
                 reviews=create_review_state(result),
+                insights=InsightState(),
             ),
         )
         return redirect(url_for("batch_workspace", token=token))
@@ -497,6 +538,7 @@ def create_app(
             preview=workspace.preview,
             result=workspace.result,
             reviews=updated,
+            insights=workspace.insights,
         )
         if not batch_store.replace(token, replacement):
             return Response("This temporary review expired or was cleared.", 404)
@@ -529,6 +571,349 @@ def create_app(
                 emotion=emotion_filter,
             )
         )
+
+    def requested_insight_selection(
+        workspace: BatchWorkspace, *, comparison: bool
+    ) -> tuple[InsightSelection, tuple[str, ...]]:
+        assert workspace.result is not None
+        saved = workspace.insights.selection if workspace.insights else None
+        default_grouping = saved.grouping if saved else GroupingDimension.TOPIC
+        grouping_value = request.values.get("grouping", default_grouping)
+        try:
+            grouping = GroupingDimension(grouping_value)
+        except ValueError as error:
+            raise ValidationError(
+                field="grouping",
+                code="unsupported_grouping",
+                message="Select a supported trusted metadata grouping.",
+            ) from error
+        group_values = available_group_values(workspace.result, grouping)
+        if not group_values:
+            raise ValidationError(
+                field="groups",
+                code="no_groups",
+                message="No successful rows are available for this grouping.",
+            )
+        groups = tuple(request.values.getlist("group"))
+        if not groups:
+            saved_groups = (
+                tuple(group for group in saved.groups if group in group_values)
+                if saved is not None and saved.grouping is grouping
+                else ()
+            )
+            if comparison and not 2 <= len(saved_groups) <= 4:
+                groups = group_values[:2]
+            else:
+                groups = saved_groups or group_values[:1]
+
+        default_perspective = (
+            InsightPerspective.AGREEMENT
+            if request.values.get("view") == "agreement"
+            else (saved.perspective if saved else InsightPerspective.AI)
+        )
+        perspective_value = request.values.get("perspective", default_perspective)
+        try:
+            perspective = InsightPerspective(perspective_value)
+        except ValueError as error:
+            raise ValidationError(
+                field="perspective",
+                code="invalid_perspective",
+                message="Select AI, human-reviewed, or agreement perspective.",
+            ) from error
+        default_metric = (
+            saved.metric
+            if saved is not None
+            and saved.metric in INSIGHT_METRICS_BY_PERSPECTIVE[perspective]
+            else INSIGHT_METRICS_BY_PERSPECTIVE[perspective][0]
+        )
+        try:
+            metric = InsightMetric(request.values.get("metric", default_metric))
+        except ValueError as error:
+            raise ValidationError(
+                field="metric",
+                code="invalid_metric",
+                message="Select a supported insight metric.",
+            ) from error
+        filters = parse_insight_filters(
+            sentiment=request.values.get(
+                "sentiment",
+                saved.filters.sentiment.value
+                if saved and saved.filters.sentiment
+                else "",
+            ),
+            emotion=request.values.get(
+                "emotion",
+                saved.filters.emotion.value if saved and saved.filters.emotion else "",
+            ),
+            date_from=request.values.get(
+                "date_from",
+                saved.filters.date_from.isoformat()
+                if saved and saved.filters.date_from
+                else "",
+            ),
+            date_to=request.values.get(
+                "date_to",
+                saved.filters.date_to.isoformat()
+                if saved and saved.filters.date_to
+                else "",
+            ),
+        )
+        return (
+            InsightSelection(grouping, groups, perspective, metric, filters),
+            group_values,
+        )
+
+    def render_insights(
+        token: str,
+        workspace: BatchWorkspace,
+        *,
+        error_message: str | None = None,
+        status: int = 200,
+    ) -> ResponseReturnValue:
+        result = workspace.result
+        reviews = workspace.reviews
+        insight_state = workspace.insights
+        if result is None or reviews is None or insight_state is None:
+            return Response("Insight workspace not found.", status=404)
+        if not any(outcome.report is not None for outcome in result.outcomes):
+            return Response("No successful rows are available for insights.", 404)
+        view = request.values.get("view", "explorer")
+        if view not in {
+            "explorer",
+            "comparison",
+            "agreement",
+            "notes",
+            "examples",
+            "export",
+        }:
+            view = "explorer"
+        comparison = view == "comparison"
+        try:
+            selection, group_values = requested_insight_selection(
+                workspace, comparison=comparison
+            )
+        except ValidationError as error:
+            error_message = error_message or error.message
+            grouping = GroupingDimension.SOURCE_TYPE
+            group_values = available_group_values(result, grouping)
+            selection = InsightSelection(
+                grouping=grouping,
+                groups=group_values[:1],
+                perspective=InsightPerspective.AI,
+                metric=InsightMetric.AI_SENTIMENT,
+            )
+        try:
+            summaries = build_group_metrics(
+                result, reviews, selection, comparison=comparison
+            )
+        except ValidationError as error:
+            error_message = error_message or error.message
+            summaries = ()
+
+        updated_insight_state = InsightState(
+            notes=insight_state.notes, selection=selection
+        )
+        if updated_insight_state != insight_state:
+            batch_store.replace(
+                token,
+                BatchWorkspace(
+                    preview=workspace.preview,
+                    result=result,
+                    reviews=reviews,
+                    insights=updated_insight_state,
+                ),
+            )
+            insight_state = updated_insight_state
+
+        example_mode_value = request.values.get(
+            "example_mode", ExampleMode.LOWEST_AI_CONFIDENCE
+        )
+        emotion_label_value = request.values.get(
+            "example_emotion", EmotionLabel.ANGER
+        )
+        context_tag_value = request.values.get("example_tag", "")
+        try:
+            example_mode = ExampleMode(example_mode_value)
+            example_emotion = EmotionLabel(emotion_label_value)
+            example_tag = ContextTag(context_tag_value) if context_tag_value else None
+        except ValueError:
+            example_mode = ExampleMode.LOWEST_AI_CONFIDENCE
+            example_emotion = EmotionLabel.ANGER
+            example_tag = None
+            error_message = error_message or "Select a supported example rule."
+        examples = select_representative_examples(
+            result,
+            reviews,
+            insight_state,
+            mode=example_mode,
+            emotion_label=example_emotion,
+            context_tag=example_tag,
+            record_ids=request.values.getlist("record_id"),
+        )
+        first_report = next(
+            outcome.report for outcome in result.outcomes if outcome.report is not None
+        )
+        association_values = {
+            "record": tuple(
+                outcome.prepared.identity
+                for outcome in result.outcomes
+                if outcome.report is not None
+            ),
+            "topic": available_group_values(result, GroupingDimension.TOPIC),
+            "community": available_group_values(
+                result, GroupingDimension.COMMUNITY
+            ),
+            "source_label": available_group_values(
+                result, GroupingDimension.SOURCE_LABEL
+            ),
+        }
+        return (
+            render_template(
+                "insights.html",
+                token=token,
+                view=view,
+                selection=selection,
+                group_values=group_values,
+                summaries=summaries,
+                metric_definition=METRIC_DEFINITIONS[selection.metric],
+                metrics_by_perspective=INSIGHT_METRICS_BY_PERSPECTIVE,
+                grouping_options=tuple(GroupingDimension),
+                perspectives=tuple(InsightPerspective),
+                context_associations=tuple(ContextAssociation),
+                context_tags=tuple(ContextTag),
+                association_values=association_values,
+                insight_state=insight_state,
+                examples=examples,
+                example_modes=tuple(ExampleMode),
+                example_mode=example_mode,
+                example_emotion=example_emotion,
+                example_tag=example_tag,
+                emotion_labels=tuple(EmotionLabel),
+                sentiment_labels=tuple(SentimentLabel),
+                first_report=first_report,
+                successful_outcomes=tuple(
+                    outcome for outcome in result.outcomes if outcome.report is not None
+                ),
+                error_message=error_message,
+                query_sentiment=selection.filters.sentiment or "",
+                query_emotion=selection.filters.emotion or "",
+                query_date_from=selection.filters.date_from or "",
+                query_date_to=selection.filters.date_to or "",
+            ),
+            status,
+        )
+
+    @app.get("/batch/<token>/insights")
+    def insights(token: str) -> ResponseReturnValue:
+        workspace = batch_store.get(token)
+        if workspace is None:
+            return Response(
+                "This temporary insight workspace expired or was cleared.", 404
+            )
+        return render_insights(token, workspace)
+
+    @app.post("/batch/<token>/insights/notes")
+    def save_context_note(token: str) -> ResponseReturnValue:
+        workspace = batch_store.get(token)
+        if (
+            workspace is None
+            or workspace.result is None
+            or workspace.reviews is None
+            or workspace.insights is None
+        ):
+            return Response(
+                "This temporary insight workspace expired or was cleared.", 404
+            )
+        try:
+            updated = add_context_note(
+                workspace.insights,
+                workspace.result,
+                association=request.form.get("association", ""),
+                association_value=request.form.get("association_value", ""),
+                phrase=request.form.get("phrase", ""),
+                explanation=request.form.get("explanation", ""),
+                context_importance=request.form.get("context_importance", ""),
+                tags=request.form.getlist("tags"),
+            )
+        except ValidationError as error:
+            return render_insights(
+                token, workspace, error_message=error.message, status=400
+            )
+        replacement = BatchWorkspace(
+            preview=workspace.preview,
+            result=workspace.result,
+            reviews=workspace.reviews,
+            insights=updated,
+        )
+        if not batch_store.replace(token, replacement):
+            return Response(
+                "This temporary insight workspace expired or was cleared.", 404
+            )
+        return redirect(url_for("insights", token=token, view="notes"))
+
+    @app.post("/batch/<token>/insights/notes/<note_id>/delete")
+    def remove_context_note(token: str, note_id: str) -> ResponseReturnValue:
+        workspace = batch_store.get(token)
+        if workspace is None or workspace.insights is None:
+            return Response(
+                "This temporary insight workspace expired or was cleared.", 404
+            )
+        try:
+            updated = delete_context_note(workspace.insights, note_id=note_id)
+        except ValidationError as error:
+            return render_insights(
+                token, workspace, error_message=error.message, status=404
+            )
+        replacement = BatchWorkspace(
+            pending=workspace.pending,
+            preview=workspace.preview,
+            result=workspace.result,
+            reviews=workspace.reviews,
+            insights=updated,
+        )
+        if not batch_store.replace(token, replacement):
+            return Response(
+                "This temporary insight workspace expired or was cleared.", 404
+            )
+        return redirect(url_for("insights", token=token, view="notes"))
+
+    @app.get("/batch/<token>/insights/export.csv")
+    def insights_export(token: str) -> ResponseReturnValue:
+        workspace = batch_store.get(token)
+        if (
+            workspace is None
+            or workspace.result is None
+            or workspace.reviews is None
+            or workspace.insights is None
+        ):
+            return Response("Insight workspace not found.", status=404)
+        try:
+            selection, _ = requested_insight_selection(
+                workspace, comparison=request.args.get("view") == "comparison"
+            )
+            if request.args.get("view") == "comparison":
+                build_group_metrics(
+                    workspace.result,
+                    workspace.reviews,
+                    selection,
+                    comparison=True,
+                )
+            content = export_insights_csv(
+                workspace.result,
+                workspace.reviews,
+                workspace.insights,
+                selection,
+                include_records=request.args.get("records") == "1",
+                include_native=request.args.get("native") == "1",
+            )
+        except ValidationError as error:
+            return Response(error.message, status=400)
+        response = Response(content, mimetype="text/csv")
+        response.headers["Content-Disposition"] = (
+            "attachment; filename=sti-insights.csv"
+        )
+        response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.get("/batch/<token>/export.csv")
     def batch_export(token: str) -> ResponseReturnValue:

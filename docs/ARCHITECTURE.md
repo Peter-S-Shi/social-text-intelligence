@@ -1,12 +1,14 @@
 # Architecture
 
-## Milestone 7 boundary
+## Milestone 8 boundary
 
-Milestone 7 attaches human review to successful Milestone 6 batch outcomes. It
-adds separate human judgments and labels, review filtering and navigation,
-agreement summaries, and explicit reviewed export. It intentionally adds no
-durable persistence, training, reviewer accounts, platform connector, French
-capability, Milestone 8 insights, or hosted deployment.
+Milestone 8 adds a descriptive insight layer to successful Milestone 6 batch
+outcomes and the separate Milestone 7 review state. It validates trusted
+metadata grouping, preserves AI/human/agreement perspectives, calculates exact
+metric denominators and sample warnings, stores manual context notes separately,
+selects examples by explicit rules, and shapes explicit exports. It intentionally
+adds no model rerun, inferred identity, LLM narrative, ranking, persistence,
+platform connector, French capability, moderation workflow, or hosted deployment.
 
 The current package contains:
 
@@ -16,8 +18,8 @@ The current package contains:
 - `providers/`: stable protocols, deterministic test implementations, a pinned
   Cardiff NLP sentiment adapter, and a pinned Sam Lowe emotion adapter;
 - `services/`: provider-neutral orchestration, thread-safe lazy reuse, CSV batch
-  processing, and reusable human-review validation, navigation, summary, and
-  export rules;
+  processing, reusable human-review rules, and reusable insight grouping,
+  metric, context-note, example-selection, and export rules;
 - `interface/`: local Flask routes, templates, and static presentation only.
 
 Dependency direction is `services -> providers -> contracts`. Contracts do not
@@ -45,6 +47,14 @@ replaces an `AnalysisReport`; it references the record identity and stores only
 human fields. Each update returns a new `ReviewState`, while the original frozen
 batch result remains unchanged. Flask parses forms and replaces the review state
 inside the existing random-token workspace.
+
+`services/insights.py` owns the trusted grouping allowlist, perspective/metric
+compatibility, filters, aggregation and denominator calculations, sample-size
+policy, context-note validation, deterministic example selection, and insight
+export shaping. It reads `BatchResult` and `ReviewState` without modifying them.
+`InsightState` contains only separate context notes and is replaced immutably in
+the same bounded workspace. Templates render already-computed values; they do
+not define statistical rules or rerun providers.
 
 ## Intended layers
 

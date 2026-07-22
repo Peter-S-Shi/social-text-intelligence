@@ -89,3 +89,14 @@ filters, honest denominators, agreement calculations, reviewed export, formula
 protection, no-store responses, and cleared workspace behavior. Browser checks
 should exercise both desktop and narrow layouts without using real text or
 metadata.
+
+Insight tests use synthetic metadata and deterministic providers. They cover the
+trusted grouping allowlist, metric/perspective compatibility, exact
+denominators, filters, per-metric sample policy, definitive review semantics,
+manual context-note validation, representative-case rules, explicit export,
+formula protection, complete export audit counts, safe failed-row grouping,
+timezone-aware export/note timestamps, no-store responses, workspace
+clearing/expiry, and accessibility-oriented route content. Browser checks should
+exercise the explorer, notes, examples, and
+export views at desktop and narrow widths with no external requests or console
+errors.

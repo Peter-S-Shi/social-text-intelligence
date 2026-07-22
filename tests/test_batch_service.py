@@ -149,6 +149,19 @@ class BatchServiceTests(unittest.TestCase):
                 max_text_length=100,
             )
 
+    def test_formula_protection_handles_leading_whitespace(self) -> None:
+        preview = prepare_csv_batch(
+            upload('text\n"  =synthetic formula"\n'),
+            text_column="text",
+            max_rows=10,
+            max_text_length=100,
+        )
+        exported = export_batch_csv(
+            analyze_batch(preview, analyzer()), include_native=False
+        )
+        row = next(csv.DictReader(io.StringIO(exported)))
+        self.assertEqual(row["text"], "'  =synthetic formula")
+
     def test_normalizes_header_whitespace_and_rejects_extra_cells(self) -> None:
         preview = prepare_csv_batch(
             upload(" text ,topic\nSynthetic row.,test\nSecond row.,test,extra\n"),
