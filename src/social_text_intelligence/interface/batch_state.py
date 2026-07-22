@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from threading import Lock
 
 from ..services.batch import BatchPreview, BatchResult, PendingBatchUpload
+from ..services.insights import InsightState
 from ..services.review import ReviewState
 
 
@@ -18,6 +19,7 @@ class BatchWorkspace:
     preview: BatchPreview | None = None
     result: BatchResult | None = None
     reviews: ReviewState | None = None
+    insights: InsightState | None = None
 
 
 @dataclass(slots=True)
