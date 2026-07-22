@@ -1,5 +1,7 @@
 """Human-review validation, state, filtering, and navigation tests."""
 
+import csv
+import io
 import unittest
 from datetime import UTC, datetime
 
@@ -19,6 +21,7 @@ from social_text_intelligence.services.batch import (
 from social_text_intelligence.services.review import (
     accept_both,
     create_review_state,
+    export_reviewed_csv,
     filter_review_cases,
     review_navigation,
     summarize_reviews,
@@ -253,6 +256,111 @@ class ReviewServiceTests(unittest.TestCase):
         self.assertEqual(summary.progress.reviewed, 0)
         self.assertEqual(summary.sentiment.definitive_count, 0)
         self.assertEqual(summary.emotion.definitive_count, 0)
+
+    def test_reviewed_export_preserves_ai_human_errors_and_agreement(self) -> None:
+        updated = accept_both(
+            self.result,
+            self.state,
+            record_id="first",
+            note="=synthetic formula",
+            now=fixed_now,
+        )
+        updated = update_review(
+            self.result,
+            updated,
+            record_id="third",
+            sentiment_judgment="correct",
+            human_sentiment="negative",
+            emotion_judgment="uncertain",
+            human_dominant_emotion=None,
+            human_secondary_emotions=(),
+            note="",
+            now=fixed_now,
+        )
+        rows = list(
+            csv.DictReader(
+                io.StringIO(
+                    export_reviewed_csv(
+                        self.result, updated, include_native=False
+                    )
+                )
+            )
+        )
+
+        self.assertEqual(len(rows), 3)
+        self.assertEqual(rows[0]["sentiment_label"], "positive")
+        self.assertEqual(rows[0]["sentiment_revision"], "mock-v1")
+        self.assertEqual(rows[0]["review_status"], "reviewed")
+        self.assertEqual(rows[0]["sentiment_agreement"], "true")
+        self.assertEqual(rows[0]["dominant_emotion_agreement"], "true")
+        self.assertEqual(rows[0]["emotion_set_agreement"], "true")
+        self.assertEqual(rows[0]["review_note"], "'=synthetic formula")
+        self.assertEqual(rows[1]["error_code"], "empty_text")
+        self.assertEqual(rows[1]["review_status"], "")
+        self.assertEqual(rows[2]["sentiment_agreement"], "false")
+        self.assertEqual(rows[2]["dominant_emotion_agreement"], "")
+        self.assertEqual(rows[2]["emotion_set_agreement"], "")
+
+    def test_confidence_comparison_appears_after_five_definitive_reviews(
+        self,
+    ) -> None:
+        preview = prepare_csv_batch(
+            PendingBatchUpload(
+                content=(
+                    b"record_id,text\n"
+                    b"one,Synthetic one.\n"
+                    b"two,Synthetic two.\n"
+                    b"three,Synthetic three.\n"
+                    b"four,Synthetic four.\n"
+                    b"five,Synthetic five.\n"
+                ),
+                headers=("record_id", "text"),
+            ),
+            text_column="text",
+            max_rows=10,
+            max_text_length=100,
+        )
+        five_results = analyze_batch(
+            preview,
+            AnalysisService(
+                sentiment_provider=DeterministicSentimentProvider(
+                    SentimentLabel.POSITIVE
+                ),
+                emotion_provider=DeterministicEmotionProvider(
+                    EmotionLabel.GRATITUDE
+                ),
+            ),
+        )
+        five_reviews = create_review_state(five_results)
+        for record_id in ("one", "two", "three", "four"):
+            five_reviews = accept_both(
+                five_results,
+                five_reviews,
+                record_id=record_id,
+                note="",
+                now=fixed_now,
+            )
+        five_reviews = update_review(
+            five_results,
+            five_reviews,
+            record_id="five",
+            sentiment_judgment="correct",
+            human_sentiment="negative",
+            emotion_judgment="correct",
+            human_dominant_emotion="anger",
+            human_secondary_emotions=("fear",),
+            note="",
+            now=fixed_now,
+        )
+
+        summary = summarize_reviews(five_results, five_reviews)
+        self.assertEqual(len(summary.confidence.sentiment), 1)
+        self.assertEqual(summary.confidence.sentiment[0].label, "0.75–0.89")
+        self.assertEqual(summary.confidence.sentiment[0].definitive_count, 5)
+        self.assertEqual(summary.confidence.sentiment[0].disagreement_count, 1)
+        self.assertEqual(
+            summary.confidence.dominant_emotion[0].disagreement_count, 1
+        )
 
 
 if __name__ == "__main__":

@@ -81,3 +81,11 @@ Batch service and route tests use only project-authored CSV bytes held in memory
 They cover column selection, validation, duplicate IDs, partial failure,
 aggregates, filters, compact/native export, expiry, and file/row limits. Never
 place real CSV uploads or generated exports in the repository.
+
+Human-review tests use deterministic providers and synthetic review fixtures.
+They cover independent judgment semantics, partial versus complete status,
+multi-label validation and neutral exclusivity, immutable AI results, navigation,
+filters, honest denominators, agreement calculations, reviewed export, formula
+protection, no-store responses, and cleared workspace behavior. Browser checks
+should exercise both desktop and narrow layouts without using real text or
+metadata.

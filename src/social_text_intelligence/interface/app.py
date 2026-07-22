@@ -26,6 +26,7 @@ from ..services import (
     analyze_batch,
     create_review_state,
     export_batch_csv,
+    export_reviewed_csv,
     filter_review_cases,
     inspect_csv_upload,
     prepare_csv_batch,
@@ -542,6 +543,28 @@ def create_app(
         response = Response(content, mimetype="text/csv")
         response.headers["Content-Disposition"] = (
             "attachment; filename=sti-batch-results.csv"
+        )
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.get("/batch/<token>/review/export.csv")
+    def review_export(token: str) -> ResponseReturnValue:
+        workspace = batch_store.get(token)
+        if (
+            workspace is None
+            or workspace.result is None
+            or workspace.reviews is None
+        ):
+            return Response("Reviewed batch result not found.", status=404)
+        include_native = request.args.get("native") == "1"
+        content = export_reviewed_csv(
+            workspace.result,
+            workspace.reviews,
+            include_native=include_native,
+        )
+        response = Response(content, mimetype="text/csv")
+        response.headers["Content-Disposition"] = (
+            "attachment; filename=sti-reviewed-results.csv"
         )
         response.headers["Cache-Control"] = "no-store"
         return response

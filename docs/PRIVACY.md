@@ -40,6 +40,15 @@ export, or history. Responses use `Cache-Control: no-store`. Users explicitly
 initiate each export; exported CSV includes original text and must be protected
 as private local data. Spreadsheet-formula-like text is escaped on export.
 
+Human judgments and optional review notes share the same random-token, bounded,
+expiring process-memory workspace. Continued interaction extends its lifetime,
+but clearing, expiry, or process shutdown can remove unexported reviews. The app
+does not create a review database, autosave file, re-import history, or background
+writer, and does not add labels or notes to logs. Reviewed exports are generated
+only on explicit request, use `Cache-Control: no-store`, retain original text, and
+apply spreadsheet-formula protection to review notes and other user-controlled
+cells. Treat exported reviewed datasets as private local data.
+
 ## Persistence
 
 Future persistence must remain local and ignored by Git. Schema migrations must

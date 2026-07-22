@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import unicodedata
 from collections import Counter
 from collections.abc import Callable, Sequence
@@ -11,7 +13,12 @@ from enum import StrEnum
 
 from ..contracts import EmotionLabel, SentimentLabel
 from ..contracts.errors import ValidationError
-from .batch import BatchOutcome, BatchResult
+from .batch import (
+    BatchOutcome,
+    BatchResult,
+    export_batch_csv,
+    safe_spreadsheet_text,
+)
 
 MAX_REVIEW_NOTE_LENGTH = 2_000
 
@@ -735,3 +742,93 @@ def summarize_reviews(result: BatchResult, state: ReviewState) -> ReviewSummary:
             dominant_emotion=_confidence_bands(emotion_confidence),
         ),
     )
+
+
+def _agreement_cell(value: bool | None) -> str:
+    if value is None:
+        return ""
+    return "true" if value else "false"
+
+
+REVIEW_EXPORT_FIELDS = (
+    "review_status",
+    "sentiment_judgment",
+    "human_sentiment",
+    "sentiment_agreement",
+    "emotion_judgment",
+    "human_dominant_emotion",
+    "human_secondary_emotions",
+    "dominant_emotion_agreement",
+    "emotion_set_agreement",
+    "review_note",
+    "reviewed_at",
+)
+
+
+def export_reviewed_csv(
+    result: BatchResult,
+    state: ReviewState,
+    *,
+    include_native: bool,
+) -> str:
+    """Extend the normalized batch export without altering any AI fields."""
+
+    base = csv.DictReader(
+        io.StringIO(export_batch_csv(result, include_native=include_native))
+    )
+    base_fields = tuple(base.fieldnames or ())
+    rows = list(base)
+    if len(rows) != len(result.outcomes):
+        raise ValueError("Normalized export rows do not match the batch result.")
+    output = io.StringIO(newline="")
+    writer = csv.DictWriter(
+        output,
+        fieldnames=(*base_fields, *REVIEW_EXPORT_FIELDS),
+        lineterminator="\n",
+    )
+    writer.writeheader()
+    for row, outcome in zip(rows, result.outcomes, strict=True):
+        review = (
+            state.for_record(outcome.prepared.identity)
+            if outcome.report is not None
+            else None
+        )
+        if outcome.report is not None and review is None:
+            raise ValueError("Review state does not match the batch result.")
+        if review is not None:
+            case = ReviewCase(outcome=outcome, review=review)
+            row.update(
+                {
+                    "review_status": (
+                        "reviewed" if review.is_reviewed else "unreviewed"
+                    ),
+                    "sentiment_judgment": review.sentiment_judgment or "",
+                    "human_sentiment": review.human_sentiment or "",
+                    "sentiment_agreement": _agreement_cell(
+                        sentiment_agreement(case)
+                    ),
+                    "emotion_judgment": review.emotion_judgment or "",
+                    "human_dominant_emotion": (
+                        review.human_dominant_emotion or ""
+                    ),
+                    "human_secondary_emotions": "|".join(
+                        review.human_secondary_emotions
+                    ),
+                    "dominant_emotion_agreement": _agreement_cell(
+                        dominant_emotion_agreement(case)
+                    ),
+                    "emotion_set_agreement": _agreement_cell(
+                        emotion_set_agreement(case)
+                    ),
+                    "review_note": safe_spreadsheet_text(review.note or ""),
+                    "reviewed_at": (
+                        review.reviewed_at.astimezone(UTC).isoformat()
+                        if review.reviewed_at is not None
+                        else ""
+                    ),
+                }
+            )
+        else:
+            row.update(dict.fromkeys(REVIEW_EXPORT_FIELDS, ""))
+        writer.writerow(row)
+    return output.getvalue()

@@ -45,6 +45,11 @@
       </form>
     </section>
 
+    <section class="panel export-panel">
+      <div><h2>Explicit reviewed export</h2><p>Includes every batch row, immutable AI outputs, separate human fields, provenance, errors, and agreement values. Native emotion scores remain optional.</p></div>
+      <div class="export-actions"><a class="button-link" href="{{ url_for('review_export', token=token) }}">Export reviewed CSV</a><a class="button-link secondary" href="{{ url_for('review_export', token=token, native=1) }}">Export with native scores</a></div>
+    </section>
+
     {% if error_message %}<div class="error" role="alert">{{ error_message }}</div>{% endif %}
 
     <section class="panel record-context">

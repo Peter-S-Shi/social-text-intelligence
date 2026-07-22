@@ -51,6 +51,7 @@ th, td { padding: .65rem; border-bottom: 1px solid var(--line); text-align: left
 .progress-message { margin-top: 1rem; color: var(--muted); }
 .danger-button { background: var(--danger); margin-bottom: 1rem; }
 .review-toolbar { display: flex; justify-content: space-between; align-items: end; gap: 1rem; }
+.export-panel { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .record-context blockquote { margin: 1rem 0; padding: 1rem; border-left: 4px solid var(--accent); background: #f7faf8; white-space: pre-wrap; }
 .metadata-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
 .metadata-grid div { min-width: 0; }
@@ -74,6 +75,6 @@ th, td { padding: .65rem; border-bottom: 1px solid var(--line); text-align: left
   .form-row, .site-header { align-items: stretch; flex-direction: column; }
   .native-scores { grid-template-columns: 1fr; }
   .aggregate-grid { grid-template-columns: 1fr; }
-  .review-toolbar { align-items: stretch; flex-direction: column; }
+  .review-toolbar, .export-panel { align-items: stretch; flex-direction: column; }
   .review-grid, .summary-grid, .metadata-grid { grid-template-columns: 1fr; }
 }

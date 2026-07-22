@@ -134,6 +134,28 @@ class ReviewRouteTests(unittest.TestCase):
         self.assertIn(b"expired or was cleared", response.data)
         self.assertEqual(response.headers["Cache-Control"], "no-store")
 
+    def test_reviewed_export_is_explicit_complete_and_no_store(self) -> None:
+        self.client.post(
+            self.workspace_url + "/review/1",
+            data={"action": "accept_both", "review_note": "@synthetic note"},
+        )
+        compact = self.client.get(self.workspace_url + "/review/export.csv")
+        native = self.client.get(
+            self.workspace_url + "/review/export.csv?native=1"
+        )
+
+        self.assertEqual(compact.status_code, 200)
+        self.assertEqual(compact.mimetype, "text/csv")
+        self.assertIn(b"review_status", compact.data)
+        self.assertIn(b"sentiment_agreement", compact.data)
+        self.assertIn(b"emotion_set_agreement", compact.data)
+        self.assertIn(b"'@synthetic note", compact.data)
+        self.assertIn(b"empty_text", compact.data)
+        self.assertIn(b"sentiment_revision", compact.data)
+        self.assertNotIn(b"emotion_native_joy", compact.data)
+        self.assertIn(b"emotion_native_joy", native.data)
+        self.assertEqual(compact.headers["Cache-Control"], "no-store")
+
 
 if __name__ == "__main__":
     unittest.main()

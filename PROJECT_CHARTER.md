@@ -732,6 +732,8 @@ The milestone prompt should communicate:
 
 This roadmap is directional. It may be revised after architecture review and model-license research.
 
+**Implementation status:** Milestones 1–7 are implemented in the current codebase. Milestone 7 is a temporary, batch-attached human-review workflow. Later milestones remain unimplemented. This status note does not broaden any milestone's scope.
+
 ### Milestone 1 — Independent Local Project Foundation
 
 Goal:
