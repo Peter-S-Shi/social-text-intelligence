@@ -5,7 +5,12 @@ import io
 import unittest
 from datetime import UTC, datetime
 
-from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
+from social_text_intelligence.contracts import (
+    AnalysisReport,
+    EmotionLabel,
+    NormalizedTextInput,
+    SentimentLabel,
+)
 from social_text_intelligence.contracts.errors import ValidationError
 from social_text_intelligence.providers import (
     DeterministicEmotionProvider,
@@ -98,6 +103,21 @@ def reviewed_state(batch: BatchResult) -> ReviewState:
     )
 
 
+class SelectiveFailureAnalyzer:
+    def __init__(self) -> None:
+        self.delegate = AnalysisService(
+            sentiment_provider=DeterministicSentimentProvider(
+                SentimentLabel.POSITIVE
+            ),
+            emotion_provider=DeterministicEmotionProvider(EmotionLabel.GRATITUDE),
+        )
+
+    def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
+        if "analysis failure" in record.text:
+            raise RuntimeError("synthetic provider failure")
+        return self.delegate.analyze(record)
+
+
 class InsightServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.result = result()
@@ -161,6 +181,85 @@ class InsightServiceTests(unittest.TestCase):
         self.assertEqual(values["joy"].count, 6)
         self.assertEqual(values["gratitude"].denominator, 6)
 
+    def test_group_context_counts_successes_failures_and_unassigned_rows(self) -> None:
+        content = (
+            b"record_id,text,topic,timestamp\n"
+            b"ok,Synthetic success.,release,2026-07-01T12:00:00+00:00\n"
+            b"provider-fail,Synthetic analysis failure.,release,"
+            b"2026-07-02T12:00:00+00:00\n"
+            b"invalid-text,,support,2026-07-03T12:00:00+00:00\n"
+            b"invalid-time,,support,not-a-timestamp\n"
+        )
+        preview = prepare_csv_batch(
+            PendingBatchUpload(
+                content=content,
+                headers=("record_id", "text", "topic", "timestamp"),
+            ),
+            text_column="text",
+            max_rows=10,
+            max_text_length=100,
+        )
+        batch = analyze_batch(preview, SelectiveFailureAnalyzer())
+        reviews = create_review_state(batch)
+        topic = build_group_metrics(
+            batch,
+            reviews,
+            InsightSelection(
+                GroupingDimension.TOPIC,
+                ("release", "support"),
+                InsightPerspective.AI,
+                InsightMetric.AI_SENTIMENT,
+            ),
+        )
+        self.assertEqual(
+            (topic[0].successful_count, topic[0].failed_count), (1, 1)
+        )
+        self.assertEqual(
+            (topic[1].successful_count, topic[1].failed_count), (0, 2)
+        )
+        exported = export_insights_csv(
+            batch,
+            reviews,
+            InsightState(),
+            InsightSelection(
+                GroupingDimension.TOPIC,
+                ("release", "support"),
+                InsightPerspective.AI,
+                InsightMetric.AI_SENTIMENT,
+            ),
+            include_records=False,
+            include_native=False,
+            now=lambda: datetime(2026, 7, 22, tzinfo=UTC),
+        )
+        export_rows = list(csv.DictReader(io.StringIO(exported)))
+        group_rows = {
+            row["group"]: row
+            for row in export_rows
+            if row["section"] == "group_summary" and row["label"] == "positive"
+        }
+        self.assertEqual(
+            group_rows["release"]["group_successful_analysis_count"], "1"
+        )
+        self.assertEqual(group_rows["release"]["group_failed_count"], "1")
+        self.assertEqual(
+            group_rows["support"]["group_successful_analysis_count"], "0"
+        )
+        self.assertEqual(group_rows["support"]["group_failed_count"], "2")
+
+        month = build_group_metrics(
+            batch,
+            reviews,
+            InsightSelection(
+                GroupingDimension.TIMESTAMP_MONTH,
+                ("2026-07",),
+                InsightPerspective.AI,
+                InsightMetric.AI_SENTIMENT,
+            ),
+        )[0]
+        self.assertEqual(month.total_count, 3)
+        self.assertEqual(month.failed_count, 2)
+        self.assertEqual(month.unassigned_failed_count, 1)
+
     def test_human_and_disagreement_denominators_exclude_uncertain(self) -> None:
         human = build_group_metrics(
             self.result,
@@ -223,6 +322,7 @@ class InsightServiceTests(unittest.TestCase):
             )
 
     def test_context_notes_are_separate_validated_and_deletable(self) -> None:
+        created_at = datetime(2026, 7, 22, 15, 30, tzinfo=UTC)
         state = add_context_note(
             InsightState(),
             self.result,
@@ -232,8 +332,10 @@ class InsightServiceTests(unittest.TestCase):
             explanation="The phrase is quoted.",
             context_importance="Quotation changes the reading.",
             tags=(ContextTag.QUOTATION_OR_REPORTED_SPEECH,),
+            now=lambda: created_at,
         )
         self.assertEqual(len(state.notes), 1)
+        self.assertEqual(state.notes[0].created_at, created_at)
         first_review = self.reviews.for_record("row-1")
         assert first_review is not None
         self.assertIsNone(first_review.note)
@@ -302,12 +404,29 @@ class InsightServiceTests(unittest.TestCase):
             ),
             include_records=True,
             include_native=False,
+            now=lambda: datetime(2026, 7, 22, 16, 45, tzinfo=UTC),
         )
         rows = list(csv.DictReader(io.StringIO(exported)))
+        metadata = rows[0]
+        self.assertEqual(metadata["section"], "export_metadata")
+        self.assertEqual(metadata["exported_at"], "2026-07-22T16:45:00+00:00")
+        self.assertIn("successful row", metadata["metric_definition"])
+        self.assertEqual(metadata["insufficient_sample_below"], "5")
+        self.assertEqual(metadata["small_sample_below"], "10")
+        self.assertEqual(metadata["total_input_count"], "12")
+        self.assertEqual(metadata["successful_analysis_count"], "12")
+        self.assertEqual(metadata["failed_count"], "0")
+        self.assertEqual(metadata["reviewable_count"], "12")
+        self.assertEqual(metadata["whole_record_reviewed_count"], "6")
+        self.assertEqual(metadata["definitive_sentiment_review_count"], "6")
+        self.assertEqual(metadata["definitive_emotion_review_count"], "5")
+        self.assertEqual(metadata["uncertain_count"], "1")
+        self.assertEqual(metadata["unreviewed_count"], "6")
         note_row = next(row for row in rows if row["section"] == "context_note")
         self.assertEqual(note_row["phrase"], "'=synthetic phrase")
         self.assertEqual(note_row["explanation"], "'@synthetic explanation")
         self.assertEqual(note_row["context_importance"], "'+synthetic context")
+        self.assertRegex(note_row["created_at"], r"\+00:00$")
         record_rows = [
             row for row in rows if row["section"] == "supporting_record"
         ]

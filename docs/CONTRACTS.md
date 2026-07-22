@@ -102,8 +102,27 @@ is applied separately to every group and metric: fewer than five is insufficient
 for comparison, five through nine is a small sample, and ten or more permits
 ordinary descriptive comparison.
 
+Group-level audit context counts successful and failed input rows separately.
+A failed row is assigned only when its selected grouping can be read reliably
+from the normalized record or independently validated from the supported
+user-provided metadata. Simple text metadata must be within its contract limit,
+`source_type` and `language` must be valid, and timestamp grouping requires a
+parseable timestamp month. Otherwise the failed row is explicitly unassigned;
+the application never infers a group from text or another field. Because failed
+rows have no AI result, AI-label and result-date filters do not apply to their
+group-context counts.
+
 `ContextNote` is a separate user-authored annotation associated with a record,
 trusted metadata value, or comparison description. Its phrase, explanation,
 context-importance text, and allowlisted tags do not modify model scores,
-reviews, or agreement. `RepresentativeExample` contains an existing outcome,
-its separate review when present, and the deterministic reason it was selected.
+reviews, or agreement. Every note records a timezone-aware UTC creation time;
+there is no edit history or persistence. `RepresentativeExample` contains an
+existing outcome, its separate review when present, and the deterministic reason
+it was selected.
+
+Insight CSV export begins with an audit row containing timezone-aware UTC export
+time, the exact metric definition, configured sample thresholds, input/analysis
+counts, review coverage counts, active filters and selection, model provenance,
+and inclusive per-row emotion-threshold semantics. Group rows retain raw counts,
+denominators, rates, sample warnings, successful/failed group counts, and the
+failed-row unassigned count. Context-note rows include their UTC creation time.

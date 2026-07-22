@@ -1,5 +1,6 @@
 """Flask routes for the local Milestone 8 insight workflow."""
 
+import csv
 import io
 import unittest
 
@@ -163,6 +164,17 @@ class InsightRouteTests(unittest.TestCase):
         self.assertNotIn(b"joy:0.6", compact.data)
         self.assertIn(b"joy:0.6", native.data)
         self.assertEqual(compact.headers["Cache-Control"], "no-store")
+        rows = list(csv.DictReader(io.StringIO(compact.data.decode())))
+        metadata = rows[0]
+        self.assertEqual(metadata["section"], "export_metadata")
+        self.assertRegex(metadata["exported_at"], r"\+00:00$")
+        self.assertIn("successful row", metadata["metric_definition"])
+        self.assertEqual(metadata["insufficient_sample_below"], "5")
+        self.assertEqual(metadata["small_sample_below"], "10")
+        self.assertEqual(metadata["total_input_count"], "12")
+        self.assertEqual(metadata["reviewable_count"], "12")
+        note = next(row for row in rows if row["section"] == "context_note")
+        self.assertRegex(note["created_at"], r"\+00:00$")
 
     def test_cleared_workspace_fails_safely(self) -> None:
         self.client.post(self.workspace_url + "/clear")

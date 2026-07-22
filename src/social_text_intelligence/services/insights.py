@@ -4,15 +4,16 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 import unicodedata
 from collections import Counter
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from secrets import token_urlsafe
 
-from ..contracts import EmotionLabel, SentimentLabel
+from ..contracts import EmotionLabel, SentimentLabel, SourceType
 from ..contracts.errors import ValidationError
 from .batch import BatchOutcome, BatchResult, safe_spreadsheet_text
 from .review import (
@@ -31,6 +32,9 @@ MAX_CONTEXT_PHRASE_LENGTH = 500
 MAX_CONTEXT_TAGS = 8
 MAX_EXAMPLES = 10
 MISSING_GROUP = "(not supplied)"
+INSUFFICIENT_SAMPLE_BELOW = 5
+SMALL_SAMPLE_BELOW = 10
+_LANGUAGE_PATTERN = re.compile(r"^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$")
 
 
 class GroupingDimension(StrEnum):
@@ -214,6 +218,10 @@ class MetricValue:
 class GroupMetricSummary:
     group: str
     total_count: int
+    successful_count: int
+    failed_count: int
+    filtered_successful_count: int
+    unassigned_failed_count: int
     eligible_count: int
     values: tuple[MetricValue, ...]
     sample: SampleSizeAssessment
@@ -230,6 +238,7 @@ class ContextNote:
     explanation: str
     context_importance: str
     tags: tuple[ContextTag, ...]
+    created_at: datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -246,14 +255,14 @@ class RepresentativeExample:
 
 
 def sample_size_assessment(eligible_count: int) -> SampleSizeAssessment:
-    if eligible_count < 5:
+    if eligible_count < INSUFFICIENT_SAMPLE_BELOW:
         return SampleSizeAssessment(
             SampleSizeLevel.INSUFFICIENT,
             "Insufficient sample for comparison",
             False,
             False,
         )
-    if eligible_count < 10:
+    if eligible_count < SMALL_SAMPLE_BELOW:
         return SampleSizeAssessment(
             SampleSizeLevel.SMALL,
             "Small sample",
@@ -304,25 +313,70 @@ def parse_insight_filters(
     return InsightFilters(parsed_sentiment, parsed_emotion, start, end)
 
 
-def _group_value(outcome: BatchOutcome, grouping: GroupingDimension) -> str:
-    report = outcome.report
-    if report is None:
-        return MISSING_GROUP
-    record = report.record
+def _record_group_value(
+    outcome: BatchOutcome, grouping: GroupingDimension
+) -> str | None:
+    record = (
+        outcome.report.record
+        if outcome.report is not None
+        else outcome.prepared.record
+    )
+    if record is None:
+        return None
     if grouping is GroupingDimension.TIMESTAMP_MONTH:
         return record.timestamp.strftime("%Y-%m") if record.timestamp else MISSING_GROUP
     value = getattr(record, grouping.value)
     return str(value.value if hasattr(value, "value") else value or MISSING_GROUP)
 
 
+def _failed_raw_group_value(
+    outcome: BatchOutcome, grouping: GroupingDimension
+) -> str | None:
+    """Use only independently valid, supported user metadata for an invalid row."""
+
+    field = (
+        "timestamp"
+        if grouping is GroupingDimension.TIMESTAMP_MONTH
+        else grouping.value
+    )
+    raw = outcome.prepared.value_map.get(field, "").strip()
+    if grouping is GroupingDimension.SOURCE_TYPE:
+        try:
+            return SourceType(raw or SourceType.FILE).value
+        except ValueError:
+            return None
+    if grouping is GroupingDimension.TIMESTAMP_MONTH:
+        if not raw:
+            return MISSING_GROUP
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00")).strftime("%Y-%m")
+        except ValueError:
+            return None
+    if grouping is GroupingDimension.LANGUAGE:
+        value = raw or "en"
+        return value if _LANGUAGE_PATTERN.fullmatch(value) else None
+    if len(raw) > 512:
+        return None
+    return raw or MISSING_GROUP
+
+
+def _group_value(outcome: BatchOutcome, grouping: GroupingDimension) -> str | None:
+    normalized = _record_group_value(outcome, grouping)
+    if normalized is not None:
+        return normalized
+    if outcome.report is None:
+        return _failed_raw_group_value(outcome, grouping)
+    return None
+
+
 def available_group_values(
     result: BatchResult, grouping: GroupingDimension
 ) -> tuple[str, ...]:
-    values = {
-        _group_value(outcome, grouping)
-        for outcome in result.outcomes
-        if outcome.report is not None
-    }
+    values: set[str] = set()
+    for outcome in result.outcomes:
+        value = _group_value(outcome, grouping)
+        if value is not None:
+            values.add(value)
     return tuple(
         sorted(values, key=lambda value: (value == MISSING_GROUP, value.casefold()))
     )
@@ -385,8 +439,13 @@ def _summarize_group(
     cases: Sequence[ReviewCase],
     metric: InsightMetric,
     group: str,
+    *,
+    total_count: int,
+    successful_count: int,
+    failed_count: int,
+    unassigned_failed_count: int,
 ) -> GroupMetricSummary:
-    total = len(outcomes)
+    filtered_successful_count = len(outcomes)
     unreviewed, uncertain = _review_counts(cases)
     values: tuple[MetricValue, ...]
     eligible: int
@@ -407,7 +466,7 @@ def _summarize_group(
         values = _distribution(emotion_labels, tuple(EmotionLabel))
         eligible = len(emotion_labels)
     elif metric is InsightMetric.AI_EMOTION_ACTIVATION:
-        eligible = total
+        eligible = filtered_successful_count
         values = tuple(
             MetricValue(
                 label.value,
@@ -508,7 +567,11 @@ def _summarize_group(
         )
     return GroupMetricSummary(
         group=group,
-        total_count=total,
+        total_count=total_count,
+        successful_count=successful_count,
+        failed_count=failed_count,
+        filtered_successful_count=filtered_successful_count,
+        unassigned_failed_count=unassigned_failed_count,
         eligible_count=eligible,
         values=values,
         sample=sample_size_assessment(eligible),
@@ -539,9 +602,19 @@ def build_group_metrics(
             message="A selected group is not present in this workspace.",
         )
     outcomes = _filtered_outcomes(result, selection.filters)
+    unassigned_failed_count = sum(
+        outcome.report is None
+        and _group_value(outcome, selection.grouping) is None
+        for outcome in result.outcomes
+    )
     cases_by_id = _case_map(result, state)
     summaries: list[GroupMetricSummary] = []
     for group in selection.groups:
+        all_grouped = tuple(
+            outcome
+            for outcome in result.outcomes
+            if _group_value(outcome, selection.grouping) == group
+        )
         grouped = tuple(
             outcome
             for outcome in outcomes
@@ -552,7 +625,20 @@ def build_group_metrics(
             for outcome in grouped
             if outcome.prepared.identity in cases_by_id
         )
-        summaries.append(_summarize_group(grouped, cases, selection.metric, group))
+        summaries.append(
+            _summarize_group(
+                grouped,
+                cases,
+                selection.metric,
+                group,
+                total_count=len(all_grouped),
+                successful_count=sum(
+                    outcome.report is not None for outcome in all_grouped
+                ),
+                failed_count=sum(outcome.report is None for outcome in all_grouped),
+                unassigned_failed_count=unassigned_failed_count,
+            )
+        )
     return tuple(summaries)
 
 
@@ -600,6 +686,7 @@ def add_context_note(
     explanation: str,
     context_importance: str,
     tags: Sequence[str],
+    now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> InsightState:
     try:
         parsed_association = ContextAssociation(association)
@@ -632,6 +719,9 @@ def add_context_note(
             code="invalid_tags",
             message=f"Select no more than {MAX_CONTEXT_TAGS} unique tags.",
         )
+    created_at = now()
+    if created_at.tzinfo is None or created_at.utcoffset() is None:
+        raise ValueError("Context-note timestamps must be timezone-aware.")
     note = ContextNote(
         note_id=token_urlsafe(12),
         association=parsed_association,
@@ -648,6 +738,7 @@ def add_context_note(
             limit=MAX_CONTEXT_FIELD_LENGTH,
         ),
         tags=parsed_tags,
+        created_at=created_at.astimezone(UTC),
     )
     return InsightState(notes=(*state.notes, note), selection=state.selection)
 
@@ -800,10 +891,26 @@ def select_representative_examples(
 
 INSIGHT_EXPORT_FIELDS = (
     "section",
+    "exported_at",
+    "metric_definition",
+    "insufficient_sample_below",
+    "small_sample_below",
+    "total_input_count",
+    "successful_analysis_count",
+    "failed_count",
+    "reviewable_count",
+    "whole_record_reviewed_count",
+    "definitive_sentiment_review_count",
+    "definitive_emotion_review_count",
+    "uncertain_count",
+    "unreviewed_count",
     "grouping",
+    "selected_groups",
     "group",
     "perspective",
     "metric",
+    "failed_grouping_rule",
+    "unassigned_failed_count",
     "sentiment_filter",
     "emotion_filter",
     "date_from",
@@ -814,14 +921,18 @@ INSIGHT_EXPORT_FIELDS = (
     "rate",
     "sample_warning",
     "total_group_rows",
-    "unreviewed_count",
-    "uncertain_count",
+    "group_successful_analysis_count",
+    "group_failed_count",
+    "filtered_successful_count",
+    "group_unreviewed_count",
+    "group_uncertain_count",
     "association",
     "association_value",
     "phrase",
     "explanation",
     "context_importance",
     "tags",
+    "created_at",
     "record_id",
     "text",
     "source_type",
@@ -839,8 +950,41 @@ INSIGHT_EXPORT_FIELDS = (
     "emotion_model",
     "emotion_revision",
     "emotion_threshold",
+    "emotion_threshold_semantics",
     "native_emotion_scores",
 )
+
+
+def _utc_timestamp(value: datetime) -> str:
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError("Export timestamps must be timezone-aware.")
+    return value.astimezone(UTC).isoformat()
+
+
+def _review_audit_counts(
+    result: BatchResult, reviews: ReviewState
+) -> dict[str, int]:
+    cases = review_cases(result, reviews)
+    reviewed = tuple(case for case in cases if case.review.is_reviewed)
+    return {
+        "total_input_count": len(result.outcomes),
+        "successful_analysis_count": result.aggregates.analyzed_count,
+        "failed_count": result.aggregates.failed_count,
+        "reviewable_count": len(cases),
+        "whole_record_reviewed_count": len(reviewed),
+        "definitive_sentiment_review_count": sum(
+            case.review.sentiment_judgment is not ReviewJudgment.UNCERTAIN
+            and case.review.human_sentiment is not None
+            for case in reviewed
+        ),
+        "definitive_emotion_review_count": sum(
+            case.review.emotion_judgment is not ReviewJudgment.UNCERTAIN
+            and case.review.human_dominant_emotion is not None
+            for case in reviewed
+        ),
+        "uncertain_count": sum(case.review.is_uncertain for case in cases),
+        "unreviewed_count": sum(not case.review.is_reviewed for case in cases),
+    }
 
 
 def export_insights_csv(
@@ -851,6 +995,7 @@ def export_insights_csv(
     *,
     include_records: bool,
     include_native: bool,
+    now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> str:
     summaries = build_group_metrics(result, reviews, selection)
     first_report = next(
@@ -861,32 +1006,71 @@ def export_insights_csv(
         output, fieldnames=INSIGHT_EXPORT_FIELDS, lineterminator="\n"
     )
     writer.writeheader()
+    exported_at = _utc_timestamp(now())
+    audit_counts = _review_audit_counts(result, reviews)
+    unassigned_failed_count = sum(
+        outcome.report is None
+        and _group_value(outcome, selection.grouping) is None
+        for outcome in result.outcomes
+    )
+    selected_groups_cell = safe_spreadsheet_text("|".join(selection.groups))
+    selection_fields: dict[str, object] = {
+        "exported_at": exported_at,
+        "metric_definition": METRIC_DEFINITIONS[selection.metric],
+        "insufficient_sample_below": INSUFFICIENT_SAMPLE_BELOW,
+        "small_sample_below": SMALL_SAMPLE_BELOW,
+        **audit_counts,
+        "grouping": selection.grouping,
+        "selected_groups": selected_groups_cell,
+        "perspective": selection.perspective,
+        "metric": selection.metric,
+        "failed_grouping_rule": (
+            "Failed rows are assigned only by independently valid supported "
+            "user-provided metadata; otherwise they remain unassigned. Analysis-"
+            "result filters do not apply to failed rows."
+        ),
+        "unassigned_failed_count": unassigned_failed_count,
+        "sentiment_filter": selection.filters.sentiment or "",
+        "emotion_filter": selection.filters.emotion or "",
+        "date_from": selection.filters.date_from or "",
+        "date_to": selection.filters.date_to or "",
+        "sentiment_model": safe_spreadsheet_text(
+            first_report.sentiment.provider.model_name
+        ),
+        "sentiment_revision": safe_spreadsheet_text(
+            first_report.sentiment.provider.revision
+        ),
+        "emotion_model": safe_spreadsheet_text(
+            first_report.emotion.provider.model_name
+        ),
+        "emotion_revision": safe_spreadsheet_text(
+            first_report.emotion.provider.revision
+        ),
+        "emotion_threshold": first_report.emotion.threshold,
+        "emotion_threshold_semantics": (
+            "Inclusive per-row threshold: a compact non-neutral emotion is active "
+            "when score >= that row's recorded threshold."
+        ),
+    }
+    writer.writerow({"section": "export_metadata", **selection_fields})
     for summary in summaries:
         for value in summary.values:
             writer.writerow(
                 {
                     "section": "group_summary",
-                    "grouping": selection.grouping,
+                    **selection_fields,
                     "group": safe_spreadsheet_text(summary.group),
-                    "perspective": selection.perspective,
-                    "metric": selection.metric,
-                    "sentiment_filter": selection.filters.sentiment or "",
-                    "emotion_filter": selection.filters.emotion or "",
-                    "date_from": selection.filters.date_from or "",
-                    "date_to": selection.filters.date_to or "",
                     "label": value.label,
                     "count": value.count,
                     "denominator": value.denominator,
                     "rate": value.rate,
                     "sample_warning": summary.sample.message or "",
                     "total_group_rows": summary.total_count,
-                    "unreviewed_count": summary.unreviewed_count,
-                    "uncertain_count": summary.uncertain_count,
-                    "sentiment_model": first_report.sentiment.provider.model_name,
-                    "sentiment_revision": first_report.sentiment.provider.revision,
-                    "emotion_model": first_report.emotion.provider.model_name,
-                    "emotion_revision": first_report.emotion.provider.revision,
-                    "emotion_threshold": first_report.emotion.threshold,
+                    "group_successful_analysis_count": summary.successful_count,
+                    "group_failed_count": summary.failed_count,
+                    "filtered_successful_count": summary.filtered_successful_count,
+                    "group_unreviewed_count": summary.unreviewed_count,
+                    "group_uncertain_count": summary.uncertain_count,
                 }
             )
     for note in insight_state.notes:
@@ -899,15 +1083,16 @@ def export_insights_csv(
                 "explanation": safe_spreadsheet_text(note.explanation),
                 "context_importance": safe_spreadsheet_text(note.context_importance),
                 "tags": safe_spreadsheet_text("|".join(note.tags)),
+                "created_at": _utc_timestamp(note.created_at),
             }
         )
     if include_records:
         cases = _case_map(result, reviews)
-        selected_groups = set(selection.groups)
+        selected_group_values = set(selection.groups)
         for outcome in _filtered_outcomes(result, selection.filters):
             report = outcome.report
             assert report is not None
-            if _group_value(outcome, selection.grouping) not in selected_groups:
+            if _group_value(outcome, selection.grouping) not in selected_group_values:
                 continue
             review = cases.get(outcome.prepared.identity)
             writer.writerow(

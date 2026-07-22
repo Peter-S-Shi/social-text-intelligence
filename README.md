@@ -175,8 +175,13 @@ Phrase and Context Notes are written manually by the user and remain separate
 from AI and human labels. Representative Cases are selected by explicit rules
 such as low confidence, definitive disagreement, correction, uncertainty, or
 note presence, and always state why each case appears. Insight CSV export is an
-explicit action; summaries and notes are included, while supporting records and
-model-native scores are optional. All insight state remains in the same bounded,
+explicit action. Its audit row records UTC export time, metric definition, sample
+thresholds, complete input/analysis/review counts, selection, filters, model
+provenance, and emotion-threshold semantics. Group summaries distinguish
+successful and failed rows; failures are grouped only from independently valid
+supported metadata and otherwise remain explicitly unassigned. Notes include a
+UTC creation time, while supporting records and model-native scores are optional.
+All insight state remains in the same bounded,
 expiring process-memory workspace and is cleared with the batch.
 
 ## Core contracts
