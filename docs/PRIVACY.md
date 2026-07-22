@@ -49,6 +49,17 @@ only on explicit request, use `Cache-Control: no-store`, retain original text, a
 apply spreadsheet-formula protection to review notes and other user-controlled
 cells. Treat exported reviewed datasets as private local data.
 
+Insight controls and user-authored phrase/context notes use the same
+random-token, bounded, expiring process-memory workspace. They create no
+database, autosave, analytics history, network request, or background writer.
+Clearing or expiry removes them with the batch. The application never logs
+group values, phrases, notes, human labels, or exported content.
+
+Insight export occurs only after an explicit request. Summary rows and context
+notes are included; original record text and metadata are optional and model-
+native scores are separately optional. Spreadsheet-formula protection covers
+all user-controlled cells. Treat every insight export as private local data.
+
 ## Persistence
 
 Future persistence must remain local and ignored by Git. Schema migrations must

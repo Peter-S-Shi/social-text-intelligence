@@ -5,9 +5,10 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 7 — human-in-the-loop review.** The local Flask application
-> supports direct English analysis, bounded CSV batch workspaces, independent
-> sentiment and emotion review, honest agreement summaries, and explicit export.
+> **Status: Milestone 8 — insights and community context.** The local Flask
+> application supports direct English analysis, bounded CSV batch workspaces,
+> independent human review, dataset-bounded group exploration, manual context
+> notes, representative-case navigation, and explicit export.
 
 ## Principles
 
@@ -154,6 +155,29 @@ revisions, separate human fields, timestamps, and true/false/blank agreement
 semantics. Native emotion scores are optional. Reviews remain in bounded,
 expiring process memory until the user exports them; there is no review database,
 background save, import, training, or reviewer account system.
+
+## Insights and community context
+
+Milestone 8 adds a local descriptive insight layer over the existing frozen
+batch results and separate review state. Group Explorer and Distribution
+Comparison use only trusted user-supplied `source_type`, `source_label`, `topic`,
+`community`, `language`, or valid timestamp-month metadata. The application does
+not infer groups from text, names, slang, locations, or model output.
+
+AI prediction, definitive human-reviewed, and AI-human agreement perspectives
+remain separate. Every metric displays raw counts, its eligible denominator,
+review coverage where relevant, and a per-group sample warning. Fewer than five
+eligible records suppress comparative percentage emphasis; five through nine
+show a prominent small-sample warning. No view produces rankings, composite
+scores, causal claims, cultural generalizations, or psychological conclusions.
+
+Phrase and Context Notes are written manually by the user and remain separate
+from AI and human labels. Representative Cases are selected by explicit rules
+such as low confidence, definitive disagreement, correction, uncertainty, or
+note presence, and always state why each case appears. Insight CSV export is an
+explicit action; summaries and notes are included, while supporting records and
+model-native scores are optional. All insight state remains in the same bounded,
+expiring process-memory workspace and is cleared with the batch.
 
 ## Core contracts
 

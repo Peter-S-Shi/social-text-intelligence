@@ -85,3 +85,25 @@ Expected contract failures use typed exceptions:
 - `ProviderError` as the base for provider failures.
 
 The core performs no persistence, networking, telemetry, or full-text logging.
+
+## Insights and context notes
+
+Insight grouping accepts only `source_type`, `source_label`, `topic`,
+`community`, `language`, and a month derived from a valid normalized timestamp.
+Group membership is never inferred from record text or model output. An
+`InsightSelection` binds one grouping, one or more exact group values, one
+perspective, one compatible metric, and optional existing AI-label/date filters.
+
+AI distributions use successful rows. Human distributions use only
+whole-record reviewed, definitive dimensions. Disagreement uses the same
+definitive eligibility and means descriptive AI-human disagreement, not
+accuracy. Each value carries a raw count and denominator. The sample-size policy
+is applied separately to every group and metric: fewer than five is insufficient
+for comparison, five through nine is a small sample, and ten or more permits
+ordinary descriptive comparison.
+
+`ContextNote` is a separate user-authored annotation associated with a record,
+trusted metadata value, or comparison description. Its phrase, explanation,
+context-importance text, and allowlisted tags do not modify model scores,
+reviews, or agreement. `RepresentativeExample` contains an existing outcome,
+its separate review when present, and the deterministic reason it was selected.

@@ -130,6 +130,19 @@ class InsightServiceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "YYYY-MM-DD"):
             parse_insight_filters(date_from="July 1")
 
+        filtered = InsightSelection(
+            grouping=GroupingDimension.TOPIC,
+            groups=("release",),
+            perspective=InsightPerspective.AI,
+            metric=InsightMetric.AI_SENTIMENT,
+            filters=parse_insight_filters(
+                date_from="2026-07-03", date_to="2026-07-04"
+            ),
+        )
+        summary = build_group_metrics(self.result, self.reviews, filtered)[0]
+        self.assertEqual(summary.eligible_count, 2)
+        self.assertEqual(summary.sample.level, SampleSizeLevel.INSUFFICIENT)
+
     def test_ai_metrics_use_successful_rows_and_independent_activation(self) -> None:
         summaries = build_group_metrics(
             self.result,
@@ -237,6 +250,17 @@ class InsightServiceTests(unittest.TestCase):
                 context_importance="Synthetic context.",
                 tags=(),
             )
+        with self.assertRaisesRegex(ValidationError, "exceeds"):
+            add_context_note(
+                state,
+                self.result,
+                association="record",
+                association_value="row-1",
+                phrase="x" * 501,
+                explanation="Synthetic explanation.",
+                context_importance="Synthetic context.",
+                tags=(),
+            )
 
     def test_examples_state_selection_reason_and_export_formula_safety(self) -> None:
         notes = add_context_note(
@@ -257,6 +281,15 @@ class InsightServiceTests(unittest.TestCase):
         )
         self.assertEqual(examples[0].outcome.prepared.identity, "row-1")
         self.assertIn("user-authored", examples[0].reason)
+        tagged_examples = select_representative_examples(
+            self.result,
+            self.reviews,
+            notes,
+            mode=ExampleMode.CONTEXT_NOTES,
+            context_tag=ContextTag.OTHER,
+        )
+        self.assertEqual(len(tagged_examples), 1)
+        self.assertIn("tagged other", tagged_examples[0].reason)
 
         exported = export_insights_csv(
             self.result,

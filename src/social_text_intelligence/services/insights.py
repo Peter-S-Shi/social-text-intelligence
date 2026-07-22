@@ -235,6 +235,7 @@ class ContextNote:
 @dataclass(frozen=True, slots=True)
 class InsightState:
     notes: tuple[ContextNote, ...] = ()
+    selection: InsightSelection | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -648,7 +649,7 @@ def add_context_note(
         ),
         tags=parsed_tags,
     )
-    return InsightState(notes=(*state.notes, note))
+    return InsightState(notes=(*state.notes, note), selection=state.selection)
 
 
 def delete_context_note(state: InsightState, *, note_id: str) -> InsightState:
@@ -657,7 +658,7 @@ def delete_context_note(state: InsightState, *, note_id: str) -> InsightState:
         raise ValidationError(
             field="note_id", code="note_not_found", message="Context note not found."
         )
-    return InsightState(notes=notes)
+    return InsightState(notes=notes, selection=state.selection)
 
 
 def select_representative_examples(
@@ -667,6 +668,7 @@ def select_representative_examples(
     *,
     mode: ExampleMode,
     emotion_label: EmotionLabel = EmotionLabel.ANGER,
+    context_tag: ContextTag | None = None,
     record_ids: Sequence[str] = (),
     limit: int = 5,
 ) -> tuple[RepresentativeExample, ...]:
@@ -762,13 +764,18 @@ def select_representative_examples(
             note.association_value
             for note in insight_state.notes
             if note.association is ContextAssociation.RECORD
+            and (context_tag is None or context_tag in note.tags)
         }
         selected = [
             outcome
             for outcome in outcomes
             if outcome.prepared.identity in noted_ids
         ]
-        reason = "Record has a user-authored context note"
+        reason = (
+            f"Record has a user-authored context note tagged {context_tag.value}"
+            if context_tag is not None
+            else "Record has a user-authored context note"
+        )
     else:
         selected_ids = set(record_ids)
         selected = [

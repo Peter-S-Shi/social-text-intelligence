@@ -387,7 +387,7 @@ def analyze_batch(preview: BatchPreview, analyzer: CombinedAnalyzer) -> BatchRes
 
 
 def safe_spreadsheet_text(value: str) -> str:
-    if value.startswith(("=", "+", "-", "@")):
+    if value.lstrip().startswith(("=", "+", "-", "@")):
         return "'" + value
     return value
 

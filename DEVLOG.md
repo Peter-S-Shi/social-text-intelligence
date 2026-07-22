@@ -1,5 +1,26 @@
 # Development Log
 
+## Milestone 8 — Insights and community context
+
+Added reusable trusted-group validation, separate AI/human/agreement
+perspectives, exact metric-specific denominators, review-coverage measures, and
+per-group sample-size policy. AI activation remains threshold-based and
+multi-label; definitive human and disagreement metrics exclude partial and
+uncertain dimensions without silently changing the denominator.
+
+Added Group Explorer, two-to-four-group Distribution Comparison, AI vs Human,
+Representative Cases, Phrase and Context Notes, and explicit Insight Export to
+the existing local Flask workspace. Examples are selected by declared
+deterministic rules. Context notes are user-authored, validated, and stored
+separately from immutable AI results and human reviews.
+
+Insight summaries retain model and review provenance, disclosures, filters, raw
+counts, denominators, and sample warnings. Optional record-level and native-score
+export remains off by default, and formula-like user-controlled cells are
+escaped. This milestone adds no model, dependency, LLM narrative, inferred
+identity, ranking, causality, automation, persistence, account, cloud service,
+platform connector, French support, or moderation workflow.
+
 ## Milestone 7 — Human-in-the-loop review
 
 Added a focused review queue for successful batch outcomes. Sentiment and

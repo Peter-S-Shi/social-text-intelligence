@@ -576,7 +576,9 @@ def create_app(
         workspace: BatchWorkspace, *, comparison: bool
     ) -> tuple[InsightSelection, tuple[str, ...]]:
         assert workspace.result is not None
-        grouping_value = request.values.get("grouping", GroupingDimension.TOPIC)
+        saved = workspace.insights.selection if workspace.insights else None
+        default_grouping = saved.grouping if saved else GroupingDimension.TOPIC
+        grouping_value = request.values.get("grouping", default_grouping)
         try:
             grouping = GroupingDimension(grouping_value)
         except ValueError as error:
@@ -594,11 +596,22 @@ def create_app(
             )
         groups = tuple(request.values.getlist("group"))
         if not groups:
-            groups = group_values[: (2 if comparison else 1)]
+            saved_groups = (
+                tuple(group for group in saved.groups if group in group_values)
+                if saved is not None and saved.grouping is grouping
+                else ()
+            )
+            if comparison and not 2 <= len(saved_groups) <= 4:
+                groups = group_values[:2]
+            else:
+                groups = saved_groups or group_values[:1]
 
-        perspective_value = request.values.get(
-            "perspective", InsightPerspective.AI
+        default_perspective = (
+            InsightPerspective.AGREEMENT
+            if request.values.get("view") == "agreement"
+            else (saved.perspective if saved else InsightPerspective.AI)
         )
+        perspective_value = request.values.get("perspective", default_perspective)
         try:
             perspective = InsightPerspective(perspective_value)
         except ValueError as error:
@@ -607,7 +620,12 @@ def create_app(
                 code="invalid_perspective",
                 message="Select AI, human-reviewed, or agreement perspective.",
             ) from error
-        default_metric = INSIGHT_METRICS_BY_PERSPECTIVE[perspective][0]
+        default_metric = (
+            saved.metric
+            if saved is not None
+            and saved.metric in INSIGHT_METRICS_BY_PERSPECTIVE[perspective]
+            else INSIGHT_METRICS_BY_PERSPECTIVE[perspective][0]
+        )
         try:
             metric = InsightMetric(request.values.get("metric", default_metric))
         except ValueError as error:
@@ -617,10 +635,28 @@ def create_app(
                 message="Select a supported insight metric.",
             ) from error
         filters = parse_insight_filters(
-            sentiment=request.values.get("sentiment", ""),
-            emotion=request.values.get("emotion", ""),
-            date_from=request.values.get("date_from", ""),
-            date_to=request.values.get("date_to", ""),
+            sentiment=request.values.get(
+                "sentiment",
+                saved.filters.sentiment.value
+                if saved and saved.filters.sentiment
+                else "",
+            ),
+            emotion=request.values.get(
+                "emotion",
+                saved.filters.emotion.value if saved and saved.filters.emotion else "",
+            ),
+            date_from=request.values.get(
+                "date_from",
+                saved.filters.date_from.isoformat()
+                if saved and saved.filters.date_from
+                else "",
+            ),
+            date_to=request.values.get(
+                "date_to",
+                saved.filters.date_to.isoformat()
+                if saved and saved.filters.date_to
+                else "",
+            ),
         )
         return (
             InsightSelection(grouping, groups, perspective, metric, filters),
@@ -674,18 +710,36 @@ def create_app(
             error_message = error_message or error.message
             summaries = ()
 
+        updated_insight_state = InsightState(
+            notes=insight_state.notes, selection=selection
+        )
+        if updated_insight_state != insight_state:
+            batch_store.replace(
+                token,
+                BatchWorkspace(
+                    preview=workspace.preview,
+                    result=result,
+                    reviews=reviews,
+                    insights=updated_insight_state,
+                ),
+            )
+            insight_state = updated_insight_state
+
         example_mode_value = request.values.get(
             "example_mode", ExampleMode.LOWEST_AI_CONFIDENCE
         )
         emotion_label_value = request.values.get(
             "example_emotion", EmotionLabel.ANGER
         )
+        context_tag_value = request.values.get("example_tag", "")
         try:
             example_mode = ExampleMode(example_mode_value)
             example_emotion = EmotionLabel(emotion_label_value)
+            example_tag = ContextTag(context_tag_value) if context_tag_value else None
         except ValueError:
             example_mode = ExampleMode.LOWEST_AI_CONFIDENCE
             example_emotion = EmotionLabel.ANGER
+            example_tag = None
             error_message = error_message or "Select a supported example rule."
         examples = select_representative_examples(
             result,
@@ -693,6 +747,7 @@ def create_app(
             insight_state,
             mode=example_mode,
             emotion_label=example_emotion,
+            context_tag=example_tag,
             record_ids=request.values.getlist("record_id"),
         )
         first_report = next(
@@ -732,6 +787,7 @@ def create_app(
                 example_modes=tuple(ExampleMode),
                 example_mode=example_mode,
                 example_emotion=example_emotion,
+                example_tag=example_tag,
                 emotion_labels=tuple(EmotionLabel),
                 sentiment_labels=tuple(SentimentLabel),
                 first_report=first_report,
@@ -739,10 +795,10 @@ def create_app(
                     outcome for outcome in result.outcomes if outcome.report is not None
                 ),
                 error_message=error_message,
-                query_sentiment=request.values.get("sentiment", ""),
-                query_emotion=request.values.get("emotion", ""),
-                query_date_from=request.values.get("date_from", ""),
-                query_date_to=request.values.get("date_to", ""),
+                query_sentiment=selection.filters.sentiment or "",
+                query_emotion=selection.filters.emotion or "",
+                query_date_from=selection.filters.date_from or "",
+                query_date_to=selection.filters.date_to or "",
             ),
             status,
         )
