@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Insights · Social Text Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script defer src="{{ url_for('static', filename='insights.js') }}"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div><p class="eyebrow">Milestone 8</p><h1>Insights &amp; Community Context</h1></div>
+    <span class="mode-badge">Temporary local memory</span>
+  </header>
+  <main>
+    <nav class="mode-nav" aria-label="Application modes">
+      <a href="{{ url_for('analyze_text') }}">Single text</a>
+      <a href="{{ url_for('batch_workspace', token=token) }}">Batch CSV</a>
+      <a href="{{ url_for('review_index', token=token) }}">Human review</a>
+      <a class="active" href="{{ url_for('insights', token=token) }}">Insights</a>
+    </nav>
+
+    <section class="privacy-note" role="note">
+      Insight settings and user-authored context notes remain only in bounded,
+      expiring local process memory until explicitly exported. Clearing the batch,
+      expiry, or stopping the app removes this state.
+    </section>
+
+    <nav class="subnav" aria-label="Insight views">
+      {% for key, label in [('explorer','Group Explorer'),('comparison','Distribution Comparison'),('agreement','AI vs Human'),('notes','Phrase & Context Notes'),('examples','Representative Cases'),('export','Insight Export')] %}
+      <a class="{{ 'active' if view == key else '' }}" href="{{ url_for('insights', token=token, view=key) }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+
+    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+
+    {% if view in ['explorer','comparison','agreement'] %}
+    <section class="panel">
+      <div class="section-heading">
+        <div><p class="eyebrow">Dataset-bounded controls</p><h2>{{ 'Distribution Comparison' if view == 'comparison' else ('AI vs Human' if view == 'agreement' else 'Group Explorer') }}</h2></div>
+        <span class="mode-badge">{{ summaries|length }} displayed group{{ '' if summaries|length == 1 else 's' }}</span>
+      </div>
+      <form class="insight-controls" method="get" data-insight-controls>
+        <input type="hidden" name="view" value="{{ view }}">
+        <label>Trusted grouping
+          <select name="grouping">
+            {% for option in grouping_options %}<option value="{{ option }}" {% if selection.grouping == option %}selected{% endif %}>{{ option|replace('_',' ')|title }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>{{ 'Compare 2–4 groups' if view == 'comparison' else 'Displayed groups' }}
+          <select name="group" multiple size="{{ [group_values|length, 5]|min }}" required>
+            {% for group in group_values %}<option value="{{ group }}" {% if group in selection.groups %}selected{% endif %}>{{ group }}</option>{% endfor %}
+          </select>
+          <small>Use Ctrl/Command to select more than one.</small>
+        </label>
+        <label>Perspective
+          <select name="perspective" data-perspective-select>
+            {% for option in perspectives %}<option value="{{ option }}" {% if selection.perspective == option %}selected{% endif %}>{{ option|replace('_',' ')|title }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Metric
+          <select name="metric" data-metric-select>
+            {% for perspective, metrics in metrics_by_perspective.items() %}{% for metric in metrics %}<option value="{{ metric }}" data-perspective="{{ perspective }}" {% if selection.metric == metric %}selected{% endif %}>{{ metric|replace('_',' ')|title }}</option>{% endfor %}{% endfor %}
+          </select>
+        </label>
+        <label>AI sentiment filter
+          <select name="sentiment"><option value="">All</option>{% for label in sentiment_labels %}<option value="{{ label }}" {% if query_sentiment == label %}selected{% endif %}>{{ label|title }}</option>{% endfor %}</select>
+        </label>
+        <label>AI dominant-emotion filter
+          <select name="emotion"><option value="">All</option>{% for label in emotion_labels %}<option value="{{ label }}" {% if query_emotion == label %}selected{% endif %}>{{ label|title }}</option>{% endfor %}</select>
+        </label>
+        <label>From date <input type="date" name="date_from" value="{{ query_date_from }}"></label>
+        <label>To date <input type="date" name="date_to" value="{{ query_date_to }}"></label>
+        <button type="submit">Apply view</button>
+      </form>
+    </section>
+
+    <section class="panel methodology" aria-label="Metric definition">
+      <h2>Metric and denominator</h2>
+      <p>{{ metric_definition }}</p>
+      <p><strong>Active grouping:</strong> {{ selection.grouping|replace('_',' ') }} · <strong>Perspective:</strong> {{ selection.perspective }} · <strong>Metric:</strong> {{ selection.metric|replace('_',' ') }}</p>
+      <p><strong>Active filters:</strong> sentiment {{ query_sentiment or 'all' }}, dominant emotion {{ query_emotion or 'all' }}, date {{ query_date_from or 'unbounded' }} to {{ query_date_to or 'unbounded' }}.</p>
+    </section>
+
+    {% if summaries %}<section class="insight-grid" aria-label="Group metric summaries">
+      {% for summary in summaries %}<article class="panel metric-card">
+        <div class="section-heading"><h2>{{ summary.group }}</h2><span>{{ summary.eligible_count }} eligible / {{ summary.total_count }} group rows</span></div>
+        {% if summary.sample.message %}<p class="sample-warning status-{{ summary.sample.level }}"><strong>{{ summary.sample.message }}</strong>{% if summary.sample.level == 'insufficient' %}; comparative emphasis is suppressed.{% endif %}</p>{% endif %}
+        <div class="distribution-list">
+          {% for value in summary.values %}<div class="distribution-row">
+            <div><span>{{ value.label|replace('_',' ')|title }}</span><strong>{{ value.count }} / {{ value.denominator }}</strong></div>
+            {% if summary.sample.emphasize_percentages %}<div class="bar-track" aria-label="{{ '%.1f'|format(value.rate * 100) }} percent"><span style="width: {{ '%.2f'|format(value.rate * 100) }}%"></span></div><small>{{ '%.1f'|format(value.rate * 100) }}%</small>{% else %}<small>Percentage de-emphasized</small>{% endif %}
+          </div>{% endfor %}
+        </div>
+        {% if selection.perspective != 'ai' %}<p><small>{{ summary.unreviewed_count }} unreviewed · {{ summary.uncertain_count }} uncertain. Eligibility is metric-specific.</small></p>{% endif %}
+      </article>{% endfor %}
+    </section>{% endif %}
+
+    <section class="limitations">
+      <strong>Descriptive, not causal.</strong> These values describe only the current user-provided dataset. Metadata groups are user-provided fields, not inferred identities. AI labels estimate expression in text; they do not establish objective feelings, psychology, culture, personality, risk, or community traits. Human-reviewed values describe only the eligible reviewed subset, and agreement is not accuracy.
+    </section>
+    {% endif %}
+
+    {% if view == 'notes' %}
+    <section class="panel">
+      <p class="eyebrow">Manual annotation only</p><h2>Add phrase and context note</h2>
+      <p>Notes remain separate from AI predictions, human review labels, scores, and agreement. They never reclassify a record.</p>
+      <form method="post" action="{{ url_for('save_context_note', token=token, view='notes') }}" class="note-form">
+        <label>Association
+          <select name="association" required>{% for option in context_associations %}<option value="{{ option }}">{{ option|replace('_',' ')|title }}</option>{% endfor %}</select>
+        </label>
+        <label>Association value
+          <input name="association_value" list="association-values" maxlength="500" required>
+          <small>Choose an existing record/topic/community/source label, or describe the current comparison.</small>
+        </label>
+        <datalist id="association-values">{% for kind, values in association_values.items() %}{% for value in values %}<option value="{{ value }}">{{ kind|replace('_',' ') }}</option>{% endfor %}{% endfor %}</datalist>
+        <label>Phrase or expression <input name="phrase" maxlength="500" required></label>
+        <label>Your explanation <textarea name="explanation" maxlength="2000" required></textarea></label>
+        <label>Why context matters <textarea name="context_importance" maxlength="2000" required></textarea></label>
+        <fieldset class="tag-options"><legend>Optional context tags</legend>{% for tag in context_tags %}<label><input type="checkbox" name="tags" value="{{ tag }}"> {{ tag|replace('_',' ') }}</label>{% endfor %}</fieldset>
+        <button type="submit">Add local note</button>
+      </form>
+    </section>
+    <section class="panel"><h2>Current context notes</h2>
+      {% if insight_state.notes %}<div class="note-list">{% for note in insight_state.notes %}<article>
+        <div class="section-heading"><strong>{{ note.phrase }}</strong><span>{{ note.association }}: {{ note.association_value }}</span></div>
+        <p>{{ note.explanation }}</p><p><strong>Why context matters:</strong> {{ note.context_importance }}</p><p><small>Tags: {{ note.tags|join(', ') or 'none' }}</small></p>
+        <form method="post" action="{{ url_for('remove_context_note', token=token, note_id=note.note_id) }}"><button class="danger-button compact" type="submit">Delete note</button></form>
+      </article>{% endfor %}</div>{% else %}<p>No context notes have been added.</p>{% endif %}
+    </section>
+    <section class="limitations"><strong>Human annotation.</strong> Notes are user-authored observations, not model-generated cultural interpretation and not protected-attribute labels.</section>
+    {% endif %}
+
+    {% if view == 'examples' %}
+    <section class="panel"><p class="eyebrow">Rule-selected cases</p><h2>Representative Cases</h2>
+      <form method="get" class="filters"><input type="hidden" name="view" value="examples">
+        <label>Selection rule <select name="example_mode">{% for mode in example_modes %}<option value="{{ mode }}" {% if example_mode == mode %}selected{% endif %}>{{ mode|replace('_',' ')|title }}</option>{% endfor %}</select></label>
+        <label>Compact emotion for highest-score rule <select name="example_emotion">{% for label in emotion_labels if label != 'neutral' %}<option value="{{ label }}" {% if example_emotion == label %}selected{% endif %}>{{ label|title }}</option>{% endfor %}</select></label>
+        <fieldset class="record-options"><legend>Optional user-selected records</legend>{% for outcome in successful_outcomes %}<label><input type="checkbox" name="record_id" value="{{ outcome.prepared.identity }}"> {{ outcome.prepared.identity }}</label>{% endfor %}</fieldset>
+        <button type="submit">Select cases</button>
+      </form>
+      <p>Cases are selected by the displayed deterministic rule and are not representative of every person, record, or community.</p>
+    </section>
+    {% if examples %}<section class="example-list">{% for example in examples %}<article class="panel">
+      <div class="section-heading"><h2>{{ example.outcome.prepared.identity }}</h2><span>{{ example.reason }}</span></div>
+      <p class="text-preview">{{ example.outcome.report.record.text[:240] }}{% if example.outcome.report.record.text|length > 240 %}…{% endif %}</p>
+      {% if example.outcome.report.record.text|length > 240 %}<details><summary>Reveal full local text</summary><blockquote>{{ example.outcome.report.record.text }}</blockquote></details>{% endif %}
+      <p>AI sentiment {{ example.outcome.report.sentiment.label }} ({{ '%.1f'|format(example.outcome.report.sentiment.confidence * 100) }}%) · AI dominant emotion {{ example.outcome.report.emotion.dominant_emotion }} ({{ '%.1f'|format(example.outcome.report.emotion.confidence * 100) }}%).</p>
+      {% if example.review %}<p>Human sentiment {{ example.review.human_sentiment or 'not definitive' }} · human dominant emotion {{ example.review.human_dominant_emotion or 'not definitive' }} · {{ 'uncertain' if example.review.is_uncertain else ('reviewed' if example.review.is_reviewed else 'unreviewed') }}.</p>{% endif %}
+    </article>{% endfor %}</section>{% else %}<section class="panel"><p>No records meet this rule.</p></section>{% endif %}
+    <section class="limitations"><strong>Navigation aid only.</strong> Low confidence, disagreement, uncertainty, and context tags help locate records for inspection; they do not diagnose sarcasm, intent, culture, or a person.</section>
+    {% endif %}
+
+    {% if view == 'export' %}
+    <section class="panel"><p class="eyebrow">Explicit action only</p><h2>Insight Export</h2>
+      <p>The CSV preserves the selected workspace definition, exact group summaries and denominators, sample warnings, model provenance, and all user-authored context notes.</p>
+      <form method="get" action="{{ url_for('insights_export', token=token) }}" class="insight-controls">
+        <input type="hidden" name="view" value="explorer"><input type="hidden" name="grouping" value="{{ selection.grouping }}"><input type="hidden" name="perspective" value="{{ selection.perspective }}"><input type="hidden" name="metric" value="{{ selection.metric }}">
+        {% for group in selection.groups %}<input type="hidden" name="group" value="{{ group }}">{% endfor %}
+        <label><input type="checkbox" name="records" value="1"> Include supporting record-level text and metadata</label>
+        <label><input type="checkbox" name="native" value="1"> Include model-native emotion scores with supporting records</label>
+        <button type="submit">Export insights CSV</button>
+      </form>
+      <p class="privacy-note">Exports may contain original text, metadata, human labels, and notes. Store them as private local data. No file is written until you choose this export.</p>
+    </section>
+    {% endif %}
+
+    <section class="panel provenance">
+      <h2>Model and review provenance</h2>
+      <code>{{ first_report.sentiment.provider.model_name }}@{{ first_report.sentiment.provider.revision }}</code>
+      <code>{{ first_report.emotion.provider.model_name }}@{{ first_report.emotion.provider.revision }}</code>
+      <p>Compact emotion activation uses each row's recorded threshold (first displayed model threshold: ≥ {{ '%.2f'|format(first_report.emotion.threshold) }}). Model outputs are probabilistic estimates of text expression. Human-reviewed views expose their own eligible subset and coverage.</p>
+    </section>
+  </main>
+</body>
+</html>

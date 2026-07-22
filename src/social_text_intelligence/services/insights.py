@@ -703,6 +703,26 @@ def select_representative_examples(
         )
         reason = "Lowest displayed AI confidence"
     elif mode is ExampleMode.AI_HUMAN_DISAGREEMENT:
+        def disagreement_relevance(outcome: BatchOutcome) -> tuple[float, int]:
+            case = cases[outcome.prepared.identity]
+            report = outcome.report
+            assert report is not None
+            disagreements = sum(
+                comparison(case) is False
+                for comparison in (
+                    sentiment_agreement,
+                    dominant_emotion_agreement,
+                    emotion_set_agreement,
+                )
+            )
+            lowest_confidence = min(
+                report.sentiment.confidence, report.emotion.confidence
+            )
+            return (
+                disagreements + (1.0 - lowest_confidence),
+                -outcome.prepared.row_number,
+            )
+
         selected = sorted(
             (
                 outcome
@@ -717,9 +737,10 @@ def select_representative_examples(
                     )
                 )
             ),
-            key=lambda item: item.prepared.row_number,
+            key=disagreement_relevance,
+            reverse=True,
         )
-        reason = "Definitive AI-human disagreement"
+        reason = "Highest definitive AI-human disagreement relevance"
     elif mode is ExampleMode.HUMAN_CORRECTED:
         selected = [
             outcome
@@ -776,6 +797,10 @@ INSIGHT_EXPORT_FIELDS = (
     "group",
     "perspective",
     "metric",
+    "sentiment_filter",
+    "emotion_filter",
+    "date_from",
+    "date_to",
     "label",
     "count",
     "denominator",
@@ -821,6 +846,9 @@ def export_insights_csv(
     include_native: bool,
 ) -> str:
     summaries = build_group_metrics(result, reviews, selection)
+    first_report = next(
+        outcome.report for outcome in result.outcomes if outcome.report is not None
+    )
     output = io.StringIO(newline="")
     writer = csv.DictWriter(
         output, fieldnames=INSIGHT_EXPORT_FIELDS, lineterminator="\n"
@@ -835,6 +863,10 @@ def export_insights_csv(
                     "group": safe_spreadsheet_text(summary.group),
                     "perspective": selection.perspective,
                     "metric": selection.metric,
+                    "sentiment_filter": selection.filters.sentiment or "",
+                    "emotion_filter": selection.filters.emotion or "",
+                    "date_from": selection.filters.date_from or "",
+                    "date_to": selection.filters.date_to or "",
                     "label": value.label,
                     "count": value.count,
                     "denominator": value.denominator,
@@ -843,6 +875,11 @@ def export_insights_csv(
                     "total_group_rows": summary.total_count,
                     "unreviewed_count": summary.unreviewed_count,
                     "uncertain_count": summary.uncertain_count,
+                    "sentiment_model": first_report.sentiment.provider.model_name,
+                    "sentiment_revision": first_report.sentiment.provider.revision,
+                    "emotion_model": first_report.emotion.provider.model_name,
+                    "emotion_revision": first_report.emotion.provider.revision,
+                    "emotion_threshold": first_report.emotion.threshold,
                 }
             )
     for note in insight_state.notes:
