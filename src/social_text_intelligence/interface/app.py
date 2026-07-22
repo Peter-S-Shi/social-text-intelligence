@@ -20,11 +20,19 @@ from ..providers import CardiffSentimentProvider, SamLoweEmotionProvider
 from ..providers.samlowe_emotion import DEFAULT_EMOTION_THRESHOLD
 from ..services import (
     AnalysisService,
+    HumanReview,
     LazyAnalysisService,
+    accept_both,
     analyze_batch,
+    create_review_state,
     export_batch_csv,
+    filter_review_cases,
     inspect_csv_upload,
     prepare_csv_batch,
+    review_cases,
+    review_navigation,
+    summarize_reviews,
+    update_review,
 )
 from ..services.batch import DEFAULT_MAX_BATCH_BYTES, DEFAULT_MAX_BATCH_ROWS
 from .batch_state import BatchWorkspace, EphemeralBatchStore
@@ -266,9 +274,260 @@ def create_app(
         result = analyze_batch(workspace.preview, analysis_gateway)
         batch_store.replace(
             token,
-            BatchWorkspace(preview=workspace.preview, result=result),
+            BatchWorkspace(
+                preview=workspace.preview,
+                result=result,
+                reviews=create_review_state(result),
+            ),
         )
         return redirect(url_for("batch_workspace", token=token))
+
+    def review_filters() -> tuple[str, str, str]:
+        return (
+            request.values.get("review", "all"),
+            request.values.get("sentiment", "all"),
+            request.values.get("emotion", "all"),
+        )
+
+    def review_form_values(
+        review: HumanReview, *, submitted: bool = False
+    ) -> dict[str, object]:
+        if submitted:
+            return {
+                "sentiment_judgment": request.form.get(
+                    "sentiment_judgment", ""
+                ),
+                "human_sentiment": request.form.get("human_sentiment", ""),
+                "emotion_judgment": request.form.get("emotion_judgment", ""),
+                "human_dominant_emotion": request.form.get(
+                    "human_dominant_emotion", ""
+                ),
+                "human_secondary_emotions": request.form.getlist(
+                    "human_secondary_emotions"
+                ),
+                "note": request.form.get("review_note", ""),
+            }
+        return {
+            "sentiment_judgment": (
+                review.sentiment_judgment.value
+                if review.sentiment_judgment is not None
+                else ""
+            ),
+            "human_sentiment": (
+                review.human_sentiment.value
+                if review.human_sentiment is not None
+                else ""
+            ),
+            "emotion_judgment": (
+                review.emotion_judgment.value
+                if review.emotion_judgment is not None
+                else ""
+            ),
+            "human_dominant_emotion": (
+                review.human_dominant_emotion.value
+                if review.human_dominant_emotion is not None
+                else ""
+            ),
+            "human_secondary_emotions": tuple(
+                label.value for label in review.human_secondary_emotions
+            ),
+            "note": review.note or "",
+        }
+
+    def render_review(
+        token: str,
+        workspace: BatchWorkspace,
+        row_number: int,
+        *,
+        error_message: str | None = None,
+        submitted: bool = False,
+        status: int = 200,
+    ) -> ResponseReturnValue:
+        result = workspace.result
+        state = workspace.reviews
+        if result is None or state is None:
+            return Response("Review workspace not found.", status=404)
+        all_cases = review_cases(result, state)
+        current = next(
+            (
+                case
+                for case in all_cases
+                if case.outcome.prepared.row_number == row_number
+            ),
+            None,
+        )
+        if current is None:
+            return Response("Review record not found.", status=404)
+        review_filter, sentiment_filter, emotion_filter = review_filters()
+        filtered = filter_review_cases(
+            result,
+            state,
+            review_filter=review_filter,
+            sentiment_filter=sentiment_filter,
+            emotion_filter=emotion_filter,
+        )
+        navigation = review_navigation(
+            result,
+            state,
+            current_record_id=current.review.record_id,
+            filtered_cases=filtered,
+        )
+        position = next(
+            index
+            for index, case in enumerate(all_cases, start=1)
+            if case.review.record_id == current.review.record_id
+        )
+        return (
+            render_template(
+                "review.html",
+                token=token,
+                current=current,
+                position=position,
+                queue_total=len(all_cases),
+                filtered_count=len(filtered),
+                navigation=navigation,
+                summary=summarize_reviews(result, state),
+                review_filter=review_filter,
+                sentiment_filter=sentiment_filter,
+                emotion_filter=emotion_filter,
+                form_values=review_form_values(
+                    current.review, submitted=submitted
+                ),
+                error_message=error_message,
+                max_review_note_length=2_000,
+            ),
+            status,
+        )
+
+    @app.get("/batch/<token>/review")
+    def review_index(token: str) -> ResponseReturnValue:
+        workspace = batch_store.get(token)
+        if (
+            workspace is None
+            or workspace.result is None
+            or workspace.reviews is None
+        ):
+            return Response("Review workspace not found.", status=404)
+        review_filter, sentiment_filter, emotion_filter = review_filters()
+        cases = filter_review_cases(
+            workspace.result,
+            workspace.reviews,
+            review_filter=review_filter,
+            sentiment_filter=sentiment_filter,
+            emotion_filter=emotion_filter,
+        )
+        if not cases:
+            cases = review_cases(workspace.result, workspace.reviews)
+        if not cases:
+            return Response("No successful batch rows are available for review.", 404)
+        return redirect(
+            url_for(
+                "review_record",
+                token=token,
+                row_number=cases[0].outcome.prepared.row_number,
+                review=review_filter,
+                sentiment=sentiment_filter,
+                emotion=emotion_filter,
+            )
+        )
+
+    @app.get("/batch/<token>/review/<int:row_number>")
+    def review_record(token: str, row_number: int) -> ResponseReturnValue:
+        workspace = batch_store.get(token)
+        if workspace is None:
+            return Response("This temporary review expired or was cleared.", 404)
+        return render_review(token, workspace, row_number)
+
+    @app.post("/batch/<token>/review/<int:row_number>")
+    def save_review(token: str, row_number: int) -> ResponseReturnValue:
+        workspace = batch_store.get(token)
+        if (
+            workspace is None
+            or workspace.result is None
+            or workspace.reviews is None
+        ):
+            return Response("This temporary review expired or was cleared.", 404)
+        current = next(
+            (
+                case
+                for case in review_cases(workspace.result, workspace.reviews)
+                if case.outcome.prepared.row_number == row_number
+            ),
+            None,
+        )
+        if current is None:
+            return Response("Review record not found.", status=404)
+        action = request.form.get("action", "save_next")
+        try:
+            if action == "accept_both":
+                updated = accept_both(
+                    workspace.result,
+                    workspace.reviews,
+                    record_id=current.review.record_id,
+                    note=request.form.get("review_note", ""),
+                )
+            else:
+                updated = update_review(
+                    workspace.result,
+                    workspace.reviews,
+                    record_id=current.review.record_id,
+                    sentiment_judgment=request.form.get("sentiment_judgment"),
+                    human_sentiment=request.form.get("human_sentiment"),
+                    emotion_judgment=request.form.get("emotion_judgment"),
+                    human_dominant_emotion=request.form.get(
+                        "human_dominant_emotion"
+                    ),
+                    human_secondary_emotions=request.form.getlist(
+                        "human_secondary_emotions"
+                    ),
+                    note=request.form.get("review_note", ""),
+                )
+        except ValidationError as error:
+            return render_review(
+                token,
+                workspace,
+                row_number,
+                error_message=error.message,
+                submitted=True,
+                status=400,
+            )
+
+        replacement = BatchWorkspace(
+            preview=workspace.preview,
+            result=workspace.result,
+            reviews=updated,
+        )
+        if not batch_store.replace(token, replacement):
+            return Response("This temporary review expired or was cleared.", 404)
+        review_filter, sentiment_filter, emotion_filter = review_filters()
+        filtered = filter_review_cases(
+            workspace.result,
+            updated,
+            review_filter=review_filter,
+            sentiment_filter=sentiment_filter,
+            emotion_filter=emotion_filter,
+        )
+        navigation = review_navigation(
+            workspace.result,
+            updated,
+            current_record_id=current.review.record_id,
+            filtered_cases=filtered,
+        )
+        target = (
+            navigation.next_unreviewed_row
+            if action == "next_unreviewed"
+            else navigation.next_row
+        )
+        return redirect(
+            url_for(
+                "review_record",
+                token=token,
+                row_number=target or row_number,
+                review=review_filter,
+                sentiment=sentiment_filter,
+                emotion=emotion_filter,
+            )
+        )
 
     @app.get("/batch/<token>/export.csv")
     def batch_export(token: str) -> ResponseReturnValue:

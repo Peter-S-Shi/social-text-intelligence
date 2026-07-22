@@ -21,6 +21,7 @@ from social_text_intelligence.services.review import (
     create_review_state,
     filter_review_cases,
     review_navigation,
+    summarize_reviews,
     update_review,
 )
 
@@ -199,6 +200,59 @@ class ReviewServiceTests(unittest.TestCase):
                 record_id="failed",
                 note="",
             )
+
+    def test_summary_uses_only_whole_record_definitive_denominators(self) -> None:
+        updated = accept_both(
+            self.result,
+            self.state,
+            record_id="first",
+            note="",
+            now=fixed_now,
+        )
+        updated = update_review(
+            self.result,
+            updated,
+            record_id="third",
+            sentiment_judgment="correct",
+            human_sentiment="negative",
+            emotion_judgment="uncertain",
+            human_dominant_emotion=None,
+            human_secondary_emotions=(),
+            note="Synthetic uncertainty.",
+            now=fixed_now,
+        )
+        summary = summarize_reviews(self.result, updated)
+
+        self.assertEqual(summary.progress.total_records, 3)
+        self.assertEqual(summary.progress.reviewable_records, 2)
+        self.assertEqual(summary.progress.reviewed, 2)
+        self.assertEqual(summary.progress.corrected, 1)
+        self.assertEqual(summary.progress.uncertain, 1)
+        self.assertEqual(summary.sentiment.definitive_count, 2)
+        self.assertEqual(summary.sentiment.agreement_count, 1)
+        self.assertEqual(summary.sentiment.corrected_count, 1)
+        self.assertEqual(summary.emotion.definitive_count, 1)
+        self.assertEqual(summary.emotion.dominant_agreement_count, 1)
+        self.assertEqual(summary.emotion.set_agreement_count, 1)
+        self.assertEqual(summary.confidence.sentiment, ())
+
+    def test_partial_dimension_does_not_enter_formal_agreement(self) -> None:
+        updated = update_review(
+            self.result,
+            self.state,
+            record_id="first",
+            sentiment_judgment="accept",
+            human_sentiment=None,
+            emotion_judgment=None,
+            human_dominant_emotion=None,
+            human_secondary_emotions=(),
+            note="",
+            now=fixed_now,
+        )
+        summary = summarize_reviews(self.result, updated)
+        self.assertEqual(summary.progress.reviewed, 0)
+        self.assertEqual(summary.sentiment.definitive_count, 0)
+        self.assertEqual(summary.emotion.definitive_count, 0)
 
 
 if __name__ == "__main__":

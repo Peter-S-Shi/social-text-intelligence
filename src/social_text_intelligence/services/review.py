@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unicodedata
+from collections import Counter
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -91,6 +92,102 @@ class ReviewNavigation:
     previous_row: int | None
     next_row: int | None
     next_unreviewed_row: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewProgress:
+    total_records: int
+    reviewable_records: int
+    reviewed: int
+    unreviewed: int
+    corrected: int
+    uncertain: int
+
+
+@dataclass(frozen=True, slots=True)
+class ConfusionRow:
+    ai_label: SentimentLabel
+    human_counts: tuple[tuple[SentimentLabel, int], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class SentimentReviewSummary:
+    definitive_count: int
+    agreement_count: int
+    corrected_count: int
+    correction_distribution: tuple[tuple[SentimentLabel, int], ...]
+    confusion: tuple[ConfusionRow, ...]
+
+    @property
+    def agreement_rate(self) -> float:
+        return (
+            self.agreement_count / self.definitive_count
+            if self.definitive_count
+            else 0.0
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EmotionLabelComparison:
+    label: EmotionLabel
+    ai_only: int
+    human_only: int
+    shared: int
+
+
+@dataclass(frozen=True, slots=True)
+class EmotionReviewSummary:
+    definitive_count: int
+    dominant_agreement_count: int
+    set_agreement_count: int
+    label_comparisons: tuple[EmotionLabelComparison, ...]
+    most_added: tuple[tuple[EmotionLabel, int], ...]
+    most_removed: tuple[tuple[EmotionLabel, int], ...]
+
+    @property
+    def dominant_agreement_rate(self) -> float:
+        return (
+            self.dominant_agreement_count / self.definitive_count
+            if self.definitive_count
+            else 0.0
+        )
+
+    @property
+    def set_agreement_rate(self) -> float:
+        return (
+            self.set_agreement_count / self.definitive_count
+            if self.definitive_count
+            else 0.0
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ConfidenceBand:
+    label: str
+    disagreement_count: int
+    definitive_count: int
+
+    @property
+    def disagreement_rate(self) -> float:
+        return (
+            self.disagreement_count / self.definitive_count
+            if self.definitive_count
+            else 0.0
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ConfidenceComparison:
+    sentiment: tuple[ConfidenceBand, ...]
+    dominant_emotion: tuple[ConfidenceBand, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewSummary:
+    progress: ReviewProgress
+    sentiment: SentimentReviewSummary
+    emotion: EmotionReviewSummary
+    confidence: ConfidenceComparison
 
 
 def create_review_state(result: BatchResult) -> ReviewState:
@@ -430,3 +527,211 @@ def review_navigation(
         None,
     )
     return ReviewNavigation(previous_row, next_row, next_unreviewed)
+
+
+def sentiment_agreement(case: ReviewCase) -> bool | None:
+    report = case.outcome.report
+    review = case.review
+    assert report is not None
+    if (
+        not review.is_reviewed
+        or review.sentiment_judgment is ReviewJudgment.UNCERTAIN
+        or review.human_sentiment is None
+    ):
+        return None
+    return review.human_sentiment is report.sentiment.label
+
+
+def dominant_emotion_agreement(case: ReviewCase) -> bool | None:
+    report = case.outcome.report
+    review = case.review
+    assert report is not None
+    if (
+        not review.is_reviewed
+        or review.emotion_judgment is ReviewJudgment.UNCERTAIN
+        or review.human_dominant_emotion is None
+    ):
+        return None
+    return review.human_dominant_emotion is report.emotion.dominant_emotion
+
+
+def emotion_set_agreement(case: ReviewCase) -> bool | None:
+    report = case.outcome.report
+    review = case.review
+    assert report is not None
+    if (
+        not review.is_reviewed
+        or review.emotion_judgment is ReviewJudgment.UNCERTAIN
+        or review.human_dominant_emotion is None
+    ):
+        return None
+    ai_labels = {
+        report.emotion.dominant_emotion,
+        *report.emotion.secondary_emotions,
+    }
+    human_labels = {
+        review.human_dominant_emotion,
+        *review.human_secondary_emotions,
+    }
+    return ai_labels == human_labels
+
+
+_CONFIDENCE_BANDS = (
+    ("0.00–0.49", 0.0, 0.5),
+    ("0.50–0.74", 0.5, 0.75),
+    ("0.75–0.89", 0.75, 0.9),
+    ("0.90–1.00", 0.9, 1.01),
+)
+MIN_CONFIDENCE_COMPARISON_REVIEWS = 5
+
+
+def _confidence_bands(
+    values: Sequence[tuple[float, bool]],
+) -> tuple[ConfidenceBand, ...]:
+    if len(values) < MIN_CONFIDENCE_COMPARISON_REVIEWS:
+        return ()
+    return tuple(
+        ConfidenceBand(
+            label=label,
+            disagreement_count=sum(
+                disagreement
+                for confidence, disagreement in values
+                if lower <= confidence < upper
+            ),
+            definitive_count=sum(
+                lower <= confidence < upper for confidence, _ in values
+            ),
+        )
+        for label, lower, upper in _CONFIDENCE_BANDS
+        if any(lower <= confidence < upper for confidence, _ in values)
+    )
+
+
+def summarize_reviews(result: BatchResult, state: ReviewState) -> ReviewSummary:
+    cases = review_cases(result, state)
+    reviewed = tuple(case for case in cases if case.review.is_reviewed)
+    sentiment_cases = tuple(
+        case for case in reviewed if sentiment_agreement(case) is not None
+    )
+    emotion_cases = tuple(
+        case for case in reviewed if dominant_emotion_agreement(case) is not None
+    )
+
+    sentiment_corrections = Counter(
+        case.review.human_sentiment
+        for case in sentiment_cases
+        if case.review.sentiment_judgment is ReviewJudgment.CORRECT
+        and case.review.human_sentiment is not None
+    )
+    confusion = tuple(
+        ConfusionRow(
+            ai_label=ai_label,
+            human_counts=tuple(
+                (
+                    human_label,
+                    sum(
+                        case.outcome.report is not None
+                        and case.outcome.report.sentiment.label is ai_label
+                        and case.review.human_sentiment is human_label
+                        for case in sentiment_cases
+                    ),
+                )
+                for human_label in SentimentLabel
+            ),
+        )
+        for ai_label in SentimentLabel
+    )
+
+    ai_only = Counter[EmotionLabel]()
+    human_only = Counter[EmotionLabel]()
+    shared = Counter[EmotionLabel]()
+    for case in emotion_cases:
+        report = case.outcome.report
+        review = case.review
+        assert report is not None and review.human_dominant_emotion is not None
+        ai_labels = {
+            report.emotion.dominant_emotion,
+            *report.emotion.secondary_emotions,
+        }
+        human_labels = {
+            review.human_dominant_emotion,
+            *review.human_secondary_emotions,
+        }
+        ai_only.update(ai_labels - human_labels)
+        human_only.update(human_labels - ai_labels)
+        shared.update(ai_labels & human_labels)
+
+    sentiment_confidence = tuple(
+        (
+            case.outcome.report.sentiment.confidence,
+            not bool(sentiment_agreement(case)),
+        )
+        for case in sentiment_cases
+        if case.outcome.report is not None
+    )
+    emotion_confidence = tuple(
+        (
+            case.outcome.report.emotion.confidence,
+            not bool(dominant_emotion_agreement(case)),
+        )
+        for case in emotion_cases
+        if case.outcome.report is not None
+    )
+    return ReviewSummary(
+        progress=ReviewProgress(
+            total_records=len(result.outcomes),
+            reviewable_records=len(cases),
+            reviewed=len(reviewed),
+            unreviewed=len(cases) - len(reviewed),
+            corrected=sum(case.review.is_corrected for case in cases),
+            uncertain=sum(case.review.is_uncertain for case in cases),
+        ),
+        sentiment=SentimentReviewSummary(
+            definitive_count=len(sentiment_cases),
+            agreement_count=sum(
+                sentiment_agreement(case) is True for case in sentiment_cases
+            ),
+            corrected_count=sum(
+                case.review.sentiment_judgment is ReviewJudgment.CORRECT
+                for case in sentiment_cases
+            ),
+            correction_distribution=tuple(
+                (label, sentiment_corrections[label]) for label in SentimentLabel
+            ),
+            confusion=confusion,
+        ),
+        emotion=EmotionReviewSummary(
+            definitive_count=len(emotion_cases),
+            dominant_agreement_count=sum(
+                dominant_emotion_agreement(case) is True for case in emotion_cases
+            ),
+            set_agreement_count=sum(
+                emotion_set_agreement(case) is True for case in emotion_cases
+            ),
+            label_comparisons=tuple(
+                EmotionLabelComparison(
+                    label=label,
+                    ai_only=ai_only[label],
+                    human_only=human_only[label],
+                    shared=shared[label],
+                )
+                for label in EmotionLabel
+            ),
+            most_added=tuple(
+                sorted(
+                    ((label, human_only[label]) for label in EmotionLabel),
+                    key=lambda item: (-item[1], item[0].value),
+                )[:3]
+            ),
+            most_removed=tuple(
+                sorted(
+                    ((label, ai_only[label]) for label in EmotionLabel),
+                    key=lambda item: (-item[1], item[0].value),
+                )[:3]
+            ),
+        ),
+        confidence=ConfidenceComparison(
+            sentiment=_confidence_bands(sentiment_confidence),
+            dominant_emotion=_confidence_bands(emotion_confidence),
+        ),
+    )

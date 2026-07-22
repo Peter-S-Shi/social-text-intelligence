@@ -17,11 +17,13 @@ from .review import (
     ReviewFilter,
     ReviewJudgment,
     ReviewState,
+    ReviewSummary,
     accept_both,
     create_review_state,
     filter_review_cases,
     review_cases,
     review_navigation,
+    summarize_reviews,
     update_review,
 )
 
@@ -36,6 +38,7 @@ __all__ = [
     "ReviewFilter",
     "ReviewJudgment",
     "ReviewState",
+    "ReviewSummary",
     "SentimentAnalysisService",
     "analyze_batch",
     "accept_both",
@@ -46,5 +49,6 @@ __all__ = [
     "filter_review_cases",
     "review_cases",
     "review_navigation",
+    "summarize_reviews",
     "update_review",
 ]
