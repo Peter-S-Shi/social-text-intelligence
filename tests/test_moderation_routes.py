@@ -1,5 +1,6 @@
 """End-to-end Flask tests for the M9 moderation training workflow."""
 
+import csv
 import io
 import unittest
 
@@ -174,6 +175,64 @@ class ModerationRouteTests(unittest.TestCase):
         self.assertIn(b"not moderation verdicts", session_page.data)
         self.assertIn(b"deterministic-sentiment", session_page.data)
         self.assertIn(b"deterministic-emotion", session_page.data)
+
+        session_url = started.headers["Location"]
+        submitted = self.client.post(
+            session_url + f"/cases/{case_id}",
+            data={
+                "action": "submit",
+                "disposition": "allow",
+                "primary_violation": "no_violation",
+                "severity": "none",
+                "escalate": "false",
+                "reasoning": "Synthetic workspace privacy regression.",
+                "reviewer_note": "Verify explicit export consent.",
+            },
+        )
+        self.assertEqual(submitted.status_code, 302)
+        session_id = session_url.rsplit("/", 1)[-1]
+        export_url = workspace_url + f"/sessions/{session_id}/export.csv"
+
+        privacy_default = self.client.get(export_url)
+        self.assertEqual(privacy_default.status_code, 200)
+        self.assertEqual(
+            privacy_default.headers["Cache-Control"], "no-store"
+        )
+        default_rows = list(
+            csv.DictReader(io.StringIO(privacy_default.data.decode()))
+        )
+        default_case = next(
+            row for row in default_rows if row["section"] == "case_result"
+        )
+        self.assertEqual(default_case["source_text"], "")
+        self.assertEqual(default_case["sentiment_signal"], "")
+        self.assertEqual(default_case["emotion_signal"], "")
+        self.assertEqual(default_case["trusted_metadata"], "")
+
+        opted_in = self.client.get(
+            export_url
+            + "?source_text=1&signals=1&context=1&metadata=1"
+        )
+        self.assertEqual(opted_in.status_code, 200)
+        self.assertEqual(opted_in.headers["Cache-Control"], "no-store")
+        opted_in_rows = list(
+            csv.DictReader(io.StringIO(opted_in.data.decode()))
+        )
+        opted_in_case = next(
+            row for row in opted_in_rows if row["section"] == "case_result"
+        )
+        self.assertEqual(
+            opted_in_case["source_text"], "synthetic workspace"
+        )
+        self.assertIn(
+            "deterministic-sentiment",
+            opted_in_case["sentiment_signal"],
+        )
+        self.assertIn(
+            "deterministic-emotion",
+            opted_in_case["emotion_signal"],
+        )
+        self.assertIn("topic=testing", opted_in_case["trusted_metadata"])
 
     def test_configured_limits_are_visible_and_capacity_does_not_evict(
         self,
