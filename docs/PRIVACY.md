@@ -75,6 +75,20 @@ notes, and metadata are excluded by default and require separate opt-in.
 Spreadsheet-formula protection applies to reasoning, reviewer notes, source
 text, context, and metadata. Treat opted-in exports as private local data.
 
+Support Triage uses its own random-token, capacity-blocking, sliding-expiry
+process-memory workspace. Built-in guide and ticket resources are
+project-authored synthetic fixtures. Workspace-derived tickets are copied only
+after explicit record selection and preserve a literal source record or literal
+bounded excerpt; decisions never write back into batch, review, insight, or
+moderation state.
+
+The default Support Triage export may include built-in synthetic text but leaves
+workspace-derived source text, sentiment/emotion signals, human review, context
+notes, and trusted metadata blank. Each workspace-derived context category has a
+separate explicit opt-in. Formula-like user-controlled cells are escaped, every
+export is explicit, and all responses use `Cache-Control: no-store`. Clearing,
+expiry, or process shutdown removes unexported triage state.
+
 ## Persistence
 
 Future persistence must remain local and ignored by Git. Schema migrations must

@@ -1,6 +1,6 @@
 # Architecture
 
-## Milestone 9 boundary
+## Milestone 10 boundary
 
 Milestone 9 adds an educational moderation training workflow over a versioned
 synthetic policy and case library. It may explicitly snapshot successful
@@ -11,6 +11,14 @@ validation from non-blocking policy guidance, and shapes auditable exports. It
 intentionally adds no live moderation model, enforcement action, support triage,
 database, LLM narrative, platform connector, French capability, or hosted
 deployment.
+
+Milestone 10 adds a separate Support Triage domain over a versioned synthetic
+routing guide and ticket library. It snapshots explicitly selected parsed batch
+records without requiring NLP success, keeps optional M3–M8 context
+non-authoritative, and owns draft/finalize/revision state, deterministic mock
+visibility, comparisons, summaries, and privacy-aware export. It adds no CRM,
+response generation, real classifier, automatic routing, persistence, or
+external operation.
 
 The current package contains:
 
@@ -73,6 +81,19 @@ bounded, expiring process memory. Capacity and object limits block creation
 rather than evicting older work. `interface/moderation_routes.py` parses forms
 and replaces immutable workspace state; it does not define policy semantics or
 persist content.
+
+`contracts/triage.py` owns support triage taxonomies, legal draft structure,
+finalized structural requirements, guide departures, snapshots, provenance, and
+first/final state. `services/triage_resources.py` validates the packaged guide
+and synthetic ticket library. `providers/triage_mock.py` is deterministic
+fixture lookup only. `services/support_triage.py` owns source eligibility,
+literal snapshots, lifecycle transitions, comparisons, filters, denominators,
+sample safeguards, and export shaping.
+
+`interface/triage_state.py` provides a random-token, capacity-blocking,
+sliding-expiry process-memory store. `interface/triage_routes.py` parses HTTP
+inputs and replaces immutable workspace values. Templates display already
+validated decisions and summaries; they do not define routing semantics.
 
 ## Intended layers
 

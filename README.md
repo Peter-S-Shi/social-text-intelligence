@@ -5,10 +5,14 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 9 — moderation training workflow.** The local Flask
+> **Status: Milestone 10 — local Support Triage workbench.** The local Flask
 > application supports direct English analysis, bounded CSV batch workspaces,
 > independent human review, dataset-bounded insights, and a synthetic,
-> policy-based moderation training workflow with explicit audit export.
+> policy-based moderation training workflow plus human-led support triage with
+> explicit audit export.
+>
+> Planned feature milestones are complete, but the project is not yet
+> feature-frozen or release-ready.
 
 ## Principles
 
@@ -212,6 +216,42 @@ block new creation without silently deleting older cases or summaries. CSV expor
 is explicit and auditable; user-derived source text, model signals, context notes,
 and trusted metadata are excluded by default and require separate opt-in. See
 [Moderation Training](docs/MODERATION_TRAINING.md) for the full contract.
+
+## Support Triage
+
+Milestone 10 adds a separate local Support Triage workbench with three areas:
+Source & Routing Guide, Triage Workspace, and Summary & Export. It uses a
+versioned project-authored synthetic guide and 22 synthetic tickets. Users may
+also explicitly snapshot successfully parsed batch records, including records
+whose sentiment or emotion inference failed. Source provenance remains visible,
+and no triage decision writes back into batch, review, insight, or moderation
+state.
+
+Human decisions keep primary and secondary intents, issue category, urgency,
+recommended queue, escalation, recommended next actions, reasons, and notes
+separate. Incomplete but legal drafts are explicit. Finalization is atomic,
+freezes guide provenance, and preserves the immutable first decision; later
+changes are explicit revisions. Structural errors block invalid state, while
+synthetic-guide warnings remain non-blocking and auditable.
+
+Independent mode hides any deterministic fixture mock before first finalize.
+The assisted simulation may show a mock first but never prefills the human form.
+Human–mock agreement and override counts are descriptive, not accuracy, quality,
+causality, or operator performance.
+
+Triage state is bounded, expiring process memory: 200 tickets per workspace,
+eight concurrent workspaces, and 30-minute sliding inactivity expiry by default.
+Limits block creation rather than evicting existing work. CSV export is explicit,
+formula-safe, and `no-store`. Built-in synthetic text may appear by default;
+workspace-derived text, NLP signals, human review, context notes, and trusted
+metadata are separate opt-ins. See
+[Support Triage](docs/SUPPORT_TRIAGE.md) for the complete contract and
+limitations.
+
+The next lifecycle phase is Feature Complete Review, followed by a Feature
+Freeze Gate, product hardening, full regression and manual acceptance, and only
+then a release-candidate and packaging decision. Deferred next-version
+candidates remain outside the current `0.10.0` feature boundary.
 
 ## Core contracts
 

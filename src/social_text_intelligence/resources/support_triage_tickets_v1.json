@@ -1,0 +1,159 @@
+{
+  "fixture_version": "1.0.0",
+  "tickets": [
+    {
+      "ticket_id": "support-001",
+      "complexity": "basic",
+      "text": "I cannot sign in after resetting my password.",
+      "rule_ids": ["TRIAGE-INTENT-001", "TRIAGE-ACCOUNT-001", "TRIAGE-QUEUE-001"],
+      "mock": {"primary_intent": "recover_account_access", "issue_category": "account_and_access", "urgency": "high", "recommended_queue": "account_and_access", "escalation_required": false, "primary_next_action": "verify_identity_or_account_ownership", "rationale": "Account access requires ownership verification."}
+    },
+    {
+      "ticket_id": "support-002",
+      "complexity": "basic",
+      "text": "My card was declined during checkout. What should I check?",
+      "rule_ids": ["TRIAGE-INTENT-001", "TRIAGE-QUEUE-001"],
+      "mock": {"primary_intent": "request_information", "secondary_intents": ["dispute_charge_or_payment"], "issue_category": "billing_and_payment", "urgency": "normal", "recommended_queue": "billing_operations", "escalation_required": false, "primary_next_action": "review_transaction_or_billing_record", "rationale": "A routine payment failure belongs with billing operations."}
+    },
+    {
+      "ticket_id": "support-003",
+      "complexity": "intermediate",
+      "text": "I do not recognize this charge and need it reviewed.",
+      "rule_ids": ["TRIAGE-ESCALATE-001", "TRIAGE-FRAUD-001"],
+      "mock": {"primary_intent": "dispute_charge_or_payment", "secondary_intents": ["report_fraud_or_security_concern"], "issue_category": "fraud_or_security_concern", "urgency": "high", "recommended_queue": "fraud_and_risk_review", "escalation_required": true, "escalation_reason": "suspected_fraud", "primary_next_action": "review_transaction_or_billing_record", "human_notes": "Synthetic suspected-fraud routing example.", "rationale": "An unrecognized charge merits fraud and risk review."}
+    },
+    {
+      "ticket_id": "support-004",
+      "complexity": "basic",
+      "text": "Please review whether my recent purchase is eligible for a refund.",
+      "rule_ids": ["TRIAGE-REFUND-001", "TRIAGE-ACTION-001"],
+      "mock": {"primary_intent": "request_refund", "issue_category": "refund_and_cancellation", "urgency": "normal", "recommended_queue": "refunds_and_cancellations", "escalation_required": false, "primary_next_action": "process_cancellation_or_refund_review", "rationale": "This is a routine refund eligibility request."}
+    },
+    {
+      "ticket_id": "support-005",
+      "complexity": "basic",
+      "text": "I want to cancel before the next renewal.",
+      "rule_ids": ["TRIAGE-INTENT-001", "TRIAGE-REFUND-001"],
+      "mock": {"primary_intent": "request_cancellation", "issue_category": "refund_and_cancellation", "urgency": "normal", "recommended_queue": "refunds_and_cancellations", "escalation_required": false, "primary_next_action": "process_cancellation_or_refund_review", "rationale": "Cancellation is recommended for the dedicated queue."}
+    },
+    {
+      "ticket_id": "support-006",
+      "complexity": "complex",
+      "text": "The service is unavailable for everyone in our test office, although this message is calm.",
+      "rule_ids": ["TRIAGE-URGENCY-001", "TRIAGE-TECH-001", "TRIAGE-ESCALATE-001"],
+      "mock": {"primary_intent": "report_technical_problem", "issue_category": "technical_problem", "urgency": "normal", "recommended_queue": "technical_support", "escalation_required": false, "primary_next_action": "collect_logs_or_technical_details", "rationale": "Deliberately under-prioritized fixture mock."}
+    },
+    {
+      "ticket_id": "support-007",
+      "complexity": "intermediate",
+      "text": "The replacement part still fails under ordinary use.",
+      "rule_ids": ["TRIAGE-CATEGORY-001", "TRIAGE-ACTION-001"],
+      "mock": {"primary_intent": "report_product_or_service_problem", "issue_category": "product_or_service_issue", "urgency": "normal", "recommended_queue": "general_support", "escalation_required": false, "primary_next_action": "request_more_information", "rationale": "More product details are needed."}
+    },
+    {
+      "ticket_id": "support-008",
+      "complexity": "basic",
+      "text": "Can you tell me the current delivery status?",
+      "rule_ids": ["TRIAGE-INTENT-001", "TRIAGE-QUEUE-001"],
+      "mock": {"primary_intent": "request_status_update", "issue_category": "order_delivery_or_status", "urgency": "normal", "recommended_queue": "order_and_delivery_support", "escalation_required": false, "primary_next_action": "monitor_or_follow_up", "rationale": "This is a routine status request."}
+    },
+    {
+      "ticket_id": "support-009",
+      "complexity": "basic",
+      "text": "Am I eligible for the student plan?",
+      "rule_ids": ["TRIAGE-CATEGORY-001", "TRIAGE-ACTION-001"],
+      "mock": {"primary_intent": "request_information", "issue_category": "policy_or_eligibility_question", "urgency": "low", "recommended_queue": "general_support", "escalation_required": false, "primary_next_action": "provide_policy_or_eligibility_information", "rationale": "A general eligibility question has little time pressure."}
+    },
+    {
+      "ticket_id": "support-010",
+      "complexity": "complex",
+      "text": "I received a sign-in alert from a location I do not recognize.",
+      "rule_ids": ["TRIAGE-ACCOUNT-001", "TRIAGE-FRAUD-001", "TRIAGE-ESCALATE-001"],
+      "mock": {"primary_intent": "report_fraud_or_security_concern", "secondary_intents": ["recover_account_access"], "issue_category": "fraud_or_security_concern", "urgency": "critical", "recommended_queue": "fraud_and_risk_review", "escalation_required": true, "escalation_reason": "account_security_concern", "primary_next_action": "verify_identity_or_account_ownership", "human_notes": "Synthetic account-security concern.", "rationale": "Possible account compromise requires prompt human review."}
+    },
+    {
+      "ticket_id": "support-011",
+      "complexity": "complex",
+      "text": "A user reports repeated targeted abuse and asks how to preserve evidence.",
+      "rule_ids": ["TRIAGE-SAFETY-001", "TRIAGE-ESCALATE-001"],
+      "mock": {"primary_intent": "report_safety_or_abuse_concern", "issue_category": "safety_or_abuse_concern", "urgency": "critical", "recommended_queue": "trust_and_safety", "escalation_required": true, "escalation_reason": "safety_or_abuse_concern", "primary_next_action": "escalate_to_specialist", "human_notes": "Synthetic, non-graphic safety concern.", "rationale": "Reported abuse belongs with trust and safety."}
+    },
+    {
+      "ticket_id": "support-012",
+      "complexity": "intermediate",
+      "text": "I have contacted support twice and the billing problem continues.",
+      "rule_ids": ["TRIAGE-ESCALATE-001", "TRIAGE-QUEUE-001"],
+      "mock": {"primary_intent": "submit_complaint", "secondary_intents": ["dispute_charge_or_payment"], "issue_category": "billing_and_payment", "urgency": "high", "recommended_queue": "billing_operations", "escalation_required": true, "escalation_reason": "repeated_unresolved_issue", "primary_next_action": "review_transaction_or_billing_record", "human_notes": "Repeated unresolved synthetic issue.", "rationale": "Retained recurrence suggests escalation review."}
+    },
+    {
+      "ticket_id": "support-013",
+      "complexity": "basic",
+      "text": "The search filters are useful, but a compact layout would help.",
+      "rule_ids": ["TRIAGE-URGENCY-001", "TRIAGE-QUEUE-001"],
+      "mock": {"primary_intent": "provide_feedback", "issue_category": "feedback_or_feature_request", "urgency": "low", "recommended_queue": "product_feedback", "escalation_required": false, "primary_next_action": "no_immediate_action", "rationale": "General feedback has no immediate operational action."}
+    },
+    {
+      "ticket_id": "support-014",
+      "complexity": "basic",
+      "text": "Please add an option to export a compact report.",
+      "rule_ids": ["TRIAGE-INTENT-001", "TRIAGE-QUEUE-001"],
+      "mock": {"primary_intent": "request_feature", "issue_category": "feedback_or_feature_request", "urgency": "low", "recommended_queue": "product_feedback", "escalation_required": false, "primary_next_action": "monitor_or_follow_up", "rationale": "Feature requests belong with product feedback."}
+    },
+    {
+      "ticket_id": "support-015",
+      "complexity": "intermediate",
+      "text": "Something changed and I am not sure whether it is my profile or a payment setting.",
+      "rule_ids": ["TRIAGE-UNCLEAR-001", "TRIAGE-MULTI-001"],
+      "mock": null
+    },
+    {
+      "ticket_id": "support-016",
+      "complexity": "complex",
+      "text": "I am furious that the icon is the wrong shade of blue.",
+      "rule_ids": ["TRIAGE-URGENCY-001", "TRIAGE-MOCK-001"],
+      "mock": {"primary_intent": "submit_complaint", "issue_category": "product_or_service_issue", "urgency": "critical", "recommended_queue": "specialist_or_manual_review", "escalation_required": true, "escalation_reason": "specialist_review_required", "primary_next_action": "escalate_to_specialist", "human_notes": "Deliberately over-prioritized fixture mock.", "rationale": "Deliberately follows angry wording rather than impact."}
+    },
+    {
+      "ticket_id": "support-017",
+      "complexity": "complex",
+      "text": "Please update my email address, and I also need the status of an existing delivery.",
+      "rule_ids": ["TRIAGE-MULTI-001", "TRIAGE-ACCOUNT-001"],
+      "mock": {"primary_intent": "change_account_details", "secondary_intents": ["request_status_update"], "issue_category": "account_and_access", "urgency": "normal", "recommended_queue": "account_and_access", "escalation_required": false, "primary_next_action": "verify_identity_or_account_ownership", "secondary_next_actions": ["monitor_or_follow_up"], "rationale": "The account change is primary while delivery status remains secondary."}
+    },
+    {
+      "ticket_id": "support-018",
+      "complexity": "intermediate",
+      "text": "The application closes when I open settings.",
+      "rule_ids": ["TRIAGE-TECH-001", "TRIAGE-MOCK-001"],
+      "mock": {"primary_intent": "report_technical_problem", "issue_category": "technical_problem", "urgency": "normal", "recommended_queue": "product_feedback", "escalation_required": false, "primary_next_action": "collect_logs_or_technical_details", "human_notes": "Deliberate queue mismatch.", "rationale": "Deliberately routes a technical issue to product feedback."}
+    },
+    {
+      "ticket_id": "support-019",
+      "complexity": "complex",
+      "text": "A refund was requested yesterday and the user also reports an unknown payment.",
+      "rule_ids": ["TRIAGE-MULTI-001", "TRIAGE-FRAUD-001"],
+      "mock": {"primary_intent": "request_refund", "secondary_intents": ["dispute_charge_or_payment"], "issue_category": "refund_and_cancellation", "urgency": "normal", "recommended_queue": "refunds_and_cancellations", "escalation_required": false, "primary_next_action": "process_cancellation_or_refund_review", "rationale": "Deliberately misses a possible fraud escalation."}
+    },
+    {
+      "ticket_id": "support-020",
+      "complexity": "intermediate",
+      "text": "The entire demonstration environment is offline before a scheduled session.",
+      "rule_ids": ["TRIAGE-TECH-001", "TRIAGE-ESCALATE-001"],
+      "mock": {"primary_intent": "report_technical_problem", "issue_category": "technical_problem", "urgency": "critical", "recommended_queue": "technical_support", "escalation_required": true, "escalation_reason": "service_wide_or_multi_user_impact", "primary_next_action": "escalate_to_specialist", "human_notes": "Synthetic broad-service impact.", "rationale": "Broad impact and time sensitivity merit prompt review."}
+    },
+    {
+      "ticket_id": "support-021",
+      "complexity": "intermediate",
+      "text": "The eligibility wording conflicts across two help pages.",
+      "rule_ids": ["TRIAGE-UNCLEAR-001", "TRIAGE-ACTION-001"],
+      "mock": {"primary_intent": "request_information", "issue_category": "policy_or_eligibility_question", "urgency": "unclear", "recommended_queue": "specialist_or_manual_review", "escalation_required": true, "escalation_reason": "policy_ambiguity", "primary_next_action": "provide_policy_or_eligibility_information", "unclear_reason": "Conflicting synthetic guidance requires review.", "human_notes": "Synthetic policy ambiguity.", "rationale": "Conflicting guidance merits specialist review."}
+    },
+    {
+      "ticket_id": "support-022",
+      "complexity": "basic",
+      "text": "=Please call me is a literal synthetic spreadsheet-like support message.",
+      "rule_ids": ["TRIAGE-UNCLEAR-001", "TRIAGE-MOCK-001"],
+      "mock": null
+    }
+  ]
+}

@@ -25,6 +25,10 @@ from .samlowe_emotion import (
     SamLoweEmotionProvider,
     TransformersEmotionRuntime,
 )
+from .triage_mock import (
+    FixtureTriageSuggestionProvider,
+    TriageSuggestionProvider,
+)
 
 __all__ = [
     "COMPACT_EMOTION_MAPPING",
@@ -48,4 +52,6 @@ __all__ = [
     "TransformersSentimentRuntime",
     "UNMAPPED_NATIVE_LABELS",
     "preprocess_social_text",
+    "FixtureTriageSuggestionProvider",
+    "TriageSuggestionProvider",
 ]

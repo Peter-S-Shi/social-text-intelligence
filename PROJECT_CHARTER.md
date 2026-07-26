@@ -732,16 +732,21 @@ The milestone prompt should communicate:
 
 This roadmap is directional. It may be revised after architecture review and model-license research.
 
-**Implementation status:** Milestones 1–9 are implemented in the current codebase.
-Milestone 9 is a temporary, policy-based moderation training workflow built on a
-versioned synthetic policy and case library, with optional explicit snapshots of
-successful Milestone 6 records and separate frozen M7/M8 context. Structural
-validation rejects incomplete or contradictory decisions; non-blocking policy
-guidance remains visible without rewriting the user's judgment. Built-in and
-self-authored reference provenance remain distinct. Training state is bounded,
-expiring process memory with configurable limits and no silent eviction.
-Milestone 10 and later milestones remain unimplemented. This status note does not
-broaden any milestone's scope.
+**Implementation status:** Milestones 1–10 are implemented in the current
+codebase. Milestone 10 is a temporary, human-led Support Triage workbench over a
+versioned synthetic routing guide and ticket library. It supports explicit
+snapshots of parsed Milestone 6 records even when NLP inference failed, while
+keeping M3–M8 signals and notes as non-authoritative context. Draft, atomic
+finalize, immutable first decision, explicit revision, guide provenance,
+non-blocking guidance warnings, deterministic mock visibility, sample-aware
+summaries, and privacy-default export remain separate and auditable. State is
+bounded, expiring process memory with configurable blocking limits and no silent
+eviction.
+
+Planned feature milestones are complete, but the project is not yet
+feature-frozen or release-ready. Former Milestones 11–13 are deferred
+next-version candidates, not implemented current-version milestones. This
+status note does not broaden any milestone's scope.
 
 ### Milestone 1 — Independent Local Project Foundation
 
@@ -837,7 +842,7 @@ Goal:
 - support human review;
 - generate structured summaries without automatically sending responses.
 
-### Milestone 11 — Transcript and Long-Form Analysis
+### Deferred next-version candidate — Transcript and Long-Form Analysis
 
 Goal:
 
@@ -846,7 +851,7 @@ Goal:
 - provide time- or segment-based sentiment and emotion views;
 - summarize long-form trends without hiding segment detail.
 
-### Milestone 12 — French Capability
+### Deferred next-version candidate — French Capability
 
 Goal:
 
@@ -855,7 +860,7 @@ Goal:
 - compare performance across English and French;
 - avoid declaring production-quality bilingual support without evidence.
 
-### Milestone 13 — Evaluation and Portfolio Polish
+### Deferred lifecycle work — Evaluation and Portfolio Polish
 
 Goal:
 
@@ -865,6 +870,18 @@ Goal:
 - finalize architecture diagrams, screenshots, model cards, notices, and reproducibility instructions.
 
 Platform API connectors should be evaluated only after the local product is mature.
+
+The planned lifecycle after Milestone 10 is:
+
+1. Feature Complete Review;
+2. Feature Freeze Gate;
+3. Product Hardening;
+4. Full regression and manual acceptance;
+5. Release Candidate and packaging;
+6. Deferred next-version backlog review.
+
+None of these labels implies `1.0.0`, production readiness, public release, or
+completion before its separate acceptance gate is satisfied.
 
 ---
 

@@ -191,4 +191,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print("CSV batch preview, analysis, filtering, and export available: yes")
     print("Temporary human review and reviewed export available: yes")
     print("Temporary local insights and context-note workflow available: yes")
+    print("Synthetic moderation training workflow available: yes")
+    print("Local Support Triage workbench available: yes")
+    print("Planned features complete; feature freeze and release review pending")
     return 0

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Triage Workspace · Support Triage</title><link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}"></head>
+<body><header class="site-header"><div><p class="eyebrow">Area 2 of 3</p><h1>Triage Workspace</h1></div><span class="mode-badge">{{ workspace.entries|length }} temporary tickets</span></header><main>
+<nav class="mode-nav"><a href="{{ url_for('triage.guide', token=token) }}">1. Source & Guide</a><a class="active" href="{{ url_for('triage.workspace', token=token) }}">2. Triage Workspace</a><a href="{{ url_for('triage.summary', token=token) }}">3. Summary & Export</a></nav>
+{% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+<section class="panel"><h2>Filter and sort</h2><form method="get" class="filter-grid">
+<label>Status<select name="status"><option value="">All</option>{% for item in statuses %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
+<label>Source<select name="source"><option value="">All</option>{% for item in sources %}<option value="{{ item.value }}">{{ item.value|replace("_", " ") }}</option>{% endfor %}</select></label>
+<label>Source label<input name="source_label" value="{{ filters.source_label }}"></label>
+<label>Topic<input name="topic" value="{{ filters.topic }}"></label>
+<label>Community<input name="community" value="{{ filters.community }}"></label>
+<label>Intent<select name="primary_intent"><option value="">All</option>{% for item in intents %}<option value="{{ item.value }}">{{ item.value|replace("_", " ") }}</option>{% endfor %}</select></label>
+<label>Category<select name="issue_category"><option value="">All</option>{% for item in categories %}<option value="{{ item.value }}">{{ item.value|replace("_", " ") }}</option>{% endfor %}</select></label>
+<label>Urgency<select name="urgency"><option value="">All</option>{% for item in urgencies %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
+<label>Queue<select name="queue"><option value="">All</option>{% for item in queues %}<option value="{{ item.value }}">{{ item.value|replace("_", " ") }}</option>{% endfor %}</select></label>
+<label>Escalation<select name="escalation"><option value="">All</option><option value="true">Yes</option><option value="false">No</option></select></label>
+<label>Mock<select name="mock"><option value="">All</option><option value="available">Available</option><option value="unavailable">Unavailable</option></select></label>
+<label>Disagreement<select name="disagreement"><option value="">All</option><option value="true">Present</option><option value="false">None</option></select></label>
+<label>Warning<select name="warning"><option value="">All</option><option value="true">Present</option><option value="false">None</option></select></label>
+<label>Text search<input name="q"></label><label>Sort<select name="sort"><option value="original">Original order</option><option value="urgency">Urgency</option><option value="status">Status</option><option value="timestamp">Timestamp</option></select></label><button type="submit">Apply</button></form></section>
+<section class="panel"><h2>Tickets</h2>{% if entries %}<div class="table-wrap"><table><thead><tr><th>ID</th><th>Source</th><th>Status</th><th>Urgency</th><th>Recommended queue</th><th>Warnings</th><th></th></tr></thead><tbody>{% for entry in entries %}<tr><td>{{ entry.ticket.ticket_id }}</td><td>{{ entry.ticket.source.value }}<br><small>{{ entry.ticket.source_label }}</small></td><td>{{ entry.status.value }}</td><td>{{ entry.final.fields.urgency.value if entry.final else "—" }}</td><td>{{ entry.final.fields.recommended_queue.value if entry.final else "—" }}</td><td>{{ entry.final.warnings|length if entry.final else 0 }}</td><td><a href="{{ url_for('triage.ticket', token=token, ticket_id=entry.ticket.ticket_id) }}">Open</a></td></tr>{% endfor %}</tbody></table></div>{% else %}<p>No tickets match. Add or adjust tickets in Source & Guide.</p>{% endif %}</section>
+</main></body></html>

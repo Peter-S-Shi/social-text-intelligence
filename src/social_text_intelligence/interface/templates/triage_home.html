@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support Triage · Social Text Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header class="site-header"><div><p class="eyebrow">Local operational workbench</p><h1>Support Triage</h1></div><span class="mode-badge">Process memory · human-led</span></header>
+  <main>
+    <nav class="mode-nav" aria-label="Analysis modes">
+      <a href="{{ url_for('analyze_text') }}">Direct analysis</a><a href="{{ url_for('batch_home') }}">Batch CSV</a><a href="{{ url_for('moderation.home') }}">Moderation Training</a><a class="active" href="{{ url_for('triage.home') }}">Support Triage</a>
+    </nav>
+    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    <section class="panel moderation-hero">
+      <h2>Turn support messages into auditable human triage decisions</h2>
+      <p>This is not a CRM, ticketing platform, response generator, or automated routing system. Recommended queues and actions are decisions for review, not operations that occurred.</p>
+      <form method="post" action="{{ url_for('triage.create_workspace') }}">
+        <label>Work mode
+          <select name="mode">
+            <option value="independent">Independent — hide synthetic mock until first finalize</option>
+            <option value="mock_assisted">AI-assisted simulation — show deterministic synthetic mock</option>
+          </select>
+        </label>
+        <label>Optional temporary batch token <input name="batch_token" value="{{ source_batch_token }}" autocomplete="off"></label>
+        <p><small>Parsed source rows remain eligible even if sentiment or emotion analysis failed. Nothing is copied until you explicitly select a record.</small></p>
+        <button type="submit">Create Support Triage workspace</button>
+      </form>
+    </section>
+    <section class="panel"><h2>Bounded temporary state</h2><p>Up to {{ limits.max_tickets }} tickets, 8 concurrent workspaces, and {{ ttl_seconds // 60 }}-minute sliding inactivity expiry. Limits block new objects and never silently overwrite existing work.</p></section>
+    <section class="limitations"><strong>Human review remains decisive.</strong> Sentiment, emotion, review notes, and context notes are supporting context only and never determine triage automatically.</section>
+  </main>
+</body></html>
