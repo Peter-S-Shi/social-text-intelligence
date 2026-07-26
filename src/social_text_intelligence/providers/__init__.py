@@ -10,6 +10,10 @@ from .cardiff_sentiment import (
     preprocess_social_text,
 )
 from .mock import DeterministicEmotionProvider, DeterministicSentimentProvider
+from .moderation_mock import (
+    FixtureModerationRecommendationProvider,
+    ModerationRecommendationProvider,
+)
 from .samlowe_emotion import (
     COMPACT_EMOTION_MAPPING,
     DEFAULT_EMOTION_THRESHOLD,
@@ -28,6 +32,8 @@ __all__ = [
     "DEFAULT_EMOTION_THRESHOLD",
     "DeterministicEmotionProvider",
     "DeterministicSentimentProvider",
+    "FixtureModerationRecommendationProvider",
+    "ModerationRecommendationProvider",
     "EMOTION_MODEL_ID",
     "EMOTION_MODEL_REVISION",
     "EmotionProvider",

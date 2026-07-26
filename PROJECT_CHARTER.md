@@ -732,11 +732,16 @@ The milestone prompt should communicate:
 
 This roadmap is directional. It may be revised after architecture review and model-license research.
 
-**Implementation status:** Milestones 1–8 are implemented in the current codebase.
-Milestone 8 is a temporary, batch-attached descriptive insight workflow built on
-the frozen Milestone 6 results and separate Milestone 7 review state. Later
-milestones remain unimplemented. This status note does not broaden any
-milestone's scope.
+**Implementation status:** Milestones 1–9 are implemented in the current codebase.
+Milestone 9 is a temporary, policy-based moderation training workflow built on a
+versioned synthetic policy and case library, with optional explicit snapshots of
+successful Milestone 6 records and separate frozen M7/M8 context. Structural
+validation rejects incomplete or contradictory decisions; non-blocking policy
+guidance remains visible without rewriting the user's judgment. Built-in and
+self-authored reference provenance remain distinct. Training state is bounded,
+expiring process memory with configurable limits and no silent eviction.
+Milestone 10 and later milestones remain unimplemented. This status note does not
+broaden any milestone's scope.
 
 ### Milestone 1 — Independent Local Project Foundation
 

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session Review · Social Text Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div><p class="eyebrow">Moderation Training</p><h1>Session review</h1></div>
+    <span class="mode-badge">{{ session.status.value }} · {{ summary.completed_cases }}/{{ summary.total_cases }}</span>
+  </header>
+  <main>
+    <nav class="subnav" aria-label="Moderation workflow">
+      <a href="{{ url_for('moderation.prepare', token=token) }}">1. Prepare</a>
+      <a href="{{ url_for('moderation.session', token=token, session_id=session.session_id) }}">2. Train</a>
+      <a class="active" href="{{ url_for('moderation.results', token=token, session_id=session.session_id) }}">3. Review</a>
+    </nav>
+    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    <section class="panel">
+      <h2>Raw denominators, not a composite score</h2>
+      <p>{{ summary.total_cases }} total · {{ summary.completed_cases }} submitted · {{ summary.unscored_cases }} cases without reference · {{ summary.ai_available_cases }} with synthetic mock AI.</p>
+      <div class="table-wrap"><table><thead><tr><th>Metric</th><th>First</th><th>Final</th><th>Denominator</th><th>Sample notice</th></tr></thead><tbody>
+      {% for first in summary.first_metrics %}
+      {% set final = summary.final_metrics[loop.index0] %}
+      <tr><td>{{ first.name }}</td><td>{{ first.numerator }}/{{ first.denominator }}</td><td>{{ final.numerator }}/{{ final.denominator }}</td><td>{{ final.denominator }} eligible · {{ final.excluded }} excluded</td><td>{{ final.sample.message or final.sample.level.value }}</td></tr>
+      {% endfor %}
+      <tr><td>trainee–mock agreement (not accuracy)</td><td colspan="2">{{ summary.trainee_ai_agreement.numerator }}/{{ summary.trainee_ai_agreement.denominator }}</td><td>{{ summary.trainee_ai_agreement.denominator }} eligible · {{ summary.trainee_ai_agreement.excluded }} excluded</td><td>{{ summary.trainee_ai_agreement.sample.message or summary.trainee_ai_agreement.sample.level.value }}</td></tr>
+      <tr><td>mock–reference alignment</td><td colspan="2">{{ summary.ai_reference_alignment.numerator }}/{{ summary.ai_reference_alignment.denominator }}</td><td>{{ summary.ai_reference_alignment.denominator }} eligible · {{ summary.ai_reference_alignment.excluded }} excluded</td><td>{{ summary.ai_reference_alignment.sample.message or summary.ai_reference_alignment.sample.level.value }}</td></tr>
+      <tr><td>complete acceptable-alternative rate</td><td colspan="2">{{ summary.acceptable_alternative_alignment.numerator }}/{{ summary.acceptable_alternative_alignment.denominator }}</td><td>{{ summary.acceptable_alternative_alignment.denominator }} eligible · {{ summary.acceptable_alternative_alignment.excluded }} excluded</td><td>{{ summary.acceptable_alternative_alignment.sample.message or summary.acceptable_alternative_alignment.sample.level.value }}</td></tr>
+      </tbody></table></div>
+      <p class="sample-warning">Small samples are descriptive training evidence only. No aggregate composite, certification score, or model-accuracy claim is calculated.</p>
+    </section>
+    <section class="insight-grid">
+      <article class="panel">
+        <h2>Category-level reference alignment</h2>
+        {% for item in summary.categories %}<div class="metric"><span>{{ item.category.value }}</span><strong>{{ item.exact_or_acceptable }}/{{ item.denominator }}</strong></div><small>{{ item.sample.message or item.sample.level.value }}</small>{% else %}<p>No eligible referenced submissions.</p>{% endfor %}
+      </article>
+      <article class="panel">
+        <h2>Severity-level reference alignment</h2>
+        {% for item in summary.severities %}<div class="metric"><span>{{ item.severity.value }}</span><strong>{{ item.exact_or_acceptable }}/{{ item.denominator }}</strong></div><small>{{ item.sample.message or item.sample.level.value }}</small>{% else %}<p>No eligible referenced submissions.</p>{% endfor %}
+      </article>
+      <article class="panel">
+        <h2>Reference provenance</h2>
+        {% for provenance, count in summary.reference_provenance_counts %}<div class="metric"><span>{{ provenance.value }}</span><strong>{{ count }}</strong></div>{% endfor %}
+      </article>
+      <article class="panel">
+        <h2>Educational disagreement patterns</h2>
+        {% for flag, count in summary.educational_flag_counts %}<div class="metric"><span>{{ flag }}</span><strong>{{ count }}</strong></div>{% else %}<p>No flagged pattern in submitted cases.</p>{% endfor %}
+      </article>
+    </section>
+    <section class="panel">
+      <h2>Case feedback and comparison</h2>
+      {% for frozen, attempt, comparison in rows %}
+      <article class="result-case">
+        <div class="section-heading"><strong>{{ frozen.case.case_id }}</strong>{% if attempt %}<span>{{ attempt.final_decision.judgment.disposition.value }} / {{ attempt.final_decision.judgment.primary_violation.value }}</span>{% else %}<span>not submitted</span>{% endif %}</div>
+        {% if attempt and attempt.final_decision.guidance_warnings %}<p class="guidance-warning"><strong>Retained guidance warnings:</strong> {{ attempt.final_decision.guidance_warnings|map(attribute='value')|join(', ') }}</p>{% endif %}
+        {% if comparison %}<p>First: {{ comparison.first_overall.value }} · Final: {{ comparison.final_overall.value }} · Flags: {{ comparison.educational_flags|join(', ') or 'none' }}</p>
+        {% elif attempt %}<a href="{{ url_for('moderation.session', token=token, session_id=session.session_id, case_id=frozen.case.case_id) }}">Open case to reveal available feedback</a>{% endif %}
+      </article>
+      {% endfor %}
+    </section>
+    <section class="panel export-panel">
+      <div><h2>Auditable CSV export</h2><p>Default export includes built-in synthetic case text. User-derived source text and associated signals remain excluded unless explicitly selected.</p><p class="privacy-note">The all-context export may contain private user text, trusted metadata, NLP signals, review fields, and context notes. Select it only when you explicitly intend to save that local data.</p></div>
+      <div class="export-actions">
+        <a class="button-link" href="{{ url_for('moderation.export_session', token=token, session_id=session.session_id) }}">Export privacy-default CSV</a>
+        <a class="button-link secondary" href="{{ url_for('moderation.export_session', token=token, session_id=session.session_id, source_text=1, signals=1, context=1, metadata=1) }}">Export with all opted-in source context</a>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Session history</h2>
+      <p>This workspace retains {{ workspace.sessions|length }}/{{ limits.max_session_attempts }} immutable session attempts. Restart creates a new attempt and never overwrites this one.</p>
+      {% if session.status.value != 'active' %}<form method="post" action="{{ url_for('moderation.restart', token=token, session_id=session.session_id) }}"><button type="submit">Restart as new attempt</button></form>{% endif %}
+    </section>
+    <form method="post" action="{{ url_for('moderation.clear_workspace', token=token) }}"><button class="danger-button" type="submit">Clear entire temporary training workspace</button></form>
+  </main>
+</body>
+</html>

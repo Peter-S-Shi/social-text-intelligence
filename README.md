@@ -5,10 +5,10 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 8 — insights and community context.** The local Flask
+> **Status: Milestone 9 — moderation training workflow.** The local Flask
 > application supports direct English analysis, bounded CSV batch workspaces,
-> independent human review, dataset-bounded group exploration, manual context
-> notes, representative-case navigation, and explicit export.
+> independent human review, dataset-bounded insights, and a synthetic,
+> policy-based moderation training workflow with explicit audit export.
 
 ## Principles
 
@@ -183,6 +183,35 @@ supported metadata and otherwise remain explicitly unassigned. Notes include a
 UTC creation time, while supporting records and model-native scores are optional.
 All insight state remains in the same bounded,
 expiring process-memory workspace and is cleared with the batch.
+
+## Moderation training
+
+Milestone 9 adds a separate three-area workflow for preparing cases, recording
+structured training decisions, and reviewing feedback. The repository includes a
+versioned synthetic moderation policy, 20 synthetic cases, frozen built-in
+references, and an explicitly labeled fixture-based mock recommendation. The
+mock is not a live moderation model, expert opinion, or accuracy ground truth.
+
+Structural contract errors reject a decision: required fields, escalation and
+unclear reasons, category exclusivity, complete reasoning, and reviewer note must
+be valid. Policy-guidance departures remain non-blocking. They are displayed and
+retained with the first and final decisions, comparison, and export without
+rewriting the user's judgment. Workspace-authored references are labeled
+`self_authored` and are never presented as independent review.
+
+Prepared workspace cases snapshot only successful batch records after an
+explicit action. Training sessions freeze their policy and reference versions,
+preserve immutable first decisions plus explicit final revisions, and keep
+cancelled or restarted attempts separate. Summaries show field-level raw counts,
+eligible denominators, exclusions, and sample warnings rather than a composite
+score or certification claim.
+
+The configurable defaults are 100 prepared cases, 50 cases per session, and 20
+retained session attempts. All state is bounded, expiring process memory. Limits
+block new creation without silently deleting older cases or summaries. CSV export
+is explicit and auditable; user-derived source text, model signals, context notes,
+and trusted metadata are excluded by default and require separate opt-in. See
+[Moderation Training](docs/MODERATION_TRAINING.md) for the full contract.
 
 ## Core contracts
 

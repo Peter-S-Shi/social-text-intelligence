@@ -35,6 +35,7 @@ from ..services import (
     InsightSelection,
     InsightState,
     LazyAnalysisService,
+    ModerationLimits,
     accept_both,
     add_context_note,
     analyze_batch,
@@ -47,6 +48,8 @@ from ..services import (
     export_reviewed_csv,
     filter_review_cases,
     inspect_csv_upload,
+    load_moderation_cases,
+    load_moderation_policy,
     parse_insight_filters,
     prepare_csv_batch,
     review_cases,
@@ -58,6 +61,8 @@ from ..services import (
 from ..services.batch import DEFAULT_MAX_BATCH_BYTES, DEFAULT_MAX_BATCH_ROWS
 from ..services.insights import METRIC_DEFINITIONS
 from .batch_state import BatchWorkspace, EphemeralBatchStore
+from .moderation_routes import moderation
+from .moderation_state import EphemeralModerationStore
 
 INSIGHT_METRICS_BY_PERSPECTIVE = {
     InsightPerspective.AI: (
@@ -137,6 +142,11 @@ def create_app(
         MAX_TEXT_LENGTH=20_000,
         MAX_BATCH_BYTES=DEFAULT_MAX_BATCH_BYTES,
         MAX_BATCH_ROWS=DEFAULT_MAX_BATCH_ROWS,
+        MODERATION_WORKSPACE_TTL_SECONDS=30 * 60,
+        MODERATION_WORKSPACE_CAPACITY=8,
+        MAX_MODERATION_PREPARED_CASES=100,
+        MAX_MODERATION_SESSION_CASES=50,
+        MAX_MODERATION_SESSION_ATTEMPTS=20,
     )
     if config is not None:
         app.config.update(config)
@@ -155,6 +165,25 @@ def create_app(
     app.extensions["sti_analysis_gateway"] = analysis_gateway
     batch_store = EphemeralBatchStore()
     app.extensions["sti_batch_store"] = batch_store
+    moderation_policy = load_moderation_policy()
+    app.extensions["sti_moderation_policy"] = moderation_policy
+    app.extensions["sti_moderation_cases"] = load_moderation_cases(
+        moderation_policy
+    )
+    app.extensions["sti_moderation_limits"] = ModerationLimits(
+        max_prepared_cases=int(
+            app.config["MAX_MODERATION_PREPARED_CASES"]
+        ),
+        max_session_cases=int(app.config["MAX_MODERATION_SESSION_CASES"]),
+        max_session_attempts=int(
+            app.config["MAX_MODERATION_SESSION_ATTEMPTS"]
+        ),
+    )
+    app.extensions["sti_moderation_store"] = EphemeralModerationStore(
+        ttl_seconds=int(app.config["MODERATION_WORKSPACE_TTL_SECONDS"]),
+        capacity=int(app.config["MODERATION_WORKSPACE_CAPACITY"]),
+    )
+    app.register_blueprint(moderation)
 
     @app.after_request
     def prevent_private_response_caching(response: Response) -> Response:
@@ -970,6 +999,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-batch-bytes", type=int, default=DEFAULT_MAX_BATCH_BYTES)
     parser.add_argument("--max-batch-rows", type=int, default=DEFAULT_MAX_BATCH_ROWS)
     parser.add_argument("--max-text-length", type=int, default=20_000)
+    parser.add_argument("--max-prepared-cases", type=int, default=100)
+    parser.add_argument("--max-session-cases", type=int, default=50)
+    parser.add_argument("--max-session-attempts", type=int, default=20)
     parser.add_argument(
         "--emotion-threshold", type=float, default=DEFAULT_EMOTION_THRESHOLD
     )
@@ -981,8 +1013,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if not 1 <= args.port <= 65_535:
         parser.error("--port must be between 1 and 65535.")
-    if min(args.max_batch_bytes, args.max_batch_rows, args.max_text_length) < 1:
-        parser.error("Batch and text limits must be positive integers.")
+    if (
+        min(
+            args.max_batch_bytes,
+            args.max_batch_rows,
+            args.max_text_length,
+            args.max_prepared_cases,
+            args.max_session_cases,
+            args.max_session_attempts,
+        )
+        < 1
+    ):
+        parser.error("Batch, text, and moderation limits must be positive.")
     app = create_app(
         {
             "CACHE_DIR": args.cache_dir,
@@ -991,6 +1033,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "MAX_BATCH_BYTES": args.max_batch_bytes,
             "MAX_BATCH_ROWS": args.max_batch_rows,
             "MAX_TEXT_LENGTH": args.max_text_length,
+            "MAX_MODERATION_PREPARED_CASES": args.max_prepared_cases,
+            "MAX_MODERATION_SESSION_CASES": args.max_session_cases,
+            "MAX_MODERATION_SESSION_ATTEMPTS": args.max_session_attempts,
         }
     )
     app.run(host="127.0.0.1", port=args.port, debug=False)

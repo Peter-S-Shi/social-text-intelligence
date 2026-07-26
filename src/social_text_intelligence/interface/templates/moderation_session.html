@@ -1,0 +1,101 @@
+{% from "_moderation_judgment.html" import judgment_fields %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Training Session · Social Text Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div><p class="eyebrow">Moderation Training</p><h1>Training session</h1></div>
+    <span class="mode-badge">{{ session.mode.value|replace('_', ' ') }} · {{ session.attempts|length }}/{{ session.cases|length }}</span>
+  </header>
+  <main>
+    <nav class="subnav" aria-label="Moderation workflow">
+      <a href="{{ url_for('moderation.prepare', token=token) }}">1. Prepare</a>
+      <a class="active" href="{{ url_for('moderation.session', token=token, session_id=session.session_id) }}">2. Train</a>
+      <a href="{{ url_for('moderation.results', token=token, session_id=session.session_id) }}">3. Review</a>
+    </nav>
+    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    {% if session.imbalance_note %}<p class="sample-warning">{{ session.imbalance_note }}</p>{% endif %}
+    <section class="case-stepper panel" aria-label="Session cases">
+      {% for item in session.cases %}
+      <a class="{% if item.case.case_id == frozen.case.case_id %}active{% endif %}" href="{{ url_for('moderation.session', token=token, session_id=session.session_id, case_id=item.case.case_id) }}">{{ loop.index }}{% if item.case.case_id in submitted_ids %} ✓{% endif %}</a>
+      {% endfor %}
+    </section>
+    <section class="panel record-context">
+      <p><strong>{{ frozen.case.difficulty.value }}</strong> · {{ frozen.case.learning_objective.value|replace('_', ' ') }} · {{ frozen.case.source.value|replace('_', ' ') }}</p>
+      {% if frozen.case.safety_sensitive %}<p class="privacy-note"><strong>Sensitive-content notice:</strong> this case may describe safety-sensitive material in concise, non-graphic terms.</p>{% endif %}
+      <blockquote>{{ frozen.case.text }}</blockquote>
+      {% if frozen.case.context %}<p><strong>Context:</strong> {{ frozen.case.context }}</p>{% endif %}
+      {% if frozen.case.source_snapshot %}
+      <details class="nested-panel">
+        <summary>Contextual M3–M8 signals (not moderation verdicts)</summary>
+        <p class="privacy-note">Sentiment and emotion estimates are contextual signals, not moderation verdicts. They do not alter disposition, severity, escalation, reference, or comparison.</p>
+        {% if frozen.case.source_snapshot.sentiment %}<p><strong>Sentiment:</strong> {{ frozen.case.source_snapshot.sentiment.label }} · {{ frozen.case.source_snapshot.sentiment.model_name }}@{{ frozen.case.source_snapshot.sentiment.revision }}</p>{% endif %}
+        {% if frozen.case.source_snapshot.emotion %}<p><strong>Emotion:</strong> {{ frozen.case.source_snapshot.emotion.dominant_emotion }} · threshold {{ frozen.case.source_snapshot.emotion.threshold }} · {{ frozen.case.source_snapshot.emotion.model_name }}@{{ frozen.case.source_snapshot.emotion.revision }}</p>{% endif %}
+        {% if frozen.case.source_snapshot.human_review %}<p><strong>Separate human NLP review:</strong> {{ frozen.case.source_snapshot.human_review.status }} · sentiment {{ frozen.case.source_snapshot.human_review.sentiment_judgment or 'unset' }} · emotion {{ frozen.case.source_snapshot.human_review.emotion_judgment or 'unset' }}</p>{% endif %}
+        {% if frozen.case.source_snapshot.context_notes %}<details><summary>{{ frozen.case.source_snapshot.context_notes|length }} carried context notes</summary>{% for note in frozen.case.source_snapshot.context_notes %}<article><strong>{{ note.association }}: {{ note.association_value }}</strong><p>{{ note.phrase }} — {{ note.explanation }}</p></article>{% endfor %}</details>{% endif %}
+      </details>
+      {% endif %}
+      {% if session.mode.value == 'ai_assisted' and frozen.case.mock_recommendation and not attempt %}
+      <aside class="ai-assist"><strong>Synthetic mock recommendation · not a model or expert:</strong> {{ frozen.case.mock_recommendation.judgment.disposition.value }} / {{ frozen.case.mock_recommendation.judgment.primary_violation.value }} / {{ frozen.case.mock_recommendation.judgment.severity.value }}. {{ frozen.case.mock_recommendation.rationale }}</aside>
+      {% elif session.mode.value == 'ai_assisted' and not frozen.case.mock_recommendation %}
+      <aside class="sample-warning">AI recommendation unavailable. Continue with your own judgment.</aside>
+      {% endif %}
+    </section>
+    {% if not attempt %}
+    <section class="panel">
+      <h2>Submit first decision</h2>
+      <p>Structural errors reject submission. Policy-guidance warnings do not change or block your judgment; reasoning and reviewer note remain required.</p>
+      <form method="post" action="{{ url_for('moderation.submit_case', token=token, session_id=session.session_id, case_id=frozen.case.case_id) }}">
+        <input type="hidden" name="action" value="submit">
+        {{ judgment_fields('', dispositions, violation_categories, severities, escalation_reasons, unclear_reasons, none, true) }}
+        <button type="submit">Submit immutable first decision</button>
+      </form>
+    </section>
+    {% else %}
+    <section class="panel">
+      <h2>Submitted decision</h2>
+      <p><strong>{{ attempt.final_decision.judgment.disposition.value }}</strong> · {{ attempt.final_decision.judgment.primary_violation.value }} · {{ attempt.final_decision.judgment.severity.value }} · escalation {{ 'yes' if attempt.final_decision.judgment.escalate else 'no' }}</p>
+      <p><strong>Reasoning:</strong> {{ attempt.final_decision.reasoning }}<br><strong>Reviewer note:</strong> {{ attempt.final_decision.reviewer_note }}</p>
+      {% if attempt.final_decision.guidance_warnings %}
+      <div class="guidance-warning" role="status"><strong>Non-blocking policy guidance:</strong><ul>{% for item in attempt.final_decision.guidance_warnings %}<li>{{ item.value|replace('_', ' ') }}</li>{% endfor %}</ul><p>Your submitted judgment was retained unchanged.</p></div>
+      {% else %}<p class="status-ok">No guidance warning for this combination.</p>{% endif %}
+      {% if can_view_feedback and not attempt.feedback_viewed %}
+      <form method="post" action="{{ url_for('moderation.reveal_feedback', token=token, session_id=session.session_id, case_id=frozen.case.case_id) }}"><button type="submit">Reveal frozen feedback and comparison</button></form>
+      {% elif not can_view_feedback %}<p>Feedback becomes available at the end of this session.</p>{% endif %}
+      {% if next_unsubmitted %}<p><a class="button-link secondary" href="{{ url_for('moderation.session', token=token, session_id=session.session_id, case_id=next_unsubmitted) }}">Continue to next unsubmitted case</a></p>{% endif %}
+    </section>
+    {% endif %}
+    {% if attempt and attempt.feedback_viewed %}
+    <section class="panel">
+      <h2>Frozen feedback</h2>
+      {% if frozen.frozen_reference %}
+      <p><strong>Reference provenance:</strong> {{ frozen.frozen_reference.provenance.value }}{% if frozen.frozen_reference.provenance.value == 'self_authored' %} — authored in this same local workspace; not independent expert review{% endif %}</p>
+      <p><strong>Preferred:</strong> {{ frozen.frozen_reference.preferred.disposition.value }} / {{ frozen.frozen_reference.preferred.primary_violation.value }} / {{ frozen.frozen_reference.preferred.severity.value }} / escalation {{ frozen.frozen_reference.preferred.escalate }}</p>
+      <p>{{ frozen.frozen_reference.rationale }}</p>
+      <p><strong>Policy clauses:</strong> {{ frozen.frozen_clause_ids|join(', ') }}</p>
+      {% if comparison %}<p><strong>Comparison:</strong> {{ comparison.first_overall.value }} → {{ comparison.final_overall.value }}</p>{% endif %}
+      {% else %}<p>This workspace case has no reference and is explicitly unscored.</p>{% endif %}
+      {% if frozen.case.mock_recommendation %}<p><strong>Synthetic mock recommendation:</strong> {{ frozen.case.mock_recommendation.judgment.disposition.value }} / {{ frozen.case.mock_recommendation.judgment.primary_violation.value }}. It is a fixture, not accuracy ground truth.</p>{% endif %}
+    </section>
+    <section class="panel">
+      <h2>Revise final decision (optional)</h2>
+      <p>The first decision remains immutable. A revision creates a separate final decision and retains all guidance warnings.</p>
+      <form method="post" action="{{ url_for('moderation.submit_case', token=token, session_id=session.session_id, case_id=frozen.case.case_id) }}">
+        <input type="hidden" name="action" value="revise">
+        {{ judgment_fields('', dispositions, violation_categories, severities, escalation_reasons, unclear_reasons, attempt.final_decision, true) }}
+        <button type="submit">Save explicit revision</button>
+      </form>
+    </section>
+    {% endif %}
+    <div class="review-actions">
+      {% if session.status.value == 'active' %}<form method="post" action="{{ url_for('moderation.cancel', token=token, session_id=session.session_id) }}"><button class="danger-button compact" type="submit">Cancel and preserve attempt</button></form>{% endif %}
+      <a class="button-link secondary" href="{{ url_for('moderation.results', token=token, session_id=session.session_id) }}">Review session</a>
+    </div>
+  </main>
+</body>
+</html>

@@ -126,3 +126,32 @@ counts, review coverage counts, active filters and selection, model provenance,
 and inclusive per-row emotion-threshold semantics. Group rows retain raw counts,
 denominators, rates, sample warnings, successful/failed group counts, and the
 failed-row unassigned count. Context-note rows include their UTC creation time.
+
+## Moderation training
+
+`ModerationJudgment` records disposition, primary and secondary categories,
+severity, escalation, and any required escalation or unclear reasons.
+`TraineeDecision` adds required reasoning, required reviewer note, and the exact
+non-blocking guidance warnings produced for that judgment.
+
+Structural validation rejects incomplete or contradictory data. `No violation`
+is exclusive, a primary category cannot repeat as secondary, Warn and Remove
+require a primary violation, escalation requires a reason, Unclear / Needs
+Review requires an unclear reason, and enumerations must be supported.
+`guidance_warnings()` separately identifies combinations that depart from the
+ordinary synthetic-policy default. These warnings do not block submission or
+alter a decision.
+
+`ReferenceDecision` stores one preferred complete judgment, zero or more
+distinct complete acceptable alternatives, a rationale, frozen policy clause
+IDs, and provenance. `built_in` identifies repository synthetic fixtures;
+`self_authored` identifies a reference created and trained against by the same
+local user. `user_authored` remains reserved for a future external author or
+policy-provider workflow and is not exposed as an M9 authoring choice.
+
+`ModerationTrainingSession` freezes cases, policy versions, references, clause
+IDs, mode, feedback timing, and order. `CaseAttempt` preserves an immutable
+first decision plus a separately timestamped final revision. Exact preferred,
+complete acceptable alternative, disagreement, and unscored states remain
+distinct. Summaries retain raw numerators, denominators, exclusions, and sample
+warnings; no composite score is defined.
