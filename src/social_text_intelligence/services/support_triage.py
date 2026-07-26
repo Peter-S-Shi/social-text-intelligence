@@ -122,6 +122,7 @@ class SummaryMetric:
     denominator: int
     excluded: int
     definition: str
+    sample: SampleSizeAssessment
 
     @property
     def rate(self) -> float:
@@ -565,7 +566,10 @@ def _finalize(
     first_submission: bool,
     now: Callable[[], datetime],
 ) -> FinalizedTriageDecision:
-    mock_visible = mode is TriageMode.MOCK_ASSISTED
+    mock_visible = bool(
+        entry.ticket.mock_suggestion is not None
+        and mode is TriageMode.MOCK_ASSISTED
+    )
     comparison = compare_to_mock(fields, entry.ticket.mock_suggestion)
     consequential = bool(
         mock_visible
@@ -864,9 +868,11 @@ def _agreement_metrics(
                 denominator=eligible,
                 excluded=len(finalized) - eligible,
                 definition=(
-                    "Human and available deterministic mock have the same "
+                    f"{'First finalized' if first else 'Current final'} human "
+                    "and available deterministic mock have the same "
                     f"{field}; descriptive agreement, not accuracy."
                 ),
+                sample=sample_size_assessment(eligible),
             )
         )
     return tuple(metrics)
@@ -966,6 +972,7 @@ def summarize_triage(workspace: TriageWorkspace) -> TriageSummary:
         mock_visible_before_count=sum(
             bool(
                 entry.first_final
+                and entry.ticket.mock_suggestion is not None
                 and entry.first_final.mock_visible_before_first_submission
             )
             for entry in finalized
@@ -973,11 +980,12 @@ def summarize_triage(workspace: TriageWorkspace) -> TriageSummary:
         mock_hidden_before_count=sum(
             bool(
                 entry.first_final
+                and entry.ticket.mock_suggestion is not None
                 and not entry.first_final.mock_visible_before_first_submission
             )
             for entry in finalized
         ),
-        sample=sample_size_assessment(len(entries)),
+        sample=sample_size_assessment(len(finalized)),
     )
 
 
@@ -1071,12 +1079,13 @@ def export_triage_csv(
             "export_metadata",
             exported_at,
             (
-                "Finalized distributions exclude untriaged and draft tickets. "
+                "Finalized human distributions use finalized tickets as their "
+                "denominator and exclude untriaged and draft tickets. "
                 "Mock comparisons exclude unavailable mocks. Percentages use "
                 "each metric's disclosed denominator."
             ),
             summary.finalized_count,
-            summary.total_eligible,
+            summary.finalized_count,
             summary.excluded_count,
             summary.sample.level.value,
             summary.sample.message or "",
@@ -1092,8 +1101,8 @@ def export_triage_csv(
                 metric.numerator,
                 metric.denominator,
                 metric.excluded,
-                summary.sample.level.value,
-                summary.sample.message or "",
+                metric.sample.level.value,
+                metric.sample.message or "",
                 metric.name,
                 *("" for _ in range(33)),
             )

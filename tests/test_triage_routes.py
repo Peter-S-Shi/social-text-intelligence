@@ -171,6 +171,77 @@ class TriageRouteTests(unittest.TestCase):
             b'value="recover_account_access" selected', page.data
         )
 
+    def test_summary_separates_finalized_and_mock_sample_notices(self) -> None:
+        base = self.create_triage()
+        for ticket_id in (
+            "support-001",
+            "support-002",
+            "support-003",
+            "support-004",
+            "support-005",
+            "support-006",
+            "support-007",
+            "support-008",
+            "support-009",
+            "support-010",
+        ):
+            self.add_ticket(base, ticket_id)
+        self.client.post(
+            base + "/tickets/support-001/finalize", data=valid_form()
+        )
+
+        summary = self.client.get(base + "/summary")
+        self.assertEqual(summary.status_code, 200)
+        self.assertIn(b"Finalized-distribution sample:", summary.data)
+        self.assertIn(b"1 eligible finalized ticket", summary.data)
+        self.assertIn(b"First sample notice", summary.data)
+        self.assertIn(b"Final sample notice", summary.data)
+        self.assertGreaterEqual(
+            summary.data.count(b"Insufficient sample for comparison"),
+            3,
+        )
+
+    def test_summary_warns_when_only_one_finalized_ticket_has_a_mock(self) -> None:
+        base = self.create_triage()
+        ticket_ids = tuple(f"support-{index:03d}" for index in range(1, 11))
+        for ticket_id in ticket_ids:
+            self.add_ticket(base, ticket_id)
+        token = base.split("/")[-1]
+        store = self.app.extensions["sti_triage_store"]
+        workspace = store.get(token)
+        store.replace(
+            token,
+            replace(
+                workspace,
+                entries=tuple(
+                    entry
+                    if index == 0
+                    else replace(
+                        entry,
+                        ticket=replace(
+                            entry.ticket,
+                            mock_suggestion=None,
+                        ),
+                    )
+                    for index, entry in enumerate(workspace.entries)
+                ),
+            ),
+        )
+        for ticket_id in ticket_ids:
+            response = self.client.post(
+                base + f"/tickets/{ticket_id}/finalize",
+                data=valid_form(),
+            )
+            self.assertEqual(response.status_code, 302)
+
+        summary = self.client.get(base + "/summary")
+        self.assertEqual(summary.status_code, 200)
+        self.assertNotIn(b"Finalized-distribution sample:", summary.data)
+        self.assertEqual(
+            summary.data.count(b"Insufficient sample for comparison"),
+            12,
+        )
+
     def test_failed_nlp_record_is_eligible_for_explicit_snapshot(self) -> None:
         failing_app = create_app(
             {

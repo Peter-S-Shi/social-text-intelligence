@@ -66,9 +66,18 @@ and untriaged tickets. Mock-unavailable tickets remain in human distributions
 but are excluded from mock-comparison denominators. Follow-up reasons overlap
 and are never collapsed into a risk or quality score.
 
-Existing sample semantics apply independently to each eligible group: fewer
-than five shows counts without percentage emphasis, five through nine shows a
-small-sample warning, and ten or more permits ordinary descriptive percentages.
+Existing sample semantics apply independently to each metric's eligible
+denominator: finalized human distributions use only finalized tickets, while
+each first/final human-mock agreement metric uses only finalized tickets with
+an available mock. Fewer than five shows counts without percentage emphasis,
+five through nine shows a small-sample warning, and ten or more permits ordinary
+descriptive percentages. Finalized-distribution and mock-comparison notices are
+shown separately.
+
+A mock is recorded as visible before first submission only when a suggestion is
+available and the workspace is in mock-assisted mode. Finalized tickets without
+a mock are explicitly unavailable and enter neither the visible nor hidden
+count.
 
 CSV export contains UTC audit metadata, guide provenance, lifecycle fields,
 warnings, mock provenance, first/final comparisons, raw numerators,

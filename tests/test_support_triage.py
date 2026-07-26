@@ -3,6 +3,7 @@
 import csv
 import io
 import unittest
+from dataclasses import replace
 from datetime import UTC, datetime
 
 from social_text_intelligence.contracts import (
@@ -144,6 +145,97 @@ class SupportTriageServiceTests(unittest.TestCase):
         self.assertEqual(summary.finalized_count, 1)
         self.assertEqual(summary.warning_ticket_count, 1)
         self.assertEqual(summary.first_agreement[0].denominator, 1)
+
+    def test_finalized_distribution_sample_uses_finalized_denominator(self) -> None:
+        selected = tuple(ticket.ticket_id for ticket in self.tickets[:10])
+        workspace = add_synthetic_tickets(
+            new_triage_workspace(mode=TriageMode.INDEPENDENT),
+            self.tickets,
+            ticket_ids=selected,
+            limits=TriageLimits(),
+        )
+        workspace = finalize_ticket(
+            workspace,
+            ticket_id=selected[0],
+            fields=fields(),
+        )
+
+        summary = summarize_triage(workspace)
+        self.assertEqual(summary.total_eligible, 10)
+        self.assertEqual(summary.finalized_count, 1)
+        self.assertEqual(summary.sample.level.value, "insufficient")
+        self.assertEqual(
+            summary.sample.message,
+            "Insufficient sample for comparison",
+        )
+
+        rows = list(csv.DictReader(io.StringIO(export_triage_csv(workspace))))
+        metadata = rows[0]
+        self.assertEqual(metadata["numerator"], "1")
+        self.assertEqual(metadata["denominator"], "1")
+        self.assertEqual(metadata["exclusions"], "9")
+        self.assertEqual(metadata["sample_status"], "insufficient")
+
+    def test_mock_agreement_sample_uses_mock_eligible_denominator(self) -> None:
+        selected_tickets = tuple(
+            ticket if index == 0 else replace(ticket, mock_suggestion=None)
+            for index, ticket in enumerate(self.tickets[:10])
+        )
+        selected = tuple(ticket.ticket_id for ticket in selected_tickets)
+        workspace = add_synthetic_tickets(
+            new_triage_workspace(mode=TriageMode.INDEPENDENT),
+            selected_tickets,
+            ticket_ids=selected,
+            limits=TriageLimits(),
+        )
+        for ticket_id in selected:
+            workspace = finalize_ticket(
+                workspace,
+                ticket_id=ticket_id,
+                fields=fields(),
+            )
+
+        summary = summarize_triage(workspace)
+        self.assertEqual(summary.finalized_count, 10)
+        self.assertEqual(summary.sample.level.value, "descriptive")
+        for metric in (*summary.first_agreement, *summary.final_agreement):
+            self.assertEqual(metric.denominator, 1)
+            self.assertEqual(metric.excluded, 9)
+            self.assertEqual(metric.sample.level.value, "insufficient")
+
+        rows = list(csv.DictReader(io.StringIO(export_triage_csv(workspace))))
+        metrics = [row for row in rows if row["row_type"] == "summary_metric"]
+        self.assertEqual(len(metrics), 12)
+        self.assertTrue(all(row["denominator"] == "1" for row in metrics))
+        self.assertTrue(
+            all(row["sample_status"] == "insufficient" for row in metrics)
+        )
+
+    def test_unavailable_mock_is_neither_visible_nor_hidden(self) -> None:
+        unavailable = next(
+            ticket for ticket in self.tickets if ticket.mock_suggestion is None
+        )
+        for mode in (TriageMode.INDEPENDENT, TriageMode.MOCK_ASSISTED):
+            with self.subTest(mode=mode):
+                workspace = add_synthetic_tickets(
+                    new_triage_workspace(mode=mode),
+                    self.tickets,
+                    ticket_ids=(unavailable.ticket_id,),
+                    limits=TriageLimits(),
+                )
+                workspace = finalize_ticket(
+                    workspace,
+                    ticket_id=unavailable.ticket_id,
+                    fields=fields(),
+                )
+                first = workspace.entries[0].first_final
+                assert first is not None
+                self.assertFalse(
+                    first.mock_visible_before_first_submission
+                )
+                summary = summarize_triage(workspace)
+                self.assertEqual(summary.mock_visible_before_count, 0)
+                self.assertEqual(summary.mock_hidden_before_count, 0)
 
     def test_export_is_auditable_formula_safe_and_privacy_default(self) -> None:
         workspace = add_synthetic_tickets(
