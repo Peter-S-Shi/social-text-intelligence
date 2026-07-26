@@ -110,6 +110,18 @@ th, td { padding: .65rem; border-bottom: 1px solid var(--line); text-align: left
 .case-stepper a { display: inline-block; min-width: 2.4rem; padding: .45rem; border-radius: 8px; text-align: center; color: var(--accent); background: var(--accent-soft); text-decoration: none; font-weight: 750; }
 .case-stepper a.active { color: white; background: var(--accent); }
 .guidance-warning, .ai-assist { padding: .75rem; border-left: 4px solid #b38415; background: #fff8df; }
+.form-grid, .filter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
+.form-grid textarea { min-height: 100px; }
+.form-grid fieldset { min-width: 0; max-height: 16rem; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: .75rem; }
+.check { font-weight: 600; }
+.check input { margin-right: .35rem; }
+.case-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin-bottom: 1rem; }
+.case-card { padding: .8rem; border: 1px solid var(--line); border-radius: 10px; font-weight: 500; }
+.results-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.action-row { display: flex; gap: .6rem; justify-content: flex-end; margin-top: 1rem; }
+.warning { padding: .7rem; border-left: 4px solid #b38415; background: #fff8df; }
+blockquote { margin: 1rem 0; padding: 1rem; border-left: 4px solid var(--accent); background: #f7faf8; white-space: pre-wrap; }
+.danger { background: var(--danger); margin-bottom: 2rem; }
 @media (max-width: 700px) {
   .result-grid { grid-template-columns: 1fr; }
   .form-row, .site-header { align-items: stretch; flex-direction: column; }
@@ -119,4 +131,6 @@ th, td { padding: .65rem; border-bottom: 1px solid var(--line); text-align: left
   .review-grid, .summary-grid, .metadata-grid { grid-template-columns: 1fr; }
   .insight-controls, .insight-grid, .example-list { grid-template-columns: 1fr; }
   .moderation-judgment-grid { grid-template-columns: 1fr; }
+  .form-grid, .filter-grid, .case-grid, .results-grid { grid-template-columns: 1fr; }
+  .mode-nav { flex-wrap: wrap; }
 }

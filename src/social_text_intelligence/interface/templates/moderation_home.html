@@ -16,6 +16,7 @@
       <a href="{{ url_for('analyze_text') }}">Direct analysis</a>
       <a href="{{ url_for('batch_home') }}">Batch CSV</a>
       <a class="active" href="{{ url_for('moderation.home') }}">Moderation Training</a>
+      <a href="{{ url_for('triage.home') }}">Support Triage</a>
     </nav>
     {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
     <section class="panel moderation-hero">

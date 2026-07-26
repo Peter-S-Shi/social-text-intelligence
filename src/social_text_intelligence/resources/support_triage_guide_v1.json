@@ -1,0 +1,22 @@
+{
+  "guide_id": "sti-synthetic-support-triage-guide",
+  "version": "1.0.0",
+  "name": "Synthetic Support Triage Guide",
+  "disclaimer": "Project-authored synthetic guidance. It does not reproduce a real company's support policy, queues, SLA, legal duties, or customer-service handbook.",
+  "rules": [
+    {"rule_id": "TRIAGE-INTENT-001", "title": "Intent", "guidance": "Record the user's main requested outcome separately from supporting intents."},
+    {"rule_id": "TRIAGE-CATEGORY-001", "title": "Category", "guidance": "Choose one issue category without treating it as a confirmed real-world event."},
+    {"rule_id": "TRIAGE-URGENCY-001", "title": "Urgency", "guidance": "Use impact, time sensitivity, and possible risk; do not use sentiment intensity as urgency."},
+    {"rule_id": "TRIAGE-QUEUE-001", "title": "Recommended queue", "guidance": "Queue mappings are recommendations and never represent assignment or transfer."},
+    {"rule_id": "TRIAGE-ESCALATE-001", "title": "Escalation", "guidance": "Possible safety, fraud, severe financial, or broad service impact normally warrants human escalation review."},
+    {"rule_id": "TRIAGE-ACTION-001", "title": "Next action", "guidance": "Actions are recommendations only and do not mean work was performed."},
+    {"rule_id": "TRIAGE-UNCLEAR-001", "title": "Unclear", "guidance": "Use unclear classifications when evidence is insufficient and retain an explanation."},
+    {"rule_id": "TRIAGE-REFUND-001", "title": "Refund", "guidance": "Refund requests normally go to refunds and cancellations or billing operations."},
+    {"rule_id": "TRIAGE-TECH-001", "title": "Technical", "guidance": "Technical reports normally go to technical support and may require logs."},
+    {"rule_id": "TRIAGE-ACCOUNT-001", "title": "Account access", "guidance": "Account access and security remain separate from ordinary profile changes."},
+    {"rule_id": "TRIAGE-SAFETY-001", "title": "Safety", "guidance": "Reported safety or abuse concerns require careful wording and appropriate human review."},
+    {"rule_id": "TRIAGE-FRAUD-001", "title": "Fraud", "guidance": "Reported fraud or security concerns are suspected concerns, not confirmed findings."},
+    {"rule_id": "TRIAGE-MULTI-001", "title": "Multiple intents", "guidance": "Keep one primary intent and at most two supporting secondary intents."},
+    {"rule_id": "TRIAGE-MOCK-001", "title": "Mock suggestion", "guidance": "Fixture suggestions are deterministic synthetic examples, not expert advice or model ground truth."}
+  ]
+}

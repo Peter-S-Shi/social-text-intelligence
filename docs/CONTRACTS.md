@@ -155,3 +155,33 @@ first decision plus a separately timestamped final revision. Exact preferred,
 complete acceptable alternative, disagreement, and unscored states remain
 distinct. Summaries retain raw numerators, denominators, exclusions, and sample
 warnings; no composite score is defined.
+
+## Support triage
+
+`TriageFields` keeps primary and secondary intents, one issue category, urgency,
+recommended queue, escalation, primary and secondary recommended next actions,
+unclear explanation, and human notes separate. A saved draft may omit required
+final fields but cannot contain unsupported enum values, duplicates, excessive
+secondary selections, primary/secondary repetition, invalid lengths, or
+conflicting escalation fields.
+
+`validate_final_fields()` requires all primary fields and conditional
+explanations. Escalation requires one supported reason. Other/Unclear category
+or Unclear urgency requires an explanation. Escalation, guide warnings, unclear
+classifications, and consequential visible-mock overrides require human notes.
+`triage_guidance_warnings()` separately retains unusual synthetic-guide
+departures without rewriting or blocking the human decision.
+
+`SupportTicket` has stable source provenance, complexity, guide identity,
+applicable rule IDs, optional deterministic mock provenance, and an optional
+workspace snapshot. Workspace snapshots contain literal source text or a literal
+bounded excerpt plus separately stored trusted metadata, NLP signals, human
+review, and context notes. Parsed rows are eligible even when analysis failed.
+
+`TicketTriageState` is limited to Untriaged, Draft, and Finalized. The first
+finalized decision and its guide provenance are immutable. A revision replaces
+only the current final decision and increments a revision count.
+`MockTriageSuggestion` is either `built_in_mock` or `self_authored_mock`;
+unavailable is explicit. Core human–mock comparisons cover intent, category,
+urgency, recommended queue, escalation, and primary next action. They define
+descriptive agreement and overrides, never accuracy or quality.

@@ -36,6 +36,7 @@ from ..services import (
     InsightState,
     LazyAnalysisService,
     ModerationLimits,
+    TriageLimits,
     accept_both,
     add_context_note,
     analyze_batch,
@@ -50,6 +51,8 @@ from ..services import (
     inspect_csv_upload,
     load_moderation_cases,
     load_moderation_policy,
+    load_support_tickets,
+    load_triage_guide,
     parse_insight_filters,
     prepare_csv_batch,
     review_cases,
@@ -63,6 +66,8 @@ from ..services.insights import METRIC_DEFINITIONS
 from .batch_state import BatchWorkspace, EphemeralBatchStore
 from .moderation_routes import moderation
 from .moderation_state import EphemeralModerationStore
+from .triage_routes import triage
+from .triage_state import EphemeralTriageStore
 
 INSIGHT_METRICS_BY_PERSPECTIVE = {
     InsightPerspective.AI: (
@@ -147,6 +152,9 @@ def create_app(
         MAX_MODERATION_PREPARED_CASES=100,
         MAX_MODERATION_SESSION_CASES=50,
         MAX_MODERATION_SESSION_ATTEMPTS=20,
+        TRIAGE_WORKSPACE_TTL_SECONDS=30 * 60,
+        TRIAGE_WORKSPACE_CAPACITY=8,
+        MAX_TRIAGE_TICKETS=200,
     )
     if config is not None:
         app.config.update(config)
@@ -184,6 +192,17 @@ def create_app(
         capacity=int(app.config["MODERATION_WORKSPACE_CAPACITY"]),
     )
     app.register_blueprint(moderation)
+    triage_guide = load_triage_guide()
+    app.extensions["sti_triage_guide"] = triage_guide
+    app.extensions["sti_support_tickets"] = load_support_tickets(triage_guide)
+    app.extensions["sti_triage_limits"] = TriageLimits(
+        max_tickets=int(app.config["MAX_TRIAGE_TICKETS"])
+    )
+    app.extensions["sti_triage_store"] = EphemeralTriageStore(
+        ttl_seconds=int(app.config["TRIAGE_WORKSPACE_TTL_SECONDS"]),
+        capacity=int(app.config["TRIAGE_WORKSPACE_CAPACITY"]),
+    )
+    app.register_blueprint(triage)
 
     @app.after_request
     def prevent_private_response_caching(response: Response) -> Response:

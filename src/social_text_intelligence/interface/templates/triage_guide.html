@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Source & Routing Guide · Support Triage</title><link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}"></head>
+<body>
+<header class="site-header"><div><p class="eyebrow">Area 1 of 3</p><h1>Source & Routing Guide</h1></div><span class="mode-badge">{{ workspace.mode.value|replace("_", " ") }}</span></header>
+<main>
+<nav class="mode-nav" aria-label="Support triage workflow"><a class="active" href="{{ url_for('triage.guide', token=token) }}">1. Source & Guide</a><a href="{{ url_for('triage.workspace', token=token) }}">2. Triage Workspace</a><a href="{{ url_for('triage.summary', token=token) }}">3. Summary & Export</a></nav>
+{% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+<section class="panel"><h2>{{ guide.name }}</h2><p><strong>{{ guide.guide_id }}@{{ guide.version }}</strong></p><p>{{ guide.disclaimer }}</p><details><summary>Review {{ guide.rules|length }} stable guide rules</summary><ul>{% for rule in guide.rules %}<li><strong>{{ rule.rule_id }} — {{ rule.title }}:</strong> {{ rule.guidance }}</li>{% endfor %}</ul></details></section>
+<section class="panel">
+  <h2>Add built-in synthetic tickets</h2>
+  <form method="get"><label>Complexity <select name="complexity"><option value="">All</option>{% for item in complexities %}<option value="{{ item.value }}" {% if complexity_filter == item.value %}selected{% endif %}>{{ item.value }}</option>{% endfor %}</select></label><label>Mock <select name="mock"><option value="">All</option><option value="available" {% if mock_filter == "available" %}selected{% endif %}>Available</option><option value="unavailable" {% if mock_filter == "unavailable" %}selected{% endif %}>Unavailable</option></select></label><button type="submit">Filter</button></form>
+  <form method="post" action="{{ url_for('triage.add_synthetic', token=token) }}">
+    <div class="case-grid">{% for ticket in built_in_tickets %}<label class="case-card"><input type="checkbox" name="ticket_ids" value="{{ ticket.ticket_id }}"><strong>{{ ticket.ticket_id }}</strong> · {{ ticket.complexity.value }} · mock {{ "available" if ticket.mock_suggestion else "unavailable" }}<br>{{ ticket.text }}</label>{% endfor %}</div>
+    <button type="submit">Add selected synthetic tickets</button>
+  </form>
+</section>
+<section class="panel">
+  <h2>Prepare one workspace-derived ticket</h2>
+  {% if eligible_records %}
+  <form method="post" action="{{ url_for('triage.add_workspace_ticket', token=token) }}">
+    <label>Parsed source record <select name="record_id">{% for outcome in eligible_records %}<option value="{{ outcome.prepared.identity }}">{{ outcome.prepared.identity }} — NLP {{ outcome.status }}</option>{% endfor %}</select></label>
+    <label>Optional literal excerpt <textarea name="excerpt" maxlength="4000"></textarea></label>
+    <label>Complexity <select name="complexity">{% for item in complexities %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
+    <fieldset><legend>Applicable routing-guide rules</legend>{% for rule in guide.rules %}<label class="check"><input type="checkbox" name="rule_ids" value="{{ rule.rule_id }}"> {{ rule.rule_id }} — {{ rule.title }}</label>{% endfor %}</fieldset>
+    <details><summary>Optional self-authored mock suggestion</summary><p>This is same-user prepared material, not a model, expert judgment, or ground truth.</p><label class="check"><input type="checkbox" name="include_self_authored_mock" value="true"> Include a complete self-authored mock</label>{% from "_triage_fields.html" import triage_fields with context %}{{ triage_fields(blank_mock_fields, "mock_") }}<label>Mock rationale<textarea name="mock_rationale" maxlength="2000"></textarea></label></details>
+    <button type="submit">Prepare explicit snapshot</button>
+  </form>
+  {% else %}<p>No eligible parsed batch records are linked. Built-in synthetic tickets remain available.</p>{% endif %}
+</section>
+<p><a class="button-link" href="{{ url_for('triage.workspace', token=token) }}">Continue to Triage Workspace</a></p>
+</main></body></html>

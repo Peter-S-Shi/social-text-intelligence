@@ -14,14 +14,14 @@ from social_text_intelligence.providers import (
 
 
 class CliTests(unittest.TestCase):
-    def test_about_reports_scope_without_claiming_analysis(self) -> None:
+    def test_about_reports_current_scope_and_release_gate(self) -> None:
         output = io.StringIO()
 
         with redirect_stdout(output):
             exit_code = main(["about"])
 
         self.assertEqual(exit_code, 0)
-        self.assertIn("Milestone: 8", output.getvalue())
+        self.assertIn("Milestone: 10", output.getvalue())
         self.assertIn("Analysis contracts available: yes", output.getvalue())
         self.assertIn("Local sentiment inference available: yes", output.getvalue())
         self.assertIn("Local emotion inference available: yes", output.getvalue())
@@ -30,6 +30,9 @@ class CliTests(unittest.TestCase):
         self.assertIn("CSV batch preview", output.getvalue())
         self.assertIn("Temporary human review", output.getvalue())
         self.assertIn("Temporary local insights", output.getvalue())
+        self.assertIn("Synthetic moderation training", output.getvalue())
+        self.assertIn("Local Support Triage", output.getvalue())
+        self.assertIn("feature freeze and release review pending", output.getvalue())
 
     def test_contracts_lists_normalized_taxonomies(self) -> None:
         output = io.StringIO()

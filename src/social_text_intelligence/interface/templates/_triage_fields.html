@@ -1,0 +1,43 @@
+{% macro triage_fields(values, prefix="") %}
+<div class="form-grid">
+  <label>Primary intent
+    <select name="{{ prefix }}primary_intent">
+      <option value="">Select</option>
+      {% for item in intents %}<option value="{{ item.value }}" {% if values.primary_intent == item %}selected{% endif %}>{{ item.value|replace("_", " ")|title }}</option>{% endfor %}
+    </select>
+  </label>
+  <fieldset><legend>Secondary intents (up to 2)</legend>
+    {% for item in intents %}<label class="check"><input type="checkbox" name="{{ prefix }}secondary_intents" value="{{ item.value }}" {% if item in values.secondary_intents %}checked{% endif %}> {{ item.value|replace("_", " ") }}</label>{% endfor %}
+  </fieldset>
+  <label>Issue category
+    <select name="{{ prefix }}issue_category"><option value="">Select</option>{% for item in categories %}<option value="{{ item.value }}" {% if values.issue_category == item %}selected{% endif %}>{{ item.value|replace("_", " ")|title }}</option>{% endfor %}</select>
+  </label>
+  <label>Urgency
+    <select name="{{ prefix }}urgency"><option value="">Select</option>{% for item in urgencies %}<option value="{{ item.value }}" {% if values.urgency == item %}selected{% endif %}>{{ item.value|title }}</option>{% endfor %}</select>
+  </label>
+  <label>Recommended queue
+    <select name="{{ prefix }}recommended_queue"><option value="">Select</option>{% for item in queues %}<option value="{{ item.value }}" {% if values.recommended_queue == item %}selected{% endif %}>{{ item.value|replace("_", " ")|title }}</option>{% endfor %}</select>
+  </label>
+  <label>Escalation recommendation
+    <select name="{{ prefix }}escalation_required">
+      <option value="false" {% if not values.escalation_required %}selected{% endif %}>No</option>
+      <option value="true" {% if values.escalation_required %}selected{% endif %}>Yes</option>
+    </select>
+  </label>
+  <label>Escalation reason
+    <select name="{{ prefix }}escalation_reason"><option value="">Not applicable</option>{% for item in escalation_reasons %}<option value="{{ item.value }}" {% if values.escalation_reason == item %}selected{% endif %}>{{ item.value|replace("_", " ")|title }}</option>{% endfor %}</select>
+  </label>
+  <label>Primary recommended next action
+    <select name="{{ prefix }}primary_next_action"><option value="">Select</option>{% for item in next_actions %}<option value="{{ item.value }}" {% if values.primary_next_action == item %}selected{% endif %}>{{ item.value|replace("_", " ")|title }}</option>{% endfor %}</select>
+  </label>
+  <fieldset><legend>Secondary recommended actions (up to 2)</legend>
+    {% for item in next_actions %}<label class="check"><input type="checkbox" name="{{ prefix }}secondary_next_actions" value="{{ item.value }}" {% if item in values.secondary_next_actions %}checked{% endif %}> {{ item.value|replace("_", " ") }}</label>{% endfor %}
+  </fieldset>
+  <label>Unclear or other explanation
+    <textarea name="{{ prefix }}unclear_reason" maxlength="2000">{{ values.unclear_reason }}</textarea>
+  </label>
+  <label>Human notes
+    <textarea name="{{ prefix }}human_notes" maxlength="2000">{{ values.human_notes }}</textarea>
+  </label>
+</div>
+{% endmacro %}

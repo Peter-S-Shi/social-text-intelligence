@@ -1,0 +1,15 @@
+{% macro decision_summary(fields) %}
+<dl class="metadata-grid">
+  <div><dt>Primary intent</dt><dd>{{ fields.primary_intent.value|replace("_", " ") if fields.primary_intent else "—" }}</dd></div>
+  <div><dt>Secondary intents</dt><dd>{{ fields.secondary_intents|map(attribute="value")|join(", ") or "none" }}</dd></div>
+  <div><dt>Issue category</dt><dd>{{ fields.issue_category.value|replace("_", " ") if fields.issue_category else "—" }}</dd></div>
+  <div><dt>Urgency</dt><dd>{{ fields.urgency.value if fields.urgency else "—" }}</dd></div>
+  <div><dt>Recommended queue</dt><dd>{{ fields.recommended_queue.value|replace("_", " ") if fields.recommended_queue else "—" }}</dd></div>
+  <div><dt>Escalation</dt><dd>{{ "recommended" if fields.escalation_required else "not recommended" }}</dd></div>
+  <div><dt>Escalation reason</dt><dd>{{ fields.escalation_reason.value|replace("_", " ") if fields.escalation_reason else "not applicable" }}</dd></div>
+  <div><dt>Primary next action</dt><dd>{{ fields.primary_next_action.value|replace("_", " ") if fields.primary_next_action else "—" }}</dd></div>
+  <div><dt>Secondary actions</dt><dd>{{ fields.secondary_next_actions|map(attribute="value")|join(", ") or "none" }}</dd></div>
+  <div><dt>Unclear explanation</dt><dd>{{ fields.unclear_reason or "not applicable" }}</dd></div>
+  <div><dt>Human notes</dt><dd>{{ fields.human_notes or "none" }}</dd></div>
+</dl>
+{% endmacro %}

@@ -1,5 +1,36 @@
 # Development Log
 
+## Milestone 10 — Local Support Triage workbench
+
+Added a separate three-area Support Triage workflow over a versioned,
+project-authored synthetic routing guide and 22 stable synthetic tickets.
+Successfully parsed batch records are eligible through explicit snapshots even
+when NLP inference failed; optional sentiment, emotion, human review, context
+notes, and trusted metadata remain supporting context and never determine
+routing automatically.
+
+Added typed intents, categories, urgency, recommended queues, escalation
+reasons, recommended actions, draft/finalized states, guide provenance,
+deterministic mock provenance, structural validation, and non-blocking warning
+contracts. Drafts may be incomplete but legal. Finalization is atomic and
+freezes an immutable first decision; explicit revisions update a separate
+current final decision.
+
+Added Independent and deterministic mock-assisted simulation modes without a
+real classifier or LLM. Human forms are never prefilled. First/final field-level
+agreement and overrides remain descriptive and are never labeled accuracy,
+quality, causal impact, or operator performance.
+
+Added sample-aware summaries, overlapping follow-up reasons, filters, sorting,
+and auditable formula-safe CSV export. Workspace-derived source text, NLP
+signals, human review, context notes, and trusted metadata are blank by default
+and require separate explicit opt-ins. Triage workspaces are process-memory
+only, expire after inactivity, and block limits without silent eviction.
+
+Planned feature milestones are now complete, but the project is not
+feature-frozen or release-ready. Former Milestones 11–13 are deferred
+next-version candidates rather than implemented current-version milestones.
+
 ## Milestone 9 — Moderation training workflow
 
 Added a versioned, project-authored synthetic moderation policy and a 20-case

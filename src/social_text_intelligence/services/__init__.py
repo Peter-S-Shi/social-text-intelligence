@@ -81,6 +81,33 @@ from .review import (
     summarize_reviews,
     update_review,
 )
+from .support_triage import (
+    FieldComparison as TriageFieldComparison,
+)
+from .support_triage import (
+    SummaryMetric as TriageSummaryMetric,
+)
+from .support_triage import (
+    TicketComparison,
+    TriageFilter,
+    TriageLimits,
+    TriageSummary,
+    TriageWorkspace,
+    add_synthetic_tickets,
+    compare_to_mock,
+    export_triage_csv,
+    filter_triage_entries,
+    finalize_ticket,
+    mock_is_visible,
+    new_triage_workspace,
+    parse_triage_fields,
+    prepare_workspace_ticket,
+    reveal_ticket_mock,
+    revise_ticket,
+    save_triage_draft,
+    summarize_triage,
+)
+from .triage_resources import load_support_tickets, load_triage_guide
 
 __all__ = [
     "AnalysisService",
@@ -155,4 +182,26 @@ __all__ = [
     "start_training_session",
     "submit_first_decision",
     "summarize_training_session",
+    "TicketComparison",
+    "TriageFieldComparison",
+    "TriageFilter",
+    "TriageLimits",
+    "TriageSummary",
+    "TriageSummaryMetric",
+    "TriageWorkspace",
+    "add_synthetic_tickets",
+    "compare_to_mock",
+    "export_triage_csv",
+    "filter_triage_entries",
+    "finalize_ticket",
+    "load_support_tickets",
+    "load_triage_guide",
+    "mock_is_visible",
+    "new_triage_workspace",
+    "parse_triage_fields",
+    "prepare_workspace_ticket",
+    "reveal_ticket_mock",
+    "revise_ticket",
+    "save_triage_draft",
+    "summarize_triage",
 ]
