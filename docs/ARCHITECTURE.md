@@ -1,14 +1,16 @@
 # Architecture
 
-## Milestone 8 boundary
+## Milestone 9 boundary
 
-Milestone 8 adds a descriptive insight layer to successful Milestone 6 batch
-outcomes and the separate Milestone 7 review state. It validates trusted
-metadata grouping, preserves AI/human/agreement perspectives, calculates exact
-metric denominators and sample warnings, stores manual context notes separately,
-selects examples by explicit rules, and shapes explicit exports. It intentionally
-adds no model rerun, inferred identity, LLM narrative, ranking, persistence,
-platform connector, French capability, moderation workflow, or hosted deployment.
+Milestone 9 adds an educational moderation training workflow over a versioned
+synthetic policy and case library. It may explicitly snapshot successful
+Milestone 6 records together with separate M3–M8 signals, review state, and
+context notes. It freezes policy/reference provenance per session, retains
+immutable first decisions and explicit final revisions, separates structural
+validation from non-blocking policy guidance, and shapes auditable exports. It
+intentionally adds no live moderation model, enforcement action, support triage,
+database, LLM narrative, platform connector, French capability, or hosted
+deployment.
 
 The current package contains:
 
@@ -19,7 +21,8 @@ The current package contains:
   Cardiff NLP sentiment adapter, and a pinned Sam Lowe emotion adapter;
 - `services/`: provider-neutral orchestration, thread-safe lazy reuse, CSV batch
   processing, reusable human-review rules, and reusable insight grouping,
-  metric, context-note, example-selection, and export rules;
+  metric, context-note, example-selection, moderation case/session/comparison,
+  and export rules;
 - `interface/`: local Flask routes, templates, and static presentation only.
 
 Dependency direction is `services -> providers -> contracts`. Contracts do not
@@ -55,6 +58,21 @@ export shaping. It reads `BatchResult` and `ReviewState` without modifying them.
 `InsightState` contains only separate context notes and is replaced immutably in
 the same bounded workspace. Templates render already-computed values; they do
 not define statistical rules or rerun providers.
+
+`contracts/moderation.py` owns the moderation enumerations, structural decision
+invariants, non-blocking guidance warnings, policy/reference provenance, frozen
+case snapshots, and attempt/session contracts. `services/moderation_resources.py`
+loads and validates packaged versioned JSON resources.
+`services/moderation_training.py` owns filtering, snapshot preparation, limits,
+session lifecycle, comparison, sample-aware summaries, and export shaping.
+`providers/moderation_mock.py` is a fixture lookup boundary only; it executes no
+model and never interprets user text.
+
+`interface/moderation_state.py` retains random-token training workspaces in
+bounded, expiring process memory. Capacity and object limits block creation
+rather than evicting older work. `interface/moderation_routes.py` parses forms
+and replaces immutable workspace state; it does not define policy semantics or
+persist content.
 
 ## Intended layers
 

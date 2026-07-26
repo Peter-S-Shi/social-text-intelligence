@@ -1,0 +1,134 @@
+{% from "_moderation_judgment.html" import judgment_fields %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prepare Cases · Social Text Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div><p class="eyebrow">Moderation Training</p><h1>Prepare cases</h1></div>
+    <span class="mode-badge">{{ workspace.prepared_cases|length }}/{{ limits.max_prepared_cases }} prepared</span>
+  </header>
+  <main>
+    <nav class="mode-nav" aria-label="Analysis modes">
+      <a href="{{ url_for('analyze_text') }}">Direct analysis</a>
+      <a href="{{ url_for('batch_home') }}">Batch CSV</a>
+      <a class="active" href="{{ url_for('moderation.home') }}">Moderation Training</a>
+    </nav>
+    <nav class="subnav" aria-label="Moderation workflow">
+      <a class="active" href="{{ url_for('moderation.prepare', token=token) }}">1. Prepare</a>
+      {% if workspace.active_session_id %}<a href="{{ url_for('moderation.session', token=token, session_id=workspace.active_session_id) }}">2. Train</a>{% else %}<span class="subnav-disabled">2. Train</span>{% endif %}
+      {% if workspace.sessions %}<a href="{{ url_for('moderation.results', token=token, session_id=workspace.sessions[-1].session_id) }}">3. Review</a>{% else %}<span class="subnav-disabled">3. Review</span>{% endif %}
+    </nav>
+    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+
+    <details class="panel methodology">
+      <summary>Versioned synthetic policy: {{ policy.name }} {{ policy.policy_version }}</summary>
+      <p><code>{{ policy.policy_id }}</code> · {{ policy.source_type.value|replace('_', ' ') }}. Policy references are frozen when a session starts.</p>
+      {% for category in policy.categories %}
+      <article class="policy-category">
+        <h3>{{ category.display_name }}</h3>
+        <p>{{ category.definition }}</p>
+        <p><strong>Severity:</strong> {{ category.severity_guidance }}<br><strong>Disposition:</strong> {{ category.disposition_guidance }}</p>
+        <ul>{% for clause in category.clauses %}<li><code>{{ clause.clause_id }}</code> — {{ clause.text }}</li>{% endfor %}</ul>
+      </article>
+      {% endfor %}
+    </details>
+
+    <section class="panel">
+      <div class="section-heading"><div><h2>Built-in synthetic case library</h2><p>{{ built_in_cases|length }} cases match the current filters.</p></div></div>
+      <form class="filters" method="get">
+        <label>Category <select name="category"><option value="">all</option>{% for item in violation_categories %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+        <label>Difficulty <select name="difficulty"><option value="">all</option>{% for item in difficulties %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
+        <label>Ambiguity <select name="ambiguity"><option value="">all</option>{% for item in ambiguity_levels %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
+        <label>Objective <select name="learning_objective"><option value="">all</option>{% for item in learning_objectives %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+        <label>Safety-sensitive <select name="safety_sensitive"><option value="">all</option><option value="true">yes</option><option value="false">no</option></select></label>
+        <button type="submit">Filter library</button>
+      </form>
+      <div class="case-library">
+        {% for case in built_in_cases %}
+        <article>
+          <div><strong>{{ case.case_id }}</strong> · {{ case.difficulty.value }} · {{ case.learning_objective.value|replace('_', ' ') }}</div>
+          <p>{{ case.text }}</p>
+          <small>{{ case.categories_involved|map(attribute='value')|join(', ') or 'no violation' }}{% if case.safety_sensitive %} · sensitive-content notice required{% endif %}</small>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if source_batch %}
+    <section class="panel">
+      <h2>Prepare a workspace-derived case</h2>
+      <p>Only successfully analyzed rows are eligible. The source record and selected M3–M8 signals are frozen into process memory. Any reference you add is labeled <code>self_authored</code>, never independent expert review.</p>
+      {% if successful_records %}
+      <form method="post" action="{{ url_for('moderation.prepare_case', token=token) }}">
+        <label>Successful source record
+          <select name="record_id" required>{% for record in successful_records %}<option value="{{ record.record_id }}">{{ record.record_id }} — {{ record.text[:120] }}</option>{% endfor %}</select>
+        </label>
+        <label>Optional literal excerpt
+          <textarea class="moderation-note" name="excerpt" maxlength="20000" placeholder="Leave blank to snapshot the complete record. Any excerpt must occur literally in the record."></textarea>
+        </label>
+        <div class="moderation-judgment-grid">
+          <label>Difficulty <select name="difficulty">{% for item in difficulties %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
+          <label>Learning objective <select name="learning_objective">{% for item in learning_objectives %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+        </div>
+        <details class="nested-panel">
+          <summary>Add an optional self-authored reference</summary>
+          <label><input type="checkbox" name="include_reference" value="true"> Include this self-authored reference</label>
+          {{ judgment_fields('reference_', dispositions, violation_categories, severities, escalation_reasons, unclear_reasons) }}
+          <label>Reference rationale <textarea class="moderation-note" name="reference_rationale" maxlength="3000"></textarea></label>
+          <fieldset class="moderation-options"><legend>Policy clauses</legend>{% for clause_id in policy_clause_ids %}<label><input type="checkbox" name="policy_clause_ids" value="{{ clause_id }}"> {{ clause_id }}</label>{% endfor %}</fieldset>
+          <label><input type="checkbox" name="include_alternative" value="true"> Add one complete acceptable alternative</label>
+          {{ judgment_fields('alternative_', dispositions, violation_categories, severities, escalation_reasons, unclear_reasons) }}
+        </details>
+        <details class="nested-panel">
+          <summary>Add an optional synthetic mock recommendation</summary>
+          <label><input type="checkbox" name="include_mock" value="true"> Include fixture-style mock recommendation</label>
+          {{ judgment_fields('mock_', dispositions, violation_categories, severities, escalation_reasons, unclear_reasons) }}
+          <label>Mock rationale <textarea class="moderation-note" name="mock_rationale" maxlength="3000"></textarea></label>
+        </details>
+        <button type="submit">Prepare immutable snapshot</button>
+      </form>
+      {% else %}<p>No successfully analyzed rows are available in the linked batch.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    <section class="panel">
+      <div class="section-heading"><div><h2>Prepared workspace cases</h2><p>{{ workspace.prepared_cases|length }} retained in this process-memory workspace.</p></div>
+      {% if workspace.prepared_cases %}<form method="post" action="{{ url_for('moderation.clear_cases', token=token) }}"><button class="danger-button compact" type="submit">Explicitly clear prepared cases</button></form>{% endif %}</div>
+      {% for case in workspace.prepared_cases %}<article class="prepared-case"><strong>{{ case.case_id }}</strong> · {{ case.difficulty.value }} · reference: {{ case.reference.provenance.value if case.reference else 'none / unscored' }}<p>{{ case.text }}</p></article>{% else %}<p>No workspace-derived cases prepared.</p>{% endfor %}
+    </section>
+
+    <section class="panel">
+      <h2>Start a training session</h2>
+      <p>Choose explicit cases or leave them unchecked for a balanced sample from the filtered pool. A single session is capped at {{ limits.max_session_cases }} cases; this workspace retains {{ limits.max_session_attempts }} attempts without silent replacement.</p>
+      <form method="post" action="{{ url_for('moderation.create_session', token=token) }}">
+        <div class="moderation-judgment-grid">
+          <label>Mode <select name="mode">{% for item in training_modes %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+          <label>Feedback <select name="feedback_timing">{% for item in feedback_timings %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+          <label>Order <select name="order_mode">{% for item in order_modes %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+          <label>Balanced sample size <input type="number" name="case_count" value="5" min="1" max="{{ limits.max_session_cases }}" required></label>
+        </div>
+        <div class="moderation-judgment-grid">
+          <label>Category filter <select name="category"><option value="">all</option>{% for item in violation_categories %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+          <label>Difficulty filter <select name="difficulty_filter"><option value="">all</option>{% for item in difficulties %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
+          <label>Ambiguity filter <select name="ambiguity"><option value="">all</option>{% for item in ambiguity_levels %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
+          <label>Objective filter <select name="learning_objective_filter"><option value="">all</option>{% for item in learning_objectives %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+          <label>Safety filter <select name="safety_sensitive"><option value="">all</option><option value="true">sensitive</option><option value="false">not sensitive</option></select></label>
+        </div>
+        <details class="nested-panel"><summary>Explicit case selection (optional)</summary><fieldset class="moderation-options">
+          {% for case in built_in_cases %}<label><input type="checkbox" name="case_ids" value="{{ case.case_id }}"> {{ case.case_id }} — {{ case.text[:90] }}</label>{% endfor %}
+          {% for case in workspace.prepared_cases %}<label><input type="checkbox" name="case_ids" value="{{ case.case_id }}"> {{ case.case_id }} — {{ case.text[:90] }}</label>{% endfor %}
+        </fieldset></details>
+        <label class="privacy-note"><input type="checkbox" name="content_notice_confirmed" value="true"> I acknowledge that selected synthetic or workspace cases may discuss harassment, hate, violence, self-harm, sexual content, privacy, or dangerous activity in concise, non-graphic terms.</label>
+        <button type="submit">Start session</button>
+      </form>
+    </section>
+    <form method="post" action="{{ url_for('moderation.clear_workspace', token=token) }}"><button class="danger-button" type="submit">Clear entire temporary training workspace</button></form>
+    <section class="limitations"><strong>Process memory only.</strong> No database, background persistence, platform connector, or moderation action is used. Limits never trigger silent deletion.</section>
+  </main>
+</body>
+</html>

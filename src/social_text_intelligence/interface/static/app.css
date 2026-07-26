@@ -96,6 +96,20 @@ th, td { padding: .65rem; border-bottom: 1px solid var(--line); text-align: left
 .example-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .example-list .panel { margin: 0; }
 .text-preview { white-space: pre-wrap; }
+.subnav-disabled { padding: .5rem .7rem; color: var(--muted); }
+.moderation-hero { border-left: 5px solid var(--accent); }
+.moderation-judgment-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; }
+.moderation-judgment-grid select, .moderation-judgment-grid input { width: 100%; }
+.moderation-options { display: flex; flex-wrap: wrap; gap: .6rem; margin: .8rem 0; padding: .8rem; border: 1px solid var(--line); border-radius: 10px; }
+.moderation-options label { font-weight: 600; }
+.moderation-note { min-height: 90px; }
+.nested-panel { margin: 1rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: 12px; }
+.policy-category, .prepared-case, .result-case, .case-library article { padding: .8rem 0; border-bottom: 1px solid var(--line); }
+.case-library { max-height: 34rem; overflow-y: auto; }
+.case-stepper { display: flex; flex-wrap: wrap; gap: .4rem; }
+.case-stepper a { display: inline-block; min-width: 2.4rem; padding: .45rem; border-radius: 8px; text-align: center; color: var(--accent); background: var(--accent-soft); text-decoration: none; font-weight: 750; }
+.case-stepper a.active { color: white; background: var(--accent); }
+.guidance-warning, .ai-assist { padding: .75rem; border-left: 4px solid #b38415; background: #fff8df; }
 @media (max-width: 700px) {
   .result-grid { grid-template-columns: 1fr; }
   .form-row, .site-header { align-items: stretch; flex-direction: column; }
@@ -104,4 +118,5 @@ th, td { padding: .65rem; border-bottom: 1px solid var(--line); text-align: left
   .review-toolbar, .export-panel { align-items: stretch; flex-direction: column; }
   .review-grid, .summary-grid, .metadata-grid { grid-template-columns: 1fr; }
   .insight-controls, .insight-grid, .example-list { grid-template-columns: 1fr; }
+  .moderation-judgment-grid { grid-template-columns: 1fr; }
 }

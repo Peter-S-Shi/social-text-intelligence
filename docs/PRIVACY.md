@@ -60,6 +60,21 @@ notes are included; original record text and metadata are optional and model-
 native scores are separately optional. Spreadsheet-formula protection covers
 all user-controlled cells. Treat every insight export as private local data.
 
+Moderation training uses a separate random-token, bounded, expiring
+process-memory workspace. Built-in policy and case fixtures are synthetic.
+Workspace-derived cases are created only from successfully analyzed records
+after an explicit snapshot action. The snapshot may contain source text,
+normalized signals, human review, context notes, and an allowlisted set of
+trusted metadata; none is written to a database or background file.
+
+Default limits are configurable and block creation rather than silently
+evicting prepared cases or session attempts. Expiry, explicit whole-workspace
+clearing, or process shutdown removes unexported state. Moderation exports are
+explicit and use `Cache-Control: no-store`. User-derived text, signals, context
+notes, and metadata are excluded by default and require separate opt-in.
+Spreadsheet-formula protection applies to reasoning, reviewer notes, source
+text, context, and metadata. Treat opted-in exports as private local data.
+
 ## Persistence
 
 Future persistence must remain local and ignored by Git. Schema migrations must

@@ -1,0 +1,62 @@
+{% macro judgment_fields(prefix, dispositions, violation_categories, severities, escalation_reasons, unclear_reasons, decision=None, include_notes=False) %}
+{% set judgment = decision.judgment if decision else none %}
+<div class="moderation-judgment-grid">
+  <label>Disposition
+    <select name="{{ prefix }}disposition" required>
+      {% for item in dispositions %}
+      <option value="{{ item.value }}" {% if judgment and judgment.disposition == item %}selected{% endif %}>{{ item.value|replace('_', ' ')|title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Primary violation
+    <select name="{{ prefix }}primary_violation" required>
+      {% for item in violation_categories %}
+      <option value="{{ item.value }}" {% if (judgment and judgment.primary_violation == item) or (not judgment and item.value == 'no_violation') %}selected{% endif %}>{{ item.value|replace('_', ' ')|title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Severity
+    <select name="{{ prefix }}severity" required>
+      {% for item in severities %}
+      <option value="{{ item.value }}" {% if (judgment and judgment.severity == item) or (not judgment and item.value == 'none') %}selected{% endif %}>{{ item.value|title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Escalation
+    <select name="{{ prefix }}escalate" required>
+      <option value="false" {% if not judgment or not judgment.escalate %}selected{% endif %}>No</option>
+      <option value="true" {% if judgment and judgment.escalate %}selected{% endif %}>Yes</option>
+    </select>
+  </label>
+</div>
+<fieldset class="moderation-options">
+  <legend>Secondary violations</legend>
+  {% for item in violation_categories if item.value != 'no_violation' %}
+  <label><input type="checkbox" name="{{ prefix }}secondary_violations" value="{{ item.value }}" {% if judgment and item in judgment.secondary_violations %}checked{% endif %}> {{ item.value|replace('_', ' ') }}</label>
+  {% endfor %}
+</fieldset>
+<div class="moderation-judgment-grid">
+  <label>Escalation reason
+    <select name="{{ prefix }}escalation_reason">
+      <option value="">Not applicable</option>
+      {% for item in escalation_reasons %}
+      <option value="{{ item.value }}" {% if judgment and judgment.escalation_reason == item %}selected{% endif %}>{{ item.value|replace('_', ' ') }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</div>
+<fieldset class="moderation-options">
+  <legend>Unclear / Needs Review reasons</legend>
+  {% for item in unclear_reasons %}
+  <label><input type="checkbox" name="{{ prefix }}unclear_reasons" value="{{ item.value }}" {% if judgment and item in judgment.unclear_reasons %}checked{% endif %}> {{ item.value|replace('_', ' ') }}</label>
+  {% endfor %}
+</fieldset>
+{% if include_notes %}
+<label>Reasoning
+  <textarea class="moderation-note" name="reasoning" maxlength="2000" required>{{ decision.reasoning if decision else '' }}</textarea>
+</label>
+<label>Reviewer note
+  <textarea class="moderation-note" name="reviewer_note" maxlength="2000" required>{{ decision.reviewer_note if decision else '' }}</textarea>
+</label>
+{% endif %}
+{% endmacro %}

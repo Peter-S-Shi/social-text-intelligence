@@ -1,0 +1,240 @@
+{
+  "policy_id": "sti-synthetic-moderation-training-policy",
+  "policy_version": "1.0.0",
+  "name": "Synthetic Moderation Training Policy",
+  "source_type": "built_in_synthetic_policy",
+  "categories": [
+    {
+      "category_id": "harassment_abuse",
+      "display_name": "Harassment or Abuse",
+      "definition": "Targeted degrading, intimidating, or persistently abusive expression directed at a person.",
+      "included_examples": [
+        "Repeated targeted insults intended to drive a person away.",
+        "Degrading abuse aimed at an identifiable individual."
+      ],
+      "excluded_examples": [
+        "General criticism of an idea without targeted abuse.",
+        "A single firm disagreement that does not demean a person."
+      ],
+      "severity_guidance": "Consider repetition, targeting, intimidation, and likely impact.",
+      "disposition_guidance": "Low concern may warrant allow or warn; clear targeted abuse may warrant warn or remove.",
+      "escalation_triggers": [
+        "Credible threats accompanying harassment.",
+        "Unresolved context suggesting coordinated targeting."
+      ],
+      "clauses": [
+        {
+          "clause_id": "HAR-1",
+          "text": "Targeted degrading or intimidating abuse is a harassment concern."
+        },
+        {
+          "clause_id": "HAR-2",
+          "text": "Criticism without targeted abuse is not harassment under this synthetic policy."
+        }
+      ]
+    },
+    {
+      "category_id": "hate_protected_class_attack",
+      "display_name": "Protected-Class Hate Attack",
+      "definition": "An attack, exclusionary claim, or dehumanizing statement directed at people because of a protected characteristic.",
+      "included_examples": [
+        "Claiming that a protected group does not belong in public life.",
+        "Dehumanizing people because of a protected characteristic."
+      ],
+      "excluded_examples": [
+        "Discussion of discrimination without attacking a protected group.",
+        "Criticism of an institution that does not target protected identity."
+      ],
+      "severity_guidance": "Consider dehumanization, exclusion, targeting, and incitement.",
+      "disposition_guidance": "Clear protected-class attacks normally warrant removal.",
+      "escalation_triggers": [
+        "Threats or incitement against a protected group.",
+        "Ambiguity requiring specialist policy review."
+      ],
+      "clauses": [
+        {
+          "clause_id": "HATE-1",
+          "text": "Protected-class attacks and exclusionary claims are violations."
+        },
+        {
+          "clause_id": "HATE-2",
+          "text": "Counterspeech and neutral discussion of discrimination are allowed."
+        }
+      ]
+    },
+    {
+      "category_id": "threat_violence",
+      "display_name": "Threat or Violence",
+      "definition": "A credible, targeted, or approving statement about causing physical harm.",
+      "included_examples": [
+        "A direct statement of intent to harm a named target.",
+        "Specific encouragement of violence against another person."
+      ],
+      "excluded_examples": [
+        "Clearly fictional or figurative language without a credible target.",
+        "Condemnation or reporting of a threat."
+      ],
+      "severity_guidance": "Consider credibility, target, timing, specificity, and imminence.",
+      "disposition_guidance": "Credible threats normally warrant removal; uncertainty may require review.",
+      "escalation_triggers": [
+        "Credible or imminent threat.",
+        "Potential high-impact safety risk."
+      ],
+      "clauses": [
+        {
+          "clause_id": "THR-1",
+          "text": "Credible targeted threats are serious violations."
+        },
+        {
+          "clause_id": "THR-2",
+          "text": "Ambiguous figurative language should be evaluated in context."
+        }
+      ]
+    },
+    {
+      "category_id": "self_harm",
+      "display_name": "Self-Harm Concern",
+      "definition": "Content expressing, encouraging, or instructing self-harm, including credible imminent risk.",
+      "included_examples": [
+        "A concise statement indicating possible imminent self-harm.",
+        "Encouragement for another person to harm themselves."
+      ],
+      "excluded_examples": [
+        "Recovery-oriented discussion without harmful instructions.",
+        "Non-graphic support-seeking language without encouragement."
+      ],
+      "severity_guidance": "Consider encouragement, instructions, credibility, and imminence.",
+      "disposition_guidance": "Support-seeking may remain allowed while still requiring escalation; encouragement or instructions may warrant removal.",
+      "escalation_triggers": [
+        "Possible imminent self-harm risk.",
+        "Uncertainty requiring specialist safety review."
+      ],
+      "clauses": [
+        {
+          "clause_id": "SH-1",
+          "text": "Possible imminent self-harm risk requires escalation review."
+        },
+        {
+          "clause_id": "SH-2",
+          "text": "Support-seeking is not automatically a removal violation."
+        }
+      ]
+    },
+    {
+      "category_id": "sexual_explicit_content",
+      "display_name": "Sexual or Explicit Content",
+      "definition": "Explicit sexual solicitation or description outside the synthetic policy's allowed non-explicit context.",
+      "included_examples": [
+        "A direct explicit sexual solicitation.",
+        "Non-graphic but clearly explicit sexual content."
+      ],
+      "excluded_examples": [
+        "Clinical or educational discussion without explicit solicitation.",
+        "Non-explicit affection."
+      ],
+      "severity_guidance": "Consider explicitness, solicitation, consent context, and safety concerns.",
+      "disposition_guidance": "Clear explicit content may warrant warning or removal under the synthetic training policy.",
+      "escalation_triggers": [
+        "Possible child-safety concern.",
+        "Consent or exploitation ambiguity requiring specialist review."
+      ],
+      "clauses": [
+        {
+          "clause_id": "SEX-1",
+          "text": "Explicit sexual solicitation is a violation."
+        },
+        {
+          "clause_id": "SEX-2",
+          "text": "Clinical and educational discussion is allowed when non-exploitative."
+        }
+      ]
+    },
+    {
+      "category_id": "spam_manipulation",
+      "display_name": "Spam or Manipulation",
+      "definition": "Deceptive, repetitive, or coordinated content intended to manipulate attention or engagement.",
+      "included_examples": [
+        "Repeated deceptive promotion promising guaranteed results.",
+        "Coordinated engagement manipulation."
+      ],
+      "excluded_examples": [
+        "A clearly identified ordinary promotion.",
+        "A single relevant link without deception."
+      ],
+      "severity_guidance": "Consider deception, repetition, coordination, and material harm.",
+      "disposition_guidance": "Minor spam may warrant warning; repeated or deceptive manipulation may warrant removal.",
+      "escalation_triggers": [
+        "Large-scale coordinated manipulation.",
+        "Potential fraud or legal concern."
+      ],
+      "clauses": [
+        {
+          "clause_id": "SPAM-1",
+          "text": "Deceptive repetitive promotion and engagement manipulation are violations."
+        },
+        {
+          "clause_id": "SPAM-2",
+          "text": "Clearly identified relevant promotion is not automatically spam."
+        }
+      ]
+    },
+    {
+      "category_id": "privacy_personal_information",
+      "display_name": "Privacy or Personal Information",
+      "definition": "Sharing or soliciting sensitive personal information without a safe and legitimate context.",
+      "included_examples": [
+        "Posting a person's private home address.",
+        "Soliciting sensitive account credentials."
+      ],
+      "excluded_examples": [
+        "A person sharing their own non-sensitive public contact information.",
+        "A synthetic placeholder that cannot identify a person."
+      ],
+      "severity_guidance": "Consider sensitivity, identifiability, consent, and potential harm.",
+      "disposition_guidance": "Exposed sensitive personal information normally warrants removal.",
+      "escalation_triggers": [
+        "Doxxing or credible targeting concern.",
+        "Legal or regulatory privacy concern."
+      ],
+      "clauses": [
+        {
+          "clause_id": "PRIV-1",
+          "text": "Non-consensual sensitive personal information is a privacy violation."
+        },
+        {
+          "clause_id": "PRIV-2",
+          "text": "Non-identifying synthetic placeholders are not personal information."
+        }
+      ]
+    },
+    {
+      "category_id": "illegal_dangerous_activity",
+      "display_name": "Illegal or Dangerous Activity",
+      "definition": "Content materially facilitating dangerous wrongdoing or requesting operational harmful instructions.",
+      "included_examples": [
+        "A request for operational steps to bypass a safety system.",
+        "Instructions intended to facilitate dangerous wrongdoing."
+      ],
+      "excluded_examples": [
+        "High-level safety education that does not increase harmful capability.",
+        "News reporting without operational instruction."
+      ],
+      "severity_guidance": "Consider intent, capability increase, operational detail, and likely harm.",
+      "disposition_guidance": "Operational facilitation normally warrants removal; ambiguous high-level discussion may require review.",
+      "escalation_triggers": [
+        "Credible imminent danger.",
+        "Specialist legal or safety review."
+      ],
+      "clauses": [
+        {
+          "clause_id": "DANG-1",
+          "text": "Operational facilitation of dangerous wrongdoing is a violation."
+        },
+        {
+          "clause_id": "DANG-2",
+          "text": "Non-operational safety education is allowed."
+        }
+      ]
+    }
+  ]
+}

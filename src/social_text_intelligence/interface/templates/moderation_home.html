@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Moderation Training · Social Text Intelligence</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div><p class="eyebrow">Local-first training workspace</p><h1>Moderation Training</h1></div>
+    <span class="mode-badge">Synthetic policy · process memory</span>
+  </header>
+  <main>
+    <nav class="mode-nav" aria-label="Analysis modes">
+      <a href="{{ url_for('analyze_text') }}">Direct analysis</a>
+      <a href="{{ url_for('batch_home') }}">Batch CSV</a>
+      <a class="active" href="{{ url_for('moderation.home') }}">Moderation Training</a>
+    </nav>
+    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    <section class="panel moderation-hero">
+      <h2>Practice structured moderation judgment</h2>
+      <p>This educational workflow uses a versioned synthetic policy, synthetic cases, and an explicitly labeled fixture-based mock recommendation. It does not execute platform moderation, make psychological diagnoses, or claim expert certification.</p>
+      <form method="post" action="{{ url_for('moderation.create_workspace') }}">
+        <label>Optional temporary batch token
+          <input name="batch_token" value="{{ source_batch_token }}" autocomplete="off">
+        </label>
+        <p><small>Leave blank to train only on built-in synthetic cases. A batch token links successful local analysis records for explicit snapshot preparation; nothing is copied until you choose a record.</small></p>
+        <button type="submit">Create temporary training workspace</button>
+      </form>
+    </section>
+    <section class="panel">
+      <h2>Default limits</h2>
+      <div class="summary-grid">
+        <article><strong>{{ limits.max_prepared_cases }}</strong><br>prepared cases</article>
+        <article><strong>{{ limits.max_session_cases }}</strong><br>cases per session</article>
+        <article><strong>{{ limits.max_session_attempts }}</strong><br>retained session attempts</article>
+      </div>
+      <p>No oldest-item eviction occurs. At a limit, creation is blocked until you export and explicitly clear the workspace, or wait for its {{ ttl_seconds // 60 }}-minute inactivity expiry.</p>
+    </section>
+    <section class="limitations"><strong>Training aid only.</strong> References are either repository-built synthetic references or clearly marked self-authored references. Self-authored material is not represented as independent expert review.</section>
+  </main>
+</body>
+</html>

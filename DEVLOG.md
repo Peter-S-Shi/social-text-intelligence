@@ -1,5 +1,35 @@
 # Development Log
 
+## Milestone 9 — Moderation training workflow
+
+Added a versioned, project-authored synthetic moderation policy and a 20-case
+synthetic training library with stable IDs, policy-clause provenance, complete
+reference decisions, acceptable alternatives, sensitive-content markers, and
+an explicitly labeled fixture mock provider. The mock provider executes no
+model and is never presented as expert judgment or accuracy ground truth.
+
+Added typed moderation contracts and separate structural validation versus
+non-blocking policy guidance. Structural errors reject incomplete or conflicting
+decisions. Guidance warnings preserve unusual but contextually possible
+combinations without rewriting or blocking the user's judgment, and remain in
+feedback, comparisons, and export. References distinguish `built_in` from
+`self_authored`; the reserved `user_authored` provenance is not exposed as a
+current single-user authoring choice.
+
+Added explicit successful-record snapshot preparation, frozen policy/reference
+sessions, independent and synthetic-mock-assisted modes, immediate or
+end-of-session feedback, immutable first decisions, explicit final revisions,
+cancel/restart history, field-level comparison, educational flags, sample-aware
+raw summaries, and auditable formula-safe CSV export with privacy-default
+exclusions.
+
+Added a three-area Prepare, Train, and Review interface plus configurable
+process-memory limits of 100 prepared cases, 50 cases per session, and 20
+retained attempts. Limits block new objects without silently deleting existing
+work. This milestone adds no live moderation model, automatic enforcement,
+support triage, LLM, persistence, platform connector, account, French support,
+or new dependency.
+
 ## Milestone 8 — Insights and community context
 
 Added reusable trusted-group validation, separate AI/human/agreement

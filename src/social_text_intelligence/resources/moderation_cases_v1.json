@@ -1,0 +1,454 @@
+{
+  "fixture_version": "1.0.0",
+  "policy_id": "sti-synthetic-moderation-training-policy",
+  "policy_version": "1.0.0",
+  "mock_provider_id": "sti-fixture-moderation-mock",
+  "mock_provider_version": "1.0.0",
+  "cases": [
+    {
+      "case_id": "synthetic-001",
+      "difficulty": "beginner",
+      "topic": "targeted insult",
+      "categories_involved": ["harassment_abuse"],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": false,
+      "learning_objective": "harassment_vs_hate",
+      "text": "You are useless. Stop posting here; nobody wants you around.",
+      "context": "A single targeted reply to another synthetic participant.",
+      "reference": {
+        "preferred": {"disposition": "warn", "primary_violation": "harassment_abuse", "secondary_violations": [], "severity": "low", "escalate": false},
+        "acceptable_alternatives": [],
+        "rationale": "The statement targets a person with degrading language but contains no protected-class attack or threat.",
+        "policy_clause_ids": ["HAR-1"]
+      },
+      "mock": {
+        "judgment": {"disposition": "warn", "primary_violation": "harassment_abuse", "secondary_violations": [], "severity": "low", "escalate": false},
+        "rationale": "Synthetic mock identifies a targeted degrading statement."
+      }
+    },
+    {
+      "case_id": "synthetic-002",
+      "difficulty": "intermediate",
+      "topic": "criticism versus abuse",
+      "categories_involved": [],
+      "context_available": true,
+      "ambiguity_level": "medium",
+      "safety_sensitive": false,
+      "learning_objective": "sentiment_is_not_harmfulness",
+      "text": "This proposal is frustrating and poorly organized.",
+      "context": "The comment criticizes a document and does not identify or demean a person.",
+      "reference": {
+        "preferred": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "acceptable_alternatives": [],
+        "rationale": "Negative sentiment directed at an idea is not itself a moderation violation.",
+        "policy_clause_ids": ["HAR-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "harassment_abuse", "secondary_violations": [], "severity": "medium", "escalate": false},
+        "rationale": "Synthetic mock deliberately over-enforces strong negative sentiment."
+      }
+    },
+    {
+      "case_id": "synthetic-003",
+      "difficulty": "beginner",
+      "topic": "protected-class exclusion",
+      "categories_involved": ["hate_protected_class_attack"],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": true,
+      "learning_objective": "harassment_vs_hate",
+      "text": "People from that protected group do not belong in our neighborhood.",
+      "context": "The statement targets a synthetic protected group rather than an individual behavior.",
+      "reference": {
+        "preferred": {"disposition": "remove", "primary_violation": "hate_protected_class_attack", "secondary_violations": [], "severity": "high", "escalate": false},
+        "acceptable_alternatives": [],
+        "rationale": "The exclusionary claim attacks people because of a protected characteristic.",
+        "policy_clause_ids": ["HATE-1"]
+      },
+      "mock": {
+        "judgment": {"disposition": "warn", "primary_violation": "harassment_abuse", "secondary_violations": [], "severity": "medium", "escalate": false},
+        "rationale": "Synthetic mock deliberately confuses hate with general harassment."
+      }
+    },
+    {
+      "case_id": "synthetic-004",
+      "difficulty": "intermediate",
+      "topic": "counterspeech",
+      "categories_involved": [],
+      "context_available": true,
+      "ambiguity_level": "medium",
+      "safety_sensitive": true,
+      "learning_objective": "policy_vs_factual_uncertainty",
+      "text": "Quoting that exclusionary slogan shows why discrimination must be challenged.",
+      "context": "The sentence reports and rejects a harmful claim.",
+      "reference": {
+        "preferred": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "acceptable_alternatives": [
+          {"disposition": "unclear_needs_review", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false, "unclear_reasons": ["insufficient_context"]}
+        ],
+        "rationale": "Counterspeech is allowed, while an unclear decision is acceptable if surrounding context is genuinely unavailable.",
+        "policy_clause_ids": ["HATE-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "hate_protected_class_attack", "secondary_violations": [], "severity": "high", "escalate": false},
+        "rationale": "Synthetic mock ignores quotation and counterspeech context."
+      }
+    },
+    {
+      "case_id": "synthetic-005",
+      "difficulty": "beginner",
+      "topic": "direct threat",
+      "categories_involved": ["threat_violence"],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": true,
+      "learning_objective": "ai_under_enforcement",
+      "text": "I will hurt you tomorrow after the meeting.",
+      "context": "A direct statement to an identifiable synthetic target with a near-term time.",
+      "reference": {
+        "preferred": {"disposition": "remove", "primary_violation": "threat_violence", "secondary_violations": [], "severity": "critical", "escalate": true, "escalation_reason": "credible_threat"},
+        "acceptable_alternatives": [],
+        "rationale": "The direct target and timing create a credible high-impact safety concern.",
+        "policy_clause_ids": ["THR-1"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "threat_violence", "secondary_violations": [], "severity": "high", "escalate": false},
+        "rationale": "Synthetic mock recognizes the violation but misses critical escalation."
+      }
+    },
+    {
+      "case_id": "synthetic-006",
+      "difficulty": "advanced",
+      "topic": "figurative threat language",
+      "categories_involved": ["threat_violence"],
+      "context_available": false,
+      "ambiguity_level": "high",
+      "safety_sensitive": true,
+      "learning_objective": "insufficient_context",
+      "text": "That performance killed me; they are going to destroy the next round.",
+      "context": "",
+      "reference": {
+        "preferred": {"disposition": "unclear_needs_review", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false, "unclear_reasons": ["ambiguous_language", "insufficient_context"]},
+        "acceptable_alternatives": [
+          {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false}
+        ],
+        "rationale": "The language appears figurative, but missing context makes an unclear decision reasonable.",
+        "policy_clause_ids": ["THR-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "threat_violence", "secondary_violations": [], "severity": "high", "escalate": true, "escalation_reason": "credible_threat"},
+        "rationale": "Synthetic mock is falsely certain under ambiguous language."
+      }
+    },
+    {
+      "case_id": "synthetic-007",
+      "difficulty": "intermediate",
+      "topic": "support seeking",
+      "categories_involved": ["self_harm"],
+      "context_available": true,
+      "ambiguity_level": "medium",
+      "safety_sensitive": true,
+      "learning_objective": "escalation_without_automatic_removal",
+      "text": "I am afraid I might hurt myself tonight and I need someone to listen.",
+      "context": "A concise support-seeking statement with possible imminent risk and no harmful instructions.",
+      "reference": {
+        "preferred": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "critical", "escalate": true, "escalation_reason": "self_harm_risk"},
+        "acceptable_alternatives": [
+          {"disposition": "unclear_needs_review", "primary_violation": "self_harm", "secondary_violations": [], "severity": "critical", "escalate": true, "escalation_reason": "self_harm_risk", "unclear_reasons": ["possible_imminent_risk_review"]}
+        ],
+        "rationale": "Support-seeking is not automatically removed, while the possible imminent risk still requires escalation.",
+        "policy_clause_ids": ["SH-1", "SH-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "self_harm", "secondary_violations": [], "severity": "critical", "escalate": true, "escalation_reason": "self_harm_risk"},
+        "rationale": "Synthetic mock over-enforces support-seeking content."
+      }
+    },
+    {
+      "case_id": "synthetic-008",
+      "difficulty": "beginner",
+      "topic": "self-harm encouragement",
+      "categories_involved": ["self_harm", "harassment_abuse"],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": true,
+      "learning_objective": "severity_vs_disposition",
+      "text": "A targeted reply encourages another person to harm themselves.",
+      "context": "The synthetic case paraphrases the harmful direction without reproducing graphic language.",
+      "reference": {
+        "preferred": {"disposition": "remove", "primary_violation": "self_harm", "secondary_violations": ["harassment_abuse"], "severity": "high", "escalate": true, "escalation_reason": "self_harm_risk"},
+        "acceptable_alternatives": [],
+        "rationale": "Targeted encouragement of self-harm is serious and warrants specialist safety escalation.",
+        "policy_clause_ids": ["SH-1", "HAR-1"]
+      },
+      "mock": null
+    },
+    {
+      "case_id": "synthetic-009",
+      "difficulty": "beginner",
+      "topic": "explicit solicitation",
+      "categories_involved": ["sexual_explicit_content"],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": true,
+      "learning_objective": "severity_vs_disposition",
+      "text": "The post contains a non-graphic but explicit sexual solicitation between adults.",
+      "context": "No child-safety or coercion signal is present in this synthetic scenario.",
+      "reference": {
+        "preferred": {"disposition": "remove", "primary_violation": "sexual_explicit_content", "secondary_violations": [], "severity": "medium", "escalate": false},
+        "acceptable_alternatives": [
+          {"disposition": "warn", "primary_violation": "sexual_explicit_content", "secondary_violations": [], "severity": "medium", "escalate": false}
+        ],
+        "rationale": "The content is explicitly sexual, while the synthetic policy permits either warning or removal at this severity.",
+        "policy_clause_ids": ["SEX-1"]
+      },
+      "mock": {
+        "judgment": {"disposition": "warn", "primary_violation": "sexual_explicit_content", "secondary_violations": [], "severity": "medium", "escalate": false},
+        "rationale": "Synthetic mock selects an authored acceptable alternative."
+      }
+    },
+    {
+      "case_id": "synthetic-010",
+      "difficulty": "intermediate",
+      "topic": "health education",
+      "categories_involved": [],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": true,
+      "learning_objective": "sentiment_is_not_harmfulness",
+      "text": "A clinical lesson discusses sexual health using non-graphic educational language.",
+      "context": "The material is instructional health education and contains no solicitation.",
+      "reference": {
+        "preferred": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "acceptable_alternatives": [],
+        "rationale": "Non-exploitative clinical education is allowed.",
+        "policy_clause_ids": ["SEX-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "sexual_explicit_content", "secondary_violations": [], "severity": "medium", "escalate": false},
+        "rationale": "Synthetic mock over-enforces based on topic words without context."
+      }
+    },
+    {
+      "case_id": "synthetic-011",
+      "difficulty": "beginner",
+      "topic": "deceptive promotion",
+      "categories_involved": ["spam_manipulation"],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": false,
+      "learning_objective": "severity_vs_disposition",
+      "text": "Guaranteed followers instantly. Repost this same offer in every discussion.",
+      "context": "The synthetic account repeats the same deceptive promotion.",
+      "reference": {
+        "preferred": {"disposition": "warn", "primary_violation": "spam_manipulation", "secondary_violations": [], "severity": "low", "escalate": false},
+        "acceptable_alternatives": [
+          {"disposition": "remove", "primary_violation": "spam_manipulation", "secondary_violations": [], "severity": "medium", "escalate": false}
+        ],
+        "rationale": "Repeated deceptive promotion is spam; either warning or removal can be justified by repetition.",
+        "policy_clause_ids": ["SPAM-1"]
+      },
+      "mock": {
+        "judgment": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "rationale": "Synthetic mock under-enforces deceptive promotion."
+      }
+    },
+    {
+      "case_id": "synthetic-012",
+      "difficulty": "intermediate",
+      "topic": "ordinary promotion",
+      "categories_involved": [],
+      "context_available": true,
+      "ambiguity_level": "medium",
+      "safety_sensitive": false,
+      "learning_objective": "ai_over_enforcement",
+      "text": "Disclosure: this is our weekly product update for subscribers who requested it.",
+      "context": "One clearly identified update is sent to a relevant opt-in audience.",
+      "reference": {
+        "preferred": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "acceptable_alternatives": [],
+        "rationale": "A relevant, disclosed, non-deceptive update is not spam.",
+        "policy_clause_ids": ["SPAM-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "warn", "primary_violation": "spam_manipulation", "secondary_violations": [], "severity": "low", "escalate": false},
+        "rationale": "Synthetic mock mistakes ordinary promotion for spam."
+      }
+    },
+    {
+      "case_id": "synthetic-013",
+      "difficulty": "beginner",
+      "topic": "private address",
+      "categories_involved": ["privacy_personal_information"],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": true,
+      "learning_objective": "ai_under_enforcement",
+      "text": "The post shares another person's private home address; the address is omitted from this synthetic case.",
+      "context": "The person did not consent to disclosure.",
+      "reference": {
+        "preferred": {"disposition": "remove", "primary_violation": "privacy_personal_information", "secondary_violations": [], "severity": "high", "escalate": true, "escalation_reason": "privacy_or_doxxing_concern"},
+        "acceptable_alternatives": [],
+        "rationale": "Non-consensual private location information creates a serious privacy and targeting concern.",
+        "policy_clause_ids": ["PRIV-1"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "privacy_personal_information", "secondary_violations": [], "severity": "medium", "escalate": false},
+        "rationale": "Synthetic mock identifies privacy exposure but misses escalation."
+      }
+    },
+    {
+      "case_id": "synthetic-014",
+      "difficulty": "beginner",
+      "topic": "synthetic placeholder",
+      "categories_involved": [],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": false,
+      "learning_objective": "policy_vs_factual_uncertainty",
+      "text": "Example address: [synthetic address removed].",
+      "context": "The text is explicitly a non-identifying placeholder.",
+      "reference": {
+        "preferred": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "acceptable_alternatives": [],
+        "rationale": "A non-identifying synthetic placeholder is not personal information.",
+        "policy_clause_ids": ["PRIV-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "rationale": "Synthetic mock correctly uses the provided placeholder context."
+      }
+    },
+    {
+      "case_id": "synthetic-015",
+      "difficulty": "intermediate",
+      "topic": "dangerous instructions request",
+      "categories_involved": ["illegal_dangerous_activity"],
+      "context_available": true,
+      "ambiguity_level": "low",
+      "safety_sensitive": true,
+      "learning_objective": "ai_under_enforcement",
+      "text": "The message asks for operational steps to bypass a safety lock; no instructions are reproduced.",
+      "context": "The request seeks capability-increasing operational detail.",
+      "reference": {
+        "preferred": {"disposition": "remove", "primary_violation": "illegal_dangerous_activity", "secondary_violations": [], "severity": "high", "escalate": true, "escalation_reason": "specialist_or_senior_review"},
+        "acceptable_alternatives": [],
+        "rationale": "Operational facilitation of dangerous wrongdoing is disallowed and merits specialist review.",
+        "policy_clause_ids": ["DANG-1"]
+      },
+      "mock": null
+    },
+    {
+      "case_id": "synthetic-016",
+      "difficulty": "intermediate",
+      "topic": "high-level safety education",
+      "categories_involved": [],
+      "context_available": true,
+      "ambiguity_level": "medium",
+      "safety_sensitive": true,
+      "learning_objective": "ai_over_enforcement",
+      "text": "A safety course explains why protective locks should not be bypassed, without operational steps.",
+      "context": "The material reduces rather than increases harmful capability.",
+      "reference": {
+        "preferred": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "acceptable_alternatives": [],
+        "rationale": "Non-operational safety education is allowed.",
+        "policy_clause_ids": ["DANG-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "illegal_dangerous_activity", "secondary_violations": [], "severity": "high", "escalate": true, "escalation_reason": "legal_or_regulatory_concern"},
+        "rationale": "Synthetic mock over-enforces based on safety-related vocabulary."
+      }
+    },
+    {
+      "case_id": "synthetic-017",
+      "difficulty": "advanced",
+      "topic": "mixed abuse and threat",
+      "categories_involved": ["threat_violence", "harassment_abuse"],
+      "context_available": true,
+      "ambiguity_level": "medium",
+      "safety_sensitive": true,
+      "learning_objective": "severity_vs_disposition",
+      "text": "A targeted abusive message also contains a credible statement of intent to cause harm.",
+      "context": "The harmful wording is paraphrased to keep the training fixture concise and non-graphic.",
+      "reference": {
+        "preferred": {"disposition": "remove", "primary_violation": "threat_violence", "secondary_violations": ["harassment_abuse"], "severity": "critical", "escalate": true, "escalation_reason": "credible_threat"},
+        "acceptable_alternatives": [],
+        "rationale": "The credible threat is primary, with targeted abuse as a secondary category.",
+        "policy_clause_ids": ["THR-1", "HAR-1"]
+      },
+      "mock": {
+        "judgment": {"disposition": "remove", "primary_violation": "harassment_abuse", "secondary_violations": ["threat_violence"], "severity": "high", "escalate": false},
+        "rationale": "Synthetic mock recognizes both categories but prioritizes and escalates incorrectly."
+      }
+    },
+    {
+      "case_id": "synthetic-018",
+      "difficulty": "advanced",
+      "topic": "context-dependent privacy",
+      "categories_involved": ["privacy_personal_information"],
+      "context_available": false,
+      "ambiguity_level": "high",
+      "safety_sensitive": true,
+      "learning_objective": "insufficient_context",
+      "text": "Contact details appear in a post, but ownership, sensitivity, and consent are unknown.",
+      "context": "",
+      "reference": {
+        "preferred": {"disposition": "unclear_needs_review", "primary_violation": "privacy_personal_information", "secondary_violations": [], "severity": "medium", "escalate": true, "escalation_reason": "privacy_or_doxxing_concern", "unclear_reasons": ["insufficient_context", "specialist_knowledge_required"]},
+        "acceptable_alternatives": [],
+        "rationale": "The missing consent and ownership context prevents a confident final disposition.",
+        "policy_clause_ids": ["PRIV-1", "PRIV-2"]
+      },
+      "mock": {
+        "judgment": {"disposition": "allow", "primary_violation": "no_violation", "secondary_violations": [], "severity": "none", "escalate": false},
+        "rationale": "Synthetic mock is falsely certain despite missing privacy context."
+      }
+    },
+    {
+      "case_id": "synthetic-019",
+      "difficulty": "advanced",
+      "topic": "policy ambiguity",
+      "categories_involved": ["spam_manipulation"],
+      "context_available": false,
+      "ambiguity_level": "high",
+      "safety_sensitive": false,
+      "learning_objective": "policy_vs_factual_uncertainty",
+      "text": "Several similar recommendations appear, but coordination and disclosure cannot be verified.",
+      "context": "",
+      "reference": {
+        "preferred": {"disposition": "unclear_needs_review", "primary_violation": "spam_manipulation", "secondary_violations": [], "severity": "low", "escalate": false, "unclear_reasons": ["conflicting_policy_signals", "insufficient_context"]},
+        "acceptable_alternatives": [
+          {"disposition": "warn", "primary_violation": "spam_manipulation", "secondary_violations": [], "severity": "low", "escalate": false}
+        ],
+        "rationale": "The visible repetition raises a concern, but coordination and deception remain unresolved.",
+        "policy_clause_ids": ["SPAM-1", "SPAM-2"]
+      },
+      "mock": null
+    },
+    {
+      "case_id": "synthetic-020",
+      "difficulty": "advanced",
+      "topic": "multi-category manipulation",
+      "categories_involved": ["spam_manipulation", "privacy_personal_information"],
+      "context_available": true,
+      "ambiguity_level": "medium",
+      "safety_sensitive": true,
+      "learning_objective": "ai_under_enforcement",
+      "text": "A deceptive repeated message asks recipients to post private account recovery details.",
+      "context": "The fixture contains no real credentials or operational account information.",
+      "reference": {
+        "preferred": {"disposition": "remove", "primary_violation": "privacy_personal_information", "secondary_violations": ["spam_manipulation"], "severity": "high", "escalate": true, "escalation_reason": "privacy_or_doxxing_concern"},
+        "acceptable_alternatives": [
+          {"disposition": "remove", "primary_violation": "spam_manipulation", "secondary_violations": ["privacy_personal_information"], "severity": "high", "escalate": true, "escalation_reason": "legal_or_regulatory_concern"}
+        ],
+        "rationale": "The request combines deceptive repetition with solicitation of sensitive account information.",
+        "policy_clause_ids": ["PRIV-1", "SPAM-1"]
+      },
+      "mock": {
+        "judgment": {"disposition": "warn", "primary_violation": "spam_manipulation", "secondary_violations": [], "severity": "low", "escalate": false},
+        "rationale": "Synthetic mock notices spam but misses the higher-impact privacy concern."
+      }
+    }
+  ]
+}
