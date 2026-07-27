@@ -18,18 +18,18 @@ python -m pip install -e ".[dev]"
 
 ## Quality checks
 
-Run all checks before proposing a milestone commit:
+Run all checks before proposing a coherent milestone or lifecycle commit:
 
 ```text
-python -m unittest discover -s tests -v
-python -m compileall -q src tests
+python -m pytest -q
 ruff check .
-mypy
+mypy --strict src tests
+python -m compileall -q src tests
+python -m pip check
 ```
 
-The fast tests and compile check do not require model dependencies. GitHub
-Actions runs the test, lint, type-check, and compile suite without downloading
-model weights.
+The default suite does not require model downloads. GitHub Actions runs the
+test, lint, type-check, and compile suite without downloading model weights.
 
 ## Optional real-model validation
 
@@ -59,6 +59,58 @@ Before every commit or push:
    user content;
 4. run the relevant checks;
 5. stage only the intended files.
+
+## Lifecycle Phase Discipline
+
+The mutable lifecycle plan is maintained in
+[ROADMAP.md](../ROADMAP.md), current execution state in
+[PROJECT_STATUS.md](../PROJECT_STATUS.md), and feature-scope findings in the
+[Feature Complete Manual Audit](FEATURE_COMPLETE_MANUAL_AUDIT.md).
+
+### Feature Complete Review
+
+- perform a product-level audit before freeze;
+- create one independently decidable finding per `FCR-XXX` audit item;
+- classify each finding before implementation;
+- update `docs/FEATURE_COMPLETE_MANUAL_AUDIT.md`;
+- update `PROJECT_STATUS.md`.
+
+### Feature Freeze
+
+- freeze the approved current-version feature set through a formal gate;
+- prohibit hidden feature expansion;
+- record every reopening decision before implementation;
+- require full regression after reopening.
+
+### Product Hardening
+
+- limit work to defects, usability, accessibility, privacy, error-state,
+  consistency, performance, and bounded-capacity corrections;
+- add no new product domain, language, model system, connector, account,
+  persistence layer, or top-level workflow;
+- update only the affected sections of the living
+  [Manual QA artifact](../manual_review_questionnaire.html);
+- update project status after each coherent hardening increment.
+
+### Full Regression and Manual Acceptance
+
+- complete the full automated validation suite;
+- execute the living manual-QA artifact with representative synthetic data;
+- record every blocker and its disposition;
+- do not propose a release candidate while a release blocker remains.
+
+### Release Candidate
+
+- verify packaging, reproducibility, licenses, notices, privacy, and final
+  regression;
+- require an explicit RC gate;
+- do not infer `1.0.0`, production readiness, or public release from RC status.
+
+### Mandatory Status Updates
+
+Every coherent lifecycle PR must update `PROJECT_STATUS.md` with the tested
+revision, phase and gate states, blockers, latest validation, and next required
+action.
 
 ## Local web interface
 
