@@ -1,4 +1,4 @@
-# Feature Complete Manual Audit / 功能完备人工审计
+# 功能完整性人工审计 / Feature Complete Manual Audit
 
 This is the canonical, append-only decision record for the Feature Complete
 Review. The Chinese section comes first and the English section follows. Both
@@ -20,38 +20,97 @@ sections use the same stable `FCR-XXX` identifiers.
 每个发现必须单独建立一个 `FCR-XXX` 项目，在开发前完成分类。不得删除、
 重新编号或静默改写历史项目；后续变化追加到该项目的“决定记录”中。
 
-## 2. 决定分类
+## 2. Decision Class 与 Decision
 
-| 决定类别 | 含义 |
+`Decision Class` 表示该发现属于哪个生命周期治理层级，只允许以下四类：
+
+| Decision Class | 含义 |
 | --- | --- |
-| `ACCEPT_AS_IS` | 当前行为符合本版本目标，保留不变 |
-| `DEFECT` | 现有约定或合理预期未实现，需要修复 |
 | `MUST_ADD_BEFORE_FREEZE` | 缺失内容阻碍冻结，需明确批准后加入当前版本 |
-| `REMOVE` | 当前能力有害、误导或无必要，应移除 |
-| `MERGE` | 与另一能力重复，应合并 |
-| `HIDE` | 能力保留，但不应作为当前主要入口展示 |
-| `SIMPLIFY` | 范围不变，减少步骤、术语或认知负担 |
-| `REJECT` | 提议不应实施，并保留拒绝理由 |
-| `DEFER_NEXT_VERSION` | 有价值但不属于当前冻结范围 |
+| `REMOVE_MERGE_HIDE_SIMPLIFY` | 在冻结前收紧、合并、隐藏或移除现有范围 |
+| `HARDENING` | 不扩展功能边界的缺陷、可用性、可访问性、隐私、错误状态或一致性改进 |
+| `DEFER_NEXT_VERSION` | 有价值但属于未来版本的扩展 |
+
+`Decision` 是独立字段，用来记录具体结果，例如：
+
+- `Add before freeze`
+- `Keep as-is`
+- `Keep and harden`
+- `Simplify`
+- `Merge`
+- `Hide from primary navigation`
+- `Remove`
+- `Defer to next version`
+- `Reject proposal`
 
 状态使用 `OPEN`、`APPROVED`、`IMPLEMENTED`、`REJECTED`、`DEFERRED` 或
-`VERIFIED`。分类和状态不得互相替代。
+`VERIFIED`。Decision Class、Decision 和状态不得互相替代。
 
 ## 3. 固定审计项目格式
 
 ```text
-ID: FCR-XXX
-标题:
-范围/工作流:
-观察或问题:
-证据与复现:
-决定类别:
-状态:
-当前版本理由:
-批准的动作:
-验收检查:
-相关 PR/commit:
-决定记录:
+Basic Information / 基本信息
+- ID: FCR-XXX
+- 标题:
+- 创建/更新日期:
+- 核查者代号:
+- 核查版本与 SHA:
+- 当前生命周期阶段:
+- 相关工作流:
+
+Current Behavior / 当前行为
+- 当前可见行为:
+- 相关 contract、文档或产品承诺:
+
+Manual Observation / 人工观察
+- 操作步骤:
+- 实际观察:
+- 合成证据或截图引用:
+- 人工核查结果:
+
+User Impact / 用户影响
+- 受影响的用户或工作流:
+- 影响程度与出现条件:
+
+Core Assessment / 核心评估
+- 是否符合当前版本目的:
+- 是否影响 Feature Freeze:
+- 是否涉及隐私、安全、数据完整性、可访问性或误导风险:
+
+Decision / 决定
+- Decision Class:
+- Decision:
+- Status:
+
+Rationale / 理由
+- 当前版本理由:
+- 被拒绝或延后的替代方案:
+
+Implementation Scope / 实施范围
+- In scope:
+- Out of scope:
+- 需要更新的文档、测试或 QA 项:
+
+Acceptance Criteria / 验收标准
+- 可验证标准:
+- 必须通过的自动化与人工检查:
+
+Risks and Regression Scope / 风险与回归范围
+- 主要风险:
+- 受影响模块:
+- 必须重跑的回归:
+
+Git / PR Record / Git 与 PR 记录
+- Branch:
+- Commit:
+- PR:
+- CI result:
+
+Final Outcome / 最终结果
+- 最终交付行为:
+- 验证结果:
+- 关闭日期:
+- 后续事项:
 ```
 
 ## 4. 初始功能审计清单
@@ -97,9 +156,9 @@ ID: FCR-XXX
 
 此索引汇总已分类决定；详细证据仍保留在对应 `FCR-XXX` 项目中。
 
-| ID | 决定类别 | 状态 | 简要理由 | 实施/验证引用 |
-| --- | --- | --- | --- | --- |
-| — | — | — | 尚未完成首次人工审计 | — |
+| ID | Decision Class | Decision | 状态 | 简要理由 | 实施/验证引用 |
+| --- | --- | --- | --- | --- | --- |
+| — | — | — | — | 尚未完成首次人工审计 | — |
 
 ## 6. Feature Freeze 决定格式
 
@@ -124,11 +183,12 @@ Feature Freeze 只能通过明确记录产生。完成 Milestone 10、完成本�
 1. 新发现使用下一个永久 `FCR-XXX` ID。
 2. 一个项目只记录一个可独立决定的问题。
 3. 不删除或重写历史结论；在“决定记录”中追加变化。
-4. add/remove/merge/hide/simplify/reject/defer 都必须同步更新本文件的索引。
-5. 批准的实现必须引用 PR/commit、验收检查和验证结果。
-6. 每个 coherent lifecycle PR 必须更新 `PROJECT_STATUS.md`。
-7. Freeze 后若扩展功能，必须先记录正式 reopening 决定并要求完整回归。
-8. 只使用合成证据；不得加入真实用户文本、身份信息、本机路径或私有导出。
+4. 每项必须分别记录四选一 Decision Class 和具体 Decision。
+5. add/remove/merge/hide/simplify/reject/defer 都必须同步更新本文件的索引。
+6. 批准的实现必须引用 PR/commit、验收检查和验证结果。
+7. 每个 coherent lifecycle PR 必须更新 `PROJECT_STATUS.md`。
+8. Freeze 后若扩展功能，必须先记录正式 reopening 决定并要求完整回归。
+9. 只使用合成证据；不得加入真实用户文本、身份信息、本机路径或私有导出。
 
 ---
 
@@ -149,36 +209,96 @@ changes to its decision record.
 
 ## 2. Decision classes
 
+`Decision Class` records the lifecycle-governance level of a finding. Only
+these four top-level classes are valid:
+
 | Decision class | Meaning |
 | --- | --- |
-| `ACCEPT_AS_IS` | Keep current behavior because it meets current-version goals |
-| `DEFECT` | Repair behavior that violates a contract or reasonable expectation |
 | `MUST_ADD_BEFORE_FREEZE` | Add an approved missing capability that blocks freeze |
-| `REMOVE` | Remove harmful, misleading, or unnecessary behavior |
-| `MERGE` | Combine overlapping capabilities |
-| `HIDE` | Retain a capability but remove it from primary presentation |
-| `SIMPLIFY` | Reduce steps, terminology, or cognitive load without expanding scope |
-| `REJECT` | Do not implement the proposal; retain the rationale |
-| `DEFER_NEXT_VERSION` | Preserve value while keeping it outside the current freeze |
+| `REMOVE_MERGE_HIDE_SIMPLIFY` | Tighten, merge, hide, or remove existing scope before freeze |
+| `HARDENING` | Improve defects, usability, accessibility, privacy, error states, or consistency without expanding the feature boundary |
+| `DEFER_NEXT_VERSION` | Preserve valuable expansion outside the current-version freeze |
+
+`Decision` is a separate field for the specific outcome:
+
+- `Add before freeze`
+- `Keep as-is`
+- `Keep and harden`
+- `Simplify`
+- `Merge`
+- `Hide from primary navigation`
+- `Remove`
+- `Defer to next version`
+- `Reject proposal`
 
 Statuses are `OPEN`, `APPROVED`, `IMPLEMENTED`, `REJECTED`, `DEFERRED`, or
-`VERIFIED`. A decision class and a status are separate fields.
+`VERIFIED`. Decision Class, Decision, and status are separate fields.
 
 ## 3. Fixed audit-item format
 
 ```text
-ID: FCR-XXX
-Title:
-Scope/workflow:
-Observation or problem:
-Evidence and reproduction:
-Decision class:
-Status:
-Current-version rationale:
-Approved action:
-Acceptance check:
-Related PR/commit:
-Decision record:
+Basic Information
+- ID: FCR-XXX
+- Title:
+- Created/updated date:
+- Reviewer alias:
+- Reviewed version and SHA:
+- Current lifecycle phase:
+- Affected workflow:
+
+Current Behavior
+- Current visible behavior:
+- Relevant contract, documentation, or product promise:
+
+Manual Observation
+- Steps:
+- Actual observation:
+- Synthetic evidence or screenshot reference:
+- Manual result:
+
+User Impact
+- Affected users or workflows:
+- Severity and conditions:
+
+Core Assessment
+- Current-version fit:
+- Feature Freeze impact:
+- Privacy, security, data-integrity, accessibility, or misleading-risk impact:
+
+Decision
+- Decision Class:
+- Decision:
+- Status:
+
+Rationale
+- Current-version rationale:
+- Rejected or deferred alternatives:
+
+Implementation Scope
+- In scope:
+- Out of scope:
+- Documentation, tests, or QA items to update:
+
+Acceptance Criteria
+- Verifiable criteria:
+- Required automated and manual checks:
+
+Risks and Regression Scope
+- Main risks:
+- Affected modules:
+- Required regression:
+
+Git / PR Record
+- Branch:
+- Commit:
+- PR:
+- CI result:
+
+Final Outcome
+- Delivered behavior:
+- Validation result:
+- Closed date:
+- Follow-up:
 ```
 
 ## 4. Initial feature audit checklist
@@ -226,9 +346,9 @@ evidence and disposition.
 
 ## 5. Feature decision index
 
-| ID | Decision class | Status | Short rationale | Implementation/verification reference |
-| --- | --- | --- | --- | --- |
-| — | — | — | Initial manual audit has not been completed | — |
+| ID | Decision Class | Decision | Status | Short rationale | Implementation/verification reference |
+| --- | --- | --- | --- | --- | --- |
+| — | — | — | — | Initial manual audit has not been completed | — |
 
 ## 6. Feature Freeze decision format
 
@@ -254,12 +374,14 @@ the gate automatically.
 1. Assign the next permanent `FCR-XXX` ID to each new finding.
 2. Keep one independently decidable issue per item.
 3. Never delete or rewrite history; append changes to the decision record.
-4. Update the index for every add, remove, merge, hide, simplify, reject, or
+4. Record one of the four Decision Class values and a separate specific
+   Decision for every item.
+5. Update the index for every add, remove, merge, hide, simplify, reject, or
    defer decision.
-5. Link approved implementation to its PR/commit, acceptance check, and
+6. Link approved implementation to its PR/commit, acceptance check, and
    validation result.
-6. Update `PROJECT_STATUS.md` in every coherent lifecycle PR.
-7. After freeze, record a formal reopening decision before feature expansion
+7. Update `PROJECT_STATUS.md` in every coherent lifecycle PR.
+8. After freeze, record a formal reopening decision before feature expansion
    and require full regression.
-8. Use synthetic evidence only; never add real user text, identities,
+9. Use synthetic evidence only; never add real user text, identities,
    machine-specific paths, or private exports.

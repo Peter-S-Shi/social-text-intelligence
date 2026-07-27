@@ -9,7 +9,8 @@ principles.
 | --- | --- |
 | Project | Social Text Intelligence |
 | Current version | `0.10.0` |
-| Current main SHA | `c746bccda39e7a93ae681f22adf57be51cba5b87` |
+| Reviewed baseline main SHA | `c746bccda39e7a93ae681f22adf57be51cba5b87` |
+| Current validated candidate | PR #13 head (authoritative SHA in GitHub); governance correction began from reviewed head `823fa481aad25448160891ff7f2dfc15f2f389fa` |
 | Current lifecycle phase | **Feature Complete Review** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | Not completed |
@@ -29,8 +30,11 @@ principles.
 
 Every coherent feature-review, freeze-gate, hardening, full-regression,
 manual-acceptance, release-candidate, or delivery change must update this file.
-The update must identify the tested revision, current phase, gate status,
-blockers, audit dispositions, latest validation, and next required action.
+The update must identify the reviewed baseline, tested candidate revision,
+current phase, gate status, blockers, audit dispositions, latest validation,
+and next required action. The actual merged `main` SHA should be recorded in
+the next lifecycle-status update after merge; a PR base SHA must never be
+presented as a future `main` SHA.
 
 Historical implementation detail belongs in [DEVLOG.md](DEVLOG.md). Feature
 scope decisions belong in the
