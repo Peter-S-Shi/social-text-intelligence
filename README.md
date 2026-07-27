@@ -5,14 +5,10 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Status: Milestone 10 — local Support Triage workbench.** The local Flask
-> application supports direct English analysis, bounded CSV batch workspaces,
-> independent human review, dataset-bounded insights, and a synthetic,
-> policy-based moderation training workflow plus human-led support triage with
-> explicit audit export.
+> **Current lifecycle phase: Feature Complete Review**
 >
-> Planned feature milestones are complete, but the project is not yet
-> feature-frozen or release-ready.
+> Planned feature milestones 1–10 are complete. The current version is not yet
+> feature-frozen, hardened, release-candidate approved, or release-ready.
 
 ## Principles
 
@@ -23,7 +19,13 @@ text with transparently licensed open-source models.
 - Platform integrations must be optional adapters, not core dependencies.
 
 The stable product and engineering direction is defined in the
-[Project Charter](PROJECT_CHARTER.md).
+[Project Charter](PROJECT_CHARTER.md). Mutable planning and current execution
+state are maintained separately:
+
+- [Product Roadmap](ROADMAP.md)
+- [Project Status](PROJECT_STATUS.md)
+- [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md)
+- [Living Manual QA](manual_review_questionnaire.html)
 
 ## Quick start
 
@@ -248,10 +250,11 @@ metadata are separate opt-ins. See
 [Support Triage](docs/SUPPORT_TRIAGE.md) for the complete contract and
 limitations.
 
-The next lifecycle phase is Feature Complete Review, followed by a Feature
-Freeze Gate, product hardening, full regression and manual acceptance, and only
-then a release-candidate and packaging decision. Deferred next-version
-candidates remain outside the current `0.10.0` feature boundary.
+Milestone 10 is the last completed planned feature milestone for the current
+version. Feature Complete Review is now in progress. A separate Feature Freeze
+Gate, product hardening, full regression and manual acceptance, and an explicit
+release-candidate decision must follow. Deferred next-version candidates remain
+outside the current `0.10.0` feature boundary.
 
 ## Core contracts
 

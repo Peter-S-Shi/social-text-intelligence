@@ -728,9 +728,12 @@ The milestone prompt should communicate:
 
 ---
 
-## 18. Provisional Milestone Roadmap
+## 18. Completed Feature Boundary and Lifecycle Governance
 
-This roadmap is directional. It may be revised after architecture review and model-license research.
+The canonical mutable plan is [ROADMAP.md](ROADMAP.md). Current execution state
+is recorded in [PROJECT_STATUS.md](PROJECT_STATUS.md). This Charter retains the
+stable feature boundary, deferred categories, and gate-based delivery
+principles; it is not the live status ledger.
 
 **Implementation status:** Milestones 1–10 are implemented in the current
 codebase. Milestone 10 is a temporary, human-led Support Triage workbench over a
@@ -744,9 +747,11 @@ bounded, expiring process memory with configurable blocking limits and no silent
 eviction.
 
 Planned feature milestones are complete, but the project is not yet
-feature-frozen or release-ready. Former Milestones 11–13 are deferred
-next-version candidates, not implemented current-version milestones. This
-status note does not broaden any milestone's scope.
+feature-frozen or release-ready. Former Milestones 11–12 are deferred
+next-version candidates. Former Milestone 13 is reclassified as lifecycle
+evaluation, hardening, acceptance, portfolio, and delivery work rather than a
+next-version feature milestone. This boundary does not broaden any completed
+milestone's scope.
 
 ### Milestone 1 — Independent Local Project Foundation
 
@@ -871,7 +876,7 @@ Goal:
 
 Platform API connectors should be evaluated only after the local product is mature.
 
-The planned lifecycle after Milestone 10 is:
+The gate-based lifecycle after Milestone 10 is:
 
 1. Feature Complete Review;
 2. Feature Freeze Gate;
@@ -882,6 +887,13 @@ The planned lifecycle after Milestone 10 is:
 
 None of these labels implies `1.0.0`, production readiness, public release, or
 completion before its separate acceptance gate is satisfied.
+
+The final feature milestone is not project completion. Feature Freeze requires
+a formal recorded gate. Product Hardening must converge quality over the frozen
+feature set and must not hide new feature development. Full automated
+regression and manual acceptance are required before an RC decision. Any
+reopening of frozen scope must be explicitly recorded with its rationale,
+approved boundary, affected artifacts, and required regression.
 
 ---
 

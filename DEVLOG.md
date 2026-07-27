@@ -1,5 +1,18 @@
 # Development Log
 
+## Lifecycle alignment after Milestone 10
+
+Created `ROADMAP.md` as the canonical mutable roadmap and
+`PROJECT_STATUS.md` as the canonical current-state record. Added the bilingual
+Feature Complete Manual Audit and the living manual-QA artifact, then aligned
+the README, Charter, and development guidance around the post-M10 lifecycle.
+
+The current phase is Feature Complete Review. Feature Freeze, Product
+Hardening, full regression and manual acceptance, and Release Candidate
+approval have not started or passed. Former M11–M12 remain deferred
+next-version candidates; former M13 is lifecycle evaluation, hardening,
+acceptance, portfolio, and delivery work rather than another future feature.
+
 ## Milestone 10 — Local Support Triage workbench
 
 Added a separate three-area Support Triage workflow over a versioned,
@@ -28,8 +41,9 @@ and require separate explicit opt-ins. Triage workspaces are process-memory
 only, expire after inactivity, and block limits without silent eviction.
 
 Planned feature milestones are now complete, but the project is not
-feature-frozen or release-ready. Former Milestones 11–13 are deferred
-next-version candidates rather than implemented current-version milestones.
+feature-frozen or release-ready. Former Milestones 11–12 are deferred
+next-version candidates. Former Milestone 13 is lifecycle work covering
+evaluation, hardening, acceptance, portfolio, and delivery.
 
 ## Milestone 9 — Moderation training workflow
 
