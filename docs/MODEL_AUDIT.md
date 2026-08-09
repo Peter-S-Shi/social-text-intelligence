@@ -62,11 +62,16 @@ integration mitigates it by:
 - fixing the full model commit hash;
 - setting `trust_remote_code=False`;
 - requesting the restricted `weights_only=True` PyTorch loading path;
+- explicitly requiring the reviewed `pytorch_model.bin` artifact with
+  `use_safetensors=False`, preventing Transformers from creating an unreviewed
+  conversion-revision snapshot in the local cache;
 - constraining the tested Transformers and PyTorch major versions;
 - storing downloaded files only in an ignored local cache;
 - keeping real-model tests opt-in so routine test runs do not download weights.
 
-Safetensors would be preferable. If the upstream project publishes an official
+Safetensors would be preferable. A locally auto-converted Safetensors artifact
+is not an approved substitute because its conversion revision is outside the
+audited provenance above. If the upstream project publishes an official
 Safetensors file, it must be reviewed at a new immutable revision before this
 project switches to it.
 
