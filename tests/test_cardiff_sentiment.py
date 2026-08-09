@@ -2,6 +2,9 @@
 
 import math
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 from social_text_intelligence.contracts import (
     InvalidProviderOutputError,
@@ -16,6 +19,9 @@ from social_text_intelligence.providers import (
     SentimentProvider,
     preprocess_social_text,
 )
+from social_text_intelligence.providers.cardiff_sentiment import (
+    TransformersSentimentRuntime,
+)
 
 
 class StubRuntime:
@@ -29,6 +35,49 @@ class StubRuntime:
 
 
 class CardiffSentimentProviderTests(unittest.TestCase):
+    def test_runtime_requires_pinned_bin_weights_without_auto_conversion(self) -> None:
+        tokenizer_loader = Mock()
+        tokenizer_loader.from_pretrained.return_value = object()
+        loaded_model = Mock()
+        model_loader = Mock()
+        model_loader.from_pretrained.return_value = loaded_model
+        fake_transformers = SimpleNamespace(
+            AutoTokenizer=tokenizer_loader,
+            AutoModelForSequenceClassification=model_loader,
+        )
+
+        def import_module(name: str) -> object:
+            if name == "torch":
+                return object()
+            if name == "transformers":
+                return fake_transformers
+            raise AssertionError(f"Unexpected import: {name}")
+
+        cache_dir = Path("synthetic-model-cache")
+        with patch(
+            "social_text_intelligence.providers.cardiff_sentiment.importlib.import_module",
+            side_effect=import_module,
+        ):
+            TransformersSentimentRuntime(cache_dir=cache_dir, offline=True)
+
+        tokenizer_loader.from_pretrained.assert_called_once_with(
+            MODEL_ID,
+            cache_dir=str(cache_dir),
+            local_files_only=True,
+            revision=MODEL_REVISION,
+            trust_remote_code=False,
+        )
+        model_loader.from_pretrained.assert_called_once_with(
+            MODEL_ID,
+            weights_only=True,
+            use_safetensors=False,
+            cache_dir=str(cache_dir),
+            local_files_only=True,
+            revision=MODEL_REVISION,
+            trust_remote_code=False,
+        )
+        loaded_model.eval.assert_called_once_with()
+
     def test_provider_implements_protocol_and_maps_all_native_labels(self) -> None:
         runtime = StubRuntime((0.05, 0.15, 0.80))
         provider = CardiffSentimentProvider(runtime=runtime)

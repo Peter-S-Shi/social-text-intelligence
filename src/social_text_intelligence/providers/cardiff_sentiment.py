@@ -84,7 +84,10 @@ class TransformersSentimentRuntime:
             )
             model_class = transformers.AutoModelForSequenceClassification
             self._model = model_class.from_pretrained(
-                MODEL_ID, weights_only=True, **load_options
+                MODEL_ID,
+                weights_only=True,
+                use_safetensors=False,
+                **load_options,
             )
         except (OSError, ValueError) as error:
             mode = "the local cache" if offline else "the pinned model source"

@@ -9,8 +9,8 @@ principles.
 | --- | --- |
 | Project | Social Text Intelligence |
 | Current version | `0.10.0` |
-| Reviewed baseline main SHA | `c746bccda39e7a93ae681f22adf57be51cba5b87` |
-| Current validated candidate | PR #13 head (authoritative SHA in GitHub); governance correction began from reviewed head `823fa481aad25448160891ff7f2dfc15f2f389fa` |
+| Reviewed baseline main SHA | `84fc819f981a8beb33589b6a3a1d74c7bb9b511b` |
+| Current validated candidate | Draft PR branch `fix/model-cache-deduplication`; the branch head in GitHub is authoritative |
 | Current lifecycle phase | **Feature Complete Review** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | Not completed |
@@ -19,12 +19,12 @@ principles.
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
-| Open blockers | No blockers classified yet; manual audit pending |
-| Approved audit items | None yet |
+| Open blockers | No release blocker classified yet; manual audit pending |
+| Approved audit items | `FCR-033` local model-cache hardening is verified; no product behavior or model revision changed |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | Lifecycle-alignment branch: 118 tests passed, 2 opt-in model tests skipped; Ruff passed; strict MyPy passed for 65 files; compileall passed; pip check passed; documentation links and static QA artifact checks passed |
-| Next required action | Execute the manual feature-complete audit |
-| Last updated | 2026-07-27 |
+| Latest validation | Model-cache hardening candidate: 119 tests passed, 2 opt-in model tests skipped; 2 real offline model integration tests passed separately; Ruff, strict MyPy for 65 files, compileall, pip check, documentation links, HTML syntax/duplicate-ID checks, and diff checks passed |
+| Next required action | Review the model-cache hardening Draft PR, then continue the manual Feature Complete Review |
+| Last updated | 2026-08-09 |
 
 ## Required maintenance
 

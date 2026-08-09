@@ -1,5 +1,20 @@
 # Development Log
 
+## Feature Complete Review — local model-cache hardening
+
+Hardened the pinned Cardiff sentiment runtime so Transformers must load the
+audited `pytorch_model.bin` artifact and cannot silently create a separate
+Safetensors conversion-revision snapshot. Added a regression test for the
+immutable revision, offline option, remote-code boundary, restricted weight
+loading, and explicit artifact choice.
+
+Repaired the machine-local Hugging Face cache after Windows Developer Mode was
+enabled: the duplicate GoEmotions snapshot weight is now a symbolic link to its
+content-addressed blob, and the unused Cardiff auto-conversion revision was
+removed after real offline inference passed for both providers. Cache repair is
+local-only and does not change a model, approved revision, label, score, product
+contract, or tracked model artifact.
+
 ## Lifecycle alignment after Milestone 10
 
 Created `ROADMAP.md` as the canonical mutable roadmap and
