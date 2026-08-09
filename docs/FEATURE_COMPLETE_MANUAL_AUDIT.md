@@ -228,7 +228,7 @@ Final Outcome / 最终结果
 
 - Branch: `fix/model-cache-deduplication`
 - Commit: Draft PR branch head（以 GitHub 为准）
-- PR: Draft PR from `fix/model-cache-deduplication`
+- PR: Draft PR #14 from `fix/model-cache-deduplication`
 - CI result: 创建 PR 后由 GitHub Actions 记录；本地验收已通过。
 
 **Final Outcome / 最终结果**
@@ -496,7 +496,7 @@ evidence and disposition.
 
 - Branch: `fix/model-cache-deduplication`
 - Commit: Draft PR branch head (authoritative in GitHub)
-- PR: Draft PR from `fix/model-cache-deduplication`
+- PR: Draft PR #14 from `fix/model-cache-deduplication`
 - CI result: GitHub Actions records it after PR creation; local acceptance passed.
 
 **Final Outcome**

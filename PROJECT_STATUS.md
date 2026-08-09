@@ -10,7 +10,7 @@ principles.
 | Project | Social Text Intelligence |
 | Current version | `0.10.0` |
 | Reviewed baseline main SHA | `84fc819f981a8beb33589b6a3a1d74c7bb9b511b` |
-| Current validated candidate | Draft PR branch `fix/model-cache-deduplication`; the branch head in GitHub is authoritative |
+| Current validated candidate | Draft PR #14 on `fix/model-cache-deduplication`; the PR head in GitHub is authoritative |
 | Current lifecycle phase | **Feature Complete Review** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | Not completed |
