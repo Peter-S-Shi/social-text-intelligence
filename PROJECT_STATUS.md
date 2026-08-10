@@ -9,8 +9,8 @@ principles.
 | --- | --- |
 | Project | Social Text Intelligence |
 | Current version | `0.10.0` |
-| Reviewed baseline main SHA | `84fc819f981a8beb33589b6a3a1d74c7bb9b511b` |
-| Current validated candidate | Draft PR #14 on `fix/model-cache-deduplication`; the PR head in GitHub is authoritative |
+| Reviewed baseline main SHA | `d896c4791653e674919c57e643362d90ebbcf317` |
+| Current validated revision | PR #14 merged into `main` at `d896c4791653e674919c57e643362d90ebbcf317` |
 | Current lifecycle phase | **Feature Complete Review** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | Not completed |
@@ -22,8 +22,8 @@ principles.
 | Open blockers | No release blocker classified yet; manual audit pending |
 | Approved audit items | `FCR-033` local model-cache hardening is verified; no product behavior or model revision changed |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | Model-cache hardening candidate: 119 tests passed, 2 opt-in model tests skipped; 2 real offline model integration tests passed separately; Ruff, strict MyPy for 65 files, compileall, pip check, documentation links, HTML syntax/duplicate-ID checks, and diff checks passed |
-| Next required action | Review the model-cache hardening Draft PR, then continue the manual Feature Complete Review |
+| Latest validation | PR #14 candidate: 119 tests passed, 2 opt-in model tests skipped; 2 real offline model integration tests passed separately; Ruff, strict MyPy for 65 files, compileall, pip check, documentation links, HTML syntax/duplicate-ID checks, and diff checks passed. PR and post-merge `main` CI passed on Python 3.11, 3.12, and 3.13 |
+| Next required action | Continue the manual Feature Complete Review |
 | Last updated | 2026-08-09 |
 
 ## Required maintenance
