@@ -185,6 +185,10 @@ Final Outcome / 最终结果
 
 ### 2026-08-13 最新反馈分类
 
+**Git 交付更新：** FCR-034–041 的实现 commit 为 `31c16c0`，位于
+`hardening/pre-freeze-manual-qa` 的 Draft PR #16。下方创建时标为“待填写”的
+Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR checks 为准。
+
 | 反馈 | 分类 | 处理 |
 | --- | --- | --- |
 | `manual-qa/`、可追踪样本/指南、本地 results 隔离 | QA infrastructure / governance | 本轮建立规范目录；`results/` 由仓库 `.gitignore` 保护 |
@@ -670,6 +674,11 @@ evidence and disposition.
 | FCR-044 | `HARDENING` | Keep and harden | `OPEN` | Return navigation is independent ergonomics; the core ticket flow completes | Later Product Hardening |
 
 ### 2026-08-13 latest-feedback classification
+
+**Git delivery update:** The FCR-034–041 implementation commit is `31c16c0`
+in Draft PR #16 from `hardening/pre-freeze-manual-qa`. This update supersedes
+the creation-time pending Git/PR placeholders below; the final remote head and
+CI status are authoritative in the PR checks.
 
 | Feedback | Classification | Treatment |
 | --- | --- | --- |
