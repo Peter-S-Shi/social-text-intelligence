@@ -1,5 +1,18 @@
 # Development Log
 
+## Feature Complete Review — FCR-044 return navigation
+
+Reclassified FCR-044 as a pre-freeze blocker after candidate-specific manual
+review showed that four internal Support Triage views lacked a discoverable
+return to the main application and caused material operating difficulty. Added
+an explicit `Social Text Intelligence home` link to every non-root workflow
+view, including deep Triage and Moderation pages, while preserving each
+workflow's own subnavigation and all temporary state.
+
+Reopened FCR-002 navigation verification and added route regressions covering
+the four Triage internal views plus Moderation session/review pages. No workflow,
+model, data, privacy, persistence, or decision semantics changed.
+
 ## Feature Complete Review — pre-freeze blocker corrections
 
 Classified the completed manual review into product findings, QA governance,

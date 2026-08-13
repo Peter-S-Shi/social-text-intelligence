@@ -78,6 +78,9 @@ class ModerationRouteTests(unittest.TestCase):
         )
         self.assertEqual(started.status_code, 302)
         session_url = started.headers["Location"]
+        session_page = self.client.get(session_url)
+        self.assertIn(b'href="/"', session_page.data)
+        self.assertIn(b"Social Text Intelligence home", session_page.data)
 
         rejected = self.client.post(
             session_url + "/cases/synthetic-001",
@@ -109,6 +112,8 @@ class ModerationRouteTests(unittest.TestCase):
         self.assertEqual(submitted.status_code, 302)
         results_url = submitted.headers["Location"]
         results = self.client.get(results_url)
+        self.assertIn(b'href="/"', results.data)
+        self.assertIn(b"Social Text Intelligence home", results.data)
         self.assertIn(b"Retained guidance warnings", results.data)
         self.assertIn(b"allow_with_violation", results.data)
         self.assertIn(b"not a composite score", results.data)

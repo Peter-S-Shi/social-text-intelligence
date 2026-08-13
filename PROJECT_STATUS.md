@@ -19,11 +19,11 @@ principles.
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
-| Open blockers | Candidate-specific manual retest for FCR-034, FCR-036, FCR-039, FCR-040, and FCR-041; V-04 workspace-derived Triage privacy opt-ins; V-01 exact final candidate evidence. Feature Freeze still requires explicit approval |
-| Approved audit items | FCR-034–041 are `IMPLEMENTED / Keep and harden`; FCR-042–044 are `OPEN` non-blocking Product Hardening findings; FCR-033 remains `VERIFIED` |
+| Open blockers | FCR-044 global return-navigation correction requires manual retest on the new PR head; FCR-002 navigation verification and V-01 exact final-candidate evidence remain open. Feature Freeze still requires explicit approval |
+| Approved audit items | FCR-034–041 passed delegated manual/technical retest; FCR-044 is an `IMPLEMENTED` pre-freeze blocker pending manual retest; FCR-042–043 remain `OPEN` non-blocking Product Hardening findings; FCR-033 remains `VERIFIED` |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | Draft PR #16 implementation `31c16c0`: targeted hardening/QA regression 34 passed; full suite 125 passed and 2 opt-in real-model tests skipped; Ruff passed; strict MyPy passed for 66 files; compileall, pip check, documentation links, questionnaire HTML parsing/duplicate-ID checks, diff checks, and privacy scan passed. GitHub PR checks are authoritative for the current head |
-| Next required action | Confirm Draft PR #16 CI, then manually retest the listed blocker and privacy items on the exact PR head; do not pass Feature Freeze automatically |
+| Latest validation | FCR-044 working candidate: targeted navigation regression 18 passed; full suite 126 passed and 2 opt-in real-model tests skipped; Ruff passed; strict MyPy passed for 66 files; compileall, pip check, documentation links, diff checks, and privacy scan passed. The final implementation SHA and GitHub CI will be recorded after the Draft PR head is updated |
+| Next required action | Validate and push the FCR-044 correction to Draft PR #16, confirm CI, then manually retest explicit home navigation on the exact new head; do not pass Feature Freeze automatically |
 | Last updated | 2026-08-13 |
 
 ## Required maintenance

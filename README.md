@@ -75,6 +75,9 @@ sti-web
 
 Open `http://127.0.0.1:5000`. Use `sti-web --offline` after both pinned model
 revisions are cached. The server binds only to the local loopback interface.
+Every non-root workflow view provides an explicit
+`← Social Text Intelligence home` link. Deep workflow navigation remains
+separate, so returning home never clears or rewrites temporary workspace state.
 
 Run the dependency-free test suite:
 

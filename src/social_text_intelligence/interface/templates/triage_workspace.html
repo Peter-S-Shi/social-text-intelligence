@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Triage Workspace · Support Triage</title><link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}"></head>
 <body><header class="site-header"><div><p class="eyebrow">Area 2 of 3</p><h1>Triage Workspace</h1></div><span class="mode-badge">{{ workspace.entries|length }} temporary tickets</span></header><main>
-<nav class="mode-nav"><a href="{{ url_for('triage.guide', token=token) }}">1. Source & Guide</a><a class="active" href="{{ url_for('triage.workspace', token=token) }}">2. Triage Workspace</a><a href="{{ url_for('triage.summary', token=token) }}">3. Summary & Export</a></nav>
+<nav class="mode-nav" aria-label="Application navigation"><a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a></nav>
+<nav class="subnav" aria-label="Support triage workflow"><a href="{{ url_for('triage.guide', token=token) }}">1. Source & Guide</a><a class="active" href="{{ url_for('triage.workspace', token=token) }}">2. Triage Workspace</a><a href="{{ url_for('triage.summary', token=token) }}">3. Summary & Export</a></nav>
 {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
 <section class="panel"><h2>Filter and sort</h2><form method="get" class="filter-grid">
 <label>Status<select name="status"><option value="">All</option>{% for item in statuses %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>

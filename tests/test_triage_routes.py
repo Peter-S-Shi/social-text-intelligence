@@ -98,6 +98,24 @@ class TriageRouteTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 302)
 
+    def test_every_workspace_view_has_an_explicit_application_home_link(
+        self,
+    ) -> None:
+        base = self.create_triage()
+        self.add_ticket(base)
+        for path in (
+            "/guide",
+            "/workspace",
+            "/tickets/support-001",
+            "/summary",
+        ):
+            with self.subTest(path=path):
+                page = self.client.get(base + path)
+                self.assertEqual(page.status_code, 200)
+                self.assertIn(b'href="/"', page.data)
+                self.assertIn(b"Social Text Intelligence home", page.data)
+                self.assertIn(b'aria-label="Application navigation"', page.data)
+
     def test_independent_draft_atomic_finalize_reveal_revision_and_no_store(
         self,
     ) -> None:

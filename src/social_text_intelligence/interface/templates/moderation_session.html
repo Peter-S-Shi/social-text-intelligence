@@ -13,6 +13,9 @@
     <span class="mode-badge">{{ session.mode.value|replace('_', ' ') }} · {{ session.attempts|length }}/{{ session.cases|length }}</span>
   </header>
   <main>
+    <nav class="mode-nav" aria-label="Application navigation">
+      <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
+    </nav>
     <nav class="subnav" aria-label="Moderation workflow">
       <a href="{{ url_for('moderation.prepare', token=token) }}">1. Prepare</a>
       <a class="active" href="{{ url_for('moderation.session', token=token, session_id=session.session_id) }}">2. Train</a>

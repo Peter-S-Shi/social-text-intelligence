@@ -162,7 +162,7 @@ Final Outcome / 最终结果
 | FCR-041 | Batch 到 Triage 关联入口 | 正常 UI 是否保留 batch token 进入 Triage | IMPLEMENTED；待人工复测 |
 | FCR-042 | 分数列表排序 | 分数列表是否需要更强的排序可读性 | OPEN；非 blocker |
 | FCR-043 | 说明与错误信息层级 | 次要说明、警告、错误的视觉层级是否足够清楚 | OPEN；非 blocker |
-| FCR-044 | Triage 返回与默认导航 | 完成 ticket 后返回/默认位置是否足够顺畅 | OPEN；非 blocker |
+| FCR-044 | 嵌套工作流返回主界面 | Triage 四个内部界面及同类深层页面是否有明确主界面返回链接 | IMPLEMENTED；blocker 人工复测待完成 |
 
 ## 5. Feature decision index
 
@@ -181,7 +181,7 @@ Final Outcome / 最终结果
 | FCR-041 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Batch Results 增加保留 token 的 Triage 入口 | Batch/Triage 关联回归；待人工隐私复测 |
 | FCR-042 | `HARDENING` | Keep and harden | `OPEN` | 分数排序是独立可读性改进，不阻碍当前 contract | 后续 Product Hardening |
 | FCR-043 | `HARDENING` | Keep and harden | `OPEN` | 说明/错误层级是跨页面视觉改进，当前可恢复性未失败 | 后续 Product Hardening |
-| FCR-044 | `HARDENING` | Keep and harden | `OPEN` | Triage 返回路径是独立导航改进，核心流程可完成 | 后续 Product Hardening |
+| FCR-044 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 复测证明缺失返回路径造成重大操作困难；所有嵌套工作流增加明确 home link | 导航 route regressions 通过；待人工复测 |
 
 ### 2026-08-13 最新反馈分类
 
@@ -197,18 +197,18 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 | 输入包含箭头时分数略有变化 | QA guidance | 输入字符已变化，分数小幅变化属预期；补充 exact-input 指南，不创建 FCR |
 | 分数列表排序 | Product FCR / Hardening | FCR-042，非 blocker |
 | 说明/错误文字视觉层级 | Product FCR / Hardening | FCR-043，非 blocker |
-| Triage 返回与默认导航 | Product FCR / Hardening | FCR-044，非 blocker |
+| Triage/嵌套工作流返回主界面 | Product FCR / Hardening | FCR-044；最新人工证据将其提升为 pre-freeze blocker，本轮已修，待复测 |
 
 ### 2026-08-13 既有 FCR disposition map
 
-- `VERIFIED / Keep as-is`: FCR-001, 002, 004, 006–013, 016, 018–020,
+- `VERIFIED / Keep as-is`: FCR-001, 004, 006–013, 016, 018–020,
   022, 025, 027–029, 032–033。
 - `IMPLEMENTED / Keep and harden`: FCR-034–041；其中 034、036、039、040、
   041 仍需在最终 candidate SHA 上人工复测。
-- `OPEN verification`: FCR-003、005、014、015、017、021、023、024、026、
-  030、031。自动化/静态证据已覆盖 V-03、V-05、V-06；V-01 与 V-04
-  仍要求 candidate-specific 人工证据。
-- `OPEN / non-blocking Hardening`: FCR-042–044。
+- `OPEN verification`: FCR-002、003、005、014、015、017、021、023、026、
+  030、031。FCR-002 因 FCR-044 的新人工证据重新打开；自动化/静态证据已覆盖
+  V-03–V-06，V-01 仍要求最终 candidate-specific 证据。
+- `OPEN / non-blocking Hardening`: FCR-042–043。
 
 ### FCR-034–FCR-041 — 固定审计记录
 
@@ -336,7 +336,7 @@ Feature Complete Review。分支、candidate commit、PR 与 CI 在本轮 Git �
 - **Git / PR Record / Git 与 PR 记录:** 当前 hardening 分支；candidate/PR/CI 待填写。
 - **Final Outcome / 最终结果:** 自动化入口/资格测试通过；V-04 六种 opt-in 仍需人工复测。
 
-### FCR-042–FCR-044 — 最新非 blocker 产品发现
+### FCR-042–FCR-044 — 最新产品发现
 
 #### FCR-042 — 分数列表排序
 
@@ -382,6 +382,16 @@ Feature Complete Review。分支、candidate commit、PR 与 CI 在本轮 Git �
 - **Risks and Regression Scope / 风险与回归范围:** Triage routes、browser history、focus。
 - **Git / PR Record / Git 与 PR 记录:** 未实施；无 commit/PR/CI。
 - **Final Outcome / 最终结果:** 保留到 Product Hardening，Feature Freeze 前无需关闭。
+
+**2026-08-13 Decision update / 决定更新：** PR #16 人工复测确认 Triage 的
+Source & Guide、Workspace、Ticket、Summary 四个内部界面均没有可发现的主应用
+返回链接，并造成重大操作困难；Moderation 的深层 Session/Results 也存在同类结构。
+这推翻了“非 blocker”的初始影响评估，但不产生新 FCR ID，因为根因仍是同一个
+嵌套工作流全局导航缺口。FCR-044 现为 pre-freeze blocker，Status 更新为
+`IMPLEMENTED`：所有非主页面使用明确、可键盘操作的
+`← Social Text Intelligence home` 链接，Triage/Moderation 深层页面将全局导航与
+工作流 subnav 分开。FCR-002 重新打开 verification；targeted route regression
+通过，最终 candidate 上的人工返回测试仍未完成。
 
 ### FCR-033 — 本地模型缓存冗余
 
@@ -651,7 +661,7 @@ predeclare a pass.
 | FCR-041 | Linked Batch-to-Triage entry | Can normal UI preserve the batch token into Triage? | IMPLEMENTED; manual retest pending |
 | FCR-042 | Score-list ordering | Would stronger score ordering improve scanability? | OPEN; non-blocking |
 | FCR-043 | Explanatory/error hierarchy | Are secondary copy, warnings, and errors visually distinct enough? | OPEN; non-blocking |
-| FCR-044 | Triage return/default navigation | Is post-ticket return/default positioning sufficiently efficient? | OPEN; non-blocking |
+| FCR-044 | Nested-workflow return navigation | Do all four Triage internals and comparable deep views expose an explicit application-home link? | IMPLEMENTED; blocker manual retest pending |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -671,7 +681,7 @@ evidence and disposition.
 | FCR-041 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Add a Batch Results Triage entry that preserves the token | Linked Batch/Triage regression; manual privacy retest pending |
 | FCR-042 | `HARDENING` | Keep and harden | `OPEN` | Score ordering is an independent readability improvement, not a current contract blocker | Later Product Hardening |
 | FCR-043 | `HARDENING` | Keep and harden | `OPEN` | Information hierarchy is cross-page visual hardening; recovery behavior did not fail | Later Product Hardening |
-| FCR-044 | `HARDENING` | Keep and harden | `OPEN` | Return navigation is independent ergonomics; the core ticket flow completes | Later Product Hardening |
+| FCR-044 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Retest proved that missing return paths cause material operating difficulty; every nested workflow now has an explicit home link | Navigation route regressions passed; manual retest pending |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -688,18 +698,19 @@ CI status are authoritative in the PR checks.
 | Small score change after adding arrow characters | QA guidance | The analyzed input changed; document exact-input comparison, no FCR |
 | Score-list ordering | Product FCR / Hardening | FCR-042, non-blocking |
 | Explanatory/error text hierarchy | Product FCR / Hardening | FCR-043, non-blocking |
-| Triage return/default navigation | Product FCR / Hardening | FCR-044, non-blocking |
+| Triage/nested-workflow return to application home | Product FCR / Hardening | FCR-044; latest evidence elevated it to a pre-freeze blocker, now corrected pending retest |
 
 ### 2026-08-13 existing-FCR disposition map
 
-- `VERIFIED / Keep as-is`: FCR-001, 002, 004, 006–013, 016, 018–020,
+- `VERIFIED / Keep as-is`: FCR-001, 004, 006–013, 016, 018–020,
   022, 025, 027–029, 032–033.
 - `IMPLEMENTED / Keep and harden`: FCR-034–041; 034, 036, 039, 040, and
   041 still require manual retest on the final candidate SHA.
-- `OPEN verification`: FCR-003, 005, 014, 015, 017, 021, 023, 024, 026,
-  030, 031. Automated/static evidence covers V-03, V-05, and V-06; V-01 and
-  V-04 still require candidate-specific manual evidence.
-- `OPEN / non-blocking Hardening`: FCR-042–044.
+- `OPEN verification`: FCR-002, 003, 005, 014, 015, 017, 021, 023, 026,
+  030, 031. FCR-002 reopened because of the new FCR-044 manual evidence;
+  automated/static evidence covers V-03–V-06, while V-01 still requires final
+  candidate-specific evidence.
+- `OPEN / non-blocking Hardening`: FCR-042–043.
 
 ### FCR-034–FCR-041 — fixed audit records
 
@@ -828,7 +839,7 @@ PR, and CI are finalized during Git delivery.
 - **Git / PR Record:** Current hardening branch; candidate/PR/CI pending.
 - **Final Outcome:** Automated entry/eligibility tests passed; V-04 six-option manual retest remains.
 
-### FCR-042–FCR-044 — latest non-blocking product findings
+### FCR-042–FCR-044 — latest product findings
 
 #### FCR-042 — Score-list ordering
 
@@ -874,6 +885,18 @@ PR, and CI are finalized during Git delivery.
 - **Risks and Regression Scope:** Triage routes, browser history, focus behavior.
 - **Git / PR Record:** Not implemented; no commit/PR/CI.
 - **Final Outcome:** Retained for Product Hardening; not required before Feature Freeze.
+
+**2026-08-13 Decision update:** PR #16 manual retest confirmed that Source &
+Guide, Workspace, Ticket, and Summary all lacked a discoverable return to the
+application home and caused material operating difficulty; deep Moderation
+Session/Results views shared the structural gap. This overturns the initial
+non-blocking impact assessment but does not create a new FCR ID because the root
+cause remains nested-workflow global navigation. FCR-044 is now a pre-freeze
+blocker with Status `IMPLEMENTED`: every non-root view uses an explicit,
+keyboard-operable `← Social Text Intelligence home` link, and deep Triage and
+Moderation views separate global navigation from workflow subnavigation.
+FCR-002 is reopened for verification. Targeted route regression passed; manual
+return-navigation retest on the final candidate remains pending.
 
 ### FCR-033 — Local model-cache redundancy
 
