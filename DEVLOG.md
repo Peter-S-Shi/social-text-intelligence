@@ -1,5 +1,13 @@
 # Development Log
 
+## Review ergonomics — Windows one-click launcher
+
+Added `start_social_text_intelligence.bat` at the repository root after explicit
+user approval. The launcher resolves the project `.venv` with relative paths,
+starts the existing loopback-only web app in offline mode, opens the browser,
+and provides setup and shutdown guidance. It installs and downloads nothing and
+does not change application, model, privacy, or persistence behavior.
+
 ## Feature Complete Review — FCR-044 return navigation
 
 Reclassified FCR-044 as a pre-freeze blocker after candidate-specific manual

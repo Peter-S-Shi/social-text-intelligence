@@ -193,7 +193,7 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 | --- | --- | --- |
 | `manual-qa/`、可追踪样本/指南、本地 results 隔离 | QA infrastructure / governance | 本轮建立规范目录；`results/` 由仓库 `.gitignore` 保护 |
 | 问卷侧边栏、上一/下一 Session | QA infrastructure / governance | 本轮更新 tracked questionnaire；不创建 FCR |
-| 一键启动 BAT | Release / RC ergonomics | 延后到 RC/发布准备，不纳入 pre-freeze 产品 blocker |
+| 一键启动 BAT | Release / RC ergonomics | 用户明确要求后已实现为项目根目录相对路径 launcher；不创建 FCR，不改变产品 contract |
 | 输入包含箭头时分数略有变化 | QA guidance | 输入字符已变化，分数小幅变化属预期；补充 exact-input 指南，不创建 FCR |
 | 分数列表排序 | Product FCR / Hardening | FCR-042，非 blocker |
 | 说明/错误文字视觉层级 | Product FCR / Hardening | FCR-043，非 blocker |
@@ -697,7 +697,7 @@ CI status are authoritative in the PR checks.
 | --- | --- | --- |
 | `manual-qa/`, tracked samples/guidance, private results | QA infrastructure / governance | Standard structure added; repository `.gitignore` protects `results/` |
 | Questionnaire sidebar and previous/next session | QA infrastructure / governance | Tracked questionnaire updated; no FCR created |
-| One-click BAT launcher | Release / RC ergonomics | Deferred to RC/release preparation; not a pre-freeze product blocker |
+| One-click BAT launcher | Release / RC ergonomics | Implemented after explicit user request as a project-relative root launcher; no FCR or product-contract change |
 | Small score change after adding arrow characters | QA guidance | The analyzed input changed; document exact-input comparison, no FCR |
 | Score-list ordering | Product FCR / Hardening | FCR-042, non-blocking |
 | Explanatory/error text hierarchy | Product FCR / Hardening | FCR-043, non-blocking |

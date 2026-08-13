@@ -79,6 +79,13 @@ Every non-root workflow view provides an explicit
 `← Social Text Intelligence home` link. Deep workflow navigation remains
 separate, so returning home never clears or rewrites temporary workspace state.
 
+On Windows, after the environment and both models are installed, double-click
+`start_social_text_intelligence.bat` in the project folder. It starts the same
+offline loopback-only server and opens the browser automatically. Keep its
+console window open while using the application; press Ctrl+C there to stop it.
+The launcher uses only project-relative paths and does not install, download, or
+persist anything.
+
 Run the dependency-free test suite:
 
 ```text
