@@ -9,22 +9,22 @@ principles.
 | --- | --- |
 | Project | Social Text Intelligence |
 | Current version | `0.10.0` |
-| Reviewed baseline main SHA | `d896c4791653e674919c57e643362d90ebbcf317` |
-| Current validated revision | PR #14 merged into `main` at `d896c4791653e674919c57e643362d90ebbcf317` |
+| Reviewed baseline main SHA | `dc70857ffef7e63997376b97510ab62389a20c41` |
+| Current validated candidate | Pre-freeze implementation commit `31c16c0` on `hardening/pre-freeze-manual-qa`; the final PR head may add status-only records |
 | Current lifecycle phase | **Feature Complete Review** |
 | Feature milestone status | Milestones 1–10 complete |
-| Feature Complete Review status | Not completed |
+| Feature Complete Review status | Manual review completed; classified corrections implemented; candidate-specific retest pending |
 | Feature Freeze status | Not started |
-| Product Hardening status | Not started |
+| Product Hardening status | Not started; this branch is limited to approved pre-freeze corrections |
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
-| Open blockers | No release blocker classified yet; manual audit pending |
-| Approved audit items | `FCR-033` local model-cache hardening is verified; no product behavior or model revision changed |
+| Open blockers | Candidate-specific manual retest for FCR-034, FCR-036, FCR-039, FCR-040, and FCR-041; V-04 workspace-derived Triage privacy opt-ins; V-01 exact final candidate evidence. Feature Freeze still requires explicit approval |
+| Approved audit items | FCR-034–041 are `IMPLEMENTED / Keep and harden`; FCR-042–044 are `OPEN` non-blocking Product Hardening findings; FCR-033 remains `VERIFIED` |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | PR #14 candidate: 119 tests passed, 2 opt-in model tests skipped; 2 real offline model integration tests passed separately; Ruff, strict MyPy for 65 files, compileall, pip check, documentation links, HTML syntax/duplicate-ID checks, and diff checks passed. PR and post-merge `main` CI passed on Python 3.11, 3.12, and 3.13 |
-| Next required action | Continue the manual Feature Complete Review |
-| Last updated | 2026-08-09 |
+| Latest validation | Candidate implementation `31c16c0`: targeted hardening/QA regression 34 passed; full suite 125 passed and 2 opt-in real-model tests skipped; Ruff passed; strict MyPy passed for 66 files; compileall, pip check, documentation links, questionnaire HTML parsing/duplicate-ID checks, diff checks, and privacy scan passed. GitHub CI is pending Draft PR publication |
+| Next required action | Publish the Draft PR, confirm CI, then manually retest the listed blocker and privacy items on the exact PR head; do not pass Feature Freeze automatically |
+| Last updated | 2026-08-13 |
 
 ## Required maintenance
 
