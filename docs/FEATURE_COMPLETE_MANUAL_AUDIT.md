@@ -393,6 +393,9 @@ Source & Guide、Workspace、Ticket、Summary 四个内部界面均没有可发�
 工作流 subnav 分开。FCR-002 重新打开 verification；targeted route regression
 通过，最终 candidate 上的人工返回测试仍未完成。
 
+**Git / PR update：** FCR-044 implementation commit `67eaa33`，Draft PR #16；
+最终 head 与 CI 以 PR checks 为准。
+
 ### FCR-033 — 本地模型缓存冗余
 
 **Basic Information / 基本信息**
@@ -897,6 +900,9 @@ keyboard-operable `← Social Text Intelligence home` link, and deep Triage and
 Moderation views separate global navigation from workflow subnavigation.
 FCR-002 is reopened for verification. Targeted route regression passed; manual
 return-navigation retest on the final candidate remains pending.
+
+**Git / PR update:** FCR-044 implementation commit `67eaa33` in Draft PR #16;
+final head and CI are authoritative in the PR checks.
 
 ### FCR-033 — Local model-cache redundancy
 
