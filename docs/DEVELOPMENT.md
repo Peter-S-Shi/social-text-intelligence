@@ -89,7 +89,7 @@ The mutable lifecycle plan is maintained in
 - add no new product domain, language, model system, connector, account,
   persistence layer, or top-level workflow;
 - update only the affected sections of the living
-  [Manual QA artifact](../manual_review_questionnaire.html);
+  [Manual QA artifact](../manual-qa/manual_review_questionnaire.html);
 - update project status after each coherent hardening increment.
 
 ### Full Regression and Manual Acceptance

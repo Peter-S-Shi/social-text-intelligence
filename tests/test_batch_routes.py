@@ -64,6 +64,13 @@ class BatchRouteTests(unittest.TestCase):
         self.assertIn(b"rates do not sum to 100%", results.data)
         self.assertIn(b"1 analyzed", results.data)
         self.assertIn(b"2 failed", results.data)
+        self.assertIn(b"Prepare Support Triage", results.data)
+        batch_token = workspace_url.rsplit("/", 1)[-1]
+        self.assertIn(
+            f'/triage?batch_token={batch_token}'.encode(), results.data
+        )
+        self.assertIn(b'This action cannot be undone.', results.data)
+        self.assertIn(b'name="confirm" value="clear" required', results.data)
 
         filtered = self.client.get(workspace_url + "?status=error")
         self.assertNotIn(b"<td>positive</td>", filtered.data)
@@ -78,7 +85,27 @@ class BatchRouteTests(unittest.TestCase):
         self.assertIn(b"empty_text", compact.data)
         self.assertIn(b"unsupported_language", compact.data)
 
-        cleared = self.client.post(workspace_url + "/clear")
+        triage_home = self.client.get(f"/triage?batch_token={batch_token}")
+        self.assertIn(
+            f'name="batch_token" value="{batch_token}"'.encode(),
+            triage_home.data,
+        )
+        triage_started = self.client.post(
+            "/triage/start",
+            data={"mode": "independent", "batch_token": batch_token},
+        )
+        self.assertEqual(triage_started.status_code, 302)
+        triage_guide = self.client.get(triage_started.headers["Location"])
+        self.assertIn(b"row-1", triage_guide.data)
+        self.assertIn(b"row-3", triage_guide.data)
+
+        unconfirmed = self.client.post(workspace_url + "/clear")
+        self.assertEqual(unconfirmed.status_code, 400)
+        self.assertEqual(self.client.get(workspace_url).status_code, 200)
+
+        cleared = self.client.post(
+            workspace_url + "/clear", data={"confirm": "clear"}
+        )
         self.assertEqual(cleared.status_code, 302)
         self.assertEqual(self.client.get(workspace_url).status_code, 404)
 

@@ -277,25 +277,54 @@
       resize: vertical;
     }
 
-    .module-nav {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 4px 2px 12px;
-      scrollbar-width: thin;
+    .review-layout {
+      display: grid;
+      grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+      align-items: start;
+      gap: 20px;
     }
 
-    .module-nav a {
-      flex: none;
+    .session-sidebar {
+      position: sticky;
+      top: 126px;
+      max-height: calc(100vh - 144px);
+      overflow: auto;
+      padding: 16px;
       border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 8px 12px;
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.98);
+      box-shadow: 0 8px 26px rgba(27, 38, 55, 0.045);
+    }
+
+    .session-sidebar h2 { margin: 0 0 12px; font-size: 1rem; }
+
+    .module-nav { display: grid; gap: 7px; }
+
+    .module-nav a {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 10px;
       color: var(--navy);
       background: var(--surface);
       text-decoration: none;
       font-size: 0.85rem;
       font-weight: 750;
     }
+
+    .module-nav a:hover { border-color: var(--teal); background: var(--teal-soft); }
+
+    .nav-progress { display: block; margin-top: 2px; color: var(--muted); font-size: 0.75rem; font-weight: 650; }
+
+    .section-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 22px 22px;
+    }
+
+    .section-actions a { text-decoration: none; }
+
+    #overall { scroll-margin-top: 130px; }
 
     .review-section {
       scroll-margin-top: 130px;
@@ -545,13 +574,16 @@
       .section-number { min-width: 42px; font-size: 1.6rem; }
       .section-score { min-width: 60px; }
       .result-control { grid-template-columns: 1fr; }
+      .review-layout { grid-template-columns: 1fr; }
+      .session-sidebar { position: static; max-height: none; }
+      .module-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media print {
       body { background: #fff; }
       .hero { padding: 24px; color: #000; background: #fff; border-bottom: 2px solid #000; }
       .hero-copy, .eyebrow { color: #333; }
-      .language-switch, .module-nav, .toolbar, .progress-track { display: none !important; }
+      .language-switch, .session-sidebar, .toolbar, .progress-track, .section-actions { display: none !important; }
       .sticky-summary { position: static; box-shadow: none; }
       .panel, .review-section, .check-item { box-shadow: none; break-inside: avoid; }
       .section-head { color: #000; background: #eee; }
@@ -640,8 +672,13 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
       </div>
     </section>
 
-    <nav class="module-nav" id="module-nav" aria-label="Review modules"></nav>
-    <div id="sections"></div>
+    <div class="review-layout">
+      <aside class="session-sidebar">
+        <h2 data-copy="sessionNavTitle">Session 导航</h2>
+        <nav class="module-nav" id="module-nav" aria-label="Review modules"></nav>
+      </aside>
+      <div id="sections"></div>
+    </div>
 
     <section class="panel" id="overall">
       <div class="section-head" style="margin: -24px -24px 22px; border-radius: 17px 17px 0 0;">
@@ -713,6 +750,10 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         pass: "✓ 通过", fail: "✕ 失败", na: "— 未测",
         evidence: "证据 / 实际表现 / 改进建议（可选）",
         sectionRecorded: "{done}/{total} 已记录",
+        sessionNavTitle: "Session 导航",
+        previousSession: "← 上一个 Session",
+        nextSession: "下一个 Session →",
+        overallSession: "总体反馈 →",
         overallTitle: "总体主观反馈",
         overallSubtitle: "请记录体验、信任边界与改良优先级。",
         finishTitle: "保存与交接",
@@ -759,6 +800,10 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         pass: "✓ Pass", fail: "✕ Fail", na: "— Not tested",
         evidence: "Evidence / observed behavior / improvement idea (optional)",
         sectionRecorded: "{done}/{total} recorded",
+        sessionNavTitle: "Session navigation",
+        previousSession: "← Previous session",
+        nextSession: "Next session →",
+        overallSession: "Overall feedback →",
         overallTitle: "Overall qualitative feedback",
         overallSubtitle: "Record experience, trust boundaries, and improvement priorities.",
         finishTitle: "Save and hand off",
@@ -806,12 +851,12 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         zhSubtitle: "用多种语言现象检查透明、可解释的单条分析。",
         enSubtitle: "Use varied language phenomena to inspect transparent single-text analysis.",
         zhGuide: [
-          "打开 direct_text_cases.md，并从 D01 开始复制文本。",
+          "打开 sample-data/direct_text_cases.md，并从 D01 开始复制文本。",
           "至少运行 D01、D03、D04、D07、D08 和 D10。",
           "比较 compact scores、native emotion scores、阈值和 provenance；不要把建议标签当作标准答案。"
         ],
         enGuide: [
-          "Open direct_text_cases.md and copy text beginning with D01.",
+          "Open sample-data/direct_text_cases.md and copy text beginning with D01.",
           "Run at least D01, D03, D04, D07, D08, and D10.",
           "Compare compact scores, native emotion scores, threshold, and provenance; do not treat suggested labels as ground truth."
         ],
@@ -832,14 +877,14 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         zhSubtitle: "验证 UTF-8 数据入口、行级错误韧性与显式导出。",
         enSubtitle: "Validate UTF-8 ingestion, row-level resilience, and explicit export.",
         zhGuide: [
-          "先上传 review_insights_workflow.csv；预览后明确点击本地分析。",
+          "先上传 sample-data/review_insights_workflow.csv；预览后明确点击本地分析。",
           "保留这个 20 条记录的工作区，供后续 Review、Insights、M9 和 M10 使用。",
-          "另开一个 Batch 工作区测试 alternate_text_column.csv 和 batch_validation_edge_cases.csv。"
+          "另开一个 Batch 工作区测试 sample-data/alternate_text_column.csv 和 sample-data/batch_validation_edge_cases.csv。"
         ],
         enGuide: [
-          "Upload review_insights_workflow.csv, preview it, then explicitly start local analysis.",
+          "Upload sample-data/review_insights_workflow.csv, preview it, then explicitly start local analysis.",
           "Keep this 20-record workspace for Review, Insights, M9, and M10.",
-          "Use another Batch workspace for alternate_text_column.csv and batch_validation_edge_cases.csv."
+          "Use another Batch workspace for sample-data/alternate_text_column.csv and sample-data/batch_validation_edge_cases.csv."
         ],
         items: [
           ["batch-main-preview", "主流程 CSV 预览显示 20 rows、20 valid、0 invalid。", "The main workflow CSV preview shows 20 rows, 20 valid, and 0 invalid.", "text 自动选中；支持的 metadata 均保留。", "The text column is selected automatically and supported metadata is retained."],
@@ -1173,9 +1218,12 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
       nav.replaceChildren();
       container.replaceChildren();
 
-      SECTIONS.forEach((section) => {
+      SECTIONS.forEach((section, sectionIndex) => {
         const navLink = element("a", "", section.number + " · " + localized(section, "Title"));
         navLink.href = "#" + section.id;
+        const navProgress = element("span", "nav-progress", "");
+        navProgress.id = "nav-score-" + section.id;
+        navLink.append(navProgress);
         nav.append(navLink);
 
         const wrapper = element("section", "review-section");
@@ -1203,8 +1251,32 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         const items = element("div", "check-items");
         section.items.forEach((item, index) => items.append(renderItem(section, item, index + 1)));
         wrapper.append(items);
+
+        const actions = element("nav", "section-actions");
+        actions.setAttribute("aria-label", "Session navigation");
+        if (sectionIndex > 0) {
+          const previous = element("a", "button secondary", text("previousSession"));
+          previous.href = "#" + SECTIONS[sectionIndex - 1].id;
+          actions.append(previous);
+        } else {
+          actions.append(element("span", "", ""));
+        }
+        const next = element(
+          "a",
+          "button primary",
+          sectionIndex < SECTIONS.length - 1 ? text("nextSession") : text("overallSession")
+        );
+        next.href = sectionIndex < SECTIONS.length - 1
+          ? "#" + SECTIONS[sectionIndex + 1].id
+          : "#overall";
+        actions.append(next);
+        wrapper.append(actions);
         container.append(wrapper);
       });
+
+      const overallLink = element("a", "", "11 · " + text("overallTitle"));
+      overallLink.href = "#overall";
+      nav.append(overallLink);
     }
 
     function renderItem(section, item, index) {
@@ -1322,7 +1394,10 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
       SECTIONS.forEach((section) => {
         const done = section.items.filter((item) => STATUS_VALUES.includes(state.results[item[0]]?.status)).length;
         const score = document.getElementById("score-" + section.id);
-        if (score) score.textContent = text("sectionRecorded").replace("{done}", done).replace("{total}", section.items.length);
+        const copy = text("sectionRecorded").replace("{done}", done).replace("{total}", section.items.length);
+        if (score) score.textContent = copy;
+        const navScore = document.getElementById("nav-score-" + section.id);
+        if (navScore) navScore.textContent = copy;
       });
     }
 

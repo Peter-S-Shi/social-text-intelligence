@@ -18,6 +18,11 @@ trusted metadata, sentiment/emotion signals, M7 human review, and M8 context
 notes. These fields are supporting context only and never become automatic
 triage verdicts. Triage does not mutate earlier milestone state.
 
+Batch Results provides a linked `Prepare Support Triage` entry that carries the
+active temporary batch token. A cleared or expired token fails safely. This is
+the normal route for exercising workspace-derived tickets and their independent
+privacy export opt-ins.
+
 ## Human decision and lifecycle
 
 The human records:
@@ -52,6 +57,10 @@ fixed fixture values; workspace mocks are explicitly same-user authored.
 Independent mode hides a mock before first finalize. Assisted simulation may
 show the deterministic mock first, but the human form starts empty and is never
 prefilled.
+
+When no mock exists, the ticket explicitly reports it as unavailable. Assisted
+copy never claims a visible suggestion in that state, and unavailable tickets
+remain outside both visible-before and hidden-before counts.
 
 First and final comparisons report six distinct fields: primary intent, issue
 category, urgency, recommended queue, escalation, and primary next action.

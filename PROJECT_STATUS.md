@@ -40,4 +40,4 @@ Historical implementation detail belongs in [DEVLOG.md](DEVLOG.md). Feature
 scope decisions belong in the
 [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md). Repeated
 human test results should be exported from the canonical
-[Manual QA artifact](manual_review_questionnaire.html).
+[Manual QA artifact](manual-qa/manual_review_questionnaire.html).

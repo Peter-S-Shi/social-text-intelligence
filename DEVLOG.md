@@ -1,5 +1,22 @@
 # Development Log
 
+## Feature Complete Review — pre-freeze blocker corrections
+
+Classified the completed manual review into product findings, QA governance,
+and release ergonomics. Recorded FCR-034 through FCR-044 without treating every
+questionnaire suggestion as a product FCR. Established a tracked `manual-qa/`
+home for the bilingual questionnaire, synthetic samples, and guidance, while
+repository ignore rules keep raw results, screenshots, exports, and machine
+paths out of Git.
+
+Clarified emotion neutral threshold-fallback copy, added Batch filter anchoring
+and destructive-clear confirmation, surfaced Human Review completion and
+Context Note UTC timestamps, exposed reliable/unassigned Insight failure
+counts, made Triage no-mock state explicit, and restored the linked
+Batch-to-Triage entry. These changes preserve models, thresholds, labels,
+privacy defaults, denominators, and process-memory boundaries. Feature Freeze
+remains pending explicit approval after candidate-specific manual retest.
+
 ## Feature Complete Review — local model-cache hardening
 
 Hardened the pinned Cardiff sentiment runtime so Transformers must load the

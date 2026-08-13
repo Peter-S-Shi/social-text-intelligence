@@ -79,11 +79,11 @@
     </section>
 
     <section class="panel">
-      <div class="section-heading"><div><h2>3. Results</h2><p>{{ workspace.result.aggregates.analyzed_count }} analyzed · {{ workspace.result.aggregates.failed_count }} failed</p></div>
-        <div class="export-actions"><a class="button-link" href="{{ url_for('review_index', token=token) }}">Start Human Review</a><a class="button-link" href="{{ url_for('insights', token=token) }}">Open Insights</a><a class="button-link" href="{{ url_for('moderation.home', batch_token=token) }}">Prepare Moderation Training</a><a class="button-link secondary" href="{{ url_for('batch_export', token=token) }}">Export normalized CSV</a><a class="button-link secondary" href="{{ url_for('batch_export', token=token, native=1) }}">Export CSV with native scores</a></div>
+      <div class="section-heading" id="results"><div><h2>3. Results</h2><p>{{ workspace.result.aggregates.analyzed_count }} analyzed · {{ workspace.result.aggregates.failed_count }} failed</p></div>
+        <div class="export-actions"><a class="button-link" href="{{ url_for('review_index', token=token) }}">Start Human Review</a><a class="button-link" href="{{ url_for('insights', token=token) }}">Open Insights</a><a class="button-link" href="{{ url_for('moderation.home', batch_token=token) }}">Prepare Moderation Training</a><a class="button-link" href="{{ url_for('triage.home', batch_token=token) }}">Prepare Support Triage</a><a class="button-link secondary" href="{{ url_for('batch_export', token=token) }}">Export normalized CSV</a><a class="button-link secondary" href="{{ url_for('batch_export', token=token, native=1) }}">Export CSV with native scores</a></div>
       </div>
       <p class="privacy-note">Exports are created only when selected and include the original text. Store them carefully.</p>
-      <form class="filters" method="get">
+      <form class="filters" method="get" action="{{ url_for('batch_workspace', token=token) }}#results">
         <label>Status <select name="status"><option value="all">all</option><option value="ok" {% if status_filter == 'ok' %}selected{% endif %}>ok</option><option value="error" {% if status_filter == 'error' %}selected{% endif %}>error</option></select></label>
         <label>Sentiment <select name="sentiment"><option value="all">all</option>{% for label in ['positive','negative','neutral'] %}<option value="{{ label }}" {% if sentiment_filter == label %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
         <label>Dominant emotion <select name="emotion"><option value="all">all</option>{% for label in ['joy','amusement','admiration','gratitude','anger','sadness','fear','disgust','neutral'] %}<option value="{{ label }}" {% if emotion_filter == label %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
@@ -95,7 +95,7 @@
     </section>
     {% endif %}
 
-    {% if workspace %}<form method="post" action="{{ url_for('batch_clear', token=token) }}"><button class="danger-button" type="submit">Clear this temporary batch</button></form>{% endif %}
+    {% if workspace %}<form method="post" action="{{ url_for('batch_clear', token=token) }}"><fieldset class="panel"><legend>Clear temporary data</legend><p class="warning"><strong>This action cannot be undone.</strong> It removes this temporary batch and its linked review and insight state from process memory. Separate workspaces are not cleared.</p><label class="check"><input type="checkbox" name="confirm" value="clear" required> I understand and want to clear this temporary batch.</label><button class="danger-button" type="submit">Clear this temporary batch</button></fieldset></form>{% endif %}
     <section class="limitations"><strong>Local and temporary.</strong> Uploaded rows and results remain only in bounded, expiring process memory. No database or upload history is created. Model outputs are estimates, not objective truth or psychological diagnosis.</section>
   </main>
 </body>

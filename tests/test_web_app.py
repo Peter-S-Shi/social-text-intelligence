@@ -65,6 +65,29 @@ class WebAppTests(unittest.TestCase):
         self.assertIn(b"Threshold", response.data)
         self.assertIn(b"deterministic-sentiment@mock-v1", response.data)
         self.assertIn(b"Inspect all model-native emotion scores", response.data)
+        self.assertIn(b"Secondary: joy", response.data)
+
+    def test_neutral_result_explains_threshold_fallback(self) -> None:
+        app = create_app(
+            {"TESTING": True},
+            analysis_gateway=LazyAnalysisService(
+                lambda: AnalysisService(
+                    sentiment_provider=DeterministicSentimentProvider(
+                        SentimentLabel.NEUTRAL
+                    ),
+                    emotion_provider=DeterministicEmotionProvider(
+                        EmotionLabel.NEUTRAL
+                    ),
+                )
+            ),
+        )
+        response = app.test_client().post(
+            "/", data={"text": "A synthetic neutral example."}
+        )
+        self.assertIn(b"Threshold fallback", response.data)
+        self.assertIn(
+            b"not a claim that the raw neutral score is the highest", response.data
+        )
 
     def test_empty_and_oversized_text_are_safe_user_errors(self) -> None:
         app = create_app(
@@ -77,6 +100,8 @@ class WebAppTests(unittest.TestCase):
         self.assertIn(b"at least one non-whitespace", empty.data)
         self.assertIn(b"exceeds 5 characters", oversized.data)
         self.assertNotIn(b"Traceback", empty.data + oversized.data)
+        self.assertNotIn(b"positive", oversized.data)
+        self.assertNotIn(b"gratitude", oversized.data)
 
     def test_provider_failure_does_not_expose_internal_detail(self) -> None:
         app = create_app(

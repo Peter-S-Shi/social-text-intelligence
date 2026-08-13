@@ -4,7 +4,13 @@ import csv
 import io
 import unittest
 
-from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
+from social_text_intelligence.contracts import (
+    AnalysisReport,
+    EmotionLabel,
+    NormalizedTextInput,
+    SentimentLabel,
+)
+from social_text_intelligence.contracts.errors import ProviderError
 from social_text_intelligence.interface import create_app
 from social_text_intelligence.providers import (
     DeterministicEmotionProvider,
@@ -22,6 +28,17 @@ def gateway() -> LazyAnalysisService:
             emotion_provider=DeterministicEmotionProvider(EmotionLabel.GRATITUDE),
         )
     )
+
+
+class FailingGateway:
+    initialized = True
+
+    def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
+        raise ProviderError(
+            provider="synthetic-failing-provider",
+            code="model_load_failed",
+            message="Synthetic route failure.",
+        )
 
 
 class ModerationRouteTests(unittest.TestCase):
@@ -233,6 +250,58 @@ class ModerationRouteTests(unittest.TestCase):
             opted_in_case["emotion_signal"],
         )
         self.assertIn("topic=testing", opted_in_case["trusted_metadata"])
+
+    def test_failed_batch_record_is_hidden_and_rejected_for_preparation(self) -> None:
+        app = create_app(
+            {
+                "TESTING": True,
+                "MAX_BATCH_BYTES": 10_000,
+                "MAX_BATCH_ROWS": 10,
+                "MAX_TEXT_LENGTH": 200,
+            },
+            analysis_gateway=FailingGateway(),
+        )
+        client = app.test_client()
+        uploaded = client.post(
+            "/batch/upload",
+            data={
+                "file": (
+                    io.BytesIO(
+                        b"record_id,text\nfailed,Synthetic failed analysis.\n"
+                    ),
+                    "synthetic.csv",
+                )
+            },
+            content_type="multipart/form-data",
+        )
+        batch_url = uploaded.headers["Location"]
+        client.post(batch_url + "/analyze")
+        batch_token = batch_url.rsplit("/", 1)[-1]
+        started = client.post(
+            "/moderation/start", data={"batch_token": batch_token}
+        )
+        workspace_url = started.headers["Location"].removesuffix("/prepare")
+
+        page = client.get(workspace_url + "/prepare")
+        self.assertIn(b"No successfully analyzed rows", page.data)
+        self.assertNotIn(b'<option value="failed">', page.data)
+
+        bypass = client.post(
+            workspace_url + "/prepare",
+            data={
+                "record_id": "failed",
+                "excerpt": "Synthetic failed analysis.",
+                "difficulty": "beginner",
+                "learning_objective": "policy_vs_factual_uncertainty",
+            },
+        )
+        self.assertEqual(bypass.status_code, 400)
+        self.assertIn(b"Only successfully analyzed records", bypass.data)
+        token = workspace_url.rsplit("/", 1)[-1]
+        self.assertEqual(
+            app.extensions["sti_moderation_store"].get(token).prepared_cases,
+            (),
+        )
 
     def test_configured_limits_are_visible_and_capacity_does_not_evict(
         self,
