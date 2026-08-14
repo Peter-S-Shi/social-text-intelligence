@@ -92,7 +92,7 @@
         <div class="distribution-list">
           {% for value in summary.values %}<div class="distribution-row">
             <div><span>{{ value.label|replace('_',' ')|title }}</span><strong>{{ value.count }} / {{ value.denominator }}</strong></div>
-            {% if summary.sample.emphasize_percentages %}<div class="bar-track" aria-label="{{ '%.1f'|format(value.rate * 100) }} percent"><span style="width: {{ '%.2f'|format(value.rate * 100) }}%"></span></div><small>{{ '%.1f'|format(value.rate * 100) }}%</small>{% else %}<small>Percentage de-emphasized</small>{% endif %}
+            {% if summary.sample.emphasize_percentages %}<progress class="metric-progress" value="{{ '%.2f'|format(value.rate * 100) }}" max="100" aria-label="{{ '%.1f'|format(value.rate * 100) }} percent">{{ '%.1f'|format(value.rate * 100) }}%</progress><small>{{ '%.1f'|format(value.rate * 100) }}%</small>{% else %}<small>Percentage de-emphasized</small>{% endif %}
           </div>{% endfor %}
         </div>
         {% if selection.perspective != 'ai' %}<p><small>{{ summary.unreviewed_count }} unreviewed · {{ summary.uncertain_count }} uncertain. Eligibility is metric-specific.</small></p>{% endif %}

@@ -127,6 +127,37 @@ notes. Creates and explicit clears already execute as single locked store
 operations. Batch analysis continues to use its stronger exclusive lease and
 lease-identity write-back contract.
 
+## Local browser boundary
+
+The Flask CLI binds to `127.0.0.1`. HTTP Host validation accepts only
+`127.0.0.1` and `localhost`; a port does not change Host trust. Any other Host
+returns a fixed HTTP 400 before route dispatch, inference, or state mutation.
+
+For `POST`, `PUT`, `PATCH`, and `DELETE`, an explicit Origin must exactly match
+the request scheme, host, and effective port. `null`, malformed, and external
+origins return a fixed HTTP 403. If Origin is absent but Referer is present, the
+Referer origin must match by the same rule. If both are absent, the request is
+accepted as a local non-browser client and still requires a trusted Host. This
+lightweight boundary creates no account, cookie session, CSRF token, CORS, or
+remote-access contract.
+
+All responses carry:
+
+- `Content-Security-Policy: default-src 'self'; base-uri 'none'; connect-src
+  'self'; font-src 'self'; form-action 'self'; frame-ancestors 'none'; img-src
+  'self'; object-src 'none'; script-src 'self'; style-src 'self'`;
+- `X-Content-Type-Options: nosniff`;
+- `Referrer-Policy: same-origin`;
+- `X-Frame-Options: DENY`;
+- the existing no-store/no-cache headers.
+
+The policy permits only checked-in local CSS and JavaScript. It contains no
+wildcard, external CDN, `unsafe-inline`, or reporting endpoint. HSTS is excluded
+because the local product intentionally serves loopback HTTP, and CORS is not
+enabled. Host rejection is 400, origin/referer rejection is 403, request-body
+rejection remains 413, mutation conflict remains 409, and expired state remains
+404.
+
 ## Insights and context notes
 
 Insight grouping accepts only `source_type`, `source_label`, `topic`,

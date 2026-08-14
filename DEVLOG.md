@@ -1,5 +1,44 @@
 # Development Log
 
+## Product Hardening Batch A6 — Local browser boundary hardening
+
+Reconciled Phase 0 PH-007 as permanent FCR-050. Existing FCR-045–049 govern
+ephemeral capacity/state, complete-input inference, request-body capacity,
+real-model evidence, and concurrent mutations; none defines the browser Host,
+same-origin, or response-header boundary.
+
+Configured Flask trusted hosts for exactly `127.0.0.1` and `localhost`, while
+the CLI continues binding only `127.0.0.1`. A fixed private 400 handles rejected
+Host values before route dispatch. Unsafe methods now require an exact
+same-origin Origin, or a same-origin Referer when Origin is absent; explicit
+cross-origin, malformed, or `null` values receive a fixed private 403. Requests
+with neither header remain supported as documented local non-browser clients
+behind trusted Host validation. Rejection occurs before model inference,
+request-body parsing, or workspace mutation.
+
+All responses now receive a self-only CSP, `nosniff`,
+`Referrer-Policy: same-origin`, `X-Frame-Options: DENY`, and the existing
+no-store/no-cache headers. The CSP uses no wildcard, external origin, or
+`unsafe-inline`. Replaced the sole dynamic inline style in Insights with a
+native progress element styled by the existing local stylesheet. HSTS, CORS,
+TLS, LAN binding, sessions, accounts, remote deployment, and CSP reporting are
+explicitly excluded.
+
+Focused regressions cover approved hosts, same-origin and fallback behavior,
+private Host/Origin rejection before inference, preservation of Batch/Review/
+Insights/Moderation/Triage state, headers on HTML/redirect/error/413/CSV/static
+responses, and the absence of inline/external template resources. Selected A3
+request-ceiling and A5 lease/concurrency tests remain green. Feature Freeze
+remains PASS; no later PH item is started.
+
+Twelve focused browser-boundary/A3/A5 tests passed. The complete deterministic
+suite passed 163 tests with 2 opt-in model integrations skipped. Ruff, strict
+MyPy for 71 files, compileall, and pip check passed.
+
+Batch A5 / PR #22 was merged at main SHA
+`3a0bb9c9460379b55a6488f966034419e40cf91d`, the synchronized A6 baseline;
+FCR-049 remains `VERIFIED`.
+
 ## Product Hardening Batch A5 — Concurrent workspace mutation integrity
 
 Reconciled Phase 0 PH-006 as permanent FCR-049. FCR-045 protects Batch
