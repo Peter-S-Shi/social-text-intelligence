@@ -170,7 +170,7 @@ Final Outcome / 最终结果
 | FCR-049 | 并发 workspace mutation 完整性 | stale workspace mutation 是否可能静默覆盖已接受的新状态 | VERIFIED；A5 behavioral review 与 CI PASS |
 | FCR-050 | 本地浏览器安全边界 | 非可信 Host、跨源 unsafe request 或缺失安全 headers 是否可能越过 loopback browser boundary | VERIFIED；A6 code review、CI 与 real-browser smoke PASS |
 | FCR-051 | Triage timestamp 排序完整性 | 按 timestamp 排序在不同 UTC offset、无时区与缺失值下是否给出正确且不误导的顺序 | VERIFIED；A9 formal review 与 final-head CI PASS |
-| FCR-052 | Applied filter/selection state 回显完整性 | 已生效的 GET filter/sort/selection query state 是否被表单控件如实回显 | IMPLEMENTED；A10 read-only audit 发现的独立 root cause，待 PR review |
+| FCR-052 | Applied filter/selection state 回显完整性 | 已生效的 GET filter/sort/selection query state 是否被表单控件如实回显 | VERIFIED；A10 formal review 与 final-head CI PASS |
 
 ## 5. Feature decision index
 
@@ -199,7 +199,7 @@ Final Outcome / 最终结果
 | FCR-049 | `HARDENING` | Keep and harden | `VERIFIED` | 共享 store-level atomic mutation 始终基于 current state；安全独立变更串行保留，不可合并 one-shot 竞争明确返回 409 | behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54` review PASS；PR #22 behavioral-head CI PASS |
 | FCR-050 | `HARDENING` | Keep and harden | `VERIFIED` | 只信任 loopback Host；unsafe methods 执行 lightweight same-origin 检查；全部响应采用严格 self-only CSP 与统一安全 headers | behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d` review/CI PASS；real-browser smoke PASS |
 | FCR-051 | `HARDENING` | Keep and harden | `VERIFIED` | Triage `Sort: Timestamp` 原按 ISO 字符串字典序排序，不同 UTC offset 下会静默产生错误时间顺序；改为 aware 按真实 instant、naive 独立 wall-clock bucket、missing 最后 | behavioral SHA `076fbe4f883073a1961b024d52d06d9cac22a58a` review PASS；PR #27 reviewed head `ef9b54adc3eeed98ef4154f71ae7f69e5f6000cb` final-head CI PASS |
-| FCR-052 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Triage Workspace、Moderation Prepare 与 Insights Representative Cases 的部分 GET filter/sort/selection 控件不回显已生效的 query state；补齐 select `selected`、text/date `value`、checkbox `checked` 回显，不改变过滤/排序/selection 业务逻辑 | Product Hardening Batch A10；14 个定向回归；真实浏览器 smoke PASS；non-blocking |
+| FCR-052 | `HARDENING` | Keep and harden | `VERIFIED` | Triage Workspace、Moderation Prepare 与 Insights Representative Cases 的部分 GET filter/sort/selection 控件不回显已生效的 query state；补齐 select `selected`、text/date `value`、checkbox `checked` 回显，不改变过滤/排序/selection 业务逻辑 | behavioral SHA `c1feb67e1b40742c7f34104e5f0922d67498dd12` review PASS；PR #28 reviewed head `6c649dc78c18921937a2d6b49e52a94cc7e92d94` final-head CI PASS；non-blocking |
 
 ### 2026-08-13 最新反馈分类
 
@@ -238,9 +238,9 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 - `VERIFIED / Product Hardening`: FCR-051；PH-010 的唯一 material gap，由
   Product Hardening Batch A9 承载，PR #27 formal review 与 final-head CI 均已
   通过，PH-010 已关闭。
-- `IMPLEMENTED / non-blocking Product Hardening`: FCR-052；Triage Workspace
+- `VERIFIED / non-blocking Product Hardening`: FCR-052；Triage Workspace
   read-only audit 发现的独立 UI state-reflection root cause，由 Product
-  Hardening Batch A10 承载，待 PR review。
+  Hardening Batch A10 承载，PR #28 formal review 与 final-head CI 均已通过。
 
 ### FCR-027 — 键盘与可访问性 Product Hardening 复核
 
@@ -573,18 +573,18 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 
 ### FCR-052 — Applied filter/selection state 回显完整性
 
-- **Basic Information / 基本信息:** Support Triage Workspace、Moderation Prepare、Insights Representative Cases 的 GET filter/sort/selection 控件；2026-08-14；状态 `IMPLEMENTED`。
+- **Basic Information / 基本信息:** Support Triage Workspace、Moderation Prepare、Insights Representative Cases 的 GET filter/sort/selection 控件；2026-08-14；状态 `VERIFIED`。
 - **Current Behavior / 当前行为:** 三处的查询参数都被服务端正确解析并正确改变了结果集，但重渲染出的表单控件不回显已生效的值：Triage Workspace 的 11 个 `<select>`（status/source/primary_intent/issue_category/urgency/queue/escalation/mock/disagreement/warning/sort）和 `q` text input 全部没有回显逻辑，即使同一表单里 `source_label`/`topic`/`community` 三个 text input 已正确回显；Moderation Prepare 的 5 个 `<select>`（category/difficulty/ambiguity/learning_objective/safety_sensitive）没有回显——路由甚至没有把已构造好的 `CaseFilter` 传入模板；Insights Representative Cases 的 `record_id` checkbox 组在 `example_mode=user_selected` 时确实决定了结果，但没有 `checked` 回显，而相邻的 example_mode/example_emotion/example_tag select 却已正确回显。
 - **Manual Observation / 人工观察:** read-only audit 系统检查了全部含 GET filter/sort 表单的模板（Triage Workspace/Guide、Review、Batch、Insights 主视图与 examples 子视图、Moderation Prepare）。确认 Review、Batch、Insights 主视图、Triage Guide 内建工单筛选均已正确回显，证明这个代码库里"正确回显"是既有、可行的模式，只是没有被一致应用到上述三处。没有任何客户端 JS 做补偿性的"从 URL 恢复控件状态"逻辑。
 - **User Impact / 用户影响:** 用户刷新页面、复制/分享当前 URL、或前进后退后，控件显示"未过滤"但实际列表仍是过滤/排序后的子集，容易被误判为查看了全部数据，从而据此做出遗漏性判断。不影响数据正确性、隐私边界或模型输出，纯粹是控件可信度问题。
 - **Core Assessment / 核心评估:** 这是独立的 UI state-reflection/trustworthiness root cause，不属于 FCR-027（键盘/accessibility-tree 语义，已 VERIFIED 且范围明确不含此项）、FCR-029（token/过期/空结果/非法输入的恢复路径，这里没有错误状态）、FCR-030（文档间一致性，非浏览器运行时 UI 一致性）；也不与 FCR-042（分数排序）、FCR-043（视觉层级）合并。因此建立永久 FCR-052。
-- **Decision / 决定:** Class `HARDENING`；Decision `Keep and harden`；Status `IMPLEMENTED`；non-blocking Product Hardening finding。
+- **Decision / 决定:** Class `HARDENING`；Decision `Keep and harden`；Status `VERIFIED`；non-blocking Product Hardening finding。
 - **Rationale / 理由:** 只需要用该代码库里已经存在且已验证可行的 native HTML + server-rendered Jinja `selected`/`checked`/`value` 模式补齐缺口，不需要新的 generic form 抽象或客户端 URL parser。Insights 的 checkbox 回显特意只在 `example_mode is ExampleMode.USER_SELECTED` 时生效——因为 `record_id` 在其它 mode 下对结果毫无影响，若不加区分地回显会反而错误地暗示一个未生效的旧查询参数仍在起作用。
 - **Implementation Scope / 实施范围:** `triage_workspace.html` 为全部 11 个 select 和 `q` 补齐回显；`moderation_routes.py` 把已构造的 `filters` 传入 `render_template()`，`moderation_prepare.html` 补齐 5 个 select 回显；`app.py` 新增 `selected_record_ids`（仅在 `user_selected` 模式下非空）并传入模板，`insights.html` 补齐对应 checkbox 回显；`docs/CONTRACTS.md` 新增 "Applied filter and selection state reflection" 章节记录该 contract。不改变任何过滤、排序或 selection 的业务逻辑；不触碰 FCR-051 timestamp sort 排序算法本身。
 - **Acceptance Criteria / 验收标准:** 对于已实际生效的 GET 参数，single-select 显示对应 `selected`，text/date input 显示对应 `value`，multi-select/checkbox 显示对应 `selected`/`checked`；未指定的参数继续显示既有默认值；对当前结果无效的参数（如非 `user_selected` 模式下的 `record_id`）不被误显为已生效；无查询参数时不出现非默认状态；Review/Batch/Insights 主视图既有正确回显不回归；FCR-051 timestamp 排序行为不变。
 - **Risks and Regression Scope / 风险与回归范围:** 仅影响上述三处表单控件的展示状态；不改变 Triage/Moderation/Insights 的过滤或排序算法、FCR-051 timestamp sort contract、POST session 配置表单、一次性 CSV/export checkbox 表单。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/a10-applied-state-reflection`；baseline main SHA `3fecf5ce43939045ed7100915eca41b9e5b2c64e`；behavioral candidate `c1feb67e1b40742c7f34104e5f0922d67498dd12`；Product Hardening Batch A10 Draft PR。
-- **Final Outcome / 最终结果:** 14 个定向回归通过，其中 11 个在修复前的实现上确实失败，证明覆盖真实缺陷；完整 suite 195 passed / 2 opt-in skipped（较 A9 基线新增 14 个测试），Ruff、strict MyPy(75 files)、compileall、pip check 全部通过，FCR-051 定向回归（9 个）不受影响。真实浏览器 smoke 依次验证 Triage Workspace（status=finalized + sort=urgency）、Moderation Prepare（difficulty=beginner + safety_sensitive=false）、Insights Representative Cases（选中两条记录）三处，控件显示与实际生效状态及结果集完全一致。PR review 前状态为 `IMPLEMENTED`，Feature Freeze 保持 PASS，FCR-042/043 保持 `OPEN` non-blocking。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/a10-applied-state-reflection`；baseline main SHA `3fecf5ce43939045ed7100915eca41b9e5b2c64e`；behavioral candidate `c1feb67e1b40742c7f34104e5f0922d67498dd12`；PR #28 reviewed head `6c649dc78c18921937a2d6b49e52a94cc7e92d94`；formal review PASS；final-head Python 3.11/3.12/3.13 CI PASS。
+- **Final Outcome / 最终结果:** 14 个定向回归通过，其中 11 个在修复前的实现上确实失败，证明覆盖真实缺陷；完整 suite 195 passed / 2 opt-in skipped（较 A9 基线新增 14 个测试），Ruff、strict MyPy(75 files)、compileall、pip check 全部通过，FCR-051 定向回归（9 个）不受影响。真实浏览器 smoke 依次验证 Triage Workspace（status=finalized + sort=urgency）、Moderation Prepare（difficulty=beginner + safety_sensitive=false）、Insights Representative Cases（选中两条记录）三处，控件显示与实际生效状态及结果集完全一致。FCR-052 在固定 behavioral SHA 上关闭为 `VERIFIED`；FCR-051 保持 `VERIFIED`，Feature Freeze 保持 PASS，FCR-042/043 保持 `OPEN` non-blocking。
 
 ### FCR-033 — 本地模型缓存冗余
 
@@ -882,7 +882,7 @@ predeclare a pass.
 | FCR-049 | Concurrent workspace mutation integrity | Can a stale workspace mutation silently overwrite newer accepted state? | VERIFIED; A5 behavioral review and CI passed |
 | FCR-050 | Local browser security boundary | Can an untrusted Host, cross-origin unsafe request, or missing headers bypass the loopback browser boundary? | VERIFIED; A6 code review, CI, and real-browser smoke passed |
 | FCR-051 | Triage timestamp ordering integrity | Does sorting by timestamp give a correct, non-misleading order across differing UTC offsets, timezone-unspecified values, and missing values? | VERIFIED; A9 formal review and final-head CI passed |
-| FCR-052 | Applied filter/selection state reflection integrity | Do form controls faithfully reflect GET filter/sort/selection query state the server has already applied? | IMPLEMENTED; independent root cause found by the A10 read-only audit, pending PR review |
+| FCR-052 | Applied filter/selection state reflection integrity | Do form controls faithfully reflect GET filter/sort/selection query state the server has already applied? | VERIFIED; A10 formal review and final-head CI passed |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -912,7 +912,7 @@ evidence and disposition.
 | FCR-049 | `HARDENING` | Keep and harden | `VERIFIED` | A shared store-level atomic mutation always uses current state; safe independent changes serialize and incompatible one-shot races return an explicit 409 | behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54` review PASS; PR #22 behavioral-head CI PASS |
 | FCR-050 | `HARDENING` | Keep and harden | `VERIFIED` | Trust loopback Hosts only, apply a lightweight same-origin gate to unsafe methods, and give every response strict self-only CSP and security headers | behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d` review/CI PASS; real-browser smoke PASS |
 | FCR-051 | `HARDENING` | Keep and harden | `VERIFIED` | Triage `Sort: Timestamp` sorted raw ISO strings lexicographically and silently produced the wrong order across UTC offsets; ordering now compares real instants, keeps timezone-unspecified values in a separate wall-clock bucket, and puts missing values last | behavioral SHA `076fbe4f883073a1961b024d52d06d9cac22a58a` review PASS; PR #27 reviewed head `ef9b54adc3eeed98ef4154f71ae7f69e5f6000cb` final-head CI PASS |
-| FCR-052 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Several GET filter/sort/selection controls in Triage Workspace, Moderation Prepare, and Insights Representative Cases did not reflect query state the server had already applied; added select/text/date/checkbox reflection without changing any filtering, sorting, or selection logic | Product Hardening Batch A10; 14 targeted regressions; real-browser smoke PASS; non-blocking |
+| FCR-052 | `HARDENING` | Keep and harden | `VERIFIED` | Several GET filter/sort/selection controls in Triage Workspace, Moderation Prepare, and Insights Representative Cases did not reflect query state the server had already applied; added select/text/date/checkbox reflection without changing any filtering, sorting, or selection logic | behavioral SHA `c1feb67e1b40742c7f34104e5f0922d67498dd12` review PASS; PR #28 reviewed head `6c649dc78c18921937a2d6b49e52a94cc7e92d94` final-head CI PASS; non-blocking |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -955,9 +955,10 @@ CI status are authoritative in the PR checks.
 - `VERIFIED / Product Hardening`: FCR-051; the single material PH-010 gap,
   carried by Product Hardening Batch A9, with PR #27 formal review and
   final-head CI both passed. PH-010 is closed.
-- `IMPLEMENTED / non-blocking Product Hardening`: FCR-052; an independent
+- `VERIFIED / non-blocking Product Hardening`: FCR-052; an independent
   UI state-reflection root cause found by the Triage Workspace read-only
-  audit, carried by Product Hardening Batch A10 and pending PR review.
+  audit, carried by Product Hardening Batch A10, with PR #28 formal review
+  and final-head CI both passed.
 
 ### FCR-027 — Product Hardening keyboard and accessibility revalidation
 
@@ -1294,18 +1295,18 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 
 ### FCR-052 — Applied filter/selection state reflection integrity
 
-- **Basic Information:** GET filter/sort/selection controls in Support Triage Workspace, Moderation Prepare, and Insights Representative Cases; 2026-08-14; status `IMPLEMENTED`.
+- **Basic Information:** GET filter/sort/selection controls in Support Triage Workspace, Moderation Prepare, and Insights Representative Cases; 2026-08-14; status `VERIFIED`.
 - **Current Behavior:** In all three surfaces the query parameters were correctly parsed and correctly narrowed or ordered the result set, but the re-rendered form controls did not reflect the effective values: Triage Workspace's 11 `<select>` controls (status/source/primary_intent/issue_category/urgency/queue/escalation/mock/disagreement/warning/sort) and its `q` text input had no reflection logic at all, even though the same form's `source_label`/`topic`/`community` text inputs already reflected correctly. Moderation Prepare's 5 `<select>` controls (category/difficulty/ambiguity/learning_objective/safety_sensitive) had no reflection — the route did not even pass the already-constructed `CaseFilter` into the template. Insights Representative Cases' `record_id` checkbox group genuinely determined the result whenever `example_mode=user_selected`, but was never checked, while the adjacent example_mode/example_emotion/example_tag selects already reflected correctly.
 - **Manual Observation:** A read-only audit systematically inspected every template with a GET filter/sort form (Triage Workspace/Guide, Review, Batch, both Insights view forms, Moderation Prepare). Review, Batch, the Insights explorer view, and Triage Guide's built-in ticket filter were all confirmed already correct, proving that correct reflection is an existing, working pattern in this codebase — it simply was not applied consistently to the three surfaces above. No client-side JavaScript restores control state from the URL anywhere in the project.
 - **User Impact:** A user who refreshes the page, copies or shares the current URL, or navigates back and forward sees controls showing "unfiltered" while the list is still a filtered or sorted subset, which invites the mistaken belief that all data is in view and can lead to acting on an incomplete picture. It does not affect data correctness, privacy boundaries, or model output — purely a control-trustworthiness defect.
 - **Core Assessment:** This is an independent UI state-reflection/trustworthiness root cause. It does not belong to FCR-027 (keyboard and accessibility-tree semantics; already `VERIFIED` with a scope that explicitly excludes this), FCR-029 (recovery paths for missing tokens, expiry, empty results, or invalid input — nothing here errors), or FCR-030 (consistency across documentation, not browser runtime UI); it is also not merged into FCR-042 (score ordering) or FCR-043 (visual hierarchy). Permanent FCR-052 is created.
-- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`; non-blocking Product Hardening finding.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `VERIFIED`; non-blocking Product Hardening finding.
 - **Rationale:** The gap only needed the native HTML plus server-rendered Jinja `selected`/`checked`/`value` pattern already proven elsewhere in this codebase; no generic form abstraction or client-side URL parser was warranted. Insights checkbox reflection is deliberately gated to `example_mode is ExampleMode.USER_SELECTED`, because `record_id` has no effect on the result in any other mode, and reflecting it unconditionally would falsely imply a stale query parameter was still effective.
 - **Implementation Scope:** `triage_workspace.html` gains reflection for all 11 selects and `q`; `moderation_routes.py` passes its already-constructed `filters` into `render_template()`, and `moderation_prepare.html` gains reflection for its 5 selects; `app.py` adds `selected_record_ids` (non-empty only in `user_selected` mode) and passes it to the template, and `insights.html` gains the corresponding checkbox reflection; `docs/CONTRACTS.md` records the contract in a new "Applied filter and selection state reflection" section. No filtering, sorting, or selection logic changes, and the FCR-051 timestamp sort algorithm itself is untouched.
 - **Acceptance Criteria:** For a GET parameter that is actually in effect, a single-select shows the matching `selected` option, a text/date input shows the matching `value`, and a multi-select/checkbox group shows the matching `selected`/`checked` state; unspecified parameters continue to render their existing default; a parameter with no effect on the current result (such as `record_id` outside `user_selected` mode) is not shown as if effective; no query produces no unexpected non-default state; Review/Batch/Insights-explorer reflection that already worked does not regress; FCR-051 timestamp sort behavior is unchanged.
 - **Risks and Regression Scope:** Only the display state of the three surfaces' controls changes. Triage/Moderation/Insights filtering and sorting algorithms, the FCR-051 timestamp sort contract, POST session-configuration forms, and one-shot CSV/export checkbox forms are all unaffected.
-- **Git / PR Record:** `hardening/a10-applied-state-reflection`; baseline main SHA `3fecf5ce43939045ed7100915eca41b9e5b2c64e`; behavioral candidate `c1feb67e1b40742c7f34104e5f0922d67498dd12`; Product Hardening Batch A10 Draft PR.
-- **Final Outcome:** Fourteen targeted regressions passed, and eleven of them genuinely fail against the pre-fix implementation, confirming they cover the real defect. The full suite passed 195 tests with 2 opt-in model integrations skipped (14 more than the A9 baseline), and Ruff, strict MyPy for 75 files, compileall, and pip check passed; the 9 FCR-051 targeted regressions were unaffected. A real-browser smoke exercised Triage Workspace (`status=finalized` plus `sort=urgency`), Moderation Prepare (`difficulty=beginner` plus `safety_sensitive=false`), and Insights Representative Cases (two records selected) in turn, and in each case the rendered controls matched the actually effective state and result set exactly. Status remains `IMPLEMENTED` before PR review, Feature Freeze remains PASS, and FCR-042/043 remain `OPEN` non-blocking.
+- **Git / PR Record:** `hardening/a10-applied-state-reflection`; baseline main SHA `3fecf5ce43939045ed7100915eca41b9e5b2c64e`; behavioral candidate `c1feb67e1b40742c7f34104e5f0922d67498dd12`; PR #28 reviewed head `6c649dc78c18921937a2d6b49e52a94cc7e92d94`; formal review PASS; final-head Python 3.11/3.12/3.13 CI PASS.
+- **Final Outcome:** Fourteen targeted regressions passed, and eleven of them genuinely fail against the pre-fix implementation, confirming they cover the real defect. The full suite passed 195 tests with 2 opt-in model integrations skipped (14 more than the A9 baseline), and Ruff, strict MyPy for 75 files, compileall, and pip check passed; the 9 FCR-051 targeted regressions were unaffected. A real-browser smoke exercised Triage Workspace (`status=finalized` plus `sort=urgency`), Moderation Prepare (`difficulty=beginner` plus `safety_sensitive=false`), and Insights Representative Cases (two records selected) in turn, and in each case the rendered controls matched the actually effective state and result set exactly. FCR-052 closes as `VERIFIED` on the fixed behavioral SHA. FCR-051 remains `VERIFIED`, Feature Freeze remains PASS, and FCR-042/043 remain `OPEN` non-blocking.
 
 ### FCR-033 — Local model-cache redundancy
 

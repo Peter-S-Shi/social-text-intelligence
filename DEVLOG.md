@@ -57,6 +57,12 @@ checkboxes checked after submission. Behavioral candidate:
 PR review. FCR-042 and FCR-043 remain open non-blocking, and Feature Freeze
 remains PASS.
 
+PR #28 formal review subsequently passed on reviewed head
+`6c649dc78c18921937a2d6b49e52a94cc7e92d94`, which also passed final-head CI
+on Python 3.11, 3.12, and 3.13. FCR-052 is therefore `VERIFIED`. FCR-051
+remains `VERIFIED`, Feature Freeze remains PASS, and FCR-042/043 remain
+`OPEN` non-blocking.
+
 ## Product Hardening Batch A9 — Triage timestamp ordering integrity
 
 Reconciled Phase 0 PH-010 as new permanent `FCR-051`. Existing FCR-015 and
