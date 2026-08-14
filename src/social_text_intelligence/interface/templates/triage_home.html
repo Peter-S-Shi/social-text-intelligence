@@ -6,12 +6,13 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header"><div><p class="eyebrow">Local operational workbench</p><h1>Support Triage</h1></div><span class="mode-badge">Process memory · human-led</span></header>
-  <main>
+  <main id="main-content" tabindex="-1">
     <nav class="mode-nav" aria-label="Analysis modes">
-      <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a><a href="{{ url_for('batch_home') }}">Batch CSV</a><a href="{{ url_for('moderation.home') }}">Moderation Training</a><a class="active" href="{{ url_for('triage.home') }}">Support Triage</a>
+      <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a><a href="{{ url_for('batch_home') }}">Batch CSV</a><a href="{{ url_for('moderation.home') }}">Moderation Training</a><a class="active" aria-current="page" href="{{ url_for('triage.home') }}">Support Triage</a>
     </nav>
-    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    {% if error_message %}<div class="error panel" id="triage-error" role="alert" tabindex="-1" autofocus>{{ error_message }}</div>{% endif %}
     <section class="panel moderation-hero">
       <h2>Turn support messages into auditable human triage decisions</h2>
       <p>This is not a CRM, ticketing platform, response generator, or automated routing system. Recommended queues and actions are decisions for review, not operations that occurred.</p>
@@ -22,8 +23,8 @@
             <option value="mock_assisted">AI-assisted simulation — show deterministic synthetic mock</option>
           </select>
         </label>
-        <label>Optional temporary batch token <input name="batch_token" value="{{ source_batch_token }}" autocomplete="off"></label>
-        <p><small>Parsed source rows remain eligible even if sentiment or emotion analysis failed. Nothing is copied until you explicitly select a record.</small></p>
+        <label for="triage-batch-token">Optional temporary batch token</label><input id="triage-batch-token" name="batch_token" value="{{ source_batch_token }}" autocomplete="off" aria-describedby="triage-batch-help{% if error_message %} triage-error{% endif %}"{% if error_message %} aria-invalid="true"{% endif %}>
+        <p><small id="triage-batch-help">Parsed source rows remain eligible even if sentiment or emotion analysis failed. Nothing is copied until you explicitly select a record.</small></p>
         <button type="submit">Create Support Triage workspace</button>
       </form>
     </section>

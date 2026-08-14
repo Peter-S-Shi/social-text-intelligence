@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header">
     <div>
       <p class="eyebrow">Local-first NLP workbench</p>
@@ -15,9 +16,9 @@
     <span class="mode-badge">{{ 'Offline' if offline else 'Normal' }} mode</span>
   </header>
 
-  <main>
+  <main id="main-content" tabindex="-1">
     <nav class="mode-nav" aria-label="Analysis modes">
-      <a class="active" href="{{ url_for('analyze_text') }}">Direct analysis</a>
+      <a class="active" aria-current="page" href="{{ url_for('analyze_text') }}">Direct analysis</a>
       <a href="{{ url_for('batch_home') }}">Batch CSV</a>
       <a href="{{ url_for('moderation.home') }}">Moderation Training</a>
       <a href="{{ url_for('triage.home') }}">Support Triage</a>
@@ -27,13 +28,13 @@
       <p>Sentiment and emotion inference runs locally. The first analysis can take longer while the two approved models load; later requests reuse them.</p>
       <form method="post" novalidate>
         <label for="text">Text</label>
-        <textarea id="text" name="text" maxlength="{{ max_text_length }}" required>{{ submitted_text }}</textarea>
+        <textarea id="text" name="text" maxlength="{{ max_text_length }}" required aria-describedby="text-help{% if error_message %} text-error{% endif %}"{% if error_message %} aria-invalid="true" autofocus{% endif %}>{{ submitted_text }}</textarea>
         <div class="form-row">
-          <small>English only · {{ max_text_length }}-character application safety limit · separate model encoded-input limits are checked before inference · models {{ 'ready' if initialized else 'load on first analysis' }}</small>
+          <small id="text-help">English only · {{ max_text_length }}-character application safety limit · separate model encoded-input limits are checked before inference · models {{ 'ready' if initialized else 'load on first analysis' }}</small>
           <button type="submit">Analyze locally</button>
         </div>
       </form>
-      {% if error_message %}<div class="error" role="alert">{{ error_message }}</div>{% endif %}
+      {% if error_message %}<div class="error" id="text-error" role="alert">{{ error_message }}</div>{% endif %}
     </section>
 
     {% if report %}

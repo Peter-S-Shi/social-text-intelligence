@@ -7,26 +7,26 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header">
     <div><p class="eyebrow">Local-first training workspace</p><h1>Moderation Training</h1></div>
     <span class="mode-badge">Synthetic policy · process memory</span>
   </header>
-  <main>
+  <main id="main-content" tabindex="-1">
     <nav class="mode-nav" aria-label="Analysis modes">
       <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
       <a href="{{ url_for('batch_home') }}">Batch CSV</a>
-      <a class="active" href="{{ url_for('moderation.home') }}">Moderation Training</a>
+      <a class="active" aria-current="page" href="{{ url_for('moderation.home') }}">Moderation Training</a>
       <a href="{{ url_for('triage.home') }}">Support Triage</a>
     </nav>
-    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    {% if error_message %}<div class="error panel" id="moderation-error" role="alert" tabindex="-1" autofocus>{{ error_message }}</div>{% endif %}
     <section class="panel moderation-hero">
       <h2>Practice structured moderation judgment</h2>
       <p>This educational workflow uses a versioned synthetic policy, synthetic cases, and an explicitly labeled fixture-based mock recommendation. It does not execute platform moderation, make psychological diagnoses, or claim expert certification.</p>
       <form method="post" action="{{ url_for('moderation.create_workspace') }}">
-        <label>Optional temporary batch token
-          <input name="batch_token" value="{{ source_batch_token }}" autocomplete="off">
-        </label>
-        <p><small>Leave blank to train only on built-in synthetic cases. A batch token links successful local analysis records for explicit snapshot preparation; nothing is copied until you choose a record.</small></p>
+        <label for="moderation-batch-token">Optional temporary batch token</label>
+          <input id="moderation-batch-token" name="batch_token" value="{{ source_batch_token }}" autocomplete="off" aria-describedby="moderation-batch-help{% if error_message %} moderation-error{% endif %}"{% if error_message %} aria-invalid="true"{% endif %}>
+        <p><small id="moderation-batch-help">Leave blank to train only on built-in synthetic cases. A batch token links successful local analysis records for explicit snapshot preparation; nothing is copied until you choose a record.</small></p>
         <button type="submit">Create temporary training workspace</button>
       </form>
     </section>

@@ -8,18 +8,19 @@
   <script defer src="{{ url_for('static', filename='insights.js') }}"></script>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header">
     <div><p class="eyebrow">Milestone 8</p><h1>Insights &amp; Community Context</h1></div>
     <span class="mode-badge">Temporary local memory</span>
   </header>
-  <main>
+  <main id="main-content" tabindex="-1">
     <nav class="mode-nav" aria-label="Application modes">
       <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
       <a href="{{ url_for('batch_workspace', token=token) }}">Batch CSV</a>
       <a href="{{ url_for('triage.home') }}">Support Triage</a>
       <a href="{{ url_for('review_index', token=token) }}">Human review</a>
       <a href="{{ url_for('moderation.home', batch_token=token) }}">Moderation Training</a>
-      <a class="active" href="{{ url_for('insights', token=token) }}">Insights</a>
+      <a class="active" aria-current="page" href="{{ url_for('insights', token=token) }}">Insights</a>
     </nav>
 
     <section class="privacy-note" role="note">
@@ -30,11 +31,11 @@
 
     <nav class="subnav" aria-label="Insight views">
       {% for key, label in [('explorer','Group Explorer'),('comparison','Distribution Comparison'),('agreement','AI vs Human'),('notes','Phrase & Context Notes'),('examples','Representative Cases'),('export','Insight Export')] %}
-      <a class="{{ 'active' if view == key else '' }}" href="{{ url_for('insights', token=token, view=key) }}">{{ label }}</a>
+      <a class="{{ 'active' if view == key else '' }}"{% if view == key %} aria-current="page"{% endif %} href="{{ url_for('insights', token=token, view=key) }}">{{ label }}</a>
       {% endfor %}
     </nav>
 
-    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    {% if error_message %}<div class="error panel" role="alert" tabindex="-1" autofocus>{{ error_message }}</div>{% endif %}
 
     {% if view in ['explorer','comparison','agreement'] %}
     <section class="panel">
@@ -49,12 +50,11 @@
             {% for option in grouping_options %}<option value="{{ option }}" {% if selection.grouping == option %}selected{% endif %}>{{ option|replace('_',' ')|title }}</option>{% endfor %}
           </select>
         </label>
-        <label>{{ 'Compare 2–4 groups' if view == 'comparison' else 'Displayed groups' }}
-          <select name="group" multiple size="{{ [group_values|length, 5]|min }}" required>
+        <label for="insight-groups">{{ 'Compare 2–4 groups' if view == 'comparison' else 'Displayed groups' }}</label>
+          <select id="insight-groups" name="group" multiple size="{{ [group_values|length, 5]|min }}" required aria-describedby="insight-groups-help">
             {% for group in group_values %}<option value="{{ group }}" {% if group in selection.groups %}selected{% endif %}>{{ group }}</option>{% endfor %}
           </select>
-          <small>Use Ctrl/Command to select more than one.</small>
-        </label>
+          <small id="insight-groups-help">Use Ctrl/Command to select more than one.</small>
         <label>Perspective
           <select name="perspective" data-perspective-select>
             {% for option in perspectives %}<option value="{{ option }}" {% if selection.perspective == option %}selected{% endif %}>{{ option|replace('_',' ')|title }}</option>{% endfor %}

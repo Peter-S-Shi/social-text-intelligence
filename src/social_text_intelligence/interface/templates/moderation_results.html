@@ -7,31 +7,32 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header">
     <div><p class="eyebrow">Moderation Training</p><h1>Session review</h1></div>
     <span class="mode-badge">{{ session.status.value }} · {{ summary.completed_cases }}/{{ summary.total_cases }}</span>
   </header>
-  <main>
+  <main id="main-content" tabindex="-1">
     <nav class="mode-nav" aria-label="Application navigation">
       <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
     </nav>
     <nav class="subnav" aria-label="Moderation workflow">
       <a href="{{ url_for('moderation.prepare', token=token) }}">1. Prepare</a>
       <a href="{{ url_for('moderation.session', token=token, session_id=session.session_id) }}">2. Train</a>
-      <a class="active" href="{{ url_for('moderation.results', token=token, session_id=session.session_id) }}">3. Review</a>
+      <a class="active" aria-current="step" href="{{ url_for('moderation.results', token=token, session_id=session.session_id) }}">3. Review</a>
     </nav>
-    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    {% if error_message %}<div class="error panel" role="alert" tabindex="-1" autofocus>{{ error_message }}</div>{% endif %}
     <section class="panel">
       <h2>Raw denominators, not a composite score</h2>
       <p>{{ summary.total_cases }} total · {{ summary.completed_cases }} submitted · {{ summary.unscored_cases }} cases without reference · {{ summary.ai_available_cases }} with synthetic mock AI.</p>
-      <div class="table-wrap"><table><thead><tr><th>Metric</th><th>First</th><th>Final</th><th>Denominator</th><th>Sample notice</th></tr></thead><tbody>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Metric</th><th scope="col">First</th><th scope="col">Final</th><th scope="col">Denominator</th><th scope="col">Sample notice</th></tr></thead><tbody>
       {% for first in summary.first_metrics %}
       {% set final = summary.final_metrics[loop.index0] %}
-      <tr><td>{{ first.name }}</td><td>{{ first.numerator }}/{{ first.denominator }}</td><td>{{ final.numerator }}/{{ final.denominator }}</td><td>{{ final.denominator }} eligible · {{ final.excluded }} excluded</td><td>{{ final.sample.message or final.sample.level.value }}</td></tr>
+      <tr><th scope="row">{{ first.name }}</th><td>{{ first.numerator }}/{{ first.denominator }}</td><td>{{ final.numerator }}/{{ final.denominator }}</td><td>{{ final.denominator }} eligible · {{ final.excluded }} excluded</td><td>{{ final.sample.message or final.sample.level.value }}</td></tr>
       {% endfor %}
-      <tr><td>trainee–mock agreement (not accuracy)</td><td colspan="2">{{ summary.trainee_ai_agreement.numerator }}/{{ summary.trainee_ai_agreement.denominator }}</td><td>{{ summary.trainee_ai_agreement.denominator }} eligible · {{ summary.trainee_ai_agreement.excluded }} excluded</td><td>{{ summary.trainee_ai_agreement.sample.message or summary.trainee_ai_agreement.sample.level.value }}</td></tr>
-      <tr><td>mock–reference alignment</td><td colspan="2">{{ summary.ai_reference_alignment.numerator }}/{{ summary.ai_reference_alignment.denominator }}</td><td>{{ summary.ai_reference_alignment.denominator }} eligible · {{ summary.ai_reference_alignment.excluded }} excluded</td><td>{{ summary.ai_reference_alignment.sample.message or summary.ai_reference_alignment.sample.level.value }}</td></tr>
-      <tr><td>complete acceptable-alternative rate</td><td colspan="2">{{ summary.acceptable_alternative_alignment.numerator }}/{{ summary.acceptable_alternative_alignment.denominator }}</td><td>{{ summary.acceptable_alternative_alignment.denominator }} eligible · {{ summary.acceptable_alternative_alignment.excluded }} excluded</td><td>{{ summary.acceptable_alternative_alignment.sample.message or summary.acceptable_alternative_alignment.sample.level.value }}</td></tr>
+      <tr><th scope="row">trainee–mock agreement (not accuracy)</th><td colspan="2">{{ summary.trainee_ai_agreement.numerator }}/{{ summary.trainee_ai_agreement.denominator }}</td><td>{{ summary.trainee_ai_agreement.denominator }} eligible · {{ summary.trainee_ai_agreement.excluded }} excluded</td><td>{{ summary.trainee_ai_agreement.sample.message or summary.trainee_ai_agreement.sample.level.value }}</td></tr>
+      <tr><th scope="row">mock–reference alignment</th><td colspan="2">{{ summary.ai_reference_alignment.numerator }}/{{ summary.ai_reference_alignment.denominator }}</td><td>{{ summary.ai_reference_alignment.denominator }} eligible · {{ summary.ai_reference_alignment.excluded }} excluded</td><td>{{ summary.ai_reference_alignment.sample.message or summary.ai_reference_alignment.sample.level.value }}</td></tr>
+      <tr><th scope="row">complete acceptable-alternative rate</th><td colspan="2">{{ summary.acceptable_alternative_alignment.numerator }}/{{ summary.acceptable_alternative_alignment.denominator }}</td><td>{{ summary.acceptable_alternative_alignment.denominator }} eligible · {{ summary.acceptable_alternative_alignment.excluded }} excluded</td><td>{{ summary.acceptable_alternative_alignment.sample.message or summary.acceptable_alternative_alignment.sample.level.value }}</td></tr>
       </tbody></table></div>
       <p class="sample-warning">Small samples are descriptive training evidence only. No aggregate composite, certification score, or model-accuracy claim is calculated.</p>
     </section>

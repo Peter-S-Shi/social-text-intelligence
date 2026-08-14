@@ -21,7 +21,9 @@ h1 { margin-bottom: 0; font-size: clamp(1.7rem, 4vw, 2.5rem); }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; box-shadow: 0 8px 25px rgba(24, 47, 38, .05); }
 label { display: block; margin-bottom: .4rem; font-weight: 700; }
 textarea { width: 100%; min-height: 180px; resize: vertical; border: 1px solid #aab8b1; border-radius: 10px; padding: .8rem; font: inherit; }
-textarea:focus, button:focus, input:focus, select:focus, a:focus { outline: 3px solid #8dc8af; outline-offset: 2px; }
+textarea:focus, button:focus, input:focus, select:focus, a:focus, summary:focus, main:focus { outline: 3px solid #8dc8af; outline-offset: 2px; }
+.skip-link { position: absolute; left: .75rem; top: -5rem; z-index: 1000; padding: .65rem .85rem; border-radius: 8px; color: white; background: var(--accent); font-weight: 700; }
+.skip-link:focus { top: .75rem; }
 .form-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: .75rem; }
 button { border: 0; border-radius: 9px; padding: .7rem 1rem; color: white; background: var(--accent); font: inherit; font-weight: 750; cursor: pointer; }
 .error { margin-top: 1rem; padding: .8rem; border-left: 4px solid var(--danger); background: #fff0f0; color: #702020; }

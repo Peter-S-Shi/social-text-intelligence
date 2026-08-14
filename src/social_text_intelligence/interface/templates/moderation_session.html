@@ -8,24 +8,25 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header">
     <div><p class="eyebrow">Moderation Training</p><h1>Training session</h1></div>
     <span class="mode-badge">{{ session.mode.value|replace('_', ' ') }} · {{ session.attempts|length }}/{{ session.cases|length }}</span>
   </header>
-  <main>
+  <main id="main-content" tabindex="-1">
     <nav class="mode-nav" aria-label="Application navigation">
       <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
     </nav>
     <nav class="subnav" aria-label="Moderation workflow">
       <a href="{{ url_for('moderation.prepare', token=token) }}">1. Prepare</a>
-      <a class="active" href="{{ url_for('moderation.session', token=token, session_id=session.session_id) }}">2. Train</a>
+      <a class="active" aria-current="step" href="{{ url_for('moderation.session', token=token, session_id=session.session_id) }}">2. Train</a>
       <a href="{{ url_for('moderation.results', token=token, session_id=session.session_id) }}">3. Review</a>
     </nav>
-    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    {% if error_message %}<div class="error panel" role="alert" tabindex="-1" autofocus>{{ error_message }}</div>{% endif %}
     {% if session.imbalance_note %}<p class="sample-warning">{{ session.imbalance_note }}</p>{% endif %}
     <section class="case-stepper panel" aria-label="Session cases">
       {% for item in session.cases %}
-      <a class="{% if item.case.case_id == frozen.case.case_id %}active{% endif %}" href="{{ url_for('moderation.session', token=token, session_id=session.session_id, case_id=item.case.case_id) }}">{{ loop.index }}{% if item.case.case_id in submitted_ids %} ✓{% endif %}</a>
+      <a class="{% if item.case.case_id == frozen.case.case_id %}active{% endif %}"{% if item.case.case_id == frozen.case.case_id %} aria-current="step"{% endif %} href="{{ url_for('moderation.session', token=token, session_id=session.session_id, case_id=item.case.case_id) }}">{{ loop.index }}{% if item.case.case_id in submitted_ids %} ✓{% endif %}</a>
       {% endfor %}
     </section>
     <section class="panel record-context">

@@ -8,23 +8,24 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header">
     <div><p class="eyebrow">Moderation Training</p><h1>Prepare cases</h1></div>
     <span class="mode-badge">{{ workspace.prepared_cases|length }}/{{ limits.max_prepared_cases }} prepared</span>
   </header>
-  <main>
+  <main id="main-content" tabindex="-1">
     <nav class="mode-nav" aria-label="Analysis modes">
       <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
       <a href="{{ url_for('batch_home') }}">Batch CSV</a>
       <a href="{{ url_for('triage.home') }}">Support Triage</a>
-      <a class="active" href="{{ url_for('moderation.home') }}">Moderation Training</a>
+      <a class="active" aria-current="page" href="{{ url_for('moderation.home') }}">Moderation Training</a>
     </nav>
     <nav class="subnav" aria-label="Moderation workflow">
-      <a class="active" href="{{ url_for('moderation.prepare', token=token) }}">1. Prepare</a>
+      <a class="active" aria-current="step" href="{{ url_for('moderation.prepare', token=token) }}">1. Prepare</a>
       {% if workspace.active_session_id %}<a href="{{ url_for('moderation.session', token=token, session_id=workspace.active_session_id) }}">2. Train</a>{% else %}<span class="subnav-disabled">2. Train</span>{% endif %}
       {% if workspace.sessions %}<a href="{{ url_for('moderation.results', token=token, session_id=workspace.sessions[-1].session_id) }}">3. Review</a>{% else %}<span class="subnav-disabled">3. Review</span>{% endif %}
     </nav>
-    {% if error_message %}<div class="error panel" role="alert">{{ error_message }}</div>{% endif %}
+    {% if error_message %}<div class="error panel" role="alert" tabindex="-1" autofocus>{{ error_message }}</div>{% endif %}
 
     <details class="panel methodology">
       <summary>Versioned synthetic policy: {{ policy.name }} {{ policy.policy_version }}</summary>
