@@ -166,6 +166,7 @@ Final Outcome / 最终结果
 | FCR-045 | 临时 Batch 状态完整性 | 容量、TTL 与 active analysis 是否可能静默销毁或丢失现有工作 | VERIFIED；PR #18 correction CI 通过 |
 | FCR-046 | 完整输入推理真实性 | 合法长文本是否可能被模型静默截断并作为整篇分析返回 | VERIFIED；behavioral candidate review 与 CI 通过 |
 | FCR-047 | 全局 HTTP request-body 边界 | 异常大的 form / multipart request 是否会在字段验证或临时状态操作前统一拒绝 | VERIFIED；behavioral candidate review 与 CI 通过 |
+| FCR-048 | 真实模型 Batch 容量与性能证据 | 500 行真实双模型分析是否可完成、内存稳定且跨 TTL 安全提交 | VERIFIED；A4 离线 CPU probe 证据充分 |
 
 ## 5. Feature decision index
 
@@ -188,6 +189,7 @@ Final Outcome / 最终结果
 | FCR-045 | `HARDENING` | Keep and harden | `VERIFIED` | 容量阻止新建而非驱逐；active analysis 跨 TTL 原子写回或明确失败；error render 保留配置限制 | Product Hardening Batch A1 targeted/full regression；PR #18 correction head CI PASS |
 | FCR-046 | `HARDENING` | Keep and harden | `VERIFIED` | 以真实 tokenizer 编码长度拒绝超出 pinned 模型预算的完整输入，禁止静默截断与 partial-text success | Product Hardening Batch A2 behavioral SHA review PASS；PR #19 CI PASS |
 | FCR-047 | `HARDENING` | Keep and harden | `VERIFIED` | 以 3 MiB Flask 全局 ceiling 在 form/multipart 解析和状态操作前统一 413；CSV 2 MiB payload limit 保持独立 | Product Hardening Batch A3 behavioral SHA review PASS；PR #20 CI PASS |
+| FCR-048 | `HARDENING` | Keep and harden | `VERIFIED` | opt-in 真实离线双模型 probe 证明 500 行完成、加载后 RSS 稳定、active lease 跨短 TTL 原子写回；无需产品 patch | [A4 容量证据](REAL_MODEL_CAPACITY_EVIDENCE.md)；本地 full quality suite；Draft PR checks 为远程依据 |
 
 ### 2026-08-13 最新反馈分类
 
@@ -455,8 +457,23 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 - **Implementation Scope / 实施范围:** 默认 `MAX_CONTENT_LENGTH=3 MiB`；比 2 MiB CSV payload limit 多 1 MiB（50%）multipart/form encoding 余量；CLI 可配置且必须大于 CSV limit。`before_request` 在 route/state logic 前拒绝已声明超限 body，Flask 在读取阶段执行同一 ceiling；统一固定文案 413 handler 继承 no-store/no-cache。
 - **Acceptance Criteria / 验收标准:** oversized Direct、Batch multipart、Review、Insights note 与 Triage decision 均返回 413；不回显原始内容、traceback 或内部路径；不创建/修改 ephemeral state；正常请求保持原语义；2 MiB CSV byte limit 继续独立；不实现 CSP、Origin/Host policy、账户、远程部署、数据库、后台任务或持久化。
 - **Risks and Regression Scope / 风险与回归范围:** Flask request parsing、multipart overhead、所有 POST route、413 headers/copy、Batch/Review/Insights/Moderation/Triage stores、CLI configuration 与 CSV limit distinction；PH-005、PH-007 及其他 hardening 不在范围内。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`；PR #20；behavioral code review 与 pre-closure final-head CI PASS；closure-head CI 以 PR checks 为准。
-- **Final Outcome / 最终结果:** A3 HTTP request-body boundary、targeted/full regression、behavioral code review 与 PR CI 均通过；FCR-047 在 exact behavioral SHA 上关闭为 `VERIFIED`。Feature Freeze 保持 PASS；PH-005 未开始。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`；PR #20 已合并到 main SHA `552be0012300ce0d40714b739bbb9e27248c8bca`；behavioral review、closure-head CI 与 post-merge CI PASS。
+- **Final Outcome / 最终结果:** A3 HTTP request-body boundary、targeted/full regression、behavioral code review 与 PR CI 均通过；FCR-047 在 exact behavioral SHA 上关闭为 `VERIFIED`。Feature Freeze 保持 PASS；PH-005 后续由 FCR-048 证据关闭。
+
+### FCR-048 — 真实模型 Batch 容量与性能证据
+
+- **Basic Information / 基本信息:** 固定 Cardiff sentiment + SamLowe emotion 的本地 CPU Batch 容量；2026-08-13；状态 `VERIFIED`。
+- **Current Behavior / 当前行为:** frozen product 以单进程同步方式逐行运行两个真实模型，Batch 上限 500 行；A1 active-analysis lease 保护长运行写回，但此前没有 1/50/500 行真实模型的耗时、吞吐、RSS 与 TTL 证据。
+- **Manual Observation / 人工观察:** Windows 11、Python 3.12.13、Intel i7-12700H、约 16 GB RAM、PyTorch 2.13 CPU-only 环境，以本地 cache 强制 offline。初始化到首个结果 3.626 秒；warm 1/50/500 行分别 0.075/3.763/39.636 秒，500/500 成功、0 失败；峰值 RSS 约 0.99 GiB，加载后到 500 行仅增长约 2.97 MiB。
+- **User Impact / 用户影响:** 缺乏证据会让 500 行承诺、同步等待和内存需求无法进入 RC 判断；实测证明定义明确的短 social-text workload 在目标桌面环境可交付，同时避免把该结果误写为所有硬件/文本长度的 SLA。
+- **Core Assessment / 核心评估:** measurement/evidence hardening；不修改 frozen product behavior，不预设或实施性能优化。
+- **Decision / 决定:** Class `HARDENING`；Decision `Keep and harden`；Status `VERIFIED`。
+- **Rationale / 理由:** FCR-045 只定义 Batch 容量阻止与 active-operation 状态完整性，FCR-046 只定义完整输入推理真实性；均不提供真实模型容量、吞吐或 RSS 的发布证据。PH-005 因此建立为永久 FCR-048，而不是重复已有 finding。
+- **Implementation Scope / 实施范围:** 增加普通 CI 不执行的 opt-in offline benchmark harness 与可审计证据；运行 production `AnalysisService`、`analyze_batch` 和 `EphemeralBatchStore` lease/write-back；使用 synthetic English fixture；不修改 `src/`、模型、revision、threshold、Batch limit 或 runtime architecture。
+- **Acceptance Criteria / 验收标准:** 分开记录冷加载/首推理与 warm 1/50/500；记录环境、吞吐、成功/失败、process RSS；active lease 在 1 秒探针 TTL 下跨期并成功提交；提出具备余量且限定 fixture/profile 的 RC budget；heavy probe 不进入普通 CI。
+- **Risks and Regression Scope / 风险与回归范围:** 结果依赖硬件与输入长度，不能外推成全局 SLA；measurement harness、offline cache、两个 pinned revision、顺序 Batch 与 A1 lease 是本项范围；PH-006、PH-007、FCR-042/043、async、parallelism、quantization、GPU 与 persistence 均排除。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；本地真实 probe 与 full quality suite PASS；Product Hardening Batch A4 Draft PR 待创建，最终 remote head 与 CI 以 PR checks 为准。
+- **Final Outcome / 最终结果:** [真实模型容量证据](REAL_MODEL_CAPACITY_EVIDENCE.md)充分支持保留 `MAX_BATCH_ROWS=500`：500 行约 39.636 秒、12.61 rows/s、峰值约 0.99 GiB，所有结果跨探针 TTL 保持并提交。PH-005 关闭为 `VERIFIED`，无需 corrective product work；Feature Freeze 保持 PASS，PH-006 未开始。
 
 ### FCR-033 — 本地模型缓存冗余
 
@@ -750,6 +767,7 @@ predeclare a pass.
 | FCR-045 | Ephemeral Batch state integrity | Can capacity, TTL, or active analysis silently destroy or lose existing work? | VERIFIED; PR #18 correction CI passed |
 | FCR-046 | Complete-input inference truthfulness | Can valid long text be silently truncated and returned as whole-text analysis? | VERIFIED; behavioral candidate review and CI passed |
 | FCR-047 | Global HTTP request-body boundary | Are abnormal form and multipart bodies rejected before field validation or temporary-state operations? | VERIFIED; behavioral candidate review and CI passed |
+| FCR-048 | Real-model Batch capacity and performance evidence | Can 500 rows complete with both real models, stable memory, and TTL-safe commit? | VERIFIED; A4 offline CPU probe evidence sufficient |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -773,6 +791,7 @@ evidence and disposition.
 | FCR-045 | `HARDENING` | Keep and harden | `VERIFIED` | Capacity blocks instead of evicting; active analysis commits atomically across TTL or fails explicitly; error rendering retains configured limits | Product Hardening Batch A1 targeted/full regression; PR #18 correction-head CI PASS |
 | FCR-046 | `HARDENING` | Keep and harden | `VERIFIED` | Reject over-budget complete input by real tokenizer length; prohibit silent truncation and partial-text success | Product Hardening Batch A2 behavioral SHA review PASS; PR #19 CI PASS |
 | FCR-047 | `HARDENING` | Keep and harden | `VERIFIED` | Apply a 3 MiB Flask-wide ceiling before form/multipart parsing and state operations; keep the 2 MiB CSV payload limit separate | Product Hardening Batch A3 behavioral SHA review PASS; PR #20 CI PASS |
+| FCR-048 | `HARDENING` | Keep and harden | `VERIFIED` | An opt-in offline real-model probe demonstrates 500-row completion, stable post-load RSS, and atomic active-lease commit across a short TTL; no product patch is required | [A4 capacity evidence](REAL_MODEL_CAPACITY_EVIDENCE.md), local full quality suite; Draft PR checks are the remote authority |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -1046,8 +1065,23 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 - **Implementation Scope:** Default `MAX_CONTENT_LENGTH=3 MiB`, leaving 1 MiB (50 percent) multipart/form encoding capacity above the 2 MiB CSV payload limit; CLI configuration must remain greater than the CSV limit. A `before_request` gate rejects declared oversized bodies before route/state logic, Flask enforces the same ceiling while reading, and one fixed 413 handler inherits no-store/no-cache.
 - **Acceptance Criteria:** Oversized Direct, Batch multipart, Review, Insights note, and Triage decision requests return 413; no source content, traceback, or internal path is echoed; no ephemeral state is created or changed; normal requests retain current semantics; the 2 MiB CSV byte limit remains independent; no CSP, Origin/Host policy, account, remote deployment, database, background task, or persistence work is added.
 - **Risks and Regression Scope:** Flask request parsing, multipart overhead, all POST routes, 413 headers/copy, Batch/Review/Insights/Moderation/Triage stores, CLI configuration, and CSV-limit distinction; PH-005, PH-007, and other hardening are excluded.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`; PR #20; behavioral code review and pre-closure final-head CI PASS; closure-head CI is authoritative in PR checks.
-- **Final Outcome:** The A3 HTTP request-body boundary, targeted/full regression, behavioral code review, and PR CI passed. FCR-047 is closed as `VERIFIED` on the exact behavioral SHA. Feature Freeze remains PASS and PH-005 is unstarted.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`; PR #20 merged to main SHA `552be0012300ce0d40714b739bbb9e27248c8bca`; behavioral review, closure-head CI, and post-merge CI PASS.
+- **Final Outcome:** The A3 HTTP request-body boundary, targeted/full regression, behavioral code review, and PR CI passed. FCR-047 is closed as `VERIFIED` on the exact behavioral SHA. Feature Freeze remains PASS; PH-005 was subsequently closed by FCR-048 evidence.
+
+### FCR-048 — Real-model Batch capacity and performance evidence
+
+- **Basic Information:** Local CPU Batch capacity with pinned Cardiff sentiment and SamLowe emotion; 2026-08-13; status `VERIFIED`.
+- **Current Behavior:** The frozen product runs both real models sequentially in one synchronous process with a 500-row Batch ceiling. The A1 active-analysis lease protects long write-back, but no 1/50/500-row real-model timing, throughput, RSS, or TTL evidence previously existed.
+- **Manual Observation:** On Windows 11, Python 3.12.13, an Intel i7-12700H, about 16 GB RAM, and PyTorch 2.13 CPU-only, the probe forced offline local-cache use. Initialization through first result took 3.626 seconds; warm 1/50/500 rows took 0.075/3.763/39.636 seconds, with 500/500 successes and zero failures. Peak RSS was about 0.99 GiB, with about 2.97 MiB growth from the first loaded result through 500 rows.
+- **User Impact:** Without evidence, the 500-row promise, synchronous wait, and memory requirement cannot be judged for RC. The measurement shows that the defined short social-text workload is deliverable on the reference desktop while avoiding a false all-hardware/all-input SLA.
+- **Core Assessment:** Measurement/evidence hardening; no frozen product behavior change and no assumed or implemented optimization.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `VERIFIED`.
+- **Rationale:** FCR-045 defines capacity blocking and active-operation state integrity, while FCR-046 defines complete-input truthfulness. Neither supplies real-model capacity, throughput, or RSS release evidence. PH-005 therefore becomes permanent FCR-048 rather than duplicating an existing finding.
+- **Implementation Scope:** Add an opt-in offline benchmark harness excluded from ordinary CI plus auditable evidence. Exercise production `AnalysisService`, `analyze_batch`, and `EphemeralBatchStore` lease/write-back with synthetic English fixtures. Do not modify `src/`, models, revisions, thresholds, Batch limits, or runtime architecture.
+- **Acceptance Criteria:** Separate cold initialization/first inference from warm 1/50/500; record environment, throughput, success/failure, and process RSS; retain and commit an active lease beyond a 1-second probe TTL; propose a headroom-bearing RC budget scoped to the fixture/profile; keep the heavy probe outside ordinary CI.
+- **Risks and Regression Scope:** Hardware and input length affect results, so this is not a universal SLA. The measurement harness, offline cache, two pinned revisions, sequential Batch, and A1 lease are in scope. PH-006, PH-007, FCR-042/043, async, parallelism, quantization, GPU, and persistence are excluded.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; local real-model probe and full quality suite PASS; Product Hardening Batch A4 Draft PR to be created, with final remote head and CI authoritative in PR checks.
+- **Final Outcome:** [Real-model capacity evidence](REAL_MODEL_CAPACITY_EVIDENCE.md) supports retaining `MAX_BATCH_ROWS=500`: 500 rows took about 39.636 seconds at 12.61 rows/s with about 0.99 GiB peak RSS, and every result survived the probe TTL and committed. PH-005 closes as `VERIFIED` without corrective product work. Feature Freeze remains PASS and PH-006 is unstarted.
 
 ### FCR-033 — Local model-cache redundancy
 

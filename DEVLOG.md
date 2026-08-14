@@ -1,5 +1,44 @@
 # Development Log
 
+## Product Hardening Batch A4 — Real-model capacity evidence
+
+Reconciled Phase 0 PH-005 as permanent FCR-048. FCR-045 governs Batch capacity,
+TTL, and active-analysis state integrity, while FCR-046 governs complete-input
+inference truthfulness; neither supplied measured release evidence for the
+pinned models at the 500-row product ceiling.
+
+Added an explicit opt-in benchmark harness outside ordinary CI. It forces
+offline mode, uses the existing local cache, and runs the production
+`AnalysisService`, sequential `analyze_batch`, and `EphemeralBatchStore`
+lease/write-back path with eight deterministic, synthetic English templates.
+It records environment, cold initialization, first combined inference, warm
+1/50/500-row timing and throughput, success/failure counts, process RSS, and
+whether an active workspace survives and commits beyond an artificial 1-second
+TTL. No `src/` product behavior, model, revision, threshold, limit, provider,
+workflow, persistence, or runtime architecture changed.
+
+On the 2026-08-14 UTC reference run (Windows 11, Python 3.12.13, Intel
+i7-12700H, approximately 16 GB RAM, PyTorch 2.13 CPU-only), offline model
+initialization through the first result took 3.626 seconds. Warm 1/50/500 rows
+took 0.075/3.763/39.636 seconds; the 500-row stage achieved 12.61 rows/second,
+with 500 successes and zero failures. Peak process RSS was 1,061,908,480 bytes
+(about 0.99 GiB), while post-load growth through 500 rows was about 2.97 MiB.
+The 50- and 500-row stages both exceeded the probe TTL, retained their active
+lease, and committed successfully.
+
+The evidence supports retaining `MAX_BATCH_ROWS=500` for the explicit local
+synchronous workflow, with a reproducible reference RC budget documented in
+`docs/REAL_MODEL_CAPACITY_EVIDENCE.md`. The budget is scoped to the checked-in
+short social-text fixture and comparable CPU desktop, not presented as a
+universal latency SLA. FCR-048 and PH-005 are therefore `VERIFIED`; corrective
+product work is not required. Feature Freeze remains PASS, and PH-006 is not
+started.
+
+The full deterministic suite passed 148 tests with 2 opt-in integration tests
+skipped. Ruff, strict MyPy for 69 files, compileall including the benchmark, and
+pip check passed. PR #20 / Batch A3 was merged at main SHA
+`552be0012300ce0d40714b739bbb9e27248c8bca`, the synchronized A4 baseline.
+
 ## Product Hardening Batch A3 — Global HTTP request-body boundary
 
 Reconciled Phase 0 PH-004 as permanent FCR-047. FCR-025 covers privacy and
