@@ -44,6 +44,20 @@ The first run downloads both immutable model revisions into ignored
 `model_cache/`. Set `STI_MODEL_OFFLINE=1` after the cache exists to require
 offline loading. Never commit model weights or caches.
 
+### Opt-in capacity probe
+
+Product Hardening capacity evidence uses the same pinned providers and Batch
+lease/write-back path as the product, but remains outside deterministic CI:
+
+```text
+python benchmarks/real_model_capacity.py --confirm-real-model-run --cache-dir model_cache
+```
+
+The probe forces offline mode, uses only checked-in synthetic English templates,
+and emits privacy-safe JSON. Its method, reference results, and RC comparison
+budget are recorded in
+[Real-model Batch capacity evidence](REAL_MODEL_CAPACITY_EVIDENCE.md).
+
 ## Milestone discipline
 
 Each milestone must have a coherent outcome, acceptance checks, privacy review,
