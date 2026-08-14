@@ -8,9 +8,10 @@ text with transparently licensed open-source models.
 > **Current lifecycle phase: Release Candidate**
 >
 > Planned feature milestones 1–10 are complete, Feature Complete Review is
-> completed, Feature Freeze is PASS, Product Hardening is complete, and Full
-> Regression and Manual Acceptance is PASS. Release Candidate work has not
-> started, so the current version is not release-ready.
+> completed, Feature Freeze is PASS, Product Hardening is complete, Full
+> Regression and Manual Acceptance is PASS, and the Release Candidate Gate is
+> PASS. An explicit Version / Delivery Decision by the repository owner is
+> still required, so the current version is not release-ready.
 
 ## Principles
 
@@ -300,10 +301,10 @@ the assisted-mode explanation appears only when a suggestion actually exists.
 
 Milestone 10 is the last completed planned feature milestone for the current
 version. Feature Complete Review is completed, Feature Freeze is PASS,
-Product Hardening is complete, and Full Regression and Manual Acceptance is
-PASS; Release Candidate is the current lifecycle phase. An explicit
-release-candidate decision and release readiness itself remain later gates.
-Deferred next-version candidates remain outside the current `0.10.0`
+Product Hardening is complete, Full Regression and Manual Acceptance is
+PASS, and the Release Candidate Gate is PASS. An explicit Version / Delivery
+Decision by the repository owner and release readiness itself remain later
+gates. Deferred next-version candidates remain outside the current `0.10.0`
 feature boundary. Detailed live execution state is maintained only in
 [Project Status](PROJECT_STATUS.md).
 

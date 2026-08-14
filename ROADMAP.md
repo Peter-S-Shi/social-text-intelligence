@@ -30,9 +30,10 @@ gate. Actual gate decisions and live execution state are recorded in
 **Current phase: Release Candidate**
 
 Feature Complete Review is completed, Feature Freeze is PASS, Product
-Hardening is complete, and Full Regression and Manual Acceptance is PASS.
-Release Candidate work has not started, and release readiness remains No.
-Findings belong in the
+Hardening is complete, Full Regression and Manual Acceptance is PASS, and
+the Release Candidate Gate is PASS. The next required action is an explicit
+Version / Delivery Decision by the repository owner; release readiness
+remains No until that decision is made. Findings belong in the
 [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md), while
 the detailed live state belongs only in [Project Status](PROJECT_STATUS.md).
 
@@ -185,22 +186,47 @@ and what evidence a decision requires are defined once, permanently, in the
 
 ## Release Candidate and Packaging
 
-**Status: Current phase. Not started.**
+**Status: PASS — 2026-08-14.** RC candidate SHA
+`427984a5d39b7e20eafc53e588aa5a53b6bd320d` (differs from the Manual
+Acceptance tested SHA only by governance/docs/lifecycle-test changes, so
+Manual Acceptance runtime evidence remains valid and was not retested).
 
 An RC decision freezes the candidate contents and verifies:
 
-- version and package metadata;
-- clean installation and reproducible local startup;
-- supported Python environments;
-- model revision and optional dependency behavior;
-- licenses, attribution, and notices;
-- final privacy and repository-hygiene review;
-- full automated and manual regression;
-- documented release blockers and their disposition.
+- version and package metadata: `social-text-intelligence` `0.10.0`,
+  `Requires-Python >=3.11`, console scripts `sti`/`sti-web`, extras
+  `sentiment`/`emotion`/`web`/`dev` — confirmed consistent in
+  `pyproject.toml` and the built wheel's `METADATA`;
+- clean installation and reproducible local startup: a wheel built from a
+  clean detached checkout installed cleanly with no extras (`pip check`
+  clean, `sti about`/`sti contracts` work) and with the `web` extra
+  (`sti-web --help` works, server binds to `127.0.0.1` only, the installed
+  wheel's home page and static assets load, proving templates/static were
+  actually packaged);
+- supported Python environments: exact-SHA CI green on 3.11/3.12/3.13,
+  reused rather than re-created locally; local wheel smoke on the available
+  Python 3.12;
+- model revision and optional dependency behavior: pinned sentiment/emotion
+  model revisions match the approved records exactly and are passed as
+  explicit non-floating arguments; no weights bundled in the wheel; with no
+  model extras installed, a Direct analysis submission fails intentionally
+  and comprehensibly (a clear in-page error, HTTP 200, no traceback) rather
+  than crashing or silently misbehaving;
+- licenses, attribution, and notices: `LICENSE`, `THIRD_PARTY_NOTICES.md`,
+  `pyproject.toml`, and the wheel's `METADATA` are mutually consistent;
+- final privacy and repository-hygiene review: no weights, databases,
+  credentials, or secrets in tracked files or the built wheel; expected
+  ignore boundaries (`dist/`, `build/`, `model_cache/`,
+  `manual-qa/results/`) remain in place;
+- full automated and manual regression: exact-SHA CI plus the reused
+  2026-08-14 Full Regression and Manual Acceptance PASS;
+- documented release blockers and their disposition: **none found**.
 
 An RC label does not automatically imply `1.0.0`, production readiness, public
 hosting, or public release. Version and delivery decisions require their own
-explicit gate.
+explicit gate — the next required action is an explicit Version / Delivery
+Decision by the repository owner. FCR-042 and FCR-043 remain `OPEN`
+non-blocking backlog, unchanged by this gate.
 
 ## Deferred next-version backlog
 
