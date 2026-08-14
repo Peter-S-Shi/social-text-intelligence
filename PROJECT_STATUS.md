@@ -10,7 +10,7 @@ principles.
 | Project | Social Text Intelligence |
 | Current version | `0.10.0` |
 | Reviewed baseline main SHA | `dc70857ffef7e63997376b97510ab62389a20c41` |
-| Current merged main SHA | `4f4545e2f9e84b59932d5867016b9be18fc2f7b4` — PR #16 merged and verified against `origin/main` |
+| Product Hardening baseline main SHA | `4f4545e2f9e84b59932d5867016b9be18fc2f7b4` — PR #16 merged and verified against `origin/main` |
 | Tested behavioral SHA | `16acb0f5931b022b57f0c5cdbe4501973aa3ad11` — candidate-specific final-head smoke test PASS |
 | Governance closure SHA | `2a701f87b167d5a112184b1ffedb4f8f7a12d95e` — documentation-only closure; it does not replace the tested behavioral SHA |
 | Current lifecycle phase | **Product Hardening** |
