@@ -472,7 +472,7 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 - **Implementation Scope / 实施范围:** 增加普通 CI 不执行的 opt-in offline benchmark harness 与可审计证据；运行 production `AnalysisService`、`analyze_batch` 和 `EphemeralBatchStore` lease/write-back；使用 synthetic English fixture；不修改 `src/`、模型、revision、threshold、Batch limit 或 runtime architecture。
 - **Acceptance Criteria / 验收标准:** 分开记录冷加载/首推理与 warm 1/50/500；记录环境、吞吐、成功/失败、process RSS；active lease 在 1 秒探针 TTL 下跨期并成功提交；提出具备余量且限定 fixture/profile 的 RC budget；heavy probe 不进入普通 CI。
 - **Risks and Regression Scope / 风险与回归范围:** 结果依赖硬件与输入长度，不能外推成全局 SLA；measurement harness、offline cache、两个 pinned revision、顺序 Batch 与 A1 lease 是本项范围；PH-006、PH-007、FCR-042/043、async、parallelism、quantization、GPU 与 persistence 均排除。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；本地真实 probe 与 full quality suite PASS；Product Hardening Batch A4 Draft PR 待创建，最终 remote head 与 CI 以 PR checks 为准。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A4 Draft PR #21；本地真实 probe 与 full quality suite PASS；最终 remote head 与 CI 以 PR checks 为准。
 - **Final Outcome / 最终结果:** [真实模型容量证据](REAL_MODEL_CAPACITY_EVIDENCE.md)充分支持保留 `MAX_BATCH_ROWS=500`：500 行约 39.636 秒、12.61 rows/s、峰值约 0.99 GiB，所有结果跨探针 TTL 保持并提交。PH-005 关闭为 `VERIFIED`，无需 corrective product work；Feature Freeze 保持 PASS，PH-006 未开始。
 
 ### FCR-033 — 本地模型缓存冗余
@@ -1080,7 +1080,7 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 - **Implementation Scope:** Add an opt-in offline benchmark harness excluded from ordinary CI plus auditable evidence. Exercise production `AnalysisService`, `analyze_batch`, and `EphemeralBatchStore` lease/write-back with synthetic English fixtures. Do not modify `src/`, models, revisions, thresholds, Batch limits, or runtime architecture.
 - **Acceptance Criteria:** Separate cold initialization/first inference from warm 1/50/500; record environment, throughput, success/failure, and process RSS; retain and commit an active lease beyond a 1-second probe TTL; propose a headroom-bearing RC budget scoped to the fixture/profile; keep the heavy probe outside ordinary CI.
 - **Risks and Regression Scope:** Hardware and input length affect results, so this is not a universal SLA. The measurement harness, offline cache, two pinned revisions, sequential Batch, and A1 lease are in scope. PH-006, PH-007, FCR-042/043, async, parallelism, quantization, GPU, and persistence are excluded.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; local real-model probe and full quality suite PASS; Product Hardening Batch A4 Draft PR to be created, with final remote head and CI authoritative in PR checks.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A4 Draft PR #21; local real-model probe and full quality suite PASS; final remote head and CI are authoritative in PR checks.
 - **Final Outcome:** [Real-model capacity evidence](REAL_MODEL_CAPACITY_EVIDENCE.md) supports retaining `MAX_BATCH_ROWS=500`: 500 rows took about 39.636 seconds at 12.61 rows/s with about 0.99 GiB peak RSS, and every result survived the probe TTL and committed. PH-005 closes as `VERIFIED` without corrective product work. Feature Freeze remains PASS and PH-006 is unstarted.
 
 ### FCR-033 — Local model-cache redundancy
