@@ -56,6 +56,14 @@ original text with no conversion. Behavioral candidate:
 PR review. FCR-042 and FCR-043 remain open non-blocking, and Feature Freeze
 remains PASS.
 
+PR #27 formal review subsequently passed on reviewed head
+`ef9b54adc3eeed98ef4154f71ae7f69e5f6000cb`, which also passed final-head CI on
+Python 3.11, 3.12, and 3.13. FCR-051 is therefore `VERIFIED` and PH-010 is
+closed; FCR-027, FCR-030, and FCR-045–050 remain `VERIFIED`, Feature Freeze
+remains PASS, FCR-042/043 remain `OPEN` non-blocking, and the parked
+filter/select applied-state finding remains a separate, unresolved item outside
+FCR-051.
+
 ## Product Hardening Batch A8 — accessibility semantics and keyboard recovery
 
 Reconciled Phase 0 PH-009 with existing FCR-027 rather than creating FCR-051.
