@@ -10,13 +10,14 @@ principles.
 | Project | Social Text Intelligence |
 | Current version | `0.10.0` |
 | Reviewed baseline main SHA | `dc70857ffef7e63997376b97510ab62389a20c41` |
+| Product Hardening baseline main SHA | `4f4545e2f9e84b59932d5867016b9be18fc2f7b4` — PR #16 merged and verified against `origin/main` |
 | Tested behavioral SHA | `16acb0f5931b022b57f0c5cdbe4501973aa3ad11` — candidate-specific final-head smoke test PASS |
 | Governance closure SHA | `2a701f87b167d5a112184b1ffedb4f8f7a12d95e` — documentation-only closure; it does not replace the tested behavioral SHA |
 | Current lifecycle phase | **Product Hardening** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | **Completed** |
 | Feature Freeze status | **PASS — explicitly approved 2026-08-13** |
-| Product Hardening status | Entered; FCR-042 and FCR-043 retained as non-blocking backlog |
+| Product Hardening status | **Current work target**; FCR-042 and FCR-043 retained as non-blocking backlog |
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
@@ -24,7 +25,7 @@ principles.
 | Approved audit items | FCR-044 manual retest passed and FCR-002 navigation verification is closed; V-01 is satisfied by the exact tested behavioral SHA; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
 | Latest validation | Tested behavioral SHA `16acb0f5931b022b57f0c5cdbe4501973aa3ad11`: final-head smoke test PASS; full suite 127 passed and 2 opt-in real-model tests skipped; Ruff, strict MyPy for 67 files, compileall, pip check, documentation links, diff/privacy checks, and GitHub CI on Python 3.11/3.12/3.13 passed |
-| Next required action | Confirm PR #16 final-head CI, mark Ready for Review, and wait for explicit merge approval before beginning Product Hardening work |
+| Next required action | Begin a separately scoped Product Hardening cycle; keep Feature Freeze `PASS` closed and treat FCR-042 and FCR-043 as the current non-blocking backlog |
 | Last updated | 2026-08-13 |
 
 ## Required maintenance
