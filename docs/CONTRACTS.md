@@ -72,13 +72,16 @@ An optional `timestamp` must be ISO 8601. Its semantics are preserved, not
 necessarily its exact spelling: a stated UTC offset is kept as stated and a
 value with no timezone stays timezone-unspecified, but the parsed value may be
 re-rendered in a normalized ISO form (for example `Z` becomes `+00:00`, and a
-date-only value gains an explicit midnight time). The raw text of the CSV cell
-itself is a separate, unparsed value; Batch CSV export reads that raw cell
-directly and reproduces it byte for byte, independent of parsing. The
-application never infers a timezone for a timezone-unspecified value and never
-normalizes a user timestamp's offset to UTC. This is deliberately distinct from
-system-generated audit timestamps — review, moderation, triage, context-note,
-and export times are always timezone-aware UTC.
+date-only value gains an explicit midnight time). The parsed CSV field value is
+retained separately in `PreparedBatchRow.input_values`. Batch export uses that
+field value rather than the parsed datetime representation. Export still
+applies the existing spreadsheet-safety escaping and normal CSV serialization,
+so this is not a byte-for-byte preservation guarantee of the original CSV
+source syntax. The application never infers a timezone for a
+timezone-unspecified value and never normalizes a user timestamp's offset to
+UTC. This is deliberately distinct from system-generated audit timestamps —
+review, moderation, triage, context-note, and export times are always
+timezone-aware UTC.
 
 Sentiment distribution counts mutually exclusive selected labels. Dominant
 emotion distribution counts one selected compact label per successful row.
