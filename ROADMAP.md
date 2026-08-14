@@ -21,20 +21,25 @@ version:
 9. synthetic policy-based moderation training;
 10. human-led support triage.
 
-Completion of these feature milestones does not mean the product is complete,
-feature-frozen, release-candidate approved, or release-ready.
+Completion of these feature milestones alone does not establish a lifecycle
+gate. Actual gate decisions and live execution state are recorded in
+[Project Status](PROJECT_STATUS.md).
 
 ## Current lifecycle phase
 
-**Current phase: Feature Complete Review**
+**Current phase: Product Hardening**
 
-The current objective is to manually exercise and assess the whole feature set
-before deciding whether the current-version scope is ready to freeze. Findings
-belong in the
-[Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md), and
-execution state belongs in [Project Status](PROJECT_STATUS.md).
+Feature Complete Review is completed and Feature Freeze is PASS. Current work
+converges quality over the frozen `0.10.0` feature boundary. Manual Acceptance
+and Release Candidate work have not started, and release readiness remains No.
+Findings belong in the
+[Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md), while
+the detailed live state belongs only in [Project Status](PROJECT_STATUS.md).
 
 ## Feature Complete Review
+
+**Status: Completed.** The following purpose and exit criteria remain the
+canonical plan and historical gate definition.
 
 ### Purpose
 
@@ -75,6 +80,10 @@ decision is ready.
 
 ## Feature Freeze Gate
 
+**Status: PASS.** The explicit decision is recorded in the
+[Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md); current
+gate state remains in [Project Status](PROJECT_STATUS.md).
+
 Feature Freeze is a formal, recorded decision that the current-version feature
 set is closed. It has not passed merely because Milestone 10 or the feature
 audit is complete.
@@ -107,6 +116,8 @@ Audit and `PROJECT_STATUS.md` before implementation.
 
 ## Product Hardening
 
+**Status: Current phase.**
+
 Product Hardening is quality convergence over the frozen feature set. It
 includes:
 
@@ -124,6 +135,8 @@ frozen feature set requires an explicit freeze-reopening decision.
 
 ## Full Regression and Manual Acceptance
 
+**Status: Not started.**
+
 This phase requires:
 
 - the complete automated test and quality suite;
@@ -140,6 +153,8 @@ evidence for a specific tested version; it does not replace the living
 checklist.
 
 ## Release Candidate and Packaging
+
+**Status: Not started.**
 
 An RC decision freezes the candidate contents and verifies:
 

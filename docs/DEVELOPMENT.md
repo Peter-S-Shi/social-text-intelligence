@@ -81,6 +81,12 @@ The mutable lifecycle plan is maintained in
 [PROJECT_STATUS.md](../PROJECT_STATUS.md), and feature-scope findings in the
 [Feature Complete Manual Audit](FEATURE_COMPLETE_MANUAL_AUDIT.md).
 
+`PROJECT_STATUS.md` is the only live execution ledger. `ROADMAP.md` defines the
+mutable lifecycle plan, this file defines contributor discipline, and the
+Charter defines stable product and engineering boundaries. Do not copy PR/SHA,
+blocker, next-action, or temporary gate wording into the Charter or CLI output.
+Consult `PROJECT_STATUS.md` before starting any lifecycle batch.
+
 ### Feature Complete Review
 
 - perform a product-level audit before freeze;

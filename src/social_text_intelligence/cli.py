@@ -28,7 +28,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--version", action="version", version=__version__)
     subparsers = parser.add_subparsers(dest="command")
-    subparsers.add_parser("about", help="Show the current project milestone.")
+    subparsers.add_parser(
+        "about", help="Show the installed version and feature capabilities."
+    )
     subparsers.add_parser("contracts", help="Show normalized analysis labels.")
     sentiment = subparsers.add_parser(
         "sentiment",
@@ -181,6 +183,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     print(PROJECT_STATUS.name)
+    print(f"Version: {__version__}")
     print(f"Milestone: {PROJECT_STATUS.milestone}")
     print("Local-first: yes")
     print("Analysis contracts available: yes")
@@ -193,5 +196,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     print("Temporary local insights and context-note workflow available: yes")
     print("Synthetic moderation training workflow available: yes")
     print("Local Support Triage workbench available: yes")
-    print("Planned features complete; feature freeze and release review pending")
+    print("Feature boundary: Milestones 1-10 complete")
+    print("Live release lifecycle: see repository PROJECT_STATUS.md")
     return 0

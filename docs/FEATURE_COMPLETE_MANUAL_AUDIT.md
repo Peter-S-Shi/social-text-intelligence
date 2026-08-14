@@ -148,7 +148,7 @@ Final Outcome / 最终结果
 | FCR-027 | 键盘与可访问性 | 焦点、标签、错误定位和主要表单是否可键盘操作 | OPEN |
 | FCR-028 | 响应式布局 | 窄屏、表格、导航和关键操作是否仍可使用 | OPEN |
 | FCR-029 | 错误与空状态 | 无 token、过期、空结果和非法输入是否提供恢复路径 | OPEN |
-| FCR-030 | 文档一致性 | README、Charter、contracts、privacy 与实际行为是否一致 | OPEN |
+| FCR-030 | 文档一致性 | README、Charter、ROADMAP、Development、Project Status 与 CLI 的职责及当前状态是否一致 | VERIFIED；A7 review 与 final-head CI PASS |
 | FCR-031 | 当前版本范围 | 是否存在必须添加、移除、合并、隐藏或简化的能力 | OPEN |
 | FCR-032 | 延后范围 | French、long-form、connectors、persistence 等是否明确隔离 | OPEN |
 | FCR-033 | 本地模型缓存冗余 | 固定模型能否在不复制权重或产生未审计转换 revision 的情况下离线运行 | VERIFIED |
@@ -176,6 +176,7 @@ Final Outcome / 最终结果
 
 | ID | Decision Class | Decision | 状态 | 简要理由 | 实施/验证引用 |
 | --- | --- | --- | --- | --- | --- |
+| FCR-030 | `HARDENING` | Keep and harden | `VERIFIED` | 以 Project Status 为唯一 live ledger，分离 Charter、Roadmap、README、Development 与 CLI 职责，避免当前态重复漂移 | behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` review PASS；PR #24 reviewed-head CI PASS |
 | FCR-033 | `HARDENING` | Keep and harden | `VERIFIED` | 清除重复缓存，并固定已审计的 sentiment 权重格式；无产品或模型输出变化 | provider 回归、完整质量检查及真实离线双模型测试 |
 | FCR-034 | `HARDENING` | Keep and harden | `VERIFIED` | 明确 neutral threshold fallback，不改模型语义 | 定向回归与 final-candidate 人工复测通过 |
 | FCR-035 | `HARDENING` | Keep and harden | `VERIFIED` | 筛选后回到 Results anchor | Batch route 回归与人工复测通过 |
@@ -217,13 +218,30 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
   022, 025, 027–029, 032–033。
 - `VERIFIED / Keep and harden`: FCR-034–041 与 FCR-044；final-candidate
   人工或委托技术复测均已完成。
-- `OPEN verification`: FCR-003、005、014、015、017、021、023、026、030、031。
+- `OPEN verification`: FCR-003、005、014、015、017、021、023、026、031。
   FCR-002 已由 FCR-044 final-head smoke test 重新关闭；V-01 已由 exact tested
   behavioral SHA 满足，V-03–V-06 已由自动化/静态/委托技术复测覆盖。
+- `VERIFIED / Keep and harden`: FCR-030；Product Hardening Batch A7 已完成
+  review 与 reviewed-head CI，PH-008 已关闭。
 - `OPEN / non-blocking Hardening`: FCR-042–043。
 - `VERIFIED / Product Hardening`: FCR-045；exact correction SHA 的 targeted/full
   local validation 与 PR #18 remote CI 均通过，PR #18 已合并到 main
   `1b36fe8c024823c1f4829621a7bcc733b2915c93`。
+
+### FCR-030 — 文档与 CLI 当前状态一致性
+
+- **Basic Information / 基本信息:** 生命周期文档、贡献者说明与 `sti about`；Product Hardening PH-008；状态 `VERIFIED`。
+- **Current Behavior / 当前行为:** `PROJECT_STATUS.md` 是唯一 canonical live execution state；Roadmap 维护可变生命周期计划；Charter 仅维护稳定边界；README 提供简洁当前概览；Development 维护贡献纪律；CLI 仅报告安装版本、已完成功能边界与能力，并指向 Project Status。
+- **Manual Observation / 人工观察:** A7 审计发现 README、Roadmap、Charter 与 CLI 仍把 Feature Complete Review 或 Feature Freeze 描述为待进行，Project Status 仍把已合并 PR #23 写成下一操作。
+- **User Impact / 用户影响:** 冲突的当前态会误导开发、审查和发布判断，并使每次生命周期转换需要重复修正文案。
+- **Core Assessment / 核心评估:** PH-008 与既有 FCR-030 是同一 documentation-consistency 根因；不建立 FCR-051。
+- **Decision / 决定:** Class `HARDENING`; Decision `Keep and harden`; Status `VERIFIED`。
+- **Rationale / 理由:** 将易变事实集中到一个 live ledger，比在 Charter 或 CLI 中复制 gate/PR/SHA 更能持续保持真实；历史记录仍保留当时正确的状态。
+- **Implementation Scope / 实施范围:** 修正当前 README、ROADMAP、Charter、Development、Project Status 与 `sti about`；同步 A6 merge 和 FCR-050 `VERIFIED`；不改 contracts/privacy/architecture 中不存在的矛盾。
+- **Acceptance Criteria / 验收标准:** 当前 surfaces 对 0.10.0、Milestones 1–10 complete、FCR Completed、Freeze PASS、Product Hardening、Manual Acceptance/RC Not started、Release readiness No 一致；CLI 不声称 freeze pending，也不冒充 live ledger；Manual QA 指向 tracked canonical path。
+- **Risks and Regression Scope / 风险与回归范围:** CLI about 输出、当前态职责、tracked Markdown 相对链接、canonical Manual QA 路径、历史记录不被误改；不涉及模型或 workflow behavior。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A7 PR #24；behavioral candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` lifecycle/CLI consistency review PASS；reviewed head `371b41bec0c6418bc07748a36d34e46dd4392664` Python 3.11/3.12/3.13 final-head CI PASS。
+- **Final Outcome / 最终结果:** targeted consistency regression、review 与 reviewed-head CI 全部通过，FCR-030 关闭为 `VERIFIED`。`PROJECT_STATUS.md` 保持唯一 canonical live execution ledger；FCR-045–050 保持 `VERIFIED`，Feature Freeze 保持 PASS，PH-009 未开始。
 
 ### FCR-034–FCR-041 — 固定审计记录
 
@@ -506,8 +524,8 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 - **Implementation Scope / 实施范围:** Flask `TRUSTED_HOSTS` 只接受 `127.0.0.1`/`localhost`；`POST`/`PUT`/`PATCH`/`DELETE` 要求 exact same-origin Origin，Origin 缺失时已有 Referer 必须同源，两者都缺失则按 trusted-Host 后的本地非浏览器请求兼容；全局增加 self-only CSP、`nosniff`、`Referrer-Policy: same-origin`、CSP `frame-ancestors 'none'` 与 `X-Frame-Options: DENY`；把唯一 inline style 改为本地 CSS 控制的原生 progress。
 - **Acceptance Criteria / 验收标准:** approved local Host 与 same-origin workflow 正常；非可信 Host 固定 400，显式跨源/`null`/malformed Origin 或不匹配 Referer 固定 403；拒绝发生在 inference、body parsing 与 mutation 前且不回显用户数据/路径；HTML、redirect、error/413、CSV、CSS/JS 均带统一 headers；CSP 无 wildcard、external source、`unsafe-inline`；A3/A5 合同保持。
 - **Risks and Regression Scope / 风险与回归范围:** Origin 缺失兼容仅面向 trusted-Host 本地非浏览器客户端，不是远程访问或认证合同；已完成的真实浏览器 smoke 确认 console 无 CSP violation 或 blocked local resource。HSTS、CORS、TLS、LAN、reverse proxy、production WSGI、account/session、CSRF framework、reporting service、后续 PH 与 FCR-042/043 均排除。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A6 PR #23；behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`；Host/same-origin/CSP/security-header code review PASS；behavioral-head Python 3.11/3.12/3.13 CI PASS；real-browser smoke PASS。
-- **Final Outcome / 最终结果:** trusted Host、same-origin unsafe-method gate、严格统一 headers 与 CSP-compatible template 已通过 review、CI 和真实浏览器 smoke；Direct、Batch/Review、Insights progress/note、Moderation/Triage、CSV 均正常，DevTools Console 无 CSP violation 或 blocked local resource。FCR-050 在固定 behavioral SHA 上关闭为 `VERIFIED`；本次 closure 仅修改治理文档。FCR-049 保持 `VERIFIED`，Feature Freeze 保持 PASS，不开始后续 PH。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A6 PR #23；behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`；Host/same-origin/CSP/security-header code review PASS；behavioral-head Python 3.11/3.12/3.13 CI PASS；real-browser smoke PASS；PR #23 已合并到 main SHA `cfcd13ef582996b8c75aa20524dcc212e2ab8922`。
+- **Final Outcome / 最终结果:** trusted Host、same-origin unsafe-method gate、严格统一 headers 与 CSP-compatible template 已通过 review、CI 和真实浏览器 smoke；Direct、Batch/Review、Insights progress/note、Moderation/Triage、CSV 均正常，DevTools Console 无 CSP violation 或 blocked local resource。FCR-050 在固定 behavioral SHA 上关闭为 `VERIFIED`；PR #23 已合并。FCR-049 保持 `VERIFIED`，Feature Freeze 保持 PASS；后续 PH-008 由既有 FCR-030 承载。
 
 ### FCR-033 — 本地模型缓存冗余
 
@@ -783,7 +801,7 @@ predeclare a pass.
 | FCR-027 | Keyboard and accessibility | Are focus, labels, error location, and major forms keyboard-operable? | OPEN |
 | FCR-028 | Responsive layout | Do narrow screens, tables, navigation, and critical actions remain usable? | OPEN |
 | FCR-029 | Error and empty states | Do missing tokens, expiry, empty results, and invalid input offer recovery? | OPEN |
-| FCR-030 | Documentation consistency | Do README, Charter, contracts, privacy, and behavior agree? | OPEN |
+| FCR-030 | Documentation consistency | Do README, Charter, ROADMAP, Development, Project Status, and CLI responsibilities and current state agree? | VERIFIED; A7 review and final-head CI passed |
 | FCR-031 | Current-version scope | Must any capability be added, removed, merged, hidden, or simplified? | OPEN |
 | FCR-032 | Deferred scope | Are French, long-form, connectors, persistence, and other expansion isolated? | OPEN |
 | FCR-033 | Local model-cache redundancy | Can pinned models run offline without duplicate weights or an unaudited conversion revision? | VERIFIED |
@@ -812,6 +830,7 @@ evidence and disposition.
 
 | ID | Decision Class | Decision | Status | Short rationale | Implementation/verification reference |
 | --- | --- | --- | --- | --- | --- |
+| FCR-030 | `HARDENING` | Keep and harden | `VERIFIED` | Make Project Status the only live ledger and separate Charter, Roadmap, README, Development, and CLI responsibilities to prevent repeated current-state drift | behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` review PASS; PR #24 reviewed-head CI PASS |
 | FCR-033 | `HARDENING` | Keep and harden | `VERIFIED` | Remove redundant cache artifacts and pin the audited sentiment weight format without product or model-output changes | Provider regression, full quality suite, and real offline two-model tests |
 | FCR-034 | `HARDENING` | Keep and harden | `VERIFIED` | Explain neutral threshold fallback without changing model semantics | Targeted regression and final-candidate manual retest passed |
 | FCR-035 | `HARDENING` | Keep and harden | `VERIFIED` | Return filter submissions to the Results anchor | Batch route regression and manual retest passed |
@@ -854,14 +873,31 @@ CI status are authoritative in the PR checks.
   022, 025, 027–029, 032–033.
 - `VERIFIED / Keep and harden`: FCR-034–041 and FCR-044; final-candidate
   manual or delegated technical retesting is complete.
-- `OPEN verification`: FCR-003, 005, 014, 015, 017, 021, 023, 026, 030, 031.
+- `OPEN verification`: FCR-003, 005, 014, 015, 017, 021, 023, 026, 031.
   FCR-002 is re-closed by the FCR-044 final-head smoke test; V-01 is satisfied
   by the exact tested behavioral SHA, and V-03–V-06 are covered by automated,
   static, or delegated technical retest evidence.
+- `VERIFIED / Keep and harden`: FCR-030; Product Hardening Batch A7 passed
+  review and reviewed-head CI, closing PH-008.
 - `OPEN / non-blocking Hardening`: FCR-042–043.
 - `VERIFIED / Product Hardening`: FCR-045; targeted/full local validation and
   PR #18 remote CI passed on the exact correction SHA, and PR #18 merged to main
   at `1b36fe8c024823c1f4829621a7bcc733b2915c93`.
+
+### FCR-030 — Documentation and CLI current-state consistency
+
+- **Basic Information:** Lifecycle documents, contributor instructions, and `sti about`; Product Hardening PH-008; status `VERIFIED`.
+- **Current Behavior:** `PROJECT_STATUS.md` is the only canonical live execution state. Roadmap owns the mutable lifecycle plan; Charter owns stable boundaries; README provides a concise current overview; Development owns contributor discipline; CLI reports the installed version, completed feature boundary, and capabilities, then points to Project Status.
+- **Manual Observation:** The A7 audit found README, Roadmap, Charter, and CLI still describing Feature Complete Review or Feature Freeze as pending, while Project Status still presented merged PR #23 as the next action.
+- **User Impact:** Conflicting current state can misdirect development, review, and release decisions and forces repeated wording repairs at each lifecycle transition.
+- **Core Assessment:** PH-008 and existing FCR-030 have the same documentation-consistency root cause; FCR-051 is not created.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `VERIFIED`.
+- **Rationale:** Concentrating volatile facts in one live ledger is more durable than copying gates, PRs, and SHAs into Charter or CLI. Historical records retain statements that were accurate at the time.
+- **Implementation Scope:** Correct current README, ROADMAP, Charter, Development, Project Status, and `sti about`; synchronize the A6 merge and FCR-050 `VERIFIED`; do not churn Contracts, Privacy, or Architecture where no contradiction exists.
+- **Acceptance Criteria:** Current surfaces agree on 0.10.0, Milestones 1–10 complete, FCR Completed, Freeze PASS, Product Hardening, Manual Acceptance/RC Not started, and Release readiness No. CLI does not claim freeze pending or impersonate the live ledger. Manual QA uses the tracked canonical path.
+- **Risks and Regression Scope:** CLI about output, current-state responsibilities, tracked Markdown relative links, canonical Manual QA path, and preservation of historical records; no model or workflow behavior.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A7 PR #24; behavioral candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` lifecycle/CLI consistency review PASS; reviewed head `371b41bec0c6418bc07748a36d34e46dd4392664` Python 3.11/3.12/3.13 final-head CI PASS.
+- **Final Outcome:** Targeted consistency regression, review, and reviewed-head CI all passed, closing FCR-030 as `VERIFIED`. `PROJECT_STATUS.md` remains the only canonical live execution ledger; FCR-045–050 remain `VERIFIED`, Feature Freeze remains PASS, and PH-009 is not started.
 
 ### FCR-034–FCR-041 — fixed audit records
 
@@ -1148,8 +1184,8 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 - **Implementation Scope:** Flask `TRUSTED_HOSTS` accepts only `127.0.0.1` and `localhost`. `POST`, `PUT`, `PATCH`, and `DELETE` require an exact same-origin Origin; when Origin is absent, an existing Referer must be same-origin; when both are absent, compatibility is limited to a local non-browser request behind trusted Host. Add global self-only CSP, `nosniff`, `Referrer-Policy: same-origin`, CSP `frame-ancestors 'none'`, and `X-Frame-Options: DENY`. Replace the sole inline style with a native progress element controlled by local CSS.
 - **Acceptance Criteria:** Approved local Hosts and same-origin workflows operate normally; untrusted Host returns fixed 400; explicit cross-origin, `null`, or malformed Origin and mismatched Referer return fixed 403; rejection occurs before inference, body parsing, or mutation and echoes no user data/path; HTML, redirect, error/413, CSV, CSS, and JavaScript carry unified headers; CSP has no wildcard, external source, or `unsafe-inline`; A3/A5 contracts remain intact.
 - **Risks and Regression Scope:** Missing-Origin compatibility is only for local non-browser clients behind trusted Host; it is not remote access or authentication. The completed real-browser smoke confirms no CSP violation or blocked local resource in the console. HSTS, CORS, TLS, LAN, reverse proxy, production WSGI, account/session, a CSRF framework, reporting service, later PH work, and FCR-042/043 are excluded.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A6 PR #23; behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; Host/same-origin/CSP/security-header code review PASS; behavioral-head Python 3.11/3.12/3.13 CI PASS; real-browser smoke PASS.
-- **Final Outcome:** Trusted Host, the same-origin unsafe-method gate, strict global headers, and the CSP-compatible template passed review, CI, and real-browser smoke. Direct, Batch/Review, Insights progress/notes, Moderation/Triage, and CSV operated normally, with no CSP violation or blocked local resource in DevTools Console. FCR-050 closes as `VERIFIED` on the fixed behavioral SHA; this closure changes governance documentation only. FCR-049 remains `VERIFIED`, Feature Freeze remains PASS, and no later hardening item is started.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A6 PR #23; behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; Host/same-origin/CSP/security-header code review PASS; behavioral-head Python 3.11/3.12/3.13 CI PASS; real-browser smoke PASS; PR #23 merged to main SHA `cfcd13ef582996b8c75aa20524dcc212e2ab8922`.
+- **Final Outcome:** Trusted Host, the same-origin unsafe-method gate, strict global headers, and the CSP-compatible template passed review, CI, and real-browser smoke. Direct, Batch/Review, Insights progress/notes, Moderation/Triage, and CSV operated normally, with no CSP violation or blocked local resource in DevTools Console. FCR-050 closes as `VERIFIED` on the fixed behavioral SHA, and PR #23 is merged. FCR-049 remains `VERIFIED`, Feature Freeze remains PASS; later PH-008 is carried by existing FCR-030.
 
 ### FCR-033 — Local model-cache redundancy
 

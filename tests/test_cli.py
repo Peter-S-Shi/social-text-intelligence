@@ -20,13 +20,14 @@ from social_text_intelligence.providers import (
 
 
 class CliTests(unittest.TestCase):
-    def test_about_reports_current_scope_and_release_gate(self) -> None:
+    def test_about_reports_installed_feature_boundary_not_live_lifecycle(self) -> None:
         output = io.StringIO()
 
         with redirect_stdout(output):
             exit_code = main(["about"])
 
         self.assertEqual(exit_code, 0)
+        self.assertIn("Version: 0.10.0", output.getvalue())
         self.assertIn("Milestone: 10", output.getvalue())
         self.assertIn("Analysis contracts available: yes", output.getvalue())
         self.assertIn("Local sentiment inference available: yes", output.getvalue())
@@ -38,7 +39,18 @@ class CliTests(unittest.TestCase):
         self.assertIn("Temporary local insights", output.getvalue())
         self.assertIn("Synthetic moderation training", output.getvalue())
         self.assertIn("Local Support Triage", output.getvalue())
-        self.assertIn("feature freeze and release review pending", output.getvalue())
+        self.assertIn(
+            "Feature boundary: Milestones 1-10 complete", output.getvalue()
+        )
+        self.assertIn(
+            "Live release lifecycle: see repository PROJECT_STATUS.md",
+            output.getvalue(),
+        )
+        self.assertNotIn(
+            "feature freeze and release review pending", output.getvalue()
+        )
+        self.assertNotIn("Feature Freeze: PASS", output.getvalue())
+        self.assertNotIn("Product Hardening", output.getvalue())
 
     def test_contracts_lists_normalized_taxonomies(self) -> None:
         output = io.StringIO()

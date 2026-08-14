@@ -1,5 +1,48 @@
 # Development Log
 
+## Product Hardening Batch A7 — lifecycle and CLI consistency
+
+Reconciled Phase 0 PH-008 with existing FCR-030 rather than creating a second
+permanent finding. FCR-030 is classified `HARDENING`, decision `Keep and
+harden`, and remains `IMPLEMENTED` pending PR review. Product Hardening Batch
+A6 / PR #23 is recorded as merged at main SHA
+`cfcd13ef582996b8c75aa20524dcc212e2ab8922`; FCR-050 remains `VERIFIED` and
+Feature Freeze remains PASS.
+
+Separated current-state responsibilities to prevent recurring drift:
+`PROJECT_STATUS.md` is the only canonical live execution state, `ROADMAP.md`
+owns the mutable lifecycle plan, `PROJECT_CHARTER.md` owns stable product and
+engineering boundaries, `README.md` provides a concise current overview, and
+`docs/DEVELOPMENT.md` defines contributor discipline. Current references now
+agree on version 0.10.0, Milestones 1–10 complete, Feature Complete Review
+Completed, Feature Freeze PASS, Product Hardening current, Manual Acceptance
+and Release Candidate not started, and release readiness No. The canonical
+Manual QA link remains `manual-qa/manual_review_questionnaire.html`.
+
+`sti about` now reports the installed version, Milestone 10 feature boundary,
+and existing capabilities. It deliberately does not embed the live phase,
+gate, PR, SHA, blocker, or release-readiness ledger; instead it points users to
+the repository `PROJECT_STATUS.md`. Targeted regression rejects the former
+feature-freeze-pending statement and prevents the CLI from duplicating current
+lifecycle values.
+
+The stale-state audit changed only current declarations and instructions.
+Dated handoffs, DEVLOG entries, historical FCR evidence, and past PR records
+retain statements that were accurate at the time. No model, threshold,
+workflow, state, security, privacy, product-scope, or version contract changed.
+PH-009 remains unstarted.
+
+Ten focused CLI/lifecycle tests passed. The complete deterministic suite passed
+167 tests with 2 opt-in model integrations skipped. Ruff, strict MyPy for 72
+files, compileall, pip check, tracked-document stale-state/link/manual-QA
+consistency checks, and repository privacy/safety checks passed. Behavioral
+candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` passed lifecycle/CLI
+consistency review. Reviewed PR #24 head
+`371b41bec0c6418bc07748a36d34e46dd4392664` passed final-head CI on Python
+3.11, 3.12, and 3.13. FCR-030 is therefore `VERIFIED`; FCR-045–050 remain
+`VERIFIED`, Feature Freeze remains PASS, and PH-009 remains unstarted. This
+closure changes governance documentation only.
+
 ## Product Hardening Batch A6 — Local browser boundary hardening
 
 Reconciled Phase 0 PH-007 as permanent FCR-050. Existing FCR-045–049 govern
