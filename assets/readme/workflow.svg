@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="460" viewBox="0 0 1200 460"
+     role="img" aria-labelledby="wf-title wf-desc">
+  <title id="wf-title">Social Text Intelligence local analysis pipeline</title>
+  <desc id="wf-desc">Direct text or batch CSV input flows through two locally run, licensed models into one structured analysis report, which then feeds human review, insights, and decision-practice workflows. Everything happens inside the local device boundary.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#565c66"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="460" fill="#0b0d10"/>
+
+  <!-- local device boundary -->
+  <rect x="24" y="24" width="1152" height="412" rx="20" fill="none" stroke="#3a3f47" stroke-width="1.5" stroke-dasharray="6 6"/>
+  <text x="52" y="54" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="16" letter-spacing="1" fill="#7b828d">LOCAL DEVICE BOUNDARY &#8212; TEXT NEVER LEAVES THIS LINE</text>
+
+  <!-- column headers -->
+  <text x="60" y="110" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="600" letter-spacing="1" fill="#8a8f98">INPUT</text>
+  <text x="320" y="110" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="600" letter-spacing="1" fill="#e8b339">LOCAL MODELS</text>
+  <text x="600" y="110" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="600" letter-spacing="1" fill="#8a8f98">STRUCTURED REPORT</text>
+  <text x="880" y="110" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="600" letter-spacing="1" fill="#4fd1c5">DOWNSTREAM WORKFLOWS</text>
+
+  <!-- input node -->
+  <g transform="translate(60 150)">
+    <rect width="220" height="150" rx="14" fill="#14171b" stroke="#2a2f37" stroke-width="1.5"/>
+    <text x="20" y="40" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" fill="#f5f3ee">Direct text</text>
+    <text x="20" y="70" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#9aa1ab">one text at a time</text>
+    <line x1="20" y1="88" x2="200" y2="88" stroke="#2a2f37" stroke-width="1"/>
+    <text x="20" y="112" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" fill="#f5f3ee">Batch CSV</text>
+    <text x="20" y="136" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#9aa1ab">up to 500 rows</text>
+  </g>
+
+  <!-- model nodes -->
+  <g transform="translate(320 150)">
+    <rect width="240" height="70" rx="12" fill="#14171b" stroke="#e8b339" stroke-width="1.5"/>
+    <circle cx="22" cy="35" r="5" fill="#e8b339"/>
+    <text x="40" y="30" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" fill="#f5f3ee">Sentiment model</text>
+    <text x="40" y="53" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#9aa1ab">licensed &#183; pinned rev.</text>
+  </g>
+  <g transform="translate(320 250)">
+    <rect width="240" height="70" rx="12" fill="#14171b" stroke="#e8b339" stroke-width="1.5"/>
+    <circle cx="22" cy="35" r="5" fill="#e8b339"/>
+    <text x="40" y="30" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" fill="#f5f3ee">Emotion model</text>
+    <text x="40" y="53" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="14" fill="#9aa1ab">licensed &#183; pinned rev.</text>
+  </g>
+
+  <!-- report node -->
+  <g transform="translate(600 175)">
+    <rect width="240" height="130" rx="14" fill="#14171b" stroke="#2a2f37" stroke-width="1.5"/>
+    <text x="20" y="38" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" fill="#f5f3ee">Structured report</text>
+    <text x="20" y="66" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#9aa1ab">sentiment + emotion scores,</text>
+    <text x="20" y="88" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#9aa1ab">model identity, exact revision,</text>
+    <text x="20" y="110" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="16" fill="#9aa1ab">no raw text logged or stored</text>
+  </g>
+
+  <!-- branch nodes -->
+  <g transform="translate(880 150)">
+    <rect width="260" height="70" rx="12" fill="#14171b" stroke="#4fd1c5" stroke-width="1.5"/>
+    <text x="20" y="30" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" fill="#f5f3ee">Human review</text>
+    <text x="20" y="53" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" fill="#9aa1ab">accept &#183; correct &#183; uncertain</text>
+  </g>
+  <g transform="translate(880 245)">
+    <rect width="260" height="70" rx="12" fill="#14171b" stroke="#4fd1c5" stroke-width="1.5"/>
+    <text x="20" y="30" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" fill="#f5f3ee">Insights</text>
+    <text x="20" y="53" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" fill="#9aa1ab">group comparison, sample-aware</text>
+  </g>
+  <g transform="translate(880 340)">
+    <rect width="260" height="70" rx="12" fill="#14171b" stroke="#4fd1c5" stroke-width="1.5"/>
+    <text x="20" y="30" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="20" fill="#f5f3ee">Decision practice</text>
+    <text x="20" y="53" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" fill="#9aa1ab">moderation &#183; support triage</text>
+  </g>
+
+  <!-- arrows: input -> models -->
+  <path d="M280,205 C300,205 300,185 318,185" fill="none" stroke="#565c66" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M280,265 C300,265 300,285 318,285" fill="none" stroke="#565c66" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- arrows: models -> report -->
+  <path d="M560,185 C580,185 580,220 598,225" fill="none" stroke="#565c66" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M560,285 C580,285 580,255 598,250" fill="none" stroke="#565c66" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- arrows: report -> branches -->
+  <path d="M840,220 C860,220 860,185 878,185" fill="none" stroke="#565c66" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M840,240 C860,240 860,280 878,280" fill="none" stroke="#565c66" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M840,260 C865,260 865,375 878,375" fill="none" stroke="#565c66" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>
