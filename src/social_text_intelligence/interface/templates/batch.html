@@ -29,7 +29,7 @@
       <form method="post" action="{{ url_for('batch_upload') }}" enctype="multipart/form-data">
         <label for="file">CSV file</label>
         <input id="file" name="file" type="file" accept=".csv,text/csv" required>
-        <p><small>Limits: {{ max_batch_bytes }} bytes, {{ max_batch_rows }} rows, {{ max_text_length }} characters per text.</small></p>
+        <p><small>Limits: {{ max_batch_bytes }} bytes, {{ max_batch_rows }} rows, {{ max_text_length }} characters per text, and {{ max_batch_workspaces }} concurrent temporary batch workspaces. At capacity, new uploads are blocked until you clear a workspace or one expires; existing work is never removed.</small></p>
         <button type="submit">Preview and validate</button>
       </form>
     </section>

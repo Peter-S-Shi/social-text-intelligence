@@ -46,10 +46,16 @@ application process. Flask routes create normalized records and render results;
 they do not load models, map labels, or write data.
 
 Batch business rules remain in `services/batch.py`, independent of Flask. The
-interface keeps each active upload in a random-token, capacity-limited,
+interface keeps each active upload in a random-token, capacity-blocking,
 time-limited in-memory workspace. Preview replaces raw upload bytes with typed
 rows; analysis adds normalized outcomes. Clearing or expiry removes the
 workspace. No temporary file or database is created.
+
+Reaching the Batch workspace limit blocks a new upload and never evicts older
+work. Synchronous analysis holds an exclusive in-memory lease: normal TTL purge
+and explicit clear cannot remove that workspace until analysis commits or
+fails. Only the current lease may write the completed state, and a rejected
+write-back is reported as a conflict rather than success.
 
 `services/review.py` owns the human-review contracts and all label validation,
 record-status semantics, navigation selection, agreement calculations, summary

@@ -1,5 +1,33 @@
 # Development Log
 
+## Product Hardening Batch A1 — Ephemeral Batch state integrity
+
+Reconciled Phase 0 findings PH-001 and PH-002 as one permanent product finding,
+FCR-045. FCR-036 remains the separate, already-verified confirmation contract
+for user-initiated clear; FCR-045 addresses the shared Batch-store root cause:
+capacity eviction and missing active-analysis write-back protection.
+
+Batch capacity now blocks new uploads with an explicit conflict instead of
+deleting existing work. Synchronous analysis acquires an exclusive in-memory
+lease, remains protected from normal TTL purge and clear while active, and may
+commit only through its current lease. A rejected write-back is an explicit
+409 and never follows the success path. Explicit clear still releases capacity,
+inactive TTL expiry remains unchanged, and no database, persistence, recovery
+worker, background task, model, threshold, or privacy contract was added.
+
+Targeted regressions cover `capacity+1`, inactive expiry, active analysis across
+TTL, duplicate/stale write-back, clear conflict and recovery, and preservation
+of existing Batch results, Review, Insights, and linked Triage workspaces when
+a new upload is blocked.
+
+PR #18 review found one narrow error-render regression: `/batch/upload` without
+a file did not pass the configured concurrent workspace limit to `batch.html`.
+Correction SHA `729318c6c253ea8eee8351e766bbcfe7a335c297` restores that context
+and adds a configured-limit route regression. Targeted Batch routes passed 6/6,
+the full suite passed 132 with 2 opt-in real-model tests skipped, all local
+quality checks passed, and PR #18 remote CI passed on Python 3.11/3.12/3.13.
+FCR-045 is therefore closed as `VERIFIED`; PH-003 remains outside this batch.
+
 ## Feature Freeze closure
 
 Recorded the user's explicit Feature Freeze PASS for tested behavioral SHA

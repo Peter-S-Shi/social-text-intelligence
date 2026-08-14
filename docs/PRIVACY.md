@@ -39,6 +39,10 @@ workflow creates no upload directory, temporary file, database, automatic
 export, or history. Responses use `Cache-Control: no-store`. Users explicitly
 initiate each export; exported CSV includes original text and must be protected
 as private local data. Spreadsheet-formula-like text is escaped on export.
+Reaching the workspace limit blocks a new upload without evicting existing
+work. An active synchronous analysis is retained across its normal TTL boundary
+until it commits or fails; this lease remains process-memory only and creates no
+background task or recovery store.
 
 Human judgments and optional review notes share the same random-token, bounded,
 expiring process-memory workspace. Continued interaction extends its lifetime,

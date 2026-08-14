@@ -147,6 +147,8 @@ def create_app(
         MAX_TEXT_LENGTH=20_000,
         MAX_BATCH_BYTES=DEFAULT_MAX_BATCH_BYTES,
         MAX_BATCH_ROWS=DEFAULT_MAX_BATCH_ROWS,
+        BATCH_WORKSPACE_TTL_SECONDS=30 * 60,
+        BATCH_WORKSPACE_CAPACITY=8,
         MODERATION_WORKSPACE_TTL_SECONDS=30 * 60,
         MODERATION_WORKSPACE_CAPACITY=8,
         MAX_MODERATION_PREPARED_CASES=100,
@@ -171,7 +173,10 @@ def create_app(
             )
         )
     app.extensions["sti_analysis_gateway"] = analysis_gateway
-    batch_store = EphemeralBatchStore()
+    batch_store = EphemeralBatchStore(
+        ttl_seconds=int(app.config["BATCH_WORKSPACE_TTL_SECONDS"]),
+        capacity=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
+    )
     app.extensions["sti_batch_store"] = batch_store
     moderation_policy = load_moderation_policy()
     app.extensions["sti_moderation_policy"] = moderation_policy
@@ -246,6 +251,7 @@ def create_app(
             max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
             max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
             max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+            max_batch_workspaces=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
         )
 
     @app.post("/batch/upload")
@@ -259,6 +265,9 @@ def create_app(
                 max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
                 max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
                 max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+                max_batch_workspaces=int(
+                    app.config["BATCH_WORKSPACE_CAPACITY"]
+                ),
             )
         try:
             content = upload.stream.read(int(app.config["MAX_BATCH_BYTES"]) + 1)
@@ -275,6 +284,21 @@ def create_app(
                 token = batch_store.create(BatchWorkspace(preview=preview))
             else:
                 token = batch_store.create(BatchWorkspace(pending=pending))
+        except RuntimeError as error:
+            return (
+                render_template(
+                    "batch.html",
+                    error_message=str(error),
+                    offline=bool(app.config["OFFLINE"]),
+                    max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
+                    max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
+                    max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+                    max_batch_workspaces=int(
+                        app.config["BATCH_WORKSPACE_CAPACITY"]
+                    ),
+                ),
+                409,
+            )
         except Exception as error:
             return render_template(
                 "batch.html",
@@ -283,6 +307,9 @@ def create_app(
                 max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
                 max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
                 max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+                max_batch_workspaces=int(
+                    app.config["BATCH_WORKSPACE_CAPACITY"]
+                ),
             )
         return redirect(url_for("batch_workspace", token=token))
 
@@ -298,6 +325,9 @@ def create_app(
                     max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
                     max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
                     max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+                    max_batch_workspaces=int(
+                        app.config["BATCH_WORKSPACE_CAPACITY"]
+                    ),
                 ),
                 404,
             )
@@ -336,6 +366,7 @@ def create_app(
             max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
             max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
             max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+            max_batch_workspaces=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
         )
 
     @app.post("/batch/<token>/select")
@@ -357,20 +388,37 @@ def create_app(
 
     @app.post("/batch/<token>/analyze")
     def batch_analyze(token: str) -> ResponseReturnValue:
-        workspace = batch_store.get(token)
-        if workspace is None or workspace.preview is None:
+        try:
+            lease = batch_store.begin_analysis(token)
+        except RuntimeError as error:
+            return Response(str(error), status=409)
+        if lease is None or lease.workspace.preview is None:
+            if lease is not None:
+                batch_store.cancel_analysis(lease)
             return redirect(url_for("batch_workspace", token=token))
-        result = analyze_batch(workspace.preview, analysis_gateway)
-        batch_store.replace(
-            token,
-            BatchWorkspace(
-                preview=workspace.preview,
-                result=result,
-                reviews=create_review_state(result),
-                insights=InsightState(),
-            ),
-        )
-        return redirect(url_for("batch_workspace", token=token))
+        committed = False
+        try:
+            result = analyze_batch(lease.workspace.preview, analysis_gateway)
+            committed = batch_store.complete_analysis(
+                lease,
+                BatchWorkspace(
+                    preview=lease.workspace.preview,
+                    result=result,
+                    reviews=create_review_state(result),
+                    insights=InsightState(),
+                ),
+            )
+            if not committed:
+                return Response(
+                    "Batch analysis finished, but its result could not be saved "
+                    "because the workspace state changed. No success was recorded; "
+                    "return to Batch CSV and retry with a current workspace.",
+                    status=409,
+                )
+            return redirect(url_for("batch_workspace", token=token))
+        finally:
+            if not committed:
+                batch_store.cancel_analysis(lease)
 
     def review_filters() -> tuple[str, str, str]:
         return (
@@ -1010,7 +1058,10 @@ def create_app(
                 "temporary batch.",
                 status=400,
             )
-        batch_store.delete(token)
+        try:
+            batch_store.delete(token)
+        except RuntimeError as error:
+            return Response(str(error), status=409)
         return redirect(url_for("batch_home"))
 
     return app

@@ -26,6 +26,16 @@ class BatchWorkspace:
 class _StoredWorkspace:
     workspace: BatchWorkspace
     expires_at: float
+    active_analysis_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class BatchAnalysisLease:
+    """Exclusive lease that keeps one batch alive while analysis is running."""
+
+    token: str
+    analysis_id: str
+    workspace: BatchWorkspace
 
 
 class EphemeralBatchStore:
@@ -48,7 +58,9 @@ class EphemeralBatchStore:
 
     def _purge(self, now: float) -> None:
         expired = [
-            token for token, item in self._items.items() if item.expires_at <= now
+            token
+            for token, item in self._items.items()
+            if item.expires_at <= now and item.active_analysis_id is None
         ]
         for token in expired:
             del self._items[token]
@@ -57,12 +69,11 @@ class EphemeralBatchStore:
         with self._lock:
             now = self._clock()
             self._purge(now)
-            while len(self._items) >= self._capacity:
-                oldest = min(
-                    self._items,
-                    key=lambda token: self._items[token].expires_at,
+            if len(self._items) >= self._capacity:
+                raise RuntimeError(
+                    "Batch workspace capacity reached; clear an existing "
+                    "workspace or wait for expiry. Existing work was not removed."
                 )
-                del self._items[oldest]
             token = secrets.token_urlsafe(24)
             self._items[token] = _StoredWorkspace(
                 workspace=workspace,
@@ -85,12 +96,72 @@ class EphemeralBatchStore:
             now = self._clock()
             self._purge(now)
             stored = self._items.get(token)
-            if stored is None:
+            if stored is None or stored.active_analysis_id is not None:
                 return False
             stored.workspace = workspace
             stored.expires_at = now + self._ttl_seconds
             return True
 
-    def delete(self, token: str) -> None:
+    def begin_analysis(self, token: str) -> BatchAnalysisLease | None:
+        """Reserve a workspace so expiry or another analysis cannot remove it."""
+
         with self._lock:
-            self._items.pop(token, None)
+            now = self._clock()
+            self._purge(now)
+            stored = self._items.get(token)
+            if stored is None:
+                return None
+            if stored.active_analysis_id is not None:
+                raise RuntimeError(
+                    "This temporary batch is already being analyzed. Wait for the "
+                    "active analysis to finish before trying again."
+                )
+            analysis_id = secrets.token_urlsafe(24)
+            stored.active_analysis_id = analysis_id
+            stored.expires_at = now + self._ttl_seconds
+            return BatchAnalysisLease(
+                token=token,
+                analysis_id=analysis_id,
+                workspace=stored.workspace,
+            )
+
+    def complete_analysis(
+        self, lease: BatchAnalysisLease, workspace: BatchWorkspace
+    ) -> bool:
+        """Commit an analysis only when its exclusive lease is still current."""
+
+        with self._lock:
+            stored = self._items.get(lease.token)
+            if (
+                stored is None
+                or stored.active_analysis_id != lease.analysis_id
+            ):
+                return False
+            stored.workspace = workspace
+            stored.active_analysis_id = None
+            stored.expires_at = self._clock() + self._ttl_seconds
+            return True
+
+    def cancel_analysis(self, lease: BatchAnalysisLease) -> bool:
+        """Release a lease after analysis fails without changing the workspace."""
+
+        with self._lock:
+            stored = self._items.get(lease.token)
+            if (
+                stored is None
+                or stored.active_analysis_id != lease.analysis_id
+            ):
+                return False
+            stored.active_analysis_id = None
+            stored.expires_at = self._clock() + self._ttl_seconds
+            return True
+
+    def delete(self, token: str) -> bool:
+        with self._lock:
+            stored = self._items.get(token)
+            if stored is not None and stored.active_analysis_id is not None:
+                raise RuntimeError(
+                    "This temporary batch is being analyzed and cannot be cleared "
+                    "until the active analysis finishes."
+                )
+            return self._items.pop(token, None) is not None
