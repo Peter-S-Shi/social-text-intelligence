@@ -50,8 +50,10 @@ and `Sort: Timestamp` path with a synthetic batch holding two different
 offsets, one timezone-unspecified timestamp, and one missing timestamp. The
 rendered order was 10:00Z, 13:00Z, timezone-unspecified 1999, then missing; the
 other sort modes were unaffected; and every stored timestamp remained its
-original text with no conversion. FCR-051 is `IMPLEMENTED` pending PR review.
-FCR-042 and FCR-043 remain open non-blocking, and Feature Freeze remains PASS.
+original text with no conversion. Behavioral candidate:
+`076fbe4f883073a1961b024d52d06d9cac22a58a`. FCR-051 is `IMPLEMENTED` pending
+PR review. FCR-042 and FCR-043 remain open non-blocking, and Feature Freeze
+remains PASS.
 
 ## Product Hardening Batch A8 — accessibility semantics and keyboard recovery
 

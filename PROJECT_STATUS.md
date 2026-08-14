@@ -33,7 +33,7 @@ principles.
 | Product Hardening Batch A8 governance closure | Project Status-only closure after the reviewed head; no product/test behavior change |
 | Product Hardening Batch A8 merged main SHA | `75c323bb998f47262dfbd8f69ab90bf1998e92fa` — PR #25 merged 2026-08-14T05:50:26Z |
 | Post-A8 governance sync merged main SHA | `7ef4d29d2bb98af2a60003748a575de8c5bcda96` — PR #26 merged; A9 synchronized baseline |
-| Product Hardening Batch A9 behavioral candidate SHA | `PENDING` — Triage timestamp ordering integrity under FCR-051; recorded after the branch head is pushed |
+| Product Hardening Batch A9 behavioral candidate SHA | `076fbe4f883073a1961b024d52d06d9cac22a58a` — Triage timestamp ordering integrity under FCR-051; targeted/full local validation and real-browser smoke PASS |
 | Current lifecycle phase | **Product Hardening** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | **Completed** |
