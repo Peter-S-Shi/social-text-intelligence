@@ -1,5 +1,62 @@
 # Development Log
 
+## Product Hardening Batch A10 — Applied filter/sort/selection state reflection integrity
+
+Product Hardening Batch A9 / PR #27 is recorded as merged to main at SHA
+`3fecf5ce43939045ed7100915eca41b9e5b2c64e`; FCR-051 remains `VERIFIED`.
+
+A read-only audit of every GET filter/sort form in the interface (Triage
+Workspace and Guide, Review, Batch, both Insights view forms, Moderation
+Prepare) found that Review, Batch, the Insights explorer view, and Triage
+Guide's built-in ticket filter already reflected applied query state
+correctly, while three surfaces did not: Triage Workspace's 11 select
+controls and its `q` text-search input, Moderation Prepare's 5 select
+controls (whose route did not even pass the parsed filters into the
+template), and Insights Representative Cases' `record_id` checkboxes,
+which genuinely determine the result in `user_selected` mode but were
+never checked. None of this is covered by FCR-027 (keyboard/accessibility
+semantics, already `VERIFIED` with an explicitly narrower scope), FCR-029
+(error/empty-state recovery — nothing here errors), or FCR-030
+(documentation consistency, not runtime UI), and it is not folded into
+FCR-042 or FCR-043. New permanent `FCR-052` is created, classified
+`HARDENING`, non-blocking.
+
+All three surfaces now use the same native Jinja `selected`/`checked`/
+`value` pattern already proven correct elsewhere in the codebase. Moderation
+Prepare's route passes its existing `CaseFilter` into the template instead
+of building a second parser. Insights checkbox reflection is deliberately
+gated to `example_mode is ExampleMode.USER_SELECTED`, since `record_id` has
+no effect in any other mode and reflecting it unconditionally would falsely
+imply a stale, non-effective query parameter was still driving the result.
+No filtering, sorting, or selection logic changed, and the FCR-051 timestamp
+sort algorithm is untouched.
+
+Fourteen targeted regressions cover: enum/boolean/text-search filters that
+narrow the Triage result while the matching control shows `selected`/
+`value`; the default no-query view showing no unexpected non-default state;
+Moderation difficulty and tri-state safety-sensitive filters narrowing the
+built-in case library while reflecting correctly, including a combined
+non-default case; Insights `user_selected` mode checking exactly the
+submitted records and excluding others; and a non-selecting example mode
+correctly leaving `record_id` unchecked, proving the effective-state gate.
+Eleven of the fourteen fail against the pre-fix implementation. The complete
+suite passed 195 tests (14 more than the A9 baseline) with 2 opt-in model
+integrations skipped; Ruff, strict MyPy for 75 files, compileall, and pip
+check passed, and the 9 FCR-051 targeted regressions were unaffected.
+
+A real-browser smoke drove the actual Triage workspace-creation, ticket,
+Moderation workspace-creation, and Batch-to-Insights paths. Applying
+`status=finalized` and `sort=urgency` in Triage Workspace left only the
+finalized ticket visible with both controls genuinely selected. Applying
+`difficulty=beginner` and `safety_sensitive=false` in Moderation Prepare
+narrowed the case library to exactly the three matching built-in cases with
+both controls genuinely selected. Selecting two records in Insights
+Representative Cases under `user_selected` mode left exactly those two
+checkboxes checked after submission. Behavioral candidate:
+`c1feb67e1b40742c7f34104e5f0922d67498dd12`. FCR-052 is `IMPLEMENTED` pending
+PR review. FCR-042 and FCR-043 remain open non-blocking, and Feature Freeze
+remains PASS.
+
 ## Product Hardening Batch A9 — Triage timestamp ordering integrity
 
 Reconciled Phase 0 PH-010 as new permanent `FCR-051`. Existing FCR-015 and
