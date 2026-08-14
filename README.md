@@ -15,7 +15,23 @@ own machine; text is not sent to an inference API.
 
 ## See it work
 
-This is a real, reproducible run against this repository — not a mockup.
+A real Direct Analysis result from this repository's own local web interface
+(`sti-web`, offline mode) — not a mockup or a staged design comp.
+
+<p align="center">
+  <img src="./assets/readme/direct-analysis-result.png" width="460"
+       alt="Social Text Intelligence Direct Analysis result for a synthetic support-feedback example: sentiment negative with a full positive/negative/neutral breakdown, dominant emotion neutral with a threshold-fallback explanation, the full nine-label compact emotion breakdown, and the exact pinned sentiment and emotion model identities under Models and provenance.">
+</p>
+
+Sentiment scores, the full compact emotion breakdown, threshold semantics,
+and exact pinned model identities all render directly from the normalized
+report — nothing here is hand-written for the screenshot. Nothing about the
+submitted text is logged or persisted.
+
+### Reproduce it yourself
+
+Same report, same pinned models, from the CLI — a shorter path to verify the
+result above wasn't cherry-picked:
 
 ```text
 $ sti analyze "The new update finally fixed the login bug, but the app \
@@ -34,11 +50,6 @@ Models:
   cardiffnlp/twitter-roberta-base-sentiment-latest@3216a57f2a0d9c45a2e6c20…
   SamLowe/roberta-base-go_emotions@d75048347613a25d77de8cf6412eaae9fa7b26…
 ```
-
-The same normalized report — sentiment scores, compact and full emotion
-scores, model identity, and exact pinned revision — renders in the local web
-interface (`sti-web`) for both single-text and batch CSV input. Nothing about
-the submitted text is logged or persisted.
 
 ## Core capabilities
 
