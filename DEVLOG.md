@@ -38,6 +38,15 @@ Behavioral candidate: `577bb3d09cb02eeebc36133cd5ce408d5fae4a20`.
 FCR-043 remains open for visual information hierarchy, and PH-010 is not
 started.
 
+The user's final keyboard-only smoke subsequently passed for Moderation and
+Support Triage, with no keyboard trap, a visible focus indicator, and
+recoverable validation errors. Reviewed PR #25 head
+`41bd13118b77b1c35a58f72f9bd68189afc04df3` passed CI on Python 3.11, 3.12, and
+3.13. FCR-027 is therefore `VERIFIED` and PH-009 is closed; FCR-030 and
+FCR-045–050 remain `VERIFIED`, Feature Freeze remains PASS, FCR-043 remains
+`OPEN` non-blocking, and PH-010 remains unstarted and unscoped. PR #25 merged
+to main at `75c323bb998f47262dfbd8f69ab90bf1998e92fa`.
+
 ## Product Hardening Batch A7 — lifecycle and CLI consistency
 
 Reconciled Phase 0 PH-008 with existing FCR-030 rather than creating a second
