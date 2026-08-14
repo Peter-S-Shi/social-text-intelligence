@@ -27,19 +27,21 @@ principles.
 | Product Hardening Batch A6 merged main SHA | `cfcd13ef582996b8c75aa20524dcc212e2ab8922` — PR #23 merged; A7 synchronized baseline |
 | Product Hardening Batch A7 behavioral candidate SHA | `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` — lifecycle/CLI consistency implementation and review PASS |
 | Product Hardening Batch A7 reviewed head SHA | `371b41bec0c6418bc07748a36d34e46dd4392664` — PR #24 final-head Python 3.11/3.12/3.13 CI PASS |
+| Product Hardening Batch A7 merged main SHA | `e73ed30c54b78630fd9bae7193119868277ca70a` — PR #24 merged; A8 synchronized baseline |
+| Product Hardening Batch A8 behavioral candidate SHA | `577bb3d09cb02eeebc36133cd5ce408d5fae4a20` — accessibility semantics and keyboard-recovery implementation |
 | Current lifecycle phase | **Product Hardening** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | **Completed** |
 | Feature Freeze status | **PASS — explicitly approved 2026-08-13** |
-| Product Hardening status | **Batches A1–A6 merged; Batch A7 reviewed and verified in PR #24**; FCR-030 and FCR-045–050 are `VERIFIED`; FCR-042 and FCR-043 remain non-blocking backlog |
+| Product Hardening status | **Batches A1–A7 merged; Batch A8 implemented locally and awaiting Draft PR review**; FCR-027 is `IMPLEMENTED`; FCR-030 and FCR-045–050 are `VERIFIED`; FCR-042 and FCR-043 remain non-blocking backlog |
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
-| Open blockers | PH-008 is closed as FCR-030 `VERIFIED`; PH-009 is not started |
-| Approved audit items | FCR-030 reconciles PH-008 and is `VERIFIED` on behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`; FCR-045 reconciles PH-001/PH-002 and remains `VERIFIED`; FCR-046 reconciles PH-003 and remains `VERIFIED`; FCR-047 reconciles PH-004 and remains `VERIFIED`; FCR-048 reconciles PH-005 and remains `VERIFIED`; FCR-049 reconciles PH-006 and remains `VERIFIED`; FCR-050 reconciles PH-007 and remains `VERIFIED` on behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
+| Open blockers | PH-009 is implemented under FCR-027 and awaits PR review plus final manual keyboard smoke; PH-010 is not started |
+| Approved audit items | FCR-027 reconciles PH-009 and is `IMPLEMENTED` on behavioral SHA `577bb3d09cb02eeebc36133cd5ce408d5fae4a20`; FCR-030 reconciles PH-008 and remains `VERIFIED` on behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`; FCR-045 reconciles PH-001/PH-002 and remains `VERIFIED`; FCR-046 reconciles PH-003 and remains `VERIFIED`; FCR-047 reconciles PH-004 and remains `VERIFIED`; FCR-048 reconciles PH-005 and remains `VERIFIED`; FCR-049 reconciles PH-006 and remains `VERIFIED`; FCR-050 reconciles PH-007 and remains `VERIFIED` on behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | Product Hardening Batch A7 behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`: lifecycle/CLI consistency review PASS; PR #24 reviewed head `371b41bec0c6418bc07748a36d34e46dd4392664` Python 3.11/3.12/3.13 CI PASS; 10 targeted CLI/lifecycle checks passed; full suite 167 passed with 2 opt-in model integrations skipped; Ruff, strict MyPy for 72 files, compileall, pip check, tracked-doc stale-state/link/manual-QA consistency checks, and repository privacy/safety checks passed |
-| Next required action | Await separate authorization before starting PH-009 or any later Product Hardening item |
+| Latest validation | Product Hardening Batch A8 behavioral SHA `577bb3d09cb02eeebc36133cd5ce408d5fae4a20`: 6 focused accessibility regressions passed; full suite 172 passed with 2 opt-in model integrations skipped; Ruff, strict MyPy for 73 files, compileall, pip check, CSP/security regression, template/static checks, and repository privacy/safety checks passed. Real-browser smoke passed for Direct validation focus and real-model success plus Batch/Review/Insights/note; Moderation/Triage final keyboard smoke remains for user retest after browser-control security interruption |
+| Next required action | Push A8, create its Draft PR, wait for remote CI/review, and complete the listed manual keyboard smoke; do not start PH-010 |
 | Last updated | 2026-08-14 |
 
 ## Required maintenance

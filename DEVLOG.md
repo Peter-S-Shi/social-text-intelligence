@@ -1,5 +1,43 @@
 # Development Log
 
+## Product Hardening Batch A8 — accessibility semantics and keyboard recovery
+
+Reconciled Phase 0 PH-009 with existing FCR-027 rather than creating FCR-051.
+The 2026-08-13 `VERIFIED / Keep as-is` keyboard smoke remains historical
+evidence. A deeper Product Hardening audit found material semantic gaps, so
+FCR-027 is revalidated as class `HARDENING`, decision `Keep and harden`, status
+`IMPLEMENTED` pending PR review and final manual keyboard smoke. Product
+Hardening Batch A7 / PR #24 is recorded as merged at main SHA
+`e73ed30c54b78630fd9bae7193119868277ca70a`; FCR-030 remains `VERIFIED` and
+Feature Freeze remains PASS.
+
+Every complete server-rendered page now provides a visible-on-focus skip link
+to a focusable main landmark. Active primary navigation and workflow steps use
+`aria-current`; Direct validation associates its alert and help with the text
+field and restores focus there, while workflow-level errors restore focus to a
+focusable alert. Key helper text is programmatically associated with Batch,
+Review, Insights, Moderation, and Triage controls. Batch analysis publishes a
+labelled progress status and sets `aria-busy` during submission. Representative
+data tables now declare column and row header scope. Native controls remain in
+place, summary joins the existing visible-focus rule, and no positive tabindex,
+faux button, dependency, workflow redesign, or CSP relaxation was introduced.
+
+Six focused accessibility regressions cover skip targets, current-page/step
+semantics, labels/help/errors, focus-recovery markup, Batch running state,
+explicit table headers, and keyboard anti-pattern scans. The complete suite
+passed 172 tests with 2 opt-in model integrations skipped. Ruff, strict MyPy for
+73 files, compileall, pip check, CSP/security regressions, static checks, and
+repository privacy/safety checks passed.
+
+Real-browser smoke passed Direct validation focus recovery and real-model
+success, Batch preview/analysis, Human Review acceptance, Insights navigation,
+note creation, and note-error focus recovery. The local browser-control
+security boundary interrupted the remaining Moderation/Triage browser session;
+those final keyboard-only flows remain explicitly assigned to user retest.
+Behavioral candidate: `577bb3d09cb02eeebc36133cd5ce408d5fae4a20`.
+FCR-043 remains open for visual information hierarchy, and PH-010 is not
+started.
+
 ## Product Hardening Batch A7 — lifecycle and CLI consistency
 
 Reconciled Phase 0 PH-008 with existing FCR-030 rather than creating a second

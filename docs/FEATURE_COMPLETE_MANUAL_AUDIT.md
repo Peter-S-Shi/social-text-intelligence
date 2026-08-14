@@ -176,6 +176,7 @@ Final Outcome / 最终结果
 
 | ID | Decision Class | Decision | 状态 | 简要理由 | 实施/验证引用 |
 | --- | --- | --- | --- | --- | --- |
+| FCR-027 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 历史键盘 smoke 证明主要控件可操作，但 A8 重新审计发现跳转路径、当前页、错误焦点、动态状态和表格关联缺少明确语义 | behavioral SHA `577bb3d09cb02eeebc36133cd5ce408d5fae4a20`；targeted/full regression 与部分真实浏览器 smoke PASS；待 PR review 和人工键盘复测 |
 | FCR-030 | `HARDENING` | Keep and harden | `VERIFIED` | 以 Project Status 为唯一 live ledger，分离 Charter、Roadmap、README、Development 与 CLI 职责，避免当前态重复漂移 | behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` review PASS；PR #24 reviewed-head CI PASS |
 | FCR-033 | `HARDENING` | Keep and harden | `VERIFIED` | 清除重复缓存，并固定已审计的 sentiment 权重格式；无产品或模型输出变化 | provider 回归、完整质量检查及真实离线双模型测试 |
 | FCR-034 | `HARDENING` | Keep and harden | `VERIFIED` | 明确 neutral threshold fallback，不改模型语义 | 定向回归与 final-candidate 人工复测通过 |
@@ -216,6 +217,9 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 
 - `VERIFIED / Keep as-is`: FCR-001–002, 004, 006–013, 016, 018–020,
   022, 025, 027–029, 032–033。
+- `IMPLEMENTED / Product Hardening revalidation`: FCR-027；保留上述 2026-08-13
+  人工结论作为历史证据，同时以 A8 新发现的语义与焦点缺口承载 PH-009；不建立
+  FCR-051。
 - `VERIFIED / Keep and harden`: FCR-034–041 与 FCR-044；final-candidate
   人工或委托技术复测均已完成。
 - `OPEN verification`: FCR-003、005、014、015、017、021、023、026、031。
@@ -227,6 +231,21 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 - `VERIFIED / Product Hardening`: FCR-045；exact correction SHA 的 targeted/full
   local validation 与 PR #18 remote CI 均通过，PR #18 已合并到 main
   `1b36fe8c024823c1f4829621a7bcc733b2915c93`。
+
+### FCR-027 — 键盘与可访问性 Product Hardening 复核
+
+- **Basic Information / 基本信息:** Direct、Batch、Review、Insights、Moderation、Triage 的 server-rendered browser workflow；Product Hardening PH-009；当前状态 `IMPLEMENTED`。
+- **Current Behavior / 当前行为:** 主要表单已使用原生 input、select、textarea、button、fieldset/legend 和 details/summary；本批增加全页跳转路径、当前页/步骤语义、帮助与错误关联、提交后焦点恢复、Batch 运行状态以及显式表格表头关系。
+- **Manual Observation / 人工观察:** 2026-08-13 的历史人工 smoke 证明主要功能可键盘操作并给出 `VERIFIED / Keep as-is`。A8 对 DOM、accessibility tree 和真实浏览器路径的更深复核发现：没有 skip path，视觉 active 没有 `aria-current`，错误后焦点没有恢复，部分 helper 未关联，Batch 运行状态未公开 busy 状态，表格缺少显式 scope。
+- **User Impact / 用户影响:** 键盘和辅助技术用户可能需要重复穿越导航、无法迅速定位错误或当前步骤，也可能无法可靠理解动态分析状态与表格坐标。
+- **Core Assessment / 核心评估:** PH-009 与既有 FCR-027 是同一 keyboard/accessibility root cause。历史结论在当时证据范围内成立，但不能替代本轮更深语义审计；使用同一永久 ID，不建立 FCR-051。
+- **Decision / 决定:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`。
+- **Rationale / 理由:** 采用 semantic HTML、native controls、最小 ARIA 和既有 CSS/JS 即可修复真实缺口，无需框架、屏幕阅读器 subsystem 或视觉重设计。FCR-043 的说明/错误视觉层级保持独立 `OPEN`。
+- **Implementation Scope / 实施范围:** 所有完整页面增加 skip link 与可聚焦 main；活动主导航/子步骤增加 `aria-current`；Direct 字段错误、其他 workflow alert 恢复焦点；关键 helper 使用 `aria-describedby`；Batch 使用 role=status、progress label 与 `aria-busy`；代表性表格增加 col/row scope；summary 增加可见焦点样式。
+- **Acceptance Criteria / 验收标准:** 主要 workflow 可只用键盘完成；当前位置、字段/组标签、错误与帮助、运行状态及表格关系在 accessibility tree 中明确；没有 positive tabindex、faux button、focus trap 或 CSP 弱化；A1/A3/A5/A6、privacy、model、state contracts 不变。
+- **Risks and Regression Scope / 风险与回归范围:** 模板渲染、redirect/CSV/security headers、Direct/Batch/Review/Insights/Moderation/Triage 表单与原生键盘行为；视觉层级和 score ordering 不在本批。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；A7 / PR #24 已合并到 main SHA `e73ed30c54b78630fd9bae7193119868277ca70a`；A8 behavioral candidate `577bb3d09cb02eeebc36133cd5ce408d5fae4a20`；Draft PR 待创建。
+- **Final Outcome / 最终结果:** 6 个 focused accessibility tests、完整 172-test deterministic suite 和静态质量检查通过。真实浏览器已覆盖 Direct validation focus 与 real-model success、Batch/Review/Insights/note；Moderation/Triage 最终键盘 smoke 因浏览器工具本机安全策略中止，保持待人工复测。PR review 前状态为 `IMPLEMENTED`，Feature Freeze 保持 PASS，PH-010 未开始。
 
 ### FCR-030 — 文档与 CLI 当前状态一致性
 
@@ -830,6 +849,7 @@ evidence and disposition.
 
 | ID | Decision Class | Decision | Status | Short rationale | Implementation/verification reference |
 | --- | --- | --- | --- | --- | --- |
+| FCR-027 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Historical keyboard smoke proved primary controls operable, but the A8 re-audit found missing bypass, current-page, error-focus, dynamic-status, and table-relation semantics | behavioral SHA `577bb3d09cb02eeebc36133cd5ce408d5fae4a20`; targeted/full regression and partial real-browser smoke passed; PR review and manual keyboard retest pending |
 | FCR-030 | `HARDENING` | Keep and harden | `VERIFIED` | Make Project Status the only live ledger and separate Charter, Roadmap, README, Development, and CLI responsibilities to prevent repeated current-state drift | behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` review PASS; PR #24 reviewed-head CI PASS |
 | FCR-033 | `HARDENING` | Keep and harden | `VERIFIED` | Remove redundant cache artifacts and pin the audited sentiment weight format without product or model-output changes | Provider regression, full quality suite, and real offline two-model tests |
 | FCR-034 | `HARDENING` | Keep and harden | `VERIFIED` | Explain neutral threshold fallback without changing model semantics | Targeted regression and final-candidate manual retest passed |
@@ -871,6 +891,10 @@ CI status are authoritative in the PR checks.
 
 - `VERIFIED / Keep as-is`: FCR-001–002, 004, 006–013, 016, 018–020,
   022, 025, 027–029, 032–033.
+- `IMPLEMENTED / Product Hardening revalidation`: FCR-027. The 2026-08-13
+  manual result remains historical evidence, while A8 uses the same permanent
+  ID for the deeper semantics and focus gaps behind PH-009; FCR-051 is not
+  created.
 - `VERIFIED / Keep and harden`: FCR-034–041 and FCR-044; final-candidate
   manual or delegated technical retesting is complete.
 - `OPEN verification`: FCR-003, 005, 014, 015, 017, 021, 023, 026, 031.
@@ -883,6 +907,21 @@ CI status are authoritative in the PR checks.
 - `VERIFIED / Product Hardening`: FCR-045; targeted/full local validation and
   PR #18 remote CI passed on the exact correction SHA, and PR #18 merged to main
   at `1b36fe8c024823c1f4829621a7bcc733b2915c93`.
+
+### FCR-027 — Product Hardening keyboard and accessibility revalidation
+
+- **Basic Information:** Direct, Batch, Review, Insights, Moderation, and Triage server-rendered browser workflows; Product Hardening PH-009; current status `IMPLEMENTED`.
+- **Current Behavior:** Major forms already use native inputs, selects, textareas, buttons, fieldsets/legends, and details/summary. This batch adds page bypass, current page/step semantics, help and error association, post-submit focus recovery, Batch running state, and explicit table-header relationships.
+- **Manual Observation:** The 2026-08-13 historical smoke established that primary features were keyboard-operable and recorded `VERIFIED / Keep as-is`. A8's deeper DOM, accessibility-tree, and real-browser review found no skip path, visual-only active navigation, no error-focus recovery, unassociated helper text, no exposed Batch busy state, and tables without explicit scope.
+- **User Impact:** Keyboard and assistive-technology users can otherwise repeat navigation, lose the current workflow/error location, or misread dynamic analysis state and table coordinates.
+- **Core Assessment:** PH-009 and existing FCR-027 share the same keyboard/accessibility root cause. The historical disposition remains valid for its evidence scope but does not replace the deeper semantic audit. The permanent ID is reused; FCR-051 is not created.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`.
+- **Rationale:** Semantic HTML, native controls, minimal ARIA, and existing CSS/JS correct the material gaps without a framework, screen-reader subsystem, or visual redesign. FCR-043's explanatory/error visual hierarchy remains separately `OPEN`.
+- **Implementation Scope:** Add a skip link and focusable main to every full page; mark active primary navigation and workflow steps with `aria-current`; recover focus to Direct fields or workflow alerts; associate key help text; expose Batch role=status, progress label, and `aria-busy`; add col/row scope to representative tables; include summary in the visible-focus style.
+- **Acceptance Criteria:** Major workflows are keyboard-operable; current location, field/group labels, errors/help, running state, and table relationships are explicit in the accessibility tree; no positive tabindex, faux button, focus trap, or CSP weakening; A1/A3/A5/A6, privacy, model, and state contracts remain unchanged.
+- **Risks and Regression Scope:** Template rendering, redirects/CSV/security headers, Direct/Batch/Review/Insights/Moderation/Triage forms, and native keyboard behavior. Visual hierarchy and score ordering are outside this batch.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; A7 / PR #24 merged to main SHA `e73ed30c54b78630fd9bae7193119868277ca70a`; A8 behavioral candidate `577bb3d09cb02eeebc36133cd5ce408d5fae4a20`; Draft PR pending creation.
+- **Final Outcome:** Six focused accessibility tests, the complete 172-test deterministic suite, and static quality checks passed. Real-browser evidence covers Direct validation focus and real-model success plus Batch/Review/Insights/note. Final Moderation/Triage keyboard smoke remains for manual retest because the local browser-control security boundary interrupted the remaining browser session. Status remains `IMPLEMENTED` before PR review, Feature Freeze remains PASS, and PH-010 is not started.
 
 ### FCR-030 — Documentation and CLI current-state consistency
 
