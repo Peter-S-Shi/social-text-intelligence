@@ -240,8 +240,8 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 - **Implementation Scope / 实施范围:** 修正当前 README、ROADMAP、Charter、Development、Project Status 与 `sti about`；同步 A6 merge 和 FCR-050 `VERIFIED`；不改 contracts/privacy/architecture 中不存在的矛盾。
 - **Acceptance Criteria / 验收标准:** 当前 surfaces 对 0.10.0、Milestones 1–10 complete、FCR Completed、Freeze PASS、Product Hardening、Manual Acceptance/RC Not started、Release readiness No 一致；CLI 不声称 freeze pending，也不冒充 live ledger；Manual QA 指向 tracked canonical path。
 - **Risks and Regression Scope / 风险与回归范围:** CLI about 输出、当前态职责、tracked Markdown 相对链接、canonical Manual QA 路径、历史记录不被误改；不涉及模型或 workflow behavior。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A7；candidate/PR/final-head CI 待填写。
-- **Final Outcome / 最终结果:** 已实现并通过 targeted consistency regression；待 PR review 后决定是否转为 `VERIFIED`。Feature Freeze 保持 PASS，PH-009 未开始。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A7 Draft PR #24；behavioral candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`；Python 3.11/3.12/3.13 behavioral-head CI PASS。
+- **Final Outcome / 最终结果:** 已实现并通过 targeted consistency regression 与 behavioral-head CI；待 PR review 后决定是否转为 `VERIFIED`。Feature Freeze 保持 PASS，PH-009 未开始。
 
 ### FCR-034–FCR-041 — 固定审计记录
 
@@ -896,8 +896,8 @@ CI status are authoritative in the PR checks.
 - **Implementation Scope:** Correct current README, ROADMAP, Charter, Development, Project Status, and `sti about`; synchronize the A6 merge and FCR-050 `VERIFIED`; do not churn Contracts, Privacy, or Architecture where no contradiction exists.
 - **Acceptance Criteria:** Current surfaces agree on 0.10.0, Milestones 1–10 complete, FCR Completed, Freeze PASS, Product Hardening, Manual Acceptance/RC Not started, and Release readiness No. CLI does not claim freeze pending or impersonate the live ledger. Manual QA uses the tracked canonical path.
 - **Risks and Regression Scope:** CLI about output, current-state responsibilities, tracked Markdown relative links, canonical Manual QA path, and preservation of historical records; no model or workflow behavior.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A7; candidate/PR/final-head CI pending.
-- **Final Outcome:** Implemented with targeted consistency regression passing; PR review will decide whether to advance to `VERIFIED`. Feature Freeze remains PASS and PH-009 is not started.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A7 Draft PR #24; behavioral candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`; Python 3.11/3.12/3.13 behavioral-head CI PASS.
+- **Final Outcome:** Implemented with targeted consistency regression and behavioral-head CI passing; PR review will decide whether to advance to `VERIFIED`. Feature Freeze remains PASS and PH-009 is not started.
 
 ### FCR-034–FCR-041 — fixed audit records
 
