@@ -100,7 +100,8 @@ Known limitations include:
 - sarcasm, irony, humor, mixed sentiment, slang, and community context can be
   misclassified;
 - performance on long prose or domains unlike social text is not established;
-- truncation occurs at the model's maximum supported input length;
+- inputs beyond the audited 512-token encoded limit are rejected before
+  inference; no truncation or partial-text result is allowed;
 - probabilities are model scores, not calibrated guarantees;
 - the model must not be used for psychological diagnosis or automatic moderation.
 

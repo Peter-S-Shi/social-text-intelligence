@@ -65,6 +65,9 @@ The first command invocation downloads the approved model revision from its
 original Hugging Face repository into the ignored `model_cache/` directory.
 Inference then runs on the local machine; input text is not sent to an inference
 API. Use `--offline` after both models are cached to forbid network retrieval.
+Both model commands reject an input that the pinned tokenizer/model cannot
+consume in full. They never silently truncate or present partial-text inference
+as a whole-text result.
 
 Run the local interface after installing the web and model extras:
 
@@ -141,7 +144,13 @@ Milestone 6 adds a separate Batch CSV mode:
    aggregates;
 5. filter row outcomes and explicitly export normalized CSV results.
 
-The default limits are 2 MiB, 500 rows, and 20,000 characters per text. Required
+The default limits are 2 MiB, 500 rows, and a 20,000-character application
+safety ceiling per text. Separately, each pinned model enforces its audited
+512-token encoded-input budget after real tokenizer encoding, including special
+tokens. If either required model cannot consume a row in full, that row receives
+an explicit `model_input_too_long` error; no partial inference is run, other
+valid rows continue, and exports leave model scores and provenance blank for the
+failed row. Required
 and supported metadata fields are documented in [Contracts](docs/CONTRACTS.md).
 Duplicate supplied IDs, invalid metadata, empty text, unsupported languages, and
 provider failures remain row-level outcomes and do not abort the batch. Uploaded

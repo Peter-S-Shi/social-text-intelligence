@@ -118,7 +118,8 @@ include:
   substantial class imbalance and much weaker performance for rare labels;
 - compact mapping loses distinctions and intentionally leaves eight native
   labels unmapped;
-- truncation occurs at the model's supported input length;
+- inputs beyond the audited 512-token encoded limit are rejected before
+  inference; no truncation or partial-text result is allowed;
 - threshold choice changes recall, precision, dominant, and secondary outputs;
 - outputs must not drive diagnosis, surveillance, or automatic moderation.
 

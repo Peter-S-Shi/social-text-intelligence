@@ -33,6 +33,10 @@ that can expose text must be explicit, temporary, and documented.
 The web server binds to `127.0.0.1` by default. Normal mode may download pinned
 model files from their documented sources, but inference text is not sent to a
 remote model API. Offline mode requires both model revisions to be cached.
+Model input is encoded locally without truncation. Text beyond either pinned
+model's complete encoded-input budget is rejected before inference; the app
+does not create or expose partial-text scores as if they described the whole
+submission.
 
 CSV uploads are read into a bounded, expiring in-memory workspace. The batch
 workflow creates no upload directory, temporary file, database, automatic
