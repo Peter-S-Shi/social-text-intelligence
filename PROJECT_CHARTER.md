@@ -735,8 +735,8 @@ is recorded in [PROJECT_STATUS.md](PROJECT_STATUS.md). This Charter retains the
 stable feature boundary, deferred categories, and gate-based delivery
 principles; it is not the live status ledger.
 
-**Implementation status:** Milestones 1–10 are implemented in the current
-codebase. Milestone 10 is a temporary, human-led Support Triage workbench over a
+**Stable feature boundary:** Milestones 1–10 define the implemented `0.10.0`
+feature set. Milestone 10 is a temporary, human-led Support Triage workbench over a
 versioned synthetic routing guide and ticket library. It supports explicit
 snapshots of parsed Milestone 6 records even when NLP inference failed, while
 keeping M3–M8 signals and notes as non-authoritative context. Draft, atomic
@@ -746,12 +746,13 @@ summaries, and privacy-default export remain separate and auditable. State is
 bounded, expiring process memory with configurable blocking limits and no silent
 eviction.
 
-Planned feature milestones are complete, but the project is not yet
-feature-frozen or release-ready. Former Milestones 11–12 are deferred
-next-version candidates. Former Milestone 13 is reclassified as lifecycle
-evaluation, hardening, acceptance, portfolio, and delivery work rather than a
-next-version feature milestone. This boundary does not broaden any completed
-milestone's scope.
+Former Milestones 11–12 are deferred next-version candidates. Former Milestone
+13 is reclassified as lifecycle evaluation, hardening, acceptance, portfolio,
+and delivery work rather than a next-version feature milestone. This stable
+boundary does not broaden any completed milestone's scope. The Charter does not
+record the live phase, gate outcome, blocker, PR, or release-readiness state;
+those current facts are maintained only in
+[PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ### Milestone 1 — Independent Local Project Foundation
 
