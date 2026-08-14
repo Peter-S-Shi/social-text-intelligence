@@ -1,5 +1,54 @@
 # Development Log
 
+## Product Hardening closure — entering Full Regression and Manual Acceptance
+
+Product Hardening Batch A10 / PR #28 is recorded as merged to main at SHA
+`fc230c587c245cdb1cd75b399c91eb38ac82d768`; independent post-merge `main` CI
+passed on Python 3.11, 3.12, and 3.13.
+
+Taking that SHA as baseline, a read-only lifecycle audit reconciled
+`PROJECT_STATUS.md`, `ROADMAP.md`, `docs/FEATURE_COMPLETE_MANUAL_AUDIT.md`,
+and `DEVLOG.md` against the permanent FCR ledger rather than trusting only
+the summary rows. Ten batches (A1-A10) closed ten permanent findings
+(FCR-027, FCR-030, FCR-045-052), all `VERIFIED`. Every approved Phase 0
+finding is closed: PH-001-PH-002 under FCR-045, PH-003 under FCR-046, PH-004
+under FCR-047, PH-005 under FCR-048, PH-006 under FCR-049, PH-007 under
+FCR-050, PH-008 under FCR-030, PH-009 under FCR-027, and PH-010 under
+FCR-051. FCR-052 is a separately discovered, closed, non-blocking finding
+outside the original PH-001-010 list.
+
+FCR-042 (score-list ordering) and FCR-043 (explanatory/error visual
+hierarchy) were re-read in full rather than assumed. Both permanent records
+already state no correctness, safety, privacy, or data risk: FCR-042 is
+readability-only and does not touch values, labels, or auditability, and
+FCR-043 describes text that is already visible and recoverable, only lacking
+strong visual weight differentiation. Neither materially prevents Full
+Regression and Manual Acceptance, so neither was implemented and neither was
+marked VERIFIED or CLOSED; both remain explicit `OPEN` non-blocking backlog.
+
+The remaining nine "OPEN verification" items from the initial audit checklist
+(FCR-003, 005, 014, 015, 017, 021, 023, 026, 031) predate Product Hardening
+entirely — they were already unresolved when Feature Freeze passed on
+2026-08-13. FCR-026 (formula-injection protection), the one with the
+clearest potential severity, was directly re-checked against current code:
+`safe_spreadsheet_text()` is applied to every export field across Batch,
+Review, Insights, Moderation, and Triage, each with its own dedicated
+regression test proving the `=`/`+`/`-`/`@` escaping behavior. No defect was
+found in any of the nine. They are formally carried into Full Regression and
+Manual Acceptance for disposition, matching that phase's own defined job in
+`ROADMAP.md`, rather than being treated as Product Hardening blockers or
+triggering a speculative new hardening batch to manufacture an A11.
+
+With no known material blocker remaining, Product Hardening closes
+`COMPLETE`. `PROJECT_STATUS.md`, `ROADMAP.md`, `docs/FEATURE_COMPLETE_MANUAL_AUDIT.md`
+(both language sections, plus a new dated closure-decision block mirroring
+the existing Feature Freeze decision format), and `README.md` are updated
+together so the current phase reads consistently everywhere. Current
+lifecycle phase becomes Full Regression and Manual Acceptance. This is not a
+claim that Manual Acceptance has passed, that a Release Candidate has
+started, or that release readiness has changed from No — those remain
+separate, later gates. No product code changed.
+
 ## Product Hardening Batch A10 — Applied filter/sort/selection state reflection integrity
 
 Product Hardening Batch A9 / PR #27 is recorded as merged to main at SHA

@@ -15,6 +15,9 @@ STALE_CURRENT_PHRASES = (
     "Current lifecycle phase: Feature Complete Review",
     "not yet feature-frozen",
     "feature freeze and release review pending",
+    "Current phase: Product Hardening",
+    "Current lifecycle phase: Product Hardening",
+    "| Current lifecycle phase | **Product Hardening** |",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -46,16 +49,20 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature milestone status | Milestones 1–10 complete |" in status
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
-    assert "| Current lifecycle phase | **Product Hardening** |" in status
+    assert (
+        "| Current lifecycle phase | **Full Regression and Manual Acceptance** |"
+        in status
+    )
     assert "| Manual Acceptance status | Not started |" in status
     assert "| Release Candidate status | Not started |" in status
     assert "| Release readiness | **No** |" in status
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert "**Current phase: Product Hardening**" in roadmap
+    assert "**Current phase: Full Regression and Manual Acceptance**" in roadmap
     assert "**Status: Completed.**" in roadmap
+    assert "**Status: Complete.**" in roadmap
     assert "**Status: PASS.**" in roadmap
-    assert roadmap.count("**Status: Not started.**") == 2
+    assert roadmap.count("**Status: Not started.**") == 1
 
 
 def test_source_of_truth_responsibilities_are_explicit() -> None:

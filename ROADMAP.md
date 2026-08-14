@@ -27,12 +27,11 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## Current lifecycle phase
 
-**Current phase: Product Hardening**
+**Current phase: Full Regression and Manual Acceptance**
 
-Feature Complete Review is completed and Feature Freeze is PASS. Current work
-converges quality over the frozen `0.10.0` feature boundary. Manual Acceptance
-and Release Candidate work have not started, and release readiness remains No.
-Findings belong in the
+Feature Complete Review is completed, Feature Freeze is PASS, and Product
+Hardening is complete. Manual Acceptance and Release Candidate work have not
+started, and release readiness remains No. Findings belong in the
 [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md), while
 the detailed live state belongs only in [Project Status](PROJECT_STATUS.md).
 
@@ -116,10 +115,20 @@ Audit and `PROJECT_STATUS.md` before implementation.
 
 ## Product Hardening
 
-**Status: Current phase.**
+**Status: Complete.** Ten batches (A1–A10) closed ten permanent findings
+(FCR-027, FCR-030, FCR-045–052) covering every approved Phase 0 finding
+(PH-001–PH-010) plus one independently discovered applied-state reflection
+defect. Each batch's behavioral candidate and reviewed head passed its own
+targeted and full regression, formal review, and remote CI; the closure
+baseline `fc230c587c245cdb1cd75b399c91eb38ac82d768` also passed independent
+post-merge `main` CI. FCR-042 and FCR-043 remain explicitly accepted `OPEN`
+non-blocking backlog — evaluated and found to carry no correctness, safety,
+privacy, accessibility, or state-integrity risk, so their absence does not
+block this closure. Detailed disposition is recorded in the
+[Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md).
 
-Product Hardening is quality convergence over the frozen feature set. It
-includes:
+Product Hardening was quality convergence over the frozen feature set. It
+included:
 
 - defect discovery and repair;
 - UX and terminology consistency;
@@ -135,7 +144,10 @@ frozen feature set requires an explicit freeze-reopening decision.
 
 ## Full Regression and Manual Acceptance
 
-**Status: Not started.**
+**Status: Current phase. Not yet passed.** Entering this phase means Product
+Hardening is complete and the repository may begin this work — it does not
+mean Manual Acceptance has passed, that a Release Candidate has started, or
+that release readiness has changed from No.
 
 This phase requires:
 
@@ -145,7 +157,9 @@ This phase requires:
   threshold boundaries;
 - privacy-default, explicit opt-in, `no-store`, and formula-injection checks;
 - current audit, QA, status, and defect records;
-- closure or formal disposition of every blocking defect.
+- closure or formal disposition of every blocking defect, including the
+  pre-freeze "OPEN verification" checklist items carried forward from Feature
+  Complete Review (FCR-003, 005, 014, 015, 017, 021, 023, 026, 031).
 
 The canonical repeatable checklist is
 [Manual QA](manual-qa/manual_review_questionnaire.html). A completed exported record is
