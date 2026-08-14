@@ -2,6 +2,7 @@
 
 from .errors import (
     InvalidProviderOutputError,
+    ModelInputTooLongError,
     ProviderError,
     SocialTextIntelligenceError,
     UnsupportedLanguageError,
@@ -101,6 +102,7 @@ __all__ = [
     "EmotionResult",
     "EmotionScore",
     "InvalidProviderOutputError",
+    "ModelInputTooLongError",
     "LearningObjective",
     "MockModerationRecommendation",
     "ModerationCaseSource",

@@ -6,6 +6,7 @@ import unittest
 from social_text_intelligence.contracts import (
     EmotionLabel,
     InvalidProviderOutputError,
+    ModelInputTooLongError,
     NormalizedTextInput,
     UnsupportedLanguageError,
     ValidationError,
@@ -27,6 +28,22 @@ class StubEmotionRuntime:
     def predict(self, text: str) -> tuple[float, ...]:
         self.received_text = text
         return self.probabilities
+
+    def validate_input(self, text: str) -> None:
+        self.received_text = text
+
+
+class RejectingEmotionRuntime(StubEmotionRuntime):
+    def validate_input(self, text: str) -> None:
+        raise ModelInputTooLongError(
+            provider="samlowe-transformers",
+            encoded_length=513,
+            max_input_tokens=512,
+        )
+
+    def predict(self, text: str) -> tuple[float, ...]:
+        self.validate_input(text)
+        return super().predict(text)
 
 
 def probabilities(**overrides: float) -> tuple[float, ...]:
@@ -123,6 +140,17 @@ class SamLoweEmotionProviderTests(unittest.TestCase):
                 provider = SamLoweEmotionProvider(runtime=StubEmotionRuntime(output))
                 with self.assertRaises(InvalidProviderOutputError):
                     provider.analyze(record)
+
+    def test_standalone_provider_rejects_incomplete_model_input(self) -> None:
+        provider = SamLoweEmotionProvider(
+            runtime=RejectingEmotionRuntime(probabilities(neutral=0.9))
+        )
+        record = NormalizedTextInput.from_text("synthetic " * 300, language="en")
+
+        with self.assertRaisesRegex(
+            ModelInputTooLongError, "No truncation or partial analysis"
+        ):
+            provider.analyze(record)
 
 
 if __name__ == "__main__":

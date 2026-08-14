@@ -66,6 +66,13 @@ class DeterministicSentimentProvider:
             provider=self.metadata,
         )
 
+    def validate_input(self, record: NormalizedTextInput) -> None:
+        if not _supports_language(self.metadata, record.language):
+            raise UnsupportedLanguageError(
+                provider=self.metadata.provider,
+                language=record.language or "unknown",
+            )
+
 
 @dataclass(frozen=True, slots=True)
 class DeterministicEmotionProvider:
@@ -122,3 +129,10 @@ class DeterministicEmotionProvider:
             ),
             provider=self.metadata,
         )
+
+    def validate_input(self, record: NormalizedTextInput) -> None:
+        if not _supports_language(self.metadata, record.language):
+            raise UnsupportedLanguageError(
+                provider=self.metadata.provider,
+                language=record.language or "unknown",
+            )

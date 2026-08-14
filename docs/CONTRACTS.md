@@ -38,6 +38,24 @@ maps documented native groups into the nine compact labels.
 The included deterministic providers exist only for unit and orchestration tests.
 They return configured values, do not interpret text, and are not NLP models.
 
+### Complete-input inference contract
+
+`MAX_TEXT_LENGTH=20_000` is an application safety ceiling measured in
+characters. It is not a proxy for model capacity. Cardiff sentiment and SamLowe
+emotion each use an audited 512-token encoded-input budget. Providers call the
+real tokenizer with special tokens enabled and truncation disabled, then reject
+an encoded sequence above that budget with `model_input_too_long` before model
+inference.
+
+Combined analysis preflights every required provider before running either
+model. A successful report therefore means every required pinned model consumed
+the complete submitted text; no successful contract needs a `truncated` field.
+An over-budget Direct or CLI request returns an explicit error explaining that
+no truncation or partial analysis occurred. In Batch, only that row fails; its
+exported model labels, scores, identities, and revisions remain blank. Automatic
+chunking, cross-chunk aggregation, summarization, and long-form analysis are not
+part of version 0.10.0.
+
 ## Batch CSV
 
 The required logical field is `text`; the interface supports selecting another
@@ -81,6 +99,8 @@ Expected contract failures use typed exceptions:
 
 - `ValidationError` for invalid input or scores;
 - `UnsupportedLanguageError` for provider-language mismatches;
+- `ModelInputTooLongError` (`model_input_too_long`) when a pinned model cannot
+  consume the complete encoded input;
 - `InvalidProviderOutputError` for results that violate normalized contracts;
 - `ProviderError` as the base for provider failures.
 

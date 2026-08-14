@@ -1,5 +1,42 @@
 # Development Log
 
+## Product Hardening Batch A2 — Input truthfulness / no silent truncation
+
+Reconciled Phase 0 PH-003 as permanent FCR-046. Existing FCR-003, FCR-006,
+and FCR-008 cover input recovery, model-limit communication, and Batch partial
+failure separately; none supplied the required cross-provider complete-input
+success invariant.
+
+Both pinned Transformers runtimes now encode with special tokens enabled and
+`truncation=False`, then compare the real encoded sequence length with an
+audited 512-token provider budget before inference. SamLowe declares 512 in its
+tokenizer metadata. The pinned Cardiff tokenizer exposes the Hugging Face
+unknown-limit sentinel, so the reviewed 512-token contract is explicit and
+checked against the loaded model's position capacity. Incompatible finite
+metadata fails closed.
+
+Combined analysis preflights both required providers before either inference.
+Direct and CLI requests return `model_input_too_long` with an explicit statement
+that no truncation or partial analysis occurred. Batch isolates the failure to
+the affected row, continues valid rows, and exports no model labels, scores,
+identities, or revisions for the failed row. The 20,000-character application
+safety ceiling remains separate. No chunking, aggregation, summarization,
+model/revision/threshold change, persistence, or successful-result truncation
+field was added.
+
+Targeted complete-input regressions passed 9/9. The full suite passed 141 with
+2 opt-in integration tests skipped; Ruff, strict MyPy for 69 files, compileall,
+and pip check passed. A separate cached, offline run of both real-model smoke
+tests passed 2/2. The user-approved code review and PR #19 final-head CI passed,
+so FCR-046 is closed as `VERIFIED` on the exact behavioral candidate below.
+The exact behavioral candidate is
+`31b5e6cf7fc6d551bb72680900976595008d9d7c`; the following documentation
+commit does not change that tested behavior.
+
+Batch A1 was merged through PR #18 at main SHA
+`1b36fe8c024823c1f4829621a7bcc733b2915c93`; this is the synchronized A2
+baseline. FCR-045 remains `VERIFIED`.
+
 ## Product Hardening Batch A1 — Ephemeral Batch state integrity
 
 Reconciled Phase 0 findings PH-001 and PH-002 as one permanent product finding,

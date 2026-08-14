@@ -29,7 +29,7 @@
         <label for="text">Text</label>
         <textarea id="text" name="text" maxlength="{{ max_text_length }}" required>{{ submitted_text }}</textarea>
         <div class="form-row">
-          <small>English only · up to {{ max_text_length }} characters · models {{ 'ready' if initialized else 'load on first analysis' }}</small>
+          <small>English only · {{ max_text_length }}-character application safety limit · separate model encoded-input limits are checked before inference · models {{ 'ready' if initialized else 'load on first analysis' }}</small>
           <button type="submit">Analyze locally</button>
         </div>
       </form>
@@ -83,6 +83,7 @@
     {% endif %}
 
     <section class="limitations" aria-label="Limitations">
+      <p><strong>Complete-input rule.</strong> A result is shown only when both pinned models can consume the full submitted text within their tokenizer-defined encoded-input limits, including special tokens. Over-limit text is rejected without truncation or partial analysis.</p>
       <strong>Estimate, not diagnosis.</strong> Labels and scores can be wrong. Sarcasm, humor, slang, cultural context, and domain shift remain difficult. Emotion output does not reveal a person's true feelings or psychological state.
     </section>
   </main>

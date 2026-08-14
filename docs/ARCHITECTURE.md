@@ -45,6 +45,23 @@ or persistence. `LazyAnalysisService` owns one lazily built `AnalysisService` pe
 application process. Flask routes create normalized records and render results;
 they do not load models, map labels, or write data.
 
+Both pinned transformer adapters share a complete-input gate. Their audited
+encoded-input budget is 512 tokens, including tokenizer-added special tokens.
+The runtime encodes with `truncation=False`, validates the resulting sequence
+length, and only then invokes the model. The SamLowe tokenizer declares 512
+directly. The pinned Cardiff tokenizer exposes Hugging Face's unknown-limit
+sentinel, so its reviewed 512-token provider contract is explicit and checked
+against the loaded model's position capacity. A finite tokenizer declaration
+that disagrees with the audited contract fails model initialization rather than
+being guessed around.
+
+`AnalysisService` preflights both required providers before either inference.
+Consequently, a successful `AnalysisReport` means the complete submitted text
+was consumed by both required models (after Cardiff's documented username/URL
+normalization); if either provider is over budget, no combined report is
+produced. The current version deliberately has no chunking, aggregation,
+summarization, or long-form workflow.
+
 Batch business rules remain in `services/batch.py`, independent of Flask. The
 interface keeps each active upload in a random-token, capacity-blocking,
 time-limited in-memory workspace. Preview replaces raw upload bytes with typed

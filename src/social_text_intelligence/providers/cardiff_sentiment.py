@@ -23,9 +23,11 @@ from ..contracts.results import (
     SentimentScore,
     TaskType,
 )
+from .input_budget import encode_complete_text, resolve_model_input_budget
 
 MODEL_ID = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 MODEL_REVISION = "3216a57f2a0d9c45a2e6c20157c20c49fb4bf9c7"
+MODEL_INPUT_TOKEN_LIMIT = 512
 NATIVE_LABELS = ("negative", "neutral", "positive")
 _LABEL_MAP = {
     "negative": SentimentLabel.NEGATIVE,
@@ -39,6 +41,10 @@ class SentimentRuntime(Protocol):
 
     def predict(self, text: str) -> Sequence[float]:
         """Return probabilities in the provider's documented native-label order."""
+        ...
+
+    def validate_input(self, text: str) -> None:
+        """Reject text the pinned model cannot consume in full."""
         ...
 
 
@@ -99,14 +105,26 @@ class TransformersSentimentRuntime:
 
         self._torch: Any = torch
         self._model.eval()
+        self._max_input_tokens = resolve_model_input_budget(
+            tokenizer=self._tokenizer,
+            model=self._model,
+            provider="cardiffnlp-transformers",
+            approved_max_input_tokens=MODEL_INPUT_TOKEN_LIMIT,
+        )
+
+    def _encode_complete(self, text: str) -> Any:
+        return encode_complete_text(
+            tokenizer=self._tokenizer,
+            text=text,
+            provider="cardiffnlp-transformers",
+            max_input_tokens=self._max_input_tokens,
+        )
+
+    def validate_input(self, text: str) -> None:
+        self._encode_complete(text)
 
     def predict(self, text: str) -> Sequence[float]:
-        encoded = self._tokenizer(
-            text,
-            return_tensors="pt",
-            truncation=True,
-            max_length=512,
-        )
+        encoded = self._encode_complete(text)
         with self._torch.inference_mode():
             logits = self._model(**encoded).logits[0]
             probabilities = self._torch.softmax(logits, dim=-1).tolist()
@@ -133,21 +151,8 @@ class CardiffSentimentProvider:
     )
 
     def analyze(self, record: NormalizedTextInput) -> SentimentResult:
-        if record.language is not None:
-            primary_language = record.language.split("-", maxsplit=1)[0].lower()
-            if primary_language != "en":
-                raise UnsupportedLanguageError(
-                    provider=self.metadata.provider,
-                    language=record.language,
-                )
-
-        runtime = self.runtime
-        if runtime is None:
-            runtime = TransformersSentimentRuntime(
-                cache_dir=self.cache_dir,
-                offline=self.offline,
-            )
-            self.runtime = runtime
+        self._validate_language(record)
+        runtime = self._runtime()
 
         prepared_text = preprocess_social_text(record.text)
         probabilities = tuple(float(score) for score in runtime.predict(prepared_text))
@@ -170,6 +175,30 @@ class CardiffSentimentProvider:
             native_scores=native_scores,
             provider=self.metadata,
         )
+
+    def validate_input(self, record: NormalizedTextInput) -> None:
+        self._validate_language(record)
+        prepared_text = preprocess_social_text(record.text)
+        self._runtime().validate_input(prepared_text)
+
+    def _runtime(self) -> SentimentRuntime:
+        runtime = self.runtime
+        if runtime is None:
+            runtime = TransformersSentimentRuntime(
+                cache_dir=self.cache_dir,
+                offline=self.offline,
+            )
+            self.runtime = runtime
+        return runtime
+
+    def _validate_language(self, record: NormalizedTextInput) -> None:
+        if record.language is not None:
+            primary_language = record.language.split("-", maxsplit=1)[0].lower()
+            if primary_language != "en":
+                raise UnsupportedLanguageError(
+                    provider=self.metadata.provider,
+                    language=record.language,
+                )
 
     def _validate_probabilities(self, probabilities: tuple[float, ...]) -> None:
         valid_values = all(
