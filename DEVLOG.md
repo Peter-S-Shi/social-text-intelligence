@@ -1,5 +1,72 @@
 # Development Log
 
+## PR #31 corrective governance patch — carried-forward FCR reconciliation
+
+Formal review of PR #31 found that its Full Regression and Manual
+Acceptance PASS decision directly resolved FCR-003 but left the other eight
+Roadmap-required carried-forward pre-freeze `OPEN verification` items
+(FCR-005, 014, 015, 017, 021, 023, 026, 031) unresolved and moved them into
+Release Candidate, while also silently dropping the Roadmap requirement
+that this phase close or formally dispose of them. That both weakened the
+completed phase's acceptance criteria retrospectively and left the gate's
+closure condition unmet, since the Roadmap had explicitly carried these
+nine items into this phase for disposition, not the next one.
+
+This is a governance/evidence adjudication correction, not a request to
+repeat manual testing: no product code, template, route, model, filter,
+sort, or questionnaire content changed. For each of the eight remaining
+FCRs, read the full permanent record and located the strongest existing
+evidence rather than performing a fresh audit or rerunning interactive
+scenarios:
+
+- **FCR-005** (native/compact, multi-label threshold, neutral semantics):
+  already-VERIFIED FCR-034 plus
+  `tests/test_web_app.py::test_post_renders_complete_combined_report` and
+  `::test_neutral_result_explains_threshold_fallback`.
+- **FCR-014** (Insights raw counts/denominators/sample warnings/
+  perspectives): four dedicated tests in `tests/test_insights_service.py`,
+  one per sub-question.
+- **FCR-015** (Context Note authorship/UTC/deletion/non-label semantics):
+  already-VERIFIED FCR-038 plus
+  `test_context_notes_are_separate_validated_and_deletable` plus the
+  `insights.html` template's explicit "user-authored," "Manual annotation
+  only," and "not protected-attribute labels" copy.
+- **FCR-017** (Moderation policy/provenance/mock honesty):
+  `tests/test_moderation_resources.py`'s two provenance tests plus this
+  session's own live observation of the Prepare page (Scenario D).
+- **FCR-021** (Triage guide/ticket provenance, draft, no-mock states):
+  three dedicated `tests/test_triage_routes.py` /
+  `tests/test_support_triage.py` tests plus this session's own live
+  observation of Source & Guide / Workspace (Scenario E).
+- **FCR-023** (Triage mock visibility/exclusion/denominators): five
+  dedicated tests split across `tests/test_support_triage.py` and
+  `tests/test_triage_routes.py`, one per sub-question.
+- **FCR-026** (formula-injection escaping): this session's own Scenario C
+  (`review-formula`, one of the 20 required profile items) plus the
+  five-export-path code re-check already recorded in the 2026-08-14 Product
+  Hardening closure decision.
+- **FCR-031** (current-version scope completeness): a scope/judgment item,
+  not a behavioral defect — resolved by the 2026-08-13 Feature Freeze
+  decision's explicit "Open current-version blockers: None," the existing
+  FCR disposition map's `VERIFIED / Keep as-is` marks on every individual
+  current-version capability question, and Product Hardening A1-A10's
+  explicit no-scope-expansion constraint honored throughout.
+
+All nine carried-forward FCRs (including the already-resolved FCR-003) are
+now closed `VERIFIED` in a single reconciliation embedded in the Full
+Regression and Manual Acceptance PASS decision in
+`docs/FEATURE_COMPLETE_MANUAL_AUDIT.md` (both languages), with the
+Section 4 checklist table and the disposition-map bullet list updated to
+match. Restored the Roadmap's original requirement text that this phase
+close or formally dispose of these nine items, now marked satisfied, rather
+than leaving it silently removed. Updated `PROJECT_STATUS.md`'s "Open
+blockers" and "Approved audit items" rows accordingly. The gate result is
+unchanged: Full Regression and Manual Acceptance remains PASS (20/20
+required fresh-interaction items, 0 FAIL, 0 blocking defects), and the
+current lifecycle phase remains Release Candidate (not started). No new
+manual interaction was required beyond what the 2026-08-14 session had
+already gathered.
+
 ## Full Regression and Manual Acceptance — PASS
 
 Repository-owner-authorized agent-operated session executed Full Regression
@@ -56,9 +123,11 @@ Result: 20/20 PASS, 0 FAIL, 0 blocking defects. FCR-042/FCR-043 untouched.
 FCR-003 was directly exercised by `direct-limits` and found consistent with
 current-version product behavior (Direct enforces only length and
 English-only; the unsupported-language-tag case belongs to Batch). The
-remaining carried-forward pre-freeze items (FCR-005, 014, 015, 017, 021,
-023, 026, 031) were outside this minimum profile and carry into Release
-Candidate. Evidence exported to
+remaining eight carried-forward pre-freeze items (FCR-005, 014, 015, 017,
+021, 023, 026, 031) were reconciled against existing evidence in the same
+decision and closed `VERIFIED` — see the corrective governance patch below,
+which closes all nine before advancing to Release Candidate. Evidence
+exported to
 `manual-qa/results/sti-full-regression-manual-acceptance-71fa608-2026-08-14.{json,md}`
 (local-only, gitignored).
 

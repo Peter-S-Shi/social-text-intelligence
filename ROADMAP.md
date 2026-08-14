@@ -155,11 +155,12 @@ Full Regression evidence reused the independent post-merge `main` CI already
 recorded for that SHA (pytest, Ruff, MyPy, compile, dependency install) plus
 existing Product Hardening real-model/concurrency/HTTP-boundary/browser-security
 evidence, per that SHA's Product Hardening record. FCR-042 and FCR-043 dispositions
-are untouched. The remaining carried-forward pre-freeze "OPEN verification"
-items (FCR-005, 014, 015, 017, 021, 023, 026, 031) were not part of this
-minimum profile and carry into Release Candidate for final disposition;
-FCR-003 was exercised directly by this profile (`direct-limits`) and found
-consistent with current-version product behavior. Full detail is recorded in
+are untouched. All nine carried-forward pre-freeze "OPEN verification" items
+(FCR-003, 005, 014, 015, 017, 021, 023, 026, 031) received explicit
+disposition and closed `VERIFIED` before this phase's PASS, using existing
+Feature Freeze, Product Hardening, and regression-test evidence plus this
+session's own fresh evidence where directly applicable (FCR-003, FCR-026);
+no carried-forward verification item remains open. Full detail is recorded in
 the [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md).
 
 This phase required:
@@ -169,7 +170,11 @@ This phase required:
 - project-authored synthetic datasets, including partial failures and sample
   threshold boundaries;
 - privacy-default, explicit opt-in, `no-store`, and formula-injection checks;
-- current audit, QA, status, and defect records.
+- current audit, QA, status, and defect records;
+- closure or formal disposition of every blocking defect, including the
+  pre-freeze "OPEN verification" checklist items carried forward from
+  Feature Complete Review (FCR-003, 005, 014, 015, 017, 021, 023, 026, 031)
+  — all nine closed `VERIFIED` before this phase's PASS.
 
 The canonical repeatable checklist is
 [Manual QA](manual-qa/manual_review_questionnaire.html). A completed exported record is
