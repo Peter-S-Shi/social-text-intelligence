@@ -1,5 +1,37 @@
 # Development Log
 
+## PR #30 corrective patch — FCR-003 Direct acceptance alignment
+
+Formal readiness review of PR #30 found that the newly added `direct-limits`
+questionnaire item claimed Direct analysis clearly rejects "an unsupported
+language tag," but Direct exposes only a text field: it declares "English
+only," has no language-selection control, and constructs
+`NormalizedTextInput` with a hardcoded `language="en"` internally
+(`src/social_text_intelligence/interface/app.py`). There is no reachable
+interaction on Direct through which a reviewer could submit a language tag
+for the product to reject, so the item described a test that cannot
+actually be performed against the current-version product.
+
+Re-read the full FCR-003 permanent record: it remains a carried-forward
+pre-freeze `OPEN verification` item asking whether blank, oversized,
+English, and unsupported-language outcomes are recoverable, evaluated across
+the product rather than mandating that every one of those cases be
+reachable specifically through Direct. Nothing in the record requires
+Direct to gain a language control, and no product code was changed.
+
+This is an acceptance-artifact-only correction. `direct-limits` now checks
+only what Direct actually enforces: the application text-length limit is
+rejected before inference with no silent truncation, and the English-only
+boundary is honestly stated on the page. The unsupported-language-tag case
+remains covered — through Batch's `language` CSV column, exercised by the
+existing `batch-edge-preview` item — and the corrected `direct-limits` item
+text says so explicitly rather than silently dropping the language half of
+FCR-003's audit topic. `direct-validation` (blank input) is unchanged.
+Corrected the matching description in this file's own prior entry below.
+Gate Standard, questionnaire v3.0/schema compatibility, English
+completeness, all other new items, current lifecycle phase/status, and
+FCR-042/FCR-043 dispositions are untouched.
+
 ## Full Regression and Manual Acceptance — readiness preparation
 
 Readiness preparation only: establishes the acceptance standard and upgrades
@@ -41,8 +73,8 @@ filter/sort/selection reflection across Triage Workspace, Moderation
 Prepare, and Insights Representative Cases), `cross-a11y-semantics` and
 `batch-busy-state` (FCR-027/A8 skip-link, current-step, focus-recovery, and
 Batch busy-state semantics that predate the original questionnaire), and
-`direct-limits` (FCR-003's over-length/unsupported-language cases for
-Direct analysis, which existing coverage only exercised for Batch). One
+`direct-limits` (FCR-003's over-length case for Direct analysis, which
+existing coverage did not exercise). One
 existing item (`direct-multilabel`) gained a clause for FCR-034's neutral
 threshold-fallback semantics rather than a new item. All other requested
 categories — privacy defaults, no-store/local boundaries,
