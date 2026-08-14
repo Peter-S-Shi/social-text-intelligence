@@ -27,7 +27,8 @@ field was added.
 Targeted complete-input regressions passed 9/9. The full suite passed 141 with
 2 opt-in integration tests skipped; Ruff, strict MyPy for 69 files, compileall,
 and pip check passed. A separate cached, offline run of both real-model smoke
-tests passed 2/2. FCR-046 remains `IMPLEMENTED` pending Draft PR CI and review.
+tests passed 2/2. The user-approved code review and PR #19 final-head CI passed,
+so FCR-046 is closed as `VERIFIED` on the exact behavioral candidate below.
 The exact behavioral candidate is
 `31b5e6cf7fc6d551bb72680900976595008d9d7c`; the following documentation
 commit does not change that tested behavior.
