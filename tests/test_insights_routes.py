@@ -250,6 +250,30 @@ class InsightRouteTests(unittest.TestCase):
         note = next(row for row in rows if row["section"] == "context_note")
         self.assertRegex(note["created_at"], r"\+00:00$")
 
+    def test_oversized_context_note_is_413_without_state_change(self) -> None:
+        token = self.workspace_url.rsplit("/", 1)[-1]
+        store = self.app.extensions["sti_batch_store"]
+        before = store.get(token)
+        assert before is not None
+        self.app.config["MAX_CONTENT_LENGTH"] = 256
+        marker = "SYNTHETIC-PRIVATE-NOTE-MARKER"
+
+        response = self.client.post(
+            self.insight_url + "/notes",
+            data={
+                "association": "record",
+                "association_value": "row-1",
+                "phrase": marker + ("x" * 1024),
+                "explanation": "Synthetic explanation.",
+                "context_importance": "Synthetic context.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        self.assertNotIn(marker.encode(), response.data)
+        self.assertEqual(store.get(token), before)
+
     def test_cleared_workspace_fails_safely(self) -> None:
         self.client.post(
             self.workspace_url + "/clear", data={"confirm": "clear"}

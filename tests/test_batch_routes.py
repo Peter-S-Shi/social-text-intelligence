@@ -228,6 +228,102 @@ class BatchRouteTests(unittest.TestCase):
         self.assertIn(b"exceeds the 5-byte limit", response.data)
         self.assertNotIn(b"Traceback", response.data)
 
+    def test_oversized_multipart_is_413_without_creating_workspace(self) -> None:
+        marker = b"SYNTHETIC-PRIVATE-BATCH-MARKER"
+        app = create_app(
+            {
+                "TESTING": True,
+                "MAX_CONTENT_LENGTH": 512,
+                "MAX_BATCH_BYTES": 128,
+            },
+            analysis_gateway=gateway(),
+        )
+        client = app.test_client()
+        store = app.extensions["sti_batch_store"]
+
+        with patch.object(store, "create", wraps=store.create) as create:
+            response = client.post(
+                "/batch/upload",
+                data={
+                    "file": (
+                        io.BytesIO(marker + (b"x" * 1024)),
+                        "oversized.csv",
+                    )
+                },
+                content_type="multipart/form-data",
+            )
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        self.assertNotIn(marker, response.data)
+        self.assertNotIn(b"Traceback", response.data)
+        create.assert_not_called()
+
+    def test_csv_payload_limit_remains_distinct_below_request_ceiling(self) -> None:
+        app = create_app(
+            {
+                "TESTING": True,
+                "MAX_CONTENT_LENGTH": 4096,
+                "MAX_BATCH_BYTES": 5,
+            },
+            analysis_gateway=gateway(),
+        )
+        response = app.test_client().post(
+            "/batch/upload",
+            data={
+                "file": (
+                    io.BytesIO(b"text\nlonger\n"),
+                    "payload-limit.csv",
+                )
+            },
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"exceeds the 5-byte limit", response.data)
+        self.assertNotIn(b"request-body limit", response.data)
+
+    def test_oversized_unparsed_post_is_413_without_analyzing_batch(self) -> None:
+        app = create_app(
+            {
+                "TESTING": True,
+                "MAX_CONTENT_LENGTH": 512,
+                "MAX_BATCH_BYTES": 128,
+                "MAX_BATCH_ROWS": 5,
+                "MAX_TEXT_LENGTH": 100,
+            },
+            analysis_gateway=gateway(),
+        )
+        client = app.test_client()
+        uploaded = client.post(
+            "/batch/upload",
+            data={
+                "file": (
+                    io.BytesIO(b"record_id,text\nrow-1,Synthetic text.\n"),
+                    "small.csv",
+                )
+            },
+            content_type="multipart/form-data",
+        )
+        workspace_url = uploaded.headers["Location"]
+        token = workspace_url.rsplit("/", 1)[-1]
+        store = app.extensions["sti_batch_store"]
+        before = store.get(token)
+        assert before is not None and before.result is None
+
+        response = client.post(
+            workspace_url + "/analyze",
+            data=b"x" * 1024,
+            content_type="application/octet-stream",
+        )
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        after = store.get(token)
+        assert after is not None
+        self.assertIsNone(after.result)
+        self.assertEqual(after, before)
+
     def test_missing_upload_keeps_workspace_capacity_limit_visible(self) -> None:
         app = create_app(
             {"TESTING": True, "BATCH_WORKSPACE_CAPACITY": 3},

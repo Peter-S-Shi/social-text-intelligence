@@ -136,3 +136,28 @@ class WebAppTests(unittest.TestCase):
         self.assertIn(b"513 tokens including special tokens", response.data)
         self.assertIn(b"No truncation or partial analysis", response.data)
         self.assertNotIn(b"Models and provenance", response.data)
+
+    def test_oversized_direct_form_is_private_no_store_413(self) -> None:
+        marker = "SYNTHETIC-PRIVATE-DIRECT-MARKER"
+        gateway = deterministic_gateway()
+        app = create_app(
+            {
+                "TESTING": True,
+                "MAX_CONTENT_LENGTH": 128,
+                "MAX_BATCH_BYTES": 64,
+            },
+            analysis_gateway=gateway,
+        )
+
+        response = app.test_client().post(
+            "/", data={"text": marker + ("x" * 256)}
+        )
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        self.assertIn(b"128-byte request-body limit", response.data)
+        self.assertIn(b"No submitted content was processed or saved", response.data)
+        self.assertNotIn(marker.encode(), response.data)
+        self.assertNotIn(b"Traceback", response.data)
+        self.assertNotIn(b"site-packages", response.data)
+        self.assertFalse(gateway.initialized)

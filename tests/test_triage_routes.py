@@ -175,6 +175,29 @@ class TriageRouteTests(unittest.TestCase):
         self.assertIn(b"Coverage", summary.data)
         self.assertIn(b"Mock comparison", summary.data)
 
+    def test_oversized_decision_post_is_413_without_state_change(self) -> None:
+        base = self.create_triage()
+        self.add_ticket(base)
+        token = base.split("/")[-1]
+        store = self.app.extensions["sti_triage_store"]
+        before = store.get(token)
+        assert before is not None
+        self.app.config["MAX_CONTENT_LENGTH"] = 256
+        marker = "SYNTHETIC-PRIVATE-DECISION-MARKER"
+
+        response = self.client.post(
+            base + "/tickets/support-001/draft",
+            data={
+                "primary_intent": "recover_account_access",
+                "human_notes": marker + ("x" * 1024),
+            },
+        )
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        self.assertNotIn(marker.encode(), response.data)
+        self.assertEqual(store.get(token), before)
+
     def test_assisted_mock_is_visible_but_human_form_is_not_prefilled(
         self,
     ) -> None:

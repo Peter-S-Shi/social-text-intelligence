@@ -9,6 +9,7 @@ from typing import Any, Protocol
 
 from flask import Flask, Response, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
+from werkzeug.exceptions import RequestEntityTooLarge
 
 from ..contracts import (
     AnalysisReport,
@@ -88,6 +89,8 @@ INSIGHT_METRICS_BY_PERSPECTIVE = {
     ),
 }
 
+DEFAULT_MAX_REQUEST_BYTES = 3 * 1024 * 1024
+
 
 class AnalysisGateway(Protocol):
     @property
@@ -145,6 +148,7 @@ def create_app(
         OFFLINE=False,
         EMOTION_THRESHOLD=DEFAULT_EMOTION_THRESHOLD,
         MAX_TEXT_LENGTH=20_000,
+        MAX_CONTENT_LENGTH=DEFAULT_MAX_REQUEST_BYTES,
         MAX_BATCH_BYTES=DEFAULT_MAX_BATCH_BYTES,
         MAX_BATCH_ROWS=DEFAULT_MAX_BATCH_ROWS,
         BATCH_WORKSPACE_TTL_SECONDS=30 * 60,
@@ -160,6 +164,16 @@ def create_app(
     )
     if config is not None:
         app.config.update(config)
+
+    max_request_bytes = int(app.config["MAX_CONTENT_LENGTH"])
+    max_batch_bytes = int(app.config["MAX_BATCH_BYTES"])
+    if max_request_bytes < 1:
+        raise ValueError("MAX_CONTENT_LENGTH must be positive")
+    if max_request_bytes <= max_batch_bytes:
+        raise ValueError(
+            "MAX_CONTENT_LENGTH must be greater than MAX_BATCH_BYTES so "
+            "multipart encoding has separate request-level capacity."
+        )
 
     if analysis_gateway is None:
         cache_dir = Path(str(app.config["CACHE_DIR"]))
@@ -214,6 +228,22 @@ def create_app(
         response.headers["Cache-Control"] = "no-store"
         response.headers["Pragma"] = "no-cache"
         return response
+
+    @app.before_request
+    def enforce_declared_request_body_limit() -> None:
+        content_length = request.content_length
+        if content_length is not None and content_length > max_request_bytes:
+            raise RequestEntityTooLarge()
+
+    @app.errorhandler(RequestEntityTooLarge)
+    def request_too_large(_error: RequestEntityTooLarge) -> Response:
+        return Response(
+            "Request too large. The submitted HTTP request exceeded the "
+            f"{max_request_bytes}-byte request-body limit. No submitted "
+            "content was processed or saved.",
+            status=413,
+            mimetype="text/plain",
+        )
 
     @app.route("/", methods=["GET", "POST"])
     def analyze_text() -> str:
@@ -1073,6 +1103,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cache-dir", default="model_cache")
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--max-batch-bytes", type=int, default=DEFAULT_MAX_BATCH_BYTES)
+    parser.add_argument(
+        "--max-request-bytes", type=int, default=DEFAULT_MAX_REQUEST_BYTES
+    )
     parser.add_argument("--max-batch-rows", type=int, default=DEFAULT_MAX_BATCH_ROWS)
     parser.add_argument("--max-text-length", type=int, default=20_000)
     parser.add_argument("--max-prepared-cases", type=int, default=100)
@@ -1092,6 +1125,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if (
         min(
             args.max_batch_bytes,
+            args.max_request_bytes,
             args.max_batch_rows,
             args.max_text_length,
             args.max_prepared_cases,
@@ -1101,12 +1135,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         < 1
     ):
         parser.error("Batch, text, and moderation limits must be positive.")
+    if args.max_request_bytes <= args.max_batch_bytes:
+        parser.error(
+            "--max-request-bytes must be greater than --max-batch-bytes "
+            "to allow multipart encoding overhead."
+        )
     app = create_app(
         {
             "CACHE_DIR": args.cache_dir,
             "OFFLINE": args.offline,
             "EMOTION_THRESHOLD": args.emotion_threshold,
             "MAX_BATCH_BYTES": args.max_batch_bytes,
+            "MAX_CONTENT_LENGTH": args.max_request_bytes,
             "MAX_BATCH_ROWS": args.max_batch_rows,
             "MAX_TEXT_LENGTH": args.max_text_length,
             "MAX_MODERATION_PREPARED_CASES": args.max_prepared_cases,
