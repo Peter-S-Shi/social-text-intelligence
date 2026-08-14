@@ -36,8 +36,12 @@ Ten focused CLI/lifecycle tests passed. The complete deterministic suite passed
 167 tests with 2 opt-in model integrations skipped. Ruff, strict MyPy for 72
 files, compileall, pip check, tracked-document stale-state/link/manual-QA
 consistency checks, and repository privacy/safety checks passed. Behavioral
-candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` passed PR #24 CI on Python
-3.11, 3.12, and 3.13; FCR-030 remains `IMPLEMENTED` pending review.
+candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` passed lifecycle/CLI
+consistency review. Reviewed PR #24 head
+`371b41bec0c6418bc07748a36d34e46dd4392664` passed final-head CI on Python
+3.11, 3.12, and 3.13. FCR-030 is therefore `VERIFIED`; FCR-045–050 remain
+`VERIFIED`, Feature Freeze remains PASS, and PH-009 remains unstarted. This
+closure changes governance documentation only.
 
 ## Product Hardening Batch A6 — Local browser boundary hardening
 

@@ -148,7 +148,7 @@ Final Outcome / 最终结果
 | FCR-027 | 键盘与可访问性 | 焦点、标签、错误定位和主要表单是否可键盘操作 | OPEN |
 | FCR-028 | 响应式布局 | 窄屏、表格、导航和关键操作是否仍可使用 | OPEN |
 | FCR-029 | 错误与空状态 | 无 token、过期、空结果和非法输入是否提供恢复路径 | OPEN |
-| FCR-030 | 文档一致性 | README、Charter、ROADMAP、Development、Project Status 与 CLI 的职责及当前状态是否一致 | IMPLEMENTED；PH-008 由本 finding 承载，待 A7 PR review |
+| FCR-030 | 文档一致性 | README、Charter、ROADMAP、Development、Project Status 与 CLI 的职责及当前状态是否一致 | VERIFIED；A7 review 与 final-head CI PASS |
 | FCR-031 | 当前版本范围 | 是否存在必须添加、移除、合并、隐藏或简化的能力 | OPEN |
 | FCR-032 | 延后范围 | French、long-form、connectors、persistence 等是否明确隔离 | OPEN |
 | FCR-033 | 本地模型缓存冗余 | 固定模型能否在不复制权重或产生未审计转换 revision 的情况下离线运行 | VERIFIED |
@@ -176,7 +176,7 @@ Final Outcome / 最终结果
 
 | ID | Decision Class | Decision | 状态 | 简要理由 | 实施/验证引用 |
 | --- | --- | --- | --- | --- | --- |
-| FCR-030 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 以 Project Status 为唯一 live ledger，分离 Charter、Roadmap、README、Development 与 CLI 职责，避免当前态重复漂移 | Product Hardening Batch A7 current-state、CLI、链接与 stale-state 回归；待 PR review |
+| FCR-030 | `HARDENING` | Keep and harden | `VERIFIED` | 以 Project Status 为唯一 live ledger，分离 Charter、Roadmap、README、Development 与 CLI 职责，避免当前态重复漂移 | behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` review PASS；PR #24 reviewed-head CI PASS |
 | FCR-033 | `HARDENING` | Keep and harden | `VERIFIED` | 清除重复缓存，并固定已审计的 sentiment 权重格式；无产品或模型输出变化 | provider 回归、完整质量检查及真实离线双模型测试 |
 | FCR-034 | `HARDENING` | Keep and harden | `VERIFIED` | 明确 neutral threshold fallback，不改模型语义 | 定向回归与 final-candidate 人工复测通过 |
 | FCR-035 | `HARDENING` | Keep and harden | `VERIFIED` | 筛选后回到 Results anchor | Batch route 回归与人工复测通过 |
@@ -221,8 +221,8 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 - `OPEN verification`: FCR-003、005、014、015、017、021、023、026、031。
   FCR-002 已由 FCR-044 final-head smoke test 重新关闭；V-01 已由 exact tested
   behavioral SHA 满足，V-03–V-06 已由自动化/静态/委托技术复测覆盖。
-- `IMPLEMENTED / Keep and harden`: FCR-030；由 Product Hardening Batch A7
-  承载 PH-008，待 PR review 后决定是否转为 `VERIFIED`。
+- `VERIFIED / Keep and harden`: FCR-030；Product Hardening Batch A7 已完成
+  review 与 reviewed-head CI，PH-008 已关闭。
 - `OPEN / non-blocking Hardening`: FCR-042–043。
 - `VERIFIED / Product Hardening`: FCR-045；exact correction SHA 的 targeted/full
   local validation 与 PR #18 remote CI 均通过，PR #18 已合并到 main
@@ -230,18 +230,18 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 
 ### FCR-030 — 文档与 CLI 当前状态一致性
 
-- **Basic Information / 基本信息:** 生命周期文档、贡献者说明与 `sti about`；Product Hardening PH-008；状态 `IMPLEMENTED`。
+- **Basic Information / 基本信息:** 生命周期文档、贡献者说明与 `sti about`；Product Hardening PH-008；状态 `VERIFIED`。
 - **Current Behavior / 当前行为:** `PROJECT_STATUS.md` 是唯一 canonical live execution state；Roadmap 维护可变生命周期计划；Charter 仅维护稳定边界；README 提供简洁当前概览；Development 维护贡献纪律；CLI 仅报告安装版本、已完成功能边界与能力，并指向 Project Status。
 - **Manual Observation / 人工观察:** A7 审计发现 README、Roadmap、Charter 与 CLI 仍把 Feature Complete Review 或 Feature Freeze 描述为待进行，Project Status 仍把已合并 PR #23 写成下一操作。
 - **User Impact / 用户影响:** 冲突的当前态会误导开发、审查和发布判断，并使每次生命周期转换需要重复修正文案。
 - **Core Assessment / 核心评估:** PH-008 与既有 FCR-030 是同一 documentation-consistency 根因；不建立 FCR-051。
-- **Decision / 决定:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`。
+- **Decision / 决定:** Class `HARDENING`; Decision `Keep and harden`; Status `VERIFIED`。
 - **Rationale / 理由:** 将易变事实集中到一个 live ledger，比在 Charter 或 CLI 中复制 gate/PR/SHA 更能持续保持真实；历史记录仍保留当时正确的状态。
 - **Implementation Scope / 实施范围:** 修正当前 README、ROADMAP、Charter、Development、Project Status 与 `sti about`；同步 A6 merge 和 FCR-050 `VERIFIED`；不改 contracts/privacy/architecture 中不存在的矛盾。
 - **Acceptance Criteria / 验收标准:** 当前 surfaces 对 0.10.0、Milestones 1–10 complete、FCR Completed、Freeze PASS、Product Hardening、Manual Acceptance/RC Not started、Release readiness No 一致；CLI 不声称 freeze pending，也不冒充 live ledger；Manual QA 指向 tracked canonical path。
 - **Risks and Regression Scope / 风险与回归范围:** CLI about 输出、当前态职责、tracked Markdown 相对链接、canonical Manual QA 路径、历史记录不被误改；不涉及模型或 workflow behavior。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A7 Draft PR #24；behavioral candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`；Python 3.11/3.12/3.13 behavioral-head CI PASS。
-- **Final Outcome / 最终结果:** 已实现并通过 targeted consistency regression 与 behavioral-head CI；待 PR review 后决定是否转为 `VERIFIED`。Feature Freeze 保持 PASS，PH-009 未开始。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A7 PR #24；behavioral candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` lifecycle/CLI consistency review PASS；reviewed head `371b41bec0c6418bc07748a36d34e46dd4392664` Python 3.11/3.12/3.13 final-head CI PASS。
+- **Final Outcome / 最终结果:** targeted consistency regression、review 与 reviewed-head CI 全部通过，FCR-030 关闭为 `VERIFIED`。`PROJECT_STATUS.md` 保持唯一 canonical live execution ledger；FCR-045–050 保持 `VERIFIED`，Feature Freeze 保持 PASS，PH-009 未开始。
 
 ### FCR-034–FCR-041 — 固定审计记录
 
@@ -801,7 +801,7 @@ predeclare a pass.
 | FCR-027 | Keyboard and accessibility | Are focus, labels, error location, and major forms keyboard-operable? | OPEN |
 | FCR-028 | Responsive layout | Do narrow screens, tables, navigation, and critical actions remain usable? | OPEN |
 | FCR-029 | Error and empty states | Do missing tokens, expiry, empty results, and invalid input offer recovery? | OPEN |
-| FCR-030 | Documentation consistency | Do README, Charter, ROADMAP, Development, Project Status, and CLI responsibilities and current state agree? | IMPLEMENTED; PH-008 is carried here pending A7 PR review |
+| FCR-030 | Documentation consistency | Do README, Charter, ROADMAP, Development, Project Status, and CLI responsibilities and current state agree? | VERIFIED; A7 review and final-head CI passed |
 | FCR-031 | Current-version scope | Must any capability be added, removed, merged, hidden, or simplified? | OPEN |
 | FCR-032 | Deferred scope | Are French, long-form, connectors, persistence, and other expansion isolated? | OPEN |
 | FCR-033 | Local model-cache redundancy | Can pinned models run offline without duplicate weights or an unaudited conversion revision? | VERIFIED |
@@ -830,7 +830,7 @@ evidence and disposition.
 
 | ID | Decision Class | Decision | Status | Short rationale | Implementation/verification reference |
 | --- | --- | --- | --- | --- | --- |
-| FCR-030 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Make Project Status the only live ledger and separate Charter, Roadmap, README, Development, and CLI responsibilities to prevent repeated current-state drift | Product Hardening Batch A7 current-state, CLI, link, and stale-state regressions; PR review pending |
+| FCR-030 | `HARDENING` | Keep and harden | `VERIFIED` | Make Project Status the only live ledger and separate Charter, Roadmap, README, Development, and CLI responsibilities to prevent repeated current-state drift | behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` review PASS; PR #24 reviewed-head CI PASS |
 | FCR-033 | `HARDENING` | Keep and harden | `VERIFIED` | Remove redundant cache artifacts and pin the audited sentiment weight format without product or model-output changes | Provider regression, full quality suite, and real offline two-model tests |
 | FCR-034 | `HARDENING` | Keep and harden | `VERIFIED` | Explain neutral threshold fallback without changing model semantics | Targeted regression and final-candidate manual retest passed |
 | FCR-035 | `HARDENING` | Keep and harden | `VERIFIED` | Return filter submissions to the Results anchor | Batch route regression and manual retest passed |
@@ -877,8 +877,8 @@ CI status are authoritative in the PR checks.
   FCR-002 is re-closed by the FCR-044 final-head smoke test; V-01 is satisfied
   by the exact tested behavioral SHA, and V-03–V-06 are covered by automated,
   static, or delegated technical retest evidence.
-- `IMPLEMENTED / Keep and harden`: FCR-030; Product Hardening Batch A7 carries
-  PH-008 pending PR review and a decision whether to advance to `VERIFIED`.
+- `VERIFIED / Keep and harden`: FCR-030; Product Hardening Batch A7 passed
+  review and reviewed-head CI, closing PH-008.
 - `OPEN / non-blocking Hardening`: FCR-042–043.
 - `VERIFIED / Product Hardening`: FCR-045; targeted/full local validation and
   PR #18 remote CI passed on the exact correction SHA, and PR #18 merged to main
@@ -886,18 +886,18 @@ CI status are authoritative in the PR checks.
 
 ### FCR-030 — Documentation and CLI current-state consistency
 
-- **Basic Information:** Lifecycle documents, contributor instructions, and `sti about`; Product Hardening PH-008; status `IMPLEMENTED`.
+- **Basic Information:** Lifecycle documents, contributor instructions, and `sti about`; Product Hardening PH-008; status `VERIFIED`.
 - **Current Behavior:** `PROJECT_STATUS.md` is the only canonical live execution state. Roadmap owns the mutable lifecycle plan; Charter owns stable boundaries; README provides a concise current overview; Development owns contributor discipline; CLI reports the installed version, completed feature boundary, and capabilities, then points to Project Status.
 - **Manual Observation:** The A7 audit found README, Roadmap, Charter, and CLI still describing Feature Complete Review or Feature Freeze as pending, while Project Status still presented merged PR #23 as the next action.
 - **User Impact:** Conflicting current state can misdirect development, review, and release decisions and forces repeated wording repairs at each lifecycle transition.
 - **Core Assessment:** PH-008 and existing FCR-030 have the same documentation-consistency root cause; FCR-051 is not created.
-- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `VERIFIED`.
 - **Rationale:** Concentrating volatile facts in one live ledger is more durable than copying gates, PRs, and SHAs into Charter or CLI. Historical records retain statements that were accurate at the time.
 - **Implementation Scope:** Correct current README, ROADMAP, Charter, Development, Project Status, and `sti about`; synchronize the A6 merge and FCR-050 `VERIFIED`; do not churn Contracts, Privacy, or Architecture where no contradiction exists.
 - **Acceptance Criteria:** Current surfaces agree on 0.10.0, Milestones 1–10 complete, FCR Completed, Freeze PASS, Product Hardening, Manual Acceptance/RC Not started, and Release readiness No. CLI does not claim freeze pending or impersonate the live ledger. Manual QA uses the tracked canonical path.
 - **Risks and Regression Scope:** CLI about output, current-state responsibilities, tracked Markdown relative links, canonical Manual QA path, and preservation of historical records; no model or workflow behavior.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A7 Draft PR #24; behavioral candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`; Python 3.11/3.12/3.13 behavioral-head CI PASS.
-- **Final Outcome:** Implemented with targeted consistency regression and behavioral-head CI passing; PR review will decide whether to advance to `VERIFIED`. Feature Freeze remains PASS and PH-009 is not started.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A7 PR #24; behavioral candidate `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` lifecycle/CLI consistency review PASS; reviewed head `371b41bec0c6418bc07748a36d34e46dd4392664` Python 3.11/3.12/3.13 final-head CI PASS.
+- **Final Outcome:** Targeted consistency regression, review, and reviewed-head CI all passed, closing FCR-030 as `VERIFIED`. `PROJECT_STATUS.md` remains the only canonical live execution ledger; FCR-045–050 remain `VERIFIED`, Feature Freeze remains PASS, and PH-009 is not started.
 
 ### FCR-034–FCR-041 — fixed audit records
 

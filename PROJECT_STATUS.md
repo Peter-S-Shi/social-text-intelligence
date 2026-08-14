@@ -25,20 +25,21 @@ principles.
 | Product Hardening Batch A5 merged main SHA | `3a0bb9c9460379b55a6488f966034419e40cf91d` — PR #22 merged; A6 synchronized baseline |
 | Product Hardening Batch A6 behavioral candidate SHA | `1a2d25fafc532215b45cf8d6310e8e1b2b16140d` — Host/same-origin/CSP/security-header review, behavioral-head CI, and real-browser smoke PASS |
 | Product Hardening Batch A6 merged main SHA | `cfcd13ef582996b8c75aa20524dcc212e2ab8922` — PR #23 merged; A7 synchronized baseline |
-| Product Hardening Batch A7 behavioral candidate SHA | `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` — lifecycle/CLI consistency implementation; PR #24 behavioral-head CI PASS |
+| Product Hardening Batch A7 behavioral candidate SHA | `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c` — lifecycle/CLI consistency implementation and review PASS |
+| Product Hardening Batch A7 reviewed head SHA | `371b41bec0c6418bc07748a36d34e46dd4392664` — PR #24 final-head Python 3.11/3.12/3.13 CI PASS |
 | Current lifecycle phase | **Product Hardening** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | **Completed** |
 | Feature Freeze status | **PASS — explicitly approved 2026-08-13** |
-| Product Hardening status | **Batches A1–A6 merged; Batch A7 implemented and awaiting review**; FCR-030 is `IMPLEMENTED`; FCR-045–050 are `VERIFIED`; FCR-042 and FCR-043 remain non-blocking backlog |
+| Product Hardening status | **Batches A1–A6 merged; Batch A7 reviewed and verified in PR #24**; FCR-030 and FCR-045–050 are `VERIFIED`; FCR-042 and FCR-043 remain non-blocking backlog |
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
-| Open blockers | PH-008 is implemented under FCR-030 and awaits PR review; PH-009 is not started |
-| Approved audit items | FCR-030 reconciles PH-008 and is `IMPLEMENTED`; FCR-045 reconciles PH-001/PH-002 and remains `VERIFIED`; FCR-046 reconciles PH-003 and remains `VERIFIED`; FCR-047 reconciles PH-004 and remains `VERIFIED`; FCR-048 reconciles PH-005 and remains `VERIFIED`; FCR-049 reconciles PH-006 and remains `VERIFIED`; FCR-050 reconciles PH-007 and remains `VERIFIED` on behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
+| Open blockers | PH-008 is closed as FCR-030 `VERIFIED`; PH-009 is not started |
+| Approved audit items | FCR-030 reconciles PH-008 and is `VERIFIED` on behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`; FCR-045 reconciles PH-001/PH-002 and remains `VERIFIED`; FCR-046 reconciles PH-003 and remains `VERIFIED`; FCR-047 reconciles PH-004 and remains `VERIFIED`; FCR-048 reconciles PH-005 and remains `VERIFIED`; FCR-049 reconciles PH-006 and remains `VERIFIED`; FCR-050 reconciles PH-007 and remains `VERIFIED` on behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | Product Hardening Batch A7 behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`: PR #24 Python 3.11/3.12/3.13 CI PASS; 10 targeted CLI/lifecycle checks passed; full suite 167 passed with 2 opt-in model integrations skipped; Ruff, strict MyPy for 72 files, compileall, pip check, tracked-doc stale-state/link/manual-QA consistency checks, and repository privacy/safety checks passed |
-| Next required action | Review Product Hardening Batch A7 and decide whether FCR-030 may advance from `IMPLEMENTED` to `VERIFIED`; do not start PH-009 without separate authorization |
+| Latest validation | Product Hardening Batch A7 behavioral SHA `cce3133d7a2dcf9d1d06fe2e11a190c79dd22a1c`: lifecycle/CLI consistency review PASS; PR #24 reviewed head `371b41bec0c6418bc07748a36d34e46dd4392664` Python 3.11/3.12/3.13 CI PASS; 10 targeted CLI/lifecycle checks passed; full suite 167 passed with 2 opt-in model integrations skipped; Ruff, strict MyPy for 72 files, compileall, pip check, tracked-doc stale-state/link/manual-QA consistency checks, and repository privacy/safety checks passed |
+| Next required action | Await separate authorization before starting PH-009 or any later Product Hardening item |
 | Last updated | 2026-08-14 |
 
 ## Required maintenance
