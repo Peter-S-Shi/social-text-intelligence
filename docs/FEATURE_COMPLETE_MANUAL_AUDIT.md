@@ -506,7 +506,7 @@ Feature Freeze decision: Social Text Intelligence 0.10.0
 Decision date: 2026-08-13
 Tested behavioral SHA: 16acb0f5931b022b57f0c5cdbe4501973aa3ad11
 Decision: PASS
-Governance closure SHA: PENDING_THIS_DOCUMENTATION_ONLY_COMMIT
+Governance closure SHA: 2a701f87b167d5a112184b1ffedb4f8f7a12d95e
 Open current-version blockers: None
 Approved exceptions: FCR-042 and FCR-043 are non-blocking Product Hardening backlog
 Deferred next-version items: French/multilingual, long-form/transcripts, connectors, persistence, accounts/shared/cloud, and other approved future expansions
@@ -1044,7 +1044,7 @@ Feature Freeze decision: Social Text Intelligence 0.10.0
 Decision date: 2026-08-13
 Tested behavioral SHA: 16acb0f5931b022b57f0c5cdbe4501973aa3ad11
 Decision: PASS
-Governance closure SHA: PENDING_THIS_DOCUMENTATION_ONLY_COMMIT
+Governance closure SHA: 2a701f87b167d5a112184b1ffedb4f8f7a12d95e
 Open current-version blockers: None
 Approved exceptions: FCR-042 and FCR-043 are non-blocking Product Hardening backlog
 Deferred next-version items: French/multilingual, long-form/transcripts, connectors, persistence, accounts/shared/cloud, and other approved future expansions
