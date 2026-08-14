@@ -68,12 +68,17 @@ supplied IDs are explicit `duplicate_record_id` row errors. Each input row yield
 one `ok` or `error` outcome with a typed error code and message. File size, row
 count, and per-text length limits are enforced before or during preview.
 
-An optional `timestamp` must be ISO 8601 but is otherwise preserved exactly as
-supplied: a stated UTC offset is kept as stated, and a value with no timezone
-stays timezone-unspecified. The application never infers a timezone for such a
-value and never normalizes user timestamps to UTC. This is deliberately
-distinct from system-generated audit timestamps — review, moderation, triage,
-context-note, and export times are always timezone-aware UTC.
+An optional `timestamp` must be ISO 8601. Its semantics are preserved, not
+necessarily its exact spelling: a stated UTC offset is kept as stated and a
+value with no timezone stays timezone-unspecified, but the parsed value may be
+re-rendered in a normalized ISO form (for example `Z` becomes `+00:00`, and a
+date-only value gains an explicit midnight time). The raw text of the CSV cell
+itself is a separate, unparsed value; Batch CSV export reads that raw cell
+directly and reproduces it byte for byte, independent of parsing. The
+application never infers a timezone for a timezone-unspecified value and never
+normalizes a user timestamp's offset to UTC. This is deliberately distinct from
+system-generated audit timestamps — review, moderation, triage, context-note,
+and export times are always timezone-aware UTC.
 
 Sentiment distribution counts mutually exclusive selected labels. Dominant
 emotion distribution counts one selected compact label per successful row.

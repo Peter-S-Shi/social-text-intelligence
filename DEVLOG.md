@@ -10,11 +10,12 @@ one. The post-A8 governance sync PR #26 is recorded as merged at main SHA
 `7ef4d29d2bb98af2a60003748a575de8c5bcda96`, the baseline for this batch.
 
 The Support Triage `Sort: Timestamp` control sorted the stored ISO timestamp as
-a raw string. Because Batch CSV accepts any valid ISO 8601 value and preserves
-it verbatim, one workspace can hold several offsets at once, and lexicographic
-order is not real-instant order: `2026-07-01T08:00:00-05:00` is 13:00Z but
-sorts as text before `2026-07-01T10:00:00+00:00`, which is 10:00Z. The wrong
-order was silent, and the branch had no test coverage.
+a raw string. Batch CSV accepts any valid ISO 8601 value and keeps its stated
+offset (or its unspecified-timezone status) rather than normalizing it, so one
+workspace can hold several offsets at once, and lexicographic order is not
+real-instant order: `2026-07-01T08:00:00-05:00` is 13:00Z but sorts as text
+before `2026-07-01T10:00:00+00:00`, which is 10:00Z. The wrong order was
+silent, and the branch had no test coverage.
 
 Ordering now parses the value and applies one explicit contract. Offset-aware
 timestamps sort first, ascending by real instant. Timezone-unspecified values
