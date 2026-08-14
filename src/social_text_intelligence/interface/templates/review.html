@@ -8,16 +8,17 @@
   <script defer src="{{ url_for('static', filename='review.js') }}"></script>
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
   <header class="site-header">
     <div><p class="eyebrow">Milestone 7</p><h1>Human-in-the-Loop Review</h1></div>
     <span class="mode-badge">Temporary local memory</span>
   </header>
-  <main>
+  <main id="main-content" tabindex="-1">
     <nav class="mode-nav" aria-label="Application modes">
       <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
       <a href="{{ url_for('batch_workspace', token=token) }}">Batch CSV</a>
       <a href="{{ url_for('triage.home') }}">Support Triage</a>
-      <a class="active" href="{{ url_for('review_index', token=token) }}">Human review</a>
+      <a class="active" aria-current="page" href="{{ url_for('review_index', token=token) }}">Human review</a>
       <a href="{{ url_for('moderation.home', batch_token=token) }}">Moderation Training</a>
       <a href="{{ url_for('insights', token=token) }}">Insights</a>
     </nav>
@@ -54,7 +55,7 @@
       <div class="export-actions"><a class="button-link" href="{{ url_for('review_export', token=token) }}">Export reviewed CSV</a><a class="button-link secondary" href="{{ url_for('review_export', token=token, native=1) }}">Export with native scores</a></div>
     </section>
 
-    {% if error_message %}<div class="error" role="alert">{{ error_message }}</div>{% endif %}
+    {% if error_message %}<div class="error" role="alert" tabindex="-1" autofocus>{{ error_message }}</div>{% endif %}
 
     <section class="panel record-context">
       <div class="section-heading"><div><p class="eyebrow">Record</p><h2>{{ current.outcome.prepared.identity }}</h2></div><span class="status-{{ 'ok' if current.review.is_reviewed else 'pending' }}">{{ 'Reviewed' if current.review.is_reviewed else 'Unreviewed' }}</span></div>
@@ -79,7 +80,7 @@
           <code>{{ current.outcome.report.sentiment.provider.model_name }}@{{ current.outcome.report.sentiment.provider.revision }}</code>
         </section>
 
-        <fieldset class="panel review-decision" data-review-dimension="sentiment">
+        <fieldset class="panel review-decision" data-review-dimension="sentiment" aria-describedby="sentiment-review-help">
           <legend>Human sentiment judgment</legend>
           <div class="choice-row">
             {% for value in ['accept','correct','uncertain'] %}<label><input type="radio" name="sentiment_judgment" value="{{ value }}" {% if form_values.sentiment_judgment == value %}checked{% endif %}> {{ value|capitalize }}</label>{% endfor %}
@@ -89,7 +90,7 @@
               <select name="human_sentiment"><option value="">Select a label</option>{% for label in ['positive','neutral','negative'] %}<option value="{{ label }}" {% if form_values.human_sentiment == label %}selected{% endif %}>{{ label|capitalize }}</option>{% endfor %}</select>
             </label>
           </div>
-          <p><small>Accept copies the AI label. Uncertain records no human label and is excluded from agreement denominators.</small></p>
+          <p><small id="sentiment-review-help">Accept copies the AI label. Uncertain records no human label and is excluded from agreement denominators.</small></p>
         </fieldset>
 
         <section class="panel">
@@ -102,7 +103,7 @@
           <code>{{ current.outcome.report.emotion.provider.model_name }}@{{ current.outcome.report.emotion.provider.revision }}</code>
         </section>
 
-        <fieldset class="panel review-decision" data-review-dimension="emotion">
+        <fieldset class="panel review-decision" data-review-dimension="emotion" aria-describedby="emotion-review-help">
           <legend>Human emotion judgment</legend>
           <div class="choice-row">
             {% for value in ['accept','correct','uncertain'] %}<label><input type="radio" name="emotion_judgment" value="{{ value }}" {% if form_values.emotion_judgment == value %}checked{% endif %}> {{ value|capitalize }}</label>{% endfor %}
@@ -113,7 +114,7 @@
             </label>
             <fieldset class="secondary-options"><legend>Human secondary emotions</legend>{% for label in ['joy','amusement','admiration','gratitude','anger','sadness','fear','disgust','neutral'] %}<label><input type="checkbox" name="human_secondary_emotions" value="{{ label }}" {% if label in form_values.human_secondary_emotions %}checked{% endif %}> {{ label|capitalize }}</label>{% endfor %}</fieldset>
           </div>
-          <p><small>Neutral is exclusive. Human secondary labels are saved in compact-taxonomy order.</small></p>
+          <p><small id="emotion-review-help">Neutral is exclusive. Human secondary labels are saved in compact-taxonomy order.</small></p>
         </fieldset>
       </div>
 
@@ -139,10 +140,10 @@
       </div>
 
       <h3>Sentiment confusion</h3>
-      <div class="table-wrap"><table><thead><tr><th>AI \ Human</th>{% for label in ['positive','negative','neutral'] %}<th>{{ label }}</th>{% endfor %}</tr></thead><tbody>{% for row in summary.sentiment.confusion %}<tr><th>{{ row.ai_label }}</th>{% for human_label, count in row.human_counts %}<td>{{ count }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th scope="col">AI \ Human</th>{% for label in ['positive','negative','neutral'] %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead><tbody>{% for row in summary.sentiment.confusion %}<tr><th scope="row">{{ row.ai_label }}</th>{% for human_label, count in row.human_counts %}<td>{{ count }}</td>{% endfor %}</tr>{% endfor %}</tbody></table></div>
 
       <h3>Emotion label comparison</h3>
-      <div class="table-wrap"><table><thead><tr><th>Label</th><th>AI-only</th><th>Human-only</th><th>Shared</th></tr></thead><tbody>{% for item in summary.emotion.label_comparisons %}<tr><th>{{ item.label }}</th><td>{{ item.ai_only }}</td><td>{{ item.human_only }}</td><td>{{ item.shared }}</td></tr>{% endfor %}</tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th scope="col">Label</th><th scope="col">AI-only</th><th scope="col">Human-only</th><th scope="col">Shared</th></tr></thead><tbody>{% for item in summary.emotion.label_comparisons %}<tr><th scope="row">{{ item.label }}</th><td>{{ item.ai_only }}</td><td>{{ item.human_only }}</td><td>{{ item.shared }}</td></tr>{% endfor %}</tbody></table></div>
       <p>Most added: {% for label, count in summary.emotion.most_added if count %}{{ label }} ({{ count }}){% if not loop.last %}, {% endif %}{% else %}none{% endfor %}. Most removed: {% for label, count in summary.emotion.most_removed if count %}{{ label }} ({{ count }}){% if not loop.last %}, {% endif %}{% else %}none{% endfor %}.</p>
 
       <h3>Confidence and disagreement</h3>
