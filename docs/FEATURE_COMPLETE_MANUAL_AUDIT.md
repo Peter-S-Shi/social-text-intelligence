@@ -164,7 +164,7 @@ Final Outcome / 最终结果
 | FCR-043 | 说明与错误信息层级 | 次要说明、警告、错误的视觉层级是否足够清楚 | OPEN；非 blocker |
 | FCR-044 | 嵌套工作流返回主界面 | Triage 四个内部界面及同类深层页面是否有明确主界面返回链接 | VERIFIED；人工复测通过 |
 | FCR-045 | 临时 Batch 状态完整性 | 容量、TTL 与 active analysis 是否可能静默销毁或丢失现有工作 | VERIFIED；PR #18 correction CI 通过 |
-| FCR-046 | 完整输入推理真实性 | 合法长文本是否可能被模型静默截断并作为整篇分析返回 | IMPLEMENTED；等待 A2 PR review |
+| FCR-046 | 完整输入推理真实性 | 合法长文本是否可能被模型静默截断并作为整篇分析返回 | IMPLEMENTED；Draft PR #19 等待 review |
 
 ## 5. Feature decision index
 
@@ -185,7 +185,7 @@ Final Outcome / 最终结果
 | FCR-043 | `HARDENING` | Keep and harden | `OPEN` | 说明/错误层级是跨页面视觉改进，当前可恢复性未失败 | 后续 Product Hardening |
 | FCR-044 | `HARDENING` | Keep and harden | `VERIFIED` | 复测证明缺失返回路径造成重大操作困难；所有嵌套工作流增加明确 home link | exact behavioral SHA 人工复测与 CI 通过 |
 | FCR-045 | `HARDENING` | Keep and harden | `VERIFIED` | 容量阻止新建而非驱逐；active analysis 跨 TTL 原子写回或明确失败；error render 保留配置限制 | Product Hardening Batch A1 targeted/full regression；PR #18 correction head CI PASS |
-| FCR-046 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 以真实 tokenizer 编码长度拒绝超出 pinned 模型预算的完整输入，禁止静默截断与 partial-text success | Product Hardening Batch A2 targeted/full regression；等待 Draft PR review |
+| FCR-046 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 以真实 tokenizer 编码长度拒绝超出 pinned 模型预算的完整输入，禁止静默截断与 partial-text success | Product Hardening Batch A2 targeted/full regression；Draft PR #19 |
 
 ### 2026-08-13 最新反馈分类
 
@@ -438,7 +438,7 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 - **Implementation Scope / 实施范围:** 两个 pinned provider 使用经审计的 512-token encoded-input budget；tokenizer 启用 special tokens、关闭 truncation 并对真实 encoded length 校验；combined 在任一模型推理前预检所有 required providers；Direct/CLI 明确拒绝，Batch 仅该 row 失败且 export 不写入 AI scores/provenance。20,000-character application safety ceiling 保持独立。
 - **Acceptance Criteria / 验收标准:** encoded length 512 成功、513 明确 `model_input_too_long`；special tokens 纳入计数；Cardiff、SamLowe、combined、Direct、mixed Batch、export 与 CLI 一致；既有未超限输出 label/score/provenance 不变；不新增 chunking、aggregation、summarization、模型、revision、threshold、持久化或成功结果 truncation 字段。
 - **Risks and Regression Scope / 风险与回归范围:** tokenizer/model metadata compatibility、Cardiff documented preprocessing、双 provider 预检顺序、首次模型加载、Batch row isolation/export、CLI error handling 与 UI copy；PH-004 及其他 hardening 不在范围内。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；behavioral candidate `31b5e6cf7fc6d551bb72680900976595008d9d7c`；Product Hardening Batch A2 Draft PR 与 remote CI 待创建/验证。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；behavioral candidate `31b5e6cf7fc6d551bb72680900976595008d9d7c`；Draft PR #19；最终 CI 状态以 PR checks 为准。
 - **Final Outcome / 最终结果:** A2 合同与 regressions 已实现；保持 `IMPLEMENTED`，等待 Draft PR CI 与 review 后再决定是否关闭为 `VERIFIED`。
 
 ### FCR-033 — 本地模型缓存冗余
@@ -731,7 +731,7 @@ predeclare a pass.
 | FCR-043 | Explanatory/error hierarchy | Are secondary copy, warnings, and errors visually distinct enough? | OPEN; non-blocking |
 | FCR-044 | Nested-workflow return navigation | Do all four Triage internals and comparable deep views expose an explicit application-home link? | VERIFIED; manual retest passed |
 | FCR-045 | Ephemeral Batch state integrity | Can capacity, TTL, or active analysis silently destroy or lose existing work? | VERIFIED; PR #18 correction CI passed |
-| FCR-046 | Complete-input inference truthfulness | Can valid long text be silently truncated and returned as whole-text analysis? | IMPLEMENTED; awaiting A2 PR review |
+| FCR-046 | Complete-input inference truthfulness | Can valid long text be silently truncated and returned as whole-text analysis? | IMPLEMENTED; Draft PR #19 awaiting review |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -753,7 +753,7 @@ evidence and disposition.
 | FCR-043 | `HARDENING` | Keep and harden | `OPEN` | Information hierarchy is cross-page visual hardening; recovery behavior did not fail | Later Product Hardening |
 | FCR-044 | `HARDENING` | Keep and harden | `VERIFIED` | Retest proved that missing return paths cause material operating difficulty; every nested workflow now has an explicit home link | Exact behavioral SHA manual retest and CI passed |
 | FCR-045 | `HARDENING` | Keep and harden | `VERIFIED` | Capacity blocks instead of evicting; active analysis commits atomically across TTL or fails explicitly; error rendering retains configured limits | Product Hardening Batch A1 targeted/full regression; PR #18 correction-head CI PASS |
-| FCR-046 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Reject over-budget complete input by real tokenizer length; prohibit silent truncation and partial-text success | Product Hardening Batch A2 targeted/full regression; awaiting Draft PR review |
+| FCR-046 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Reject over-budget complete input by real tokenizer length; prohibit silent truncation and partial-text success | Product Hardening Batch A2 targeted/full regression; Draft PR #19 |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -1012,7 +1012,7 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 - **Implementation Scope:** Use an audited 512-token encoded-input budget for both pinned providers; enable tokenizer special tokens, disable truncation, and validate real encoded length; preflight every required provider before combined inference; reject Direct/CLI explicitly; fail only the affected Batch row and leave its exported AI scores/provenance blank. Keep the 20,000-character application safety ceiling separate.
 - **Acceptance Criteria:** Encoded length 512 succeeds and 513 returns explicit `model_input_too_long`; special tokens count; Cardiff, SamLowe, combined, Direct, mixed Batch, export, and CLI agree; existing within-budget labels/scores/provenance do not change; no chunking, aggregation, summarization, model, revision, threshold, persistence, or successful-result truncation field is added.
 - **Risks and Regression Scope:** Tokenizer/model metadata compatibility, documented Cardiff preprocessing, two-provider preflight order, first model load, Batch row isolation/export, CLI error handling, and UI copy; PH-004 and all other hardening are excluded.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; behavioral candidate `31b5e6cf7fc6d551bb72680900976595008d9d7c`; Product Hardening Batch A2 Draft PR and remote CI pending creation/verification.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; behavioral candidate `31b5e6cf7fc6d551bb72680900976595008d9d7c`; Draft PR #19; final CI status is authoritative in PR checks.
 - **Final Outcome:** The A2 contract and regressions are implemented; status remains `IMPLEMENTED` pending Draft PR CI and review before any move to `VERIFIED`.
 
 ### FCR-033 — Local model-cache redundancy
