@@ -5,12 +5,12 @@ development. Its long-term purpose is to support sentiment, emotion, and
 human-in-the-loop analysis of feedback, comments, transcripts, and other social
 text with transparently licensed open-source models.
 
-> **Current lifecycle phase: Full Regression and Manual Acceptance**
+> **Current lifecycle phase: Release Candidate**
 >
 > Planned feature milestones 1–10 are complete, Feature Complete Review is
-> completed, Feature Freeze is PASS, and Product Hardening is complete.
-> Manual Acceptance and Release Candidate work have not started, so the
-> current version is not release-ready.
+> completed, Feature Freeze is PASS, Product Hardening is complete, and Full
+> Regression and Manual Acceptance is PASS. Release Candidate work has not
+> started, so the current version is not release-ready.
 
 ## Principles
 
@@ -299,10 +299,10 @@ temporary token. Tickets with no deterministic mock say that it is unavailable;
 the assisted-mode explanation appears only when a suggestion actually exists.
 
 Milestone 10 is the last completed planned feature milestone for the current
-version. Feature Complete Review is completed, Feature Freeze is PASS, and
-Product Hardening is complete; Full Regression and Manual Acceptance is the
-current lifecycle phase. Manual Acceptance passing, an explicit
-release-candidate decision, and release readiness itself remain later gates.
+version. Feature Complete Review is completed, Feature Freeze is PASS,
+Product Hardening is complete, and Full Regression and Manual Acceptance is
+PASS; Release Candidate is the current lifecycle phase. An explicit
+release-candidate decision and release readiness itself remain later gates.
 Deferred next-version candidates remain outside the current `0.10.0`
 feature boundary. Detailed live execution state is maintained only in
 [Project Status](PROJECT_STATUS.md).

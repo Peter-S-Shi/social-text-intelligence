@@ -27,11 +27,12 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## Current lifecycle phase
 
-**Current phase: Full Regression and Manual Acceptance**
+**Current phase: Release Candidate**
 
-Feature Complete Review is completed, Feature Freeze is PASS, and Product
-Hardening is complete. Manual Acceptance and Release Candidate work have not
-started, and release readiness remains No. Findings belong in the
+Feature Complete Review is completed, Feature Freeze is PASS, Product
+Hardening is complete, and Full Regression and Manual Acceptance is PASS.
+Release Candidate work has not started, and release readiness remains No.
+Findings belong in the
 [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md), while
 the detailed live state belongs only in [Project Status](PROJECT_STATUS.md).
 
@@ -144,12 +145,25 @@ frozen feature set requires an explicit freeze-reopening decision.
 
 ## Full Regression and Manual Acceptance
 
-**Status: Current phase. Not yet passed.** Entering this phase means Product
-Hardening is complete and the repository may begin this work — it does not
-mean Manual Acceptance has passed, that a Release Candidate has started, or
-that release readiness has changed from No.
+**Status: PASS — 2026-08-14.** A repository-owner-authorized agent-operated
+session executed a repository-owner-defined minimum required fresh-interaction
+profile of 20 questionnaire items against tested SHA
+`71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1`, using a real offline local server
+and a real browser. All 20 items PASS; 0 FAIL; 0 blocking defects under the
+[Manual Acceptance Gate Standard](docs/MANUAL_ACCEPTANCE_GATE.md). Automated
+Full Regression evidence reused the independent post-merge `main` CI already
+recorded for that SHA (pytest, Ruff, MyPy, compile, dependency install) plus
+existing Product Hardening real-model/concurrency/HTTP-boundary/browser-security
+evidence, per that SHA's Product Hardening record. FCR-042 and FCR-043 dispositions
+are untouched. All nine carried-forward pre-freeze "OPEN verification" items
+(FCR-003, 005, 014, 015, 017, 021, 023, 026, 031) received explicit
+disposition and closed `VERIFIED` before this phase's PASS, using existing
+Feature Freeze, Product Hardening, and regression-test evidence plus this
+session's own fresh evidence where directly applicable (FCR-003, FCR-026);
+no carried-forward verification item remains open. Full detail is recorded in
+the [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md).
 
-This phase requires:
+This phase required:
 
 - the complete automated test and quality suite;
 - browser-based and manual QA across representative workflows;
@@ -158,21 +172,20 @@ This phase requires:
 - privacy-default, explicit opt-in, `no-store`, and formula-injection checks;
 - current audit, QA, status, and defect records;
 - closure or formal disposition of every blocking defect, including the
-  pre-freeze "OPEN verification" checklist items carried forward from Feature
-  Complete Review (FCR-003, 005, 014, 015, 017, 021, 023, 026, 031).
+  pre-freeze "OPEN verification" checklist items carried forward from
+  Feature Complete Review (FCR-003, 005, 014, 015, 017, 021, 023, 026, 031)
+  — all nine closed `VERIFIED` before this phase's PASS.
 
 The canonical repeatable checklist is
 [Manual QA](manual-qa/manual_review_questionnaire.html). A completed exported record is
 evidence for a specific tested version; it does not replace the living
 checklist. What PASS, FAIL, and N/A mean for this phase, who may execute it,
 and what evidence a decision requires are defined once, permanently, in the
-[Manual Acceptance Gate Standard](docs/MANUAL_ACCEPTANCE_GATE.md). Establishing
-that standard is readiness preparation; it is not itself an acceptance
-decision and does not start this phase's execution.
+[Manual Acceptance Gate Standard](docs/MANUAL_ACCEPTANCE_GATE.md).
 
 ## Release Candidate and Packaging
 
-**Status: Not started.**
+**Status: Current phase. Not started.**
 
 An RC decision freezes the candidate contents and verifies:
 

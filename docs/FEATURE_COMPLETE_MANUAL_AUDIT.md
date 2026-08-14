@@ -10,7 +10,7 @@ sections use the same stable `FCR-XXX` identifiers.
 
 ## 1. 当前状态与使用方法
 
-- 当前阶段：**Full Regression and Manual Acceptance（全面回归与人工验收）**；Product Hardening 已 COMPLETE
+- 当前阶段：**Release Candidate（发布候选）**；Full Regression and Manual Acceptance 已 **PASS**（2026-08-14）
 - Feature Freeze：**PASS（2026-08-13 用户明确批准）**
 - Release readiness：**否**
 - 操作型逐项测试记录：
@@ -121,9 +121,9 @@ Final Outcome / 最终结果
 | --- | --- | --- | --- |
 | FCR-001 | 启动与本地边界 | 安装、离线启动、loopback、限制和数据生命周期是否清楚 | OPEN |
 | FCR-002 | 顶层导航 | 所有主要工作流是否可发现且层级一致 | VERIFIED |
-| FCR-003 | 直接文本输入 | 空白、超长、英文与不支持语言的反馈是否可恢复 | OPEN |
+| FCR-003 | 直接文本输入 | 空白、超长、英文与不支持语言的反馈是否可恢复 | VERIFIED；2026-08-14 Full Regression and Manual Acceptance 现场验证 |
 | FCR-004 | Sentiment 输出 | 标签、分数、置信度、模型和 revision 是否透明 | OPEN |
-| FCR-005 | Emotion 输出 | native/compact、多标签阈值和 neutral 语义是否明确 | OPEN |
+| FCR-005 | Emotion 输出 | native/compact、多标签阈值和 neutral 语义是否明确 | VERIFIED；FCR-034 与既有回归测试覆盖 |
 | FCR-006 | 模型限制 | 输出是否避免心理诊断、客观真相或确定性暗示 | OPEN |
 | FCR-007 | Batch 预览 | UTF-8、文本列选择、metadata 和限制是否可理解 | OPEN |
 | FCR-008 | Batch 局部失败 | 合法行、无效行和 provider 失败是否逐行保留 | OPEN |
@@ -132,24 +132,24 @@ Final Outcome / 最终结果
 | FCR-011 | 独立人工判断 | accept/correct/uncertain 与 AI 字段是否始终分离 | OPEN |
 | FCR-012 | Review 汇总与导出 | 分母、agreement、时间和公式保护是否正确 | OPEN |
 | FCR-013 | Insights 分组 | 只使用受信 metadata，不从文本推断群体 | OPEN |
-| FCR-014 | Insights 指标 | raw counts、eligible denominator、sample warning 和视角是否一致 | OPEN |
-| FCR-015 | Context Notes | 人工来源、UTC 时间、删除和非标签语义是否明确 | OPEN |
+| FCR-014 | Insights 指标 | raw counts、eligible denominator、sample warning 和视角是否一致 | VERIFIED；既有 Insights service 回归测试覆盖 |
+| FCR-015 | Context Notes | 人工来源、UTC 时间、删除和非标签语义是否明确 | VERIFIED；FCR-038 与既有回归测试、模板文案覆盖 |
 | FCR-016 | Insight 导出 | audit metadata、失败行分组、opt-in 和 no-store 是否完整 | OPEN |
-| FCR-017 | Moderation 来源 | synthetic policy、reference provenance 和 mock 边界是否诚实 | OPEN |
+| FCR-017 | Moderation 来源 | synthetic policy、reference provenance 和 mock 边界是否诚实 | VERIFIED；既有回归测试与 2026-08-14 现场观察覆盖 |
 | FCR-018 | Moderation 决定 | structural error 与 guidance warning 是否真正分离 | OPEN |
 | FCR-019 | Moderation 会话 | first/final 决定、反馈、限制和清理是否可审计 | OPEN |
 | FCR-020 | Moderation 隐私导出 | 用户文本及上下文是否默认排除、仅显式 opt-in 包含 | OPEN |
-| FCR-021 | Triage 来源与 draft | guide、ticket provenance、draft 与无 mock 状态是否清楚 | OPEN |
+| FCR-021 | Triage 来源与 draft | guide、ticket provenance、draft 与无 mock 状态是否清楚 | VERIFIED；既有回归测试与 2026-08-14 现场观察覆盖 |
 | FCR-022 | Triage finalize/revision | 原子完成、immutable first decision 和 revision 是否正确 | OPEN |
-| FCR-023 | Triage mock 与汇总 | 可见性、unavailable 排除及各指标分母是否正确 | OPEN |
+| FCR-023 | Triage mock 与汇总 | 可见性、unavailable 排除及各指标分母是否正确 | VERIFIED；既有 Support Triage 回归测试覆盖 |
 | FCR-024 | Triage 隐私导出 | 各 workspace 上下文类别是否独立 opt-in | OPEN |
 | FCR-025 | 隐私与本地状态 | 日志、过期、清理、no-store 和无静默持久化是否一致 | OPEN |
-| FCR-026 | 公式注入保护 | 所有用户可控 CSV 字段是否安全转义 | OPEN |
+| FCR-026 | 公式注入保护 | 所有用户可控 CSV 字段是否安全转义 | VERIFIED；5 个导出路径回归测试与 2026-08-14 review-formula 现场验证覆盖 |
 | FCR-027 | 键盘与可访问性 | 焦点、标签、错误定位和主要表单是否可键盘操作 | VERIFIED；A8 review、PR #25 CI 与人工键盘复测 PASS |
 | FCR-028 | 响应式布局 | 窄屏、表格、导航和关键操作是否仍可使用 | OPEN |
 | FCR-029 | 错误与空状态 | 无 token、过期、空结果和非法输入是否提供恢复路径 | OPEN |
 | FCR-030 | 文档一致性 | README、Charter、ROADMAP、Development、Project Status 与 CLI 的职责及当前状态是否一致 | VERIFIED；A7 review 与 final-head CI PASS |
-| FCR-031 | 当前版本范围 | 是否存在必须添加、移除、合并、隐藏或简化的能力 | OPEN |
+| FCR-031 | 当前版本范围 | 是否存在必须添加、移除、合并、隐藏或简化的能力 | VERIFIED；由 Feature Freeze 决定与既有逐项 scope disposition 解决 |
 | FCR-032 | 延后范围 | French、long-form、connectors、persistence 等是否明确隔离 | OPEN |
 | FCR-033 | 本地模型缓存冗余 | 固定模型能否在不复制权重或产生未审计转换 revision 的情况下离线运行 | VERIFIED |
 | FCR-034 | Emotion neutral 阈值回退语义 | neutral 是否明确表示阈值回退，而非最高 raw score | VERIFIED |
@@ -226,7 +226,11 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
   review、PR #25 CI 与人工键盘复测，PH-009 已关闭；不建立 FCR-051。
 - `VERIFIED / Keep and harden`: FCR-034–041 与 FCR-044；final-candidate
   人工或委托技术复测均已完成。
-- `OPEN verification`: FCR-003、005、014、015、017、021、023、026、031。
+- `VERIFIED / Full Regression and Manual Acceptance`: FCR-003、005、014、
+  015、017、021、023、026、031（9 项，此前列为 pre-freeze `OPEN
+  verification`）；2026-08-14 Full Regression and Manual Acceptance 阶段
+  逐项复核既有证据后全部关闭为 `VERIFIED`，详见下方
+  "2026-08-14 Full Regression and Manual Acceptance 通过决定"。
   FCR-002 已由 FCR-044 final-head smoke test 重新关闭；V-01 已由 exact tested
   behavioral SHA 满足，V-03–V-06 已由自动化/静态/委托技术复测覆盖。
 - `VERIFIED / Keep and harden`: FCR-030；Product Hardening Batch A7 已完成
@@ -742,6 +746,130 @@ Evidence: PR #18–#28 各自的 behavioral candidate/reviewed head 远程 CI；
 本决定不代表 Manual Acceptance 已通过、Release Candidate 已开始，或 release
 readiness 已变为 Yes；这些仍是后续独立的 gate。
 
+### 2026-08-14 Full Regression and Manual Acceptance 通过决定
+
+```text
+Full Regression and Manual Acceptance decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-14
+Tested candidate SHA: 71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1（PR #30 合并；
+  独立 post-merge main CI 在 Python 3.11/3.12/3.13 全部 PASS）
+Decision: PASS
+Executor: repository owner 明确授权的 interactive coding agent；在真实本地
+  离线服务（sti-web --offline，真实 pinned 模型）与真实浏览器中操作
+Automated Full Regression evidence: 复用该 exact SHA 的独立 post-merge main
+  CI（pytest、Ruff、MyPy、compile、依赖安装）；不重复本地跑一遍相同证据；
+  真实模型容量、并发完整性、HTTP 边界与浏览器安全边界证据复用既有 Product
+  Hardening 记录（FCR-046–050）
+Required fresh interactive profile: repository owner 定义的 20 项最小
+  profile（setup-launch、setup-nav、setup-boundary、direct-validation、
+  direct-limits、batch-busy-state、batch-edge-preview、batch-edge-analysis、
+  batch-clear、review-formula、moderation-structural、moderation-warning、
+  triage-timestamp-sort、cross-applied-state、cross-keyboard、
+  cross-a11y-semantics、cross-privacy、cross-no-store、cross-expiry、
+  cross-errors）
+Result: 20/20 PASS；0 FAIL；0 blocking defect
+Six consolidated scenarios: A（Startup + Direct）、B（Batch edge workflow，
+  9-row edge CSV：3 valid/6 invalid preview，2 analyzed/7 failed 分析，
+  aria-busy busy state，显式 clear 与 cleared-token 恢复）、C（Review formula
+  export，=SYNTHETIC_FORMULA_TEST 安全转义确认）、D（Moderation
+  structural/warning pair，reasoning-required 结构错误与
+  allow_with_violation non-blocking warning）、E（专为 triage-timestamp-sort
+  构造的 4 行合成 batch：aware +05:00、aware -05:00（字典序与真实 instant
+  顺序相反）、naive、missing，link 到 Triage 后按 Timestamp 排序结果与契约
+  完全一致；cross-applied-state 在 Triage Workspace、Moderation Prepare、
+  Insights Representative Cases 三个 surface 上分别验证非默认 query state
+  回显）、F（cross-cutting：真实 skip-link 键盘激活、aria-current/
+  aria-invalid/aria-describedby/role=alert 语义、完整会话期间服务端日志
+  隐私复核、导出响应 no-store/CSP header、batch-clear 证明的 process-memory
+  过期恢复路径）
+FCR-042/FCR-043 disposition: 未改动，保持既有 OPEN non-blocking
+Carried-forward pre-freeze FCR reconciliation (required before this phase
+  may close, per Roadmap): 全部 9 项复核既有证据后关闭为 VERIFIED，不新增
+  产品代码或问卷改动，仅一项复用本次会话已有的现场证据（FCR-026），其余
+  依赖既有回归测试与既有决定：
+  - FCR-003（Direct 空白/超长/英文/不支持语言反馈是否可恢复）: VERIFIED。
+    由本次 direct-limits 与 direct-validation 项直接验证，确认与当前版本
+    产品行为一致（Direct 无语言选择控件，仅执行长度上限与 English-only
+    边界；不支持语言标签场景由 Batch CSV language 列覆盖，本次
+    batch-edge-analysis 中 edge-fr-001 的 unsupported_language 失败即为
+    该场景的真实证据）。
+  - FCR-005（Emotion native/compact、多标签阈值、neutral 语义是否明确）:
+    VERIFIED。FCR-034（已 VERIFIED）确立 neutral 阈值回退语义；
+    tests/test_web_app.py::test_post_renders_complete_combined_report 与
+    ::test_neutral_result_explains_threshold_fallback 对 dominant/
+    secondary/threshold/native-scores 展示与阈值回退文案有确定性回归覆盖。
+  - FCR-014（Insights raw counts/eligible denominator/sample warning/
+    perspectives 是否一致）: VERIFIED。
+    tests/test_insights_service.py 中
+    test_group_context_counts_successes_failures_and_unassigned_rows、
+    test_sample_size_policy_applies_per_metric_group、
+    test_metric_must_match_perspective、
+    test_human_and_disagreement_denominators_exclude_uncertain 分别覆盖
+    四个子问题。
+  - FCR-015（Context Notes 人工来源/UTC 时间/删除/非标签语义是否明确）:
+    VERIFIED。FCR-038（已 VERIFIED）确立 UTC 展示；
+    tests/test_insights_service.py::test_context_notes_are_separate_validated_and_deletable
+    覆盖删除与"notes 不进入 human review 字段"的非标签语义；
+    insights.html 模板文案直接声明"Manual annotation only"、
+    "user-authored observations"、"not protected-attribute labels"，并逐条
+    显示 `Created at (UTC)`。
+  - FCR-017（Moderation synthetic policy/reference provenance/mock 边界是否
+    诚实）: VERIFIED。
+    tests/test_moderation_resources.py::test_policy_and_fixture_provenance_and_coverage_are_complete
+    与 ::test_fixture_cases_are_synthetic_and_policy_versioned 确认 policy
+    版本化、20 个内置 case 的 reference provenance 均为 BUILT_IN、
+    ai_available/ai_unavailable 边界显式区分；本次会话 Scenario D 现场观察
+    Prepare 页面确认 "Synthetic Moderation Training Policy 1.0.0" 与逐 case
+    的 mock available/unavailable 标注真实可见。
+  - FCR-021（Triage guide/ticket provenance、draft、无 mock 状态是否清楚）:
+    VERIFIED。
+    tests/test_triage_routes.py::test_independent_draft_atomic_finalize_reveal_revision_and_no_store
+    与 ::test_no_mock_is_explicit_and_never_claimed_visible、
+    tests/test_support_triage.py::test_draft_finalize_warning_revision_and_summary
+    覆盖三个子问题；本次会话 Scenario E 现场观察 Source & Guide 与 Workspace
+    页面确认 guide 版本号与 built_in_synthetic/workspace_record provenance
+    区分真实可见。
+  - FCR-023（Triage mock 可见性/unavailable 排除/各指标分母是否正确）:
+    VERIFIED。
+    tests/test_support_triage.py::test_finalized_distribution_sample_uses_finalized_denominator、
+    ::test_mock_agreement_sample_uses_mock_eligible_denominator、
+    ::test_unavailable_mock_is_neither_visible_nor_hidden 与
+    tests/test_triage_routes.py::test_summary_separates_finalized_and_mock_sample_notices、
+    ::test_summary_warns_when_only_one_finalized_ticket_has_a_mock 分别覆盖
+    可见性、排除与各指标独立分母三个子问题。
+  - FCR-026（所有用户可控 CSV 字段是否安全转义）: VERIFIED。
+    2026-08-14 会话 Scenario C（review-formula，本次 20 项 required profile
+    之一）已现场验证 `=SYNTHETIC_FORMULA_TEST` 导出为安全的 apostrophe 前缀
+    字面量；`safe_spreadsheet_text()` 应用于 Batch/Review/Insights/
+    Moderation/Triage 全部 5 个导出路径且各自有专属回归测试，已在
+    2026-08-14 Product Hardening 关闭决定中直接复核代码确认无缺陷。
+  - FCR-031（当前版本是否存在必须添加、移除、合并、隐藏或简化的能力）:
+    VERIFIED——scope/judgment 项，而非行为缺陷，由既有生命周期决定解决。
+    2026-08-13 Feature Freeze 决定明确记录 "Open current-version blockers:
+    None"；既有 FCR disposition map 中 FCR-001–002、004、006–013、016、
+    018–020、022、025、027–029、032–033 等构成当前版本范围的全部单项
+    capability 问题均已各自标记 `VERIFIED / Keep as-is`；Product Hardening
+    A1–A10 的每个批次均明确要求"不新增产品域、语言、模型系统、connector、
+    account、persistence 或顶层 workflow"且逐批复核未发现范围扩张。三者
+    合并已充分回答本项的聚合问题，不需要新增单独的行为验证。
+Evidence export: manual-qa/results/
+  sti-full-regression-manual-acceptance-71fa608-2026-08-14.{json,md}
+  （本地文件，受 .gitignore 保护，未提交到仓库）
+Next lifecycle phase: Release Candidate
+Release Candidate status: Not started
+Release readiness: No
+Approver: User / project owner
+```
+
+本决定不代表 Release Candidate 已开始或 release readiness 已变为 Yes；RC
+仍是后续独立的 gate。所有 84 项问卷检查中，仅上述 20 项在本次会话中获得新鲜
+交互证据；其余项目继续由既有自动化、Feature Freeze、Product Hardening 与
+历史版本证据支持，未被标记、也未被强制置为 N/A。Roadmap 要求的九项
+pre-freeze `OPEN verification` carried-forward FCR（FCR-003、005、014、
+015、017、021、023、026、031）均已在本决定中获得明确 disposition 并关闭为
+`VERIFIED`；本阶段不再有未关闭的 carried-forward 核查项遗留给 Release
+Candidate。
+
 ## 7. Codex 维护规则
 
 1. 新发现使用下一个永久 `FCR-XXX` ID。
@@ -760,7 +888,7 @@ readiness 已变为 Yes；这些仍是后续独立的 gate。
 
 ## 1. Current state and use
 
-- Current phase: **Full Regression and Manual Acceptance**; Product Hardening is **COMPLETE**
+- Current phase: **Release Candidate**; Full Regression and Manual Acceptance is **PASS** (2026-08-14)
 - Feature Freeze: **PASS (explicit user approval on 2026-08-13)**
 - Release readiness: **No**
 - Repeatable operational checklist:
@@ -874,9 +1002,9 @@ predeclare a pass.
 | --- | --- | --- | --- |
 | FCR-001 | Startup and local boundary | Are installation, offline startup, loopback binding, limits, and data lifecycle clear? | OPEN |
 | FCR-002 | Top-level navigation | Are all major workflows discoverable and consistently organized? | VERIFIED |
-| FCR-003 | Direct text input | Are blank, oversized, English, and unsupported-language outcomes recoverable? | OPEN |
+| FCR-003 | Direct text input | Are blank, oversized, English, and unsupported-language outcomes recoverable? | VERIFIED; 2026-08-14 Full Regression and Manual Acceptance live verification |
 | FCR-004 | Sentiment output | Are labels, scores, confidence, model, and revision transparent? | OPEN |
-| FCR-005 | Emotion output | Are native/compact, multi-label threshold, and neutral semantics explicit? | OPEN |
+| FCR-005 | Emotion output | Are native/compact, multi-label threshold, and neutral semantics explicit? | VERIFIED; covered by FCR-034 and existing regression tests |
 | FCR-006 | Model limitations | Does output avoid psychological, objective-truth, or certainty implications? | OPEN |
 | FCR-007 | Batch preview | Are UTF-8 input, text-column selection, metadata, and limits understandable? | OPEN |
 | FCR-008 | Batch partial failure | Are valid rows, invalid rows, and provider failures preserved separately? | OPEN |
@@ -885,24 +1013,24 @@ predeclare a pass.
 | FCR-011 | Independent human judgment | Do accept/correct/uncertain remain separate from AI fields? | OPEN |
 | FCR-012 | Review summary and export | Are denominators, agreement, timestamps, and formula safety correct? | OPEN |
 | FCR-013 | Insight grouping | Is grouping limited to trusted metadata without text-derived group inference? | OPEN |
-| FCR-014 | Insight metrics | Are raw counts, eligible denominators, sample warnings, and perspectives consistent? | OPEN |
-| FCR-015 | Context Notes | Are human authorship, UTC time, deletion, and non-label semantics explicit? | OPEN |
+| FCR-014 | Insight metrics | Are raw counts, eligible denominators, sample warnings, and perspectives consistent? | VERIFIED; covered by existing Insights service regression tests |
+| FCR-015 | Context Notes | Are human authorship, UTC time, deletion, and non-label semantics explicit? | VERIFIED; covered by FCR-038, existing regression tests, and template copy |
 | FCR-016 | Insight export | Are audit metadata, failed-row grouping, opt-ins, and no-store complete? | OPEN |
-| FCR-017 | Moderation sources | Are synthetic policy, reference provenance, and mock boundaries honest? | OPEN |
+| FCR-017 | Moderation sources | Are synthetic policy, reference provenance, and mock boundaries honest? | VERIFIED; covered by existing regression tests and 2026-08-14 live observation |
 | FCR-018 | Moderation decisions | Are structural errors and guidance warnings behaviorally separate? | OPEN |
 | FCR-019 | Moderation sessions | Are first/final decisions, feedback, limits, and clearing auditable? | OPEN |
 | FCR-020 | Moderation privacy export | Is user context excluded by default and included only by explicit opt-in? | OPEN |
-| FCR-021 | Triage sources and drafts | Are guide/ticket provenance, draft, and no-mock states clear? | OPEN |
+| FCR-021 | Triage sources and drafts | Are guide/ticket provenance, draft, and no-mock states clear? | VERIFIED; covered by existing regression tests and 2026-08-14 live observation |
 | FCR-022 | Triage finalize/revision | Are atomic finalization, immutable first decision, and revisions correct? | OPEN |
-| FCR-023 | Triage mock and summary | Are visibility, unavailable exclusions, and metric denominators correct? | OPEN |
+| FCR-023 | Triage mock and summary | Are visibility, unavailable exclusions, and metric denominators correct? | VERIFIED; covered by existing Support Triage regression tests |
 | FCR-024 | Triage privacy export | Is each workspace context category independently opt-in? | OPEN |
 | FCR-025 | Privacy and local state | Are logging, expiry, clearing, no-store, and no silent persistence consistent? | OPEN |
-| FCR-026 | Formula-injection protection | Is every user-controlled CSV field safely escaped? | OPEN |
+| FCR-026 | Formula-injection protection | Is every user-controlled CSV field safely escaped? | VERIFIED; covered by regression tests across all 5 export paths and 2026-08-14 review-formula live verification |
 | FCR-027 | Keyboard and accessibility | Are focus, labels, error location, and major forms keyboard-operable? | VERIFIED; A8 review, PR #25 CI, and manual keyboard retest passed |
 | FCR-028 | Responsive layout | Do narrow screens, tables, navigation, and critical actions remain usable? | OPEN |
 | FCR-029 | Error and empty states | Do missing tokens, expiry, empty results, and invalid input offer recovery? | OPEN |
 | FCR-030 | Documentation consistency | Do README, Charter, ROADMAP, Development, Project Status, and CLI responsibilities and current state agree? | VERIFIED; A7 review and final-head CI passed |
-| FCR-031 | Current-version scope | Must any capability be added, removed, merged, hidden, or simplified? | OPEN |
+| FCR-031 | Current-version scope | Must any capability be added, removed, merged, hidden, or simplified? | VERIFIED; resolved by the Feature Freeze decision and existing per-item scope dispositions |
 | FCR-032 | Deferred scope | Are French, long-form, connectors, persistence, and other expansion isolated? | OPEN |
 | FCR-033 | Local model-cache redundancy | Can pinned models run offline without duplicate weights or an unaudited conversion revision? | VERIFIED |
 | FCR-034 | Emotion neutral fallback semantics | Is neutral explicit as threshold fallback rather than highest raw score? | VERIFIED |
@@ -983,7 +1111,12 @@ CI status are authoritative in the PR checks.
   created.
 - `VERIFIED / Keep and harden`: FCR-034–041 and FCR-044; final-candidate
   manual or delegated technical retesting is complete.
-- `OPEN verification`: FCR-003, 005, 014, 015, 017, 021, 023, 026, 031.
+- `VERIFIED / Full Regression and Manual Acceptance`: FCR-003, 005, 014,
+  015, 017, 021, 023, 026, 031 (9 items, formerly the pre-freeze `OPEN
+  verification` list); the 2026-08-14 Full Regression and Manual
+  Acceptance phase re-reviewed each against existing evidence and closed
+  all nine `VERIFIED`, detailed under "2026-08-14 Full Regression and
+  Manual Acceptance PASS decision" below.
   FCR-002 is re-closed by the FCR-044 final-head smoke test; V-01 is satisfied
   by the exact tested behavioral SHA, and V-03–V-06 are covered by automated,
   static, or delegated technical retest evidence.
@@ -1513,6 +1646,150 @@ Evidence: PR #18-#28 behavioral candidate/reviewed head remote CI; closure
 This decision does not mean Manual Acceptance has passed, a Release Candidate
 has started, or release readiness has changed to Yes; those remain separate,
 later gates.
+
+### 2026-08-14 Full Regression and Manual Acceptance PASS decision
+
+```text
+Full Regression and Manual Acceptance decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-14
+Tested candidate SHA: 71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1 (PR #30
+  merged; independent post-merge main CI PASS on Python 3.11/3.12/3.13)
+Decision: PASS
+Executor: repository-owner-authorized interactive coding agent, operating a
+  real local offline server (sti-web --offline, real pinned models) and a
+  real browser
+Automated Full Regression evidence: reused the exact-SHA independent
+  post-merge main CI (pytest, Ruff, MyPy, compile, dependency install)
+  rather than duplicating it locally; real-model capacity, concurrency
+  integrity, HTTP boundary, and browser security evidence reused from the
+  existing Product Hardening record (FCR-046-050)
+Required fresh interactive profile: repository-owner-defined minimum
+  20-item profile (setup-launch, setup-nav, setup-boundary,
+  direct-validation, direct-limits, batch-busy-state, batch-edge-preview,
+  batch-edge-analysis, batch-clear, review-formula, moderation-structural,
+  moderation-warning, triage-timestamp-sort, cross-applied-state,
+  cross-keyboard, cross-a11y-semantics, cross-privacy, cross-no-store,
+  cross-expiry, cross-errors)
+Result: 20/20 PASS; 0 FAIL; 0 blocking defects
+Six consolidated scenarios: A (Startup + Direct), B (Batch edge workflow:
+  9-row edge CSV, 3 valid/6 invalid preview, 2 analyzed/7 failed analysis,
+  aria-busy running state, explicit clear and cleared-token recovery), C
+  (Review formula export: =SYNTHETIC_FORMULA_TEST safely escaped on export),
+  D (Moderation structural/warning pair: reasoning-required structural
+  rejection and a non-blocking allow_with_violation guidance warning), E (a
+  4-row synthetic batch purpose-built for triage-timestamp-sort: aware
+  +05:00, aware -05:00 with lexical order reversed from real-instant order,
+  a timezone-unspecified row, and a missing-timestamp row, linked into
+  Triage and sorted exactly per contract; cross-applied-state verified on
+  Triage Workspace, Moderation Prepare, and Insights Representative Cases),
+  F (cross-cutting: real skip-link keyboard activation, aria-current/
+  aria-invalid/aria-describedby/role=alert semantics, a full-session server
+  log privacy review, no-store/CSP export response headers, and the
+  process-memory expiry/recovery path proven via batch-clear)
+FCR-042/FCR-043 disposition: untouched, remain OPEN non-blocking
+Carried-forward pre-freeze FCR reconciliation (required before this phase
+  may close, per the Roadmap): all 9 items reconciled against existing
+  evidence and closed VERIFIED, with no new product code or questionnaire
+  change; only one relies on fresh evidence already gathered in this
+  session (FCR-026), the rest on existing regression tests and existing
+  decisions:
+  - FCR-003 (are blank/oversized/English/unsupported-language Direct
+    outcomes recoverable): VERIFIED. Directly exercised by direct-limits
+    and direct-validation in this session and found consistent with
+    current-version product behavior (Direct has no language-selection
+    control and enforces only the length limit and English-only boundary;
+    the unsupported-language-tag scenario is covered by the Batch CSV
+    language column, demonstrated live by edge-fr-001's
+    unsupported_language failure in batch-edge-analysis).
+  - FCR-005 (are native/compact, multi-label threshold, and neutral
+    semantics explicit): VERIFIED. FCR-034 (already VERIFIED) establishes
+    the neutral threshold-fallback semantics;
+    tests/test_web_app.py::test_post_renders_complete_combined_report and
+    ::test_neutral_result_explains_threshold_fallback deterministically
+    cover the dominant/secondary/threshold/native-score presentation and
+    the fallback wording.
+  - FCR-014 (are raw counts, eligible denominators, sample warnings, and
+    perspectives consistent): VERIFIED. Four dedicated tests in
+    tests/test_insights_service.py cover each sub-question:
+    test_group_context_counts_successes_failures_and_unassigned_rows,
+    test_sample_size_policy_applies_per_metric_group,
+    test_metric_must_match_perspective, and
+    test_human_and_disagreement_denominators_exclude_uncertain.
+  - FCR-015 (are human authorship, UTC time, deletion, and non-label
+    semantics explicit): VERIFIED. FCR-038 (already VERIFIED) establishes
+    UTC display;
+    tests/test_insights_service.py::test_context_notes_are_separate_validated_and_deletable
+    covers deletion and the non-label separation from human review fields;
+    the insights.html template explicitly states "Manual annotation only,"
+    "user-authored observations," and "not protected-attribute labels," and
+    renders `Created at (UTC)` per note.
+  - FCR-017 (are synthetic policy, reference provenance, and mock
+    boundaries honest): VERIFIED.
+    tests/test_moderation_resources.py::test_policy_and_fixture_provenance_and_coverage_are_complete
+    and ::test_fixture_cases_are_synthetic_and_policy_versioned confirm a
+    versioned policy, BUILT_IN reference provenance on all 20 built-in
+    cases, and an explicit ai_available/ai_unavailable boundary; this
+    session's Scenario D directly observed the Prepare page showing
+    "Synthetic Moderation Training Policy 1.0.0" and per-case mock
+    available/unavailable labels live.
+  - FCR-021 (are guide/ticket provenance, draft, and no-mock states
+    clear): VERIFIED.
+    tests/test_triage_routes.py::test_independent_draft_atomic_finalize_reveal_revision_and_no_store
+    and ::test_no_mock_is_explicit_and_never_claimed_visible plus
+    tests/test_support_triage.py::test_draft_finalize_warning_revision_and_summary
+    cover all three sub-questions; this session's Scenario E directly
+    observed the Source & Guide and Workspace pages showing the guide
+    version and the built_in_synthetic/workspace_record provenance
+    distinction live.
+  - FCR-023 (are visibility, unavailable exclusions, and metric
+    denominators correct): VERIFIED.
+    tests/test_support_triage.py::test_finalized_distribution_sample_uses_finalized_denominator,
+    ::test_mock_agreement_sample_uses_mock_eligible_denominator, and
+    ::test_unavailable_mock_is_neither_visible_nor_hidden plus
+    tests/test_triage_routes.py::test_summary_separates_finalized_and_mock_sample_notices
+    and ::test_summary_warns_when_only_one_finalized_ticket_has_a_mock
+    cover visibility, exclusion, and per-metric denominator independence
+    respectively.
+  - FCR-026 (is every user-controlled CSV field safely escaped): VERIFIED.
+    This session's Scenario C (review-formula, one of the 20 required
+    profile items) directly verified that `=SYNTHETIC_FORMULA_TEST` exports
+    as a safe apostrophe-prefixed literal; `safe_spreadsheet_text()` is
+    applied across all 5 export paths (Batch, Review, Insights, Moderation,
+    Triage) each with a dedicated regression test, already directly
+    re-checked in code during the 2026-08-14 Product Hardening closure
+    decision with no defect found.
+  - FCR-031 (must any current-version capability be added, removed,
+    merged, hidden, or simplified): VERIFIED -- a scope/judgment item, not
+    a behavioral defect, already resolved by prior lifecycle decisions. The
+    2026-08-13 Feature Freeze decision explicitly recorded "Open
+    current-version blockers: None"; the existing FCR disposition map
+    already marks every individual current-version capability question
+    (FCR-001-002, 004, 006-013, 016, 018-020, 022, 025, 027-029, 032-033)
+    `VERIFIED / Keep as-is`; and every Product Hardening batch A1-A10
+    explicitly required "no new product domain, language, model system,
+    connector, account, persistence layer, or top-level workflow" and was
+    reviewed against that constraint with no scope expansion found.
+    Together these fully answer this item's aggregate question without a
+    new behavioral check.
+Evidence export: manual-qa/results/
+  sti-full-regression-manual-acceptance-71fa608-2026-08-14.{json,md}
+  (local file, protected by .gitignore, not committed to the repository)
+Next lifecycle phase: Release Candidate
+Release Candidate status: Not started
+Release readiness: No
+Approver: User / project owner
+```
+
+This decision does not mean a Release Candidate has started or release
+readiness has changed to Yes; RC remains a separate, later gate. Of all 84
+questionnaire checks, only the 20 listed above received fresh interactive
+evidence in this session; the remainder continue to be supported by
+existing automated, Feature Freeze, Product Hardening, and prior
+version-specific evidence, and were neither marked nor forced to N/A. The
+nine Roadmap-required pre-freeze `OPEN verification` carried-forward FCRs
+(FCR-003, 005, 014, 015, 017, 021, 023, 026, 031) all received an explicit
+disposition in this decision and are closed `VERIFIED`; no unresolved
+carried-forward verification item remains for Release Candidate.
 
 ## 7. Codex maintenance rules
 
