@@ -165,7 +165,7 @@ Final Outcome / 最终结果
 | FCR-044 | 嵌套工作流返回主界面 | Triage 四个内部界面及同类深层页面是否有明确主界面返回链接 | VERIFIED；人工复测通过 |
 | FCR-045 | 临时 Batch 状态完整性 | 容量、TTL 与 active analysis 是否可能静默销毁或丢失现有工作 | VERIFIED；PR #18 correction CI 通过 |
 | FCR-046 | 完整输入推理真实性 | 合法长文本是否可能被模型静默截断并作为整篇分析返回 | VERIFIED；behavioral candidate review 与 CI 通过 |
-| FCR-047 | 全局 HTTP request-body 边界 | 异常大的 form / multipart request 是否会在字段验证或临时状态操作前统一拒绝 | IMPLEMENTED；等待 A3 PR review |
+| FCR-047 | 全局 HTTP request-body 边界 | 异常大的 form / multipart request 是否会在字段验证或临时状态操作前统一拒绝 | IMPLEMENTED；Draft PR #20 等待 review |
 
 ## 5. Feature decision index
 
@@ -187,7 +187,7 @@ Final Outcome / 最终结果
 | FCR-044 | `HARDENING` | Keep and harden | `VERIFIED` | 复测证明缺失返回路径造成重大操作困难；所有嵌套工作流增加明确 home link | exact behavioral SHA 人工复测与 CI 通过 |
 | FCR-045 | `HARDENING` | Keep and harden | `VERIFIED` | 容量阻止新建而非驱逐；active analysis 跨 TTL 原子写回或明确失败；error render 保留配置限制 | Product Hardening Batch A1 targeted/full regression；PR #18 correction head CI PASS |
 | FCR-046 | `HARDENING` | Keep and harden | `VERIFIED` | 以真实 tokenizer 编码长度拒绝超出 pinned 模型预算的完整输入，禁止静默截断与 partial-text success | Product Hardening Batch A2 behavioral SHA review PASS；PR #19 CI PASS |
-| FCR-047 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 以 3 MiB Flask 全局 ceiling 在 form/multipart 解析和状态操作前统一 413；CSV 2 MiB payload limit 保持独立 | Product Hardening Batch A3 targeted/full regression；等待 Draft PR review |
+| FCR-047 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 以 3 MiB Flask 全局 ceiling 在 form/multipart 解析和状态操作前统一 413；CSV 2 MiB payload limit 保持独立 | Product Hardening Batch A3 targeted/full regression；Draft PR #20 |
 
 ### 2026-08-13 最新反馈分类
 
@@ -455,7 +455,7 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 - **Implementation Scope / 实施范围:** 默认 `MAX_CONTENT_LENGTH=3 MiB`；比 2 MiB CSV payload limit 多 1 MiB（50%）multipart/form encoding 余量；CLI 可配置且必须大于 CSV limit。`before_request` 在 route/state logic 前拒绝已声明超限 body，Flask 在读取阶段执行同一 ceiling；统一固定文案 413 handler 继承 no-store/no-cache。
 - **Acceptance Criteria / 验收标准:** oversized Direct、Batch multipart、Review、Insights note 与 Triage decision 均返回 413；不回显原始内容、traceback 或内部路径；不创建/修改 ephemeral state；正常请求保持原语义；2 MiB CSV byte limit 继续独立；不实现 CSP、Origin/Host policy、账户、远程部署、数据库、后台任务或持久化。
 - **Risks and Regression Scope / 风险与回归范围:** Flask request parsing、multipart overhead、所有 POST route、413 headers/copy、Batch/Review/Insights/Moderation/Triage stores、CLI configuration 与 CSV limit distinction；PH-005、PH-007 及其他 hardening 不在范围内。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`；Product Hardening Batch A3 Draft PR 待创建；remote CI 待验证。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`；Draft PR #20；最终 CI 状态以 PR checks 为准。
 - **Final Outcome / 最终结果:** A3 boundary 与 regressions 已实现；保持 `IMPLEMENTED`，等待 Draft PR CI 与 review 后再决定是否关闭为 `VERIFIED`。Feature Freeze 保持 PASS；PH-005 未开始。
 
 ### FCR-033 — 本地模型缓存冗余
@@ -749,7 +749,7 @@ predeclare a pass.
 | FCR-044 | Nested-workflow return navigation | Do all four Triage internals and comparable deep views expose an explicit application-home link? | VERIFIED; manual retest passed |
 | FCR-045 | Ephemeral Batch state integrity | Can capacity, TTL, or active analysis silently destroy or lose existing work? | VERIFIED; PR #18 correction CI passed |
 | FCR-046 | Complete-input inference truthfulness | Can valid long text be silently truncated and returned as whole-text analysis? | VERIFIED; behavioral candidate review and CI passed |
-| FCR-047 | Global HTTP request-body boundary | Are abnormal form and multipart bodies rejected before field validation or temporary-state operations? | IMPLEMENTED; awaiting A3 PR review |
+| FCR-047 | Global HTTP request-body boundary | Are abnormal form and multipart bodies rejected before field validation or temporary-state operations? | IMPLEMENTED; Draft PR #20 awaiting review |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -772,7 +772,7 @@ evidence and disposition.
 | FCR-044 | `HARDENING` | Keep and harden | `VERIFIED` | Retest proved that missing return paths cause material operating difficulty; every nested workflow now has an explicit home link | Exact behavioral SHA manual retest and CI passed |
 | FCR-045 | `HARDENING` | Keep and harden | `VERIFIED` | Capacity blocks instead of evicting; active analysis commits atomically across TTL or fails explicitly; error rendering retains configured limits | Product Hardening Batch A1 targeted/full regression; PR #18 correction-head CI PASS |
 | FCR-046 | `HARDENING` | Keep and harden | `VERIFIED` | Reject over-budget complete input by real tokenizer length; prohibit silent truncation and partial-text success | Product Hardening Batch A2 behavioral SHA review PASS; PR #19 CI PASS |
-| FCR-047 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Apply a 3 MiB Flask-wide ceiling before form/multipart parsing and state operations; keep the 2 MiB CSV payload limit separate | Product Hardening Batch A3 targeted/full regression; awaiting Draft PR review |
+| FCR-047 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Apply a 3 MiB Flask-wide ceiling before form/multipart parsing and state operations; keep the 2 MiB CSV payload limit separate | Product Hardening Batch A3 targeted/full regression; Draft PR #20 |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -1046,7 +1046,7 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 - **Implementation Scope:** Default `MAX_CONTENT_LENGTH=3 MiB`, leaving 1 MiB (50 percent) multipart/form encoding capacity above the 2 MiB CSV payload limit; CLI configuration must remain greater than the CSV limit. A `before_request` gate rejects declared oversized bodies before route/state logic, Flask enforces the same ceiling while reading, and one fixed 413 handler inherits no-store/no-cache.
 - **Acceptance Criteria:** Oversized Direct, Batch multipart, Review, Insights note, and Triage decision requests return 413; no source content, traceback, or internal path is echoed; no ephemeral state is created or changed; normal requests retain current semantics; the 2 MiB CSV byte limit remains independent; no CSP, Origin/Host policy, account, remote deployment, database, background task, or persistence work is added.
 - **Risks and Regression Scope:** Flask request parsing, multipart overhead, all POST routes, 413 headers/copy, Batch/Review/Insights/Moderation/Triage stores, CLI configuration, and CSV-limit distinction; PH-005, PH-007, and other hardening are excluded.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`; Product Hardening Batch A3 Draft PR pending; remote CI pending.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`; Draft PR #20; final CI status is authoritative in PR checks.
 - **Final Outcome:** The A3 boundary and regressions are implemented; status remains `IMPLEMENTED` pending Draft PR CI and review before any move to `VERIFIED`. Feature Freeze remains PASS and PH-005 is unstarted.
 
 ### FCR-033 — Local model-cache redundancy

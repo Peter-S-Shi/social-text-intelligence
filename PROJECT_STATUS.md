@@ -22,7 +22,7 @@ principles.
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | **Completed** |
 | Feature Freeze status | **PASS — explicitly approved 2026-08-13** |
-| Product Hardening status | **Batches A1–A2 merged; Batch A3 implemented locally**; FCR-045 and FCR-046 remain `VERIFIED`; FCR-047 is `IMPLEMENTED` pending Draft PR review; FCR-042 and FCR-043 remain non-blocking backlog |
+| Product Hardening status | **Batches A1–A2 merged; Batch A3 implemented in Draft PR #20**; FCR-045 and FCR-046 remain `VERIFIED`; FCR-047 is `IMPLEMENTED` pending review; FCR-042 and FCR-043 remain non-blocking backlog |
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
@@ -30,7 +30,7 @@ principles.
 | Approved audit items | FCR-045 reconciles PH-001/PH-002 and remains `VERIFIED`; FCR-046 reconciles PH-003 and remains `VERIFIED`; FCR-047 reconciles PH-004 as the global HTTP request-boundary root cause and is `IMPLEMENTED`; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
 | Latest validation | Product Hardening Batch A3 behavioral candidate `def0577feb3c43d4e9e81577003c43da821b6ba2`: targeted request-boundary and unchanged-normal-flow regressions 12 passed; full suite 148 passed and 2 opt-in real-model tests skipped; Ruff, strict MyPy for 69 files, compileall, and pip check passed |
-| Next required action | Push Batch A3, create and review its Draft PR, and verify remote CI; do not merge or start PH-005/another hardening item without separate approval |
+| Next required action | Review Draft PR #20 and its final-head CI; do not merge or start PH-005/another hardening item without separate approval |
 | Last updated | 2026-08-13 |
 
 ## Required maintenance
