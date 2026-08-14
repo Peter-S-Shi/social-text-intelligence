@@ -13,19 +13,20 @@ principles.
 | Product Hardening baseline main SHA | `421b0fb2610de98f09c8acec5a9e2f137f35f4e2` — stable baseline for the independent Product Hardening cycle |
 | Tested behavioral SHA | `16acb0f5931b022b57f0c5cdbe4501973aa3ad11` — candidate-specific final-head smoke test PASS |
 | Governance closure SHA | `2a701f87b167d5a112184b1ffedb4f8f7a12d95e` — documentation-only closure; it does not replace the tested behavioral SHA |
+| Product Hardening Batch A1 tested behavioral SHA | `729318c6c253ea8eee8351e766bbcfe7a335c297` — PR #18 correction head; remote CI PASS |
 | Current lifecycle phase | **Product Hardening** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | **Completed** |
 | Feature Freeze status | **PASS — explicitly approved 2026-08-13** |
-| Product Hardening status | **Batch A1 implemented and locally validated**; FCR-045 awaits Draft PR review/CI; FCR-042 and FCR-043 remain non-blocking backlog |
+| Product Hardening status | **Batch A1 verified in Draft PR #18**; FCR-045 is `VERIFIED`; FCR-042 and FCR-043 remain non-blocking backlog |
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
-| Open blockers | Feature Freeze remains closed; FCR-045 awaits PR review/CI, while Phase 0 PH-003 and PH-004 remain unimplemented release-risk findings outside Batch A1 |
-| Approved audit items | FCR-045 reconciles PH-001 and PH-002 as one Batch state-integrity root cause and is `IMPLEMENTED`; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
+| Open blockers | Feature Freeze remains closed; FCR-045 is closed, while Phase 0 PH-003 and PH-004 remain unimplemented release-risk findings outside Batch A1 |
+| Approved audit items | FCR-045 reconciles PH-001 and PH-002 as one Batch state-integrity root cause and is `VERIFIED` on the exact tested behavioral SHA; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | Product Hardening Batch A1: targeted cross-workflow regression 34 passed; full suite 131 passed and 2 opt-in real-model tests skipped; Ruff, strict MyPy for 67 files, compileall, and pip check passed locally; remote CI pending Draft PR |
-| Next required action | Review Product Hardening Batch A1 Draft PR and CI; do not start PH-003 or another hardening batch without separate approval |
+| Latest validation | Product Hardening Batch A1 correction SHA `729318c6c253ea8eee8351e766bbcfe7a335c297`: targeted Batch route regression 6 passed; full suite 132 passed and 2 opt-in real-model tests skipped; Ruff, strict MyPy for 67 files, compileall, and pip check passed locally; PR #18 remote CI passed on Python 3.11/3.12/3.13 |
+| Next required action | Review the final governance head of Draft PR #18; do not merge or start PH-003/another hardening batch without separate approval |
 | Last updated | 2026-08-13 |
 
 ## Required maintenance
