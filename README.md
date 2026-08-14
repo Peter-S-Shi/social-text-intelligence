@@ -25,7 +25,7 @@ state are maintained separately:
 - [Product Roadmap](ROADMAP.md)
 - [Project Status](PROJECT_STATUS.md)
 - [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md)
-- [Living Manual QA](manual_review_questionnaire.html)
+- [Living Manual QA](manual-qa/manual_review_questionnaire.html)
 
 ## Quick start
 
@@ -75,6 +75,16 @@ sti-web
 
 Open `http://127.0.0.1:5000`. Use `sti-web --offline` after both pinned model
 revisions are cached. The server binds only to the local loopback interface.
+Every non-root workflow view provides an explicit
+`← Social Text Intelligence home` link. Deep workflow navigation remains
+separate, so returning home never clears or rewrites temporary workspace state.
+
+On Windows, after the environment and both models are installed, double-click
+`start_social_text_intelligence.bat` in the project folder. It starts the same
+offline loopback-only server and opens the browser automatically. Keep its
+console window open while using the application; press Ctrl+C there to stop it.
+The launcher uses only project-relative paths and does not install, download, or
+persist anything.
 
 Run the dependency-free test suite:
 
@@ -190,6 +200,10 @@ UTC creation time, while supporting records and model-native scores are optional
 All insight state remains in the same bounded,
 expiring process-memory workspace and is cleared with the batch.
 
+Clearing a batch requires explicit confirmation and explains that its linked
+review and insight state will also be removed. Filter submissions return to the
+Results section without changing their semantics.
+
 ## Moderation training
 
 Milestone 9 adds a separate three-area workflow for preparing cases, recording
@@ -249,6 +263,10 @@ workspace-derived text, NLP signals, human review, context notes, and trusted
 metadata are separate opt-ins. See
 [Support Triage](docs/SUPPORT_TRIAGE.md) for the complete contract and
 limitations.
+
+Batch Results includes a linked Support Triage entry that preserves the active
+temporary token. Tickets with no deterministic mock say that it is unavailable;
+the assisted-mode explanation appears only when a suggestion actually exists.
 
 Milestone 10 is the last completed planned feature milestone for the current
 version. Feature Complete Review is now in progress. A separate Feature Freeze

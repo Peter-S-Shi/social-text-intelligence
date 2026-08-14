@@ -9,22 +9,23 @@ principles.
 | --- | --- |
 | Project | Social Text Intelligence |
 | Current version | `0.10.0` |
-| Reviewed baseline main SHA | `d896c4791653e674919c57e643362d90ebbcf317` |
-| Current validated revision | PR #14 merged into `main` at `d896c4791653e674919c57e643362d90ebbcf317` |
-| Current lifecycle phase | **Feature Complete Review** |
+| Reviewed baseline main SHA | `dc70857ffef7e63997376b97510ab62389a20c41` |
+| Tested behavioral SHA | `16acb0f5931b022b57f0c5cdbe4501973aa3ad11` — candidate-specific final-head smoke test PASS |
+| Governance closure SHA | `2a701f87b167d5a112184b1ffedb4f8f7a12d95e` — documentation-only closure; it does not replace the tested behavioral SHA |
+| Current lifecycle phase | **Product Hardening** |
 | Feature milestone status | Milestones 1–10 complete |
-| Feature Complete Review status | Not completed |
-| Feature Freeze status | Not started |
-| Product Hardening status | Not started |
+| Feature Complete Review status | **Completed** |
+| Feature Freeze status | **PASS — explicitly approved 2026-08-13** |
+| Product Hardening status | Entered; FCR-042 and FCR-043 retained as non-blocking backlog |
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
-| Open blockers | No release blocker classified yet; manual audit pending |
-| Approved audit items | `FCR-033` local model-cache hardening is verified; no product behavior or model revision changed |
+| Open blockers | None for Feature Freeze; release readiness remains No until Product Hardening and later gates complete |
+| Approved audit items | FCR-044 manual retest passed and FCR-002 navigation verification is closed; V-01 is satisfied by the exact tested behavioral SHA; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | PR #14 candidate: 119 tests passed, 2 opt-in model tests skipped; 2 real offline model integration tests passed separately; Ruff, strict MyPy for 65 files, compileall, pip check, documentation links, HTML syntax/duplicate-ID checks, and diff checks passed. PR and post-merge `main` CI passed on Python 3.11, 3.12, and 3.13 |
-| Next required action | Continue the manual Feature Complete Review |
-| Last updated | 2026-08-09 |
+| Latest validation | Tested behavioral SHA `16acb0f5931b022b57f0c5cdbe4501973aa3ad11`: final-head smoke test PASS; full suite 127 passed and 2 opt-in real-model tests skipped; Ruff, strict MyPy for 67 files, compileall, pip check, documentation links, diff/privacy checks, and GitHub CI on Python 3.11/3.12/3.13 passed |
+| Next required action | Confirm PR #16 final-head CI, mark Ready for Review, and wait for explicit merge approval before beginning Product Hardening work |
+| Last updated | 2026-08-13 |
 
 ## Required maintenance
 
@@ -40,4 +41,4 @@ Historical implementation detail belongs in [DEVLOG.md](DEVLOG.md). Feature
 scope decisions belong in the
 [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md). Repeated
 human test results should be exported from the canonical
-[Manual QA artifact](manual_review_questionnaire.html).
+[Manual QA artifact](manual-qa/manual_review_questionnaire.html).

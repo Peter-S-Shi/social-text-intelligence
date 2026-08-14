@@ -52,6 +52,9 @@
         <p class="eyebrow">Dominant emotion</p>
         <h2>{{ report.emotion.dominant_emotion }}</h2>
         <p>Threshold ≥ {{ '%.2f'|format(report.emotion.threshold) }}</p>
+        {% if report.emotion.dominant_emotion.value == 'neutral' %}
+        <p class="privacy-note"><strong>Threshold fallback:</strong> no non-neutral compact emotion reached the configured threshold. Neutral here is a fallback state, not a claim that the raw neutral score is the highest score.</p>
+        {% endif %}
         <p>Secondary: {{ report.emotion.secondary_emotions|join(', ') if report.emotion.secondary_emotions else 'none' }}</p>
         <div class="scores">
           {% for item in report.emotion.scores %}

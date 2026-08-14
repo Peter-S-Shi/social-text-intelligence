@@ -94,6 +94,8 @@ class ReviewRouteTests(unittest.TestCase):
             follow_redirects=True,
         )
         self.assertIn(b"2 reviewed", corrected.data)
+        self.assertIn(b"Review queue complete", corrected.data)
+        self.assertIn(b"All 2 reviewable records", corrected.data)
         self.assertIn(b"Agreement: 1 / 2 definitive reviews", corrected.data)
         self.assertIn(b"1 definitive corrections", corrected.data)
 
@@ -128,7 +130,9 @@ class ReviewRouteTests(unittest.TestCase):
         self.assertIs(after.result.outcomes[0].report, original_report)
 
     def test_cleared_review_fails_safely(self) -> None:
-        self.client.post(self.workspace_url + "/clear")
+        self.client.post(
+            self.workspace_url + "/clear", data={"confirm": "clear"}
+        )
         response = self.client.get(self.workspace_url + "/review/1")
         self.assertEqual(response.status_code, 404)
         self.assertIn(b"expired or was cleared", response.data)

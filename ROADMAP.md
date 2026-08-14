@@ -135,7 +135,7 @@ This phase requires:
 - closure or formal disposition of every blocking defect.
 
 The canonical repeatable checklist is
-[Manual QA](manual_review_questionnaire.html). A completed exported record is
+[Manual QA](manual-qa/manual_review_questionnaire.html). A completed exported record is
 evidence for a specific tested version; it does not replace the living
 checklist.
 

@@ -1,5 +1,56 @@
 # Development Log
 
+## Feature Freeze closure
+
+Recorded the user's explicit Feature Freeze PASS for tested behavioral SHA
+`16acb0f5931b022b57f0c5cdbe4501973aa3ad11` after the candidate-specific
+final-head smoke test passed. FCR-044 is manually verified, FCR-002 navigation
+verification is re-closed, and V-01 is satisfied by the exact SHA. FCR-042 and
+FCR-043 remain non-blocking Product Hardening backlog.
+
+This closure changes governance documentation only. It does not modify product
+behavior, models, revisions, thresholds, privacy contracts, workflows, or the
+tested behavioral candidate. Release readiness remains No; the next lifecycle
+phase is Product Hardening.
+
+## Review ergonomics — Windows one-click launcher
+
+Added `start_social_text_intelligence.bat` at the repository root after explicit
+user approval. The launcher resolves the project `.venv` with relative paths,
+starts the existing loopback-only web app in offline mode, opens the browser,
+and provides setup and shutdown guidance. It installs and downloads nothing and
+does not change application, model, privacy, or persistence behavior.
+
+## Feature Complete Review — FCR-044 return navigation
+
+Reclassified FCR-044 as a pre-freeze blocker after candidate-specific manual
+review showed that four internal Support Triage views lacked a discoverable
+return to the main application and caused material operating difficulty. Added
+an explicit `Social Text Intelligence home` link to every non-root workflow
+view, including deep Triage and Moderation pages, while preserving each
+workflow's own subnavigation and all temporary state.
+
+Reopened FCR-002 navigation verification and added route regressions covering
+the four Triage internal views plus Moderation session/review pages. No workflow,
+model, data, privacy, persistence, or decision semantics changed.
+
+## Feature Complete Review — pre-freeze blocker corrections
+
+Classified the completed manual review into product findings, QA governance,
+and release ergonomics. Recorded FCR-034 through FCR-044 without treating every
+questionnaire suggestion as a product FCR. Established a tracked `manual-qa/`
+home for the bilingual questionnaire, synthetic samples, and guidance, while
+repository ignore rules keep raw results, screenshots, exports, and machine
+paths out of Git.
+
+Clarified emotion neutral threshold-fallback copy, added Batch filter anchoring
+and destructive-clear confirmation, surfaced Human Review completion and
+Context Note UTC timestamps, exposed reliable/unassigned Insight failure
+counts, made Triage no-mock state explicit, and restored the linked
+Batch-to-Triage entry. These changes preserve models, thresholds, labels,
+privacy defaults, denominators, and process-memory boundaries. Feature Freeze
+remains pending explicit approval after candidate-specific manual retest.
+
 ## Feature Complete Review — local model-cache hardening
 
 Hardened the pinned Cardiff sentiment runtime so Transformers must load the

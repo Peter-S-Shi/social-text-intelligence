@@ -1,0 +1,6 @@
+record_id,message,source_type,source_label,language,timestamp,topic,community,demo_extra
+column-001,"The instructions answered my question clearly.",file,alternate_column,en,2026-07-01T10:00:00Z,documentation,community_north,ignored-alpha
+column-002,"I followed every step, but the confirmation never appeared.",file,alternate_column,en,2026-07-02T10:00:00Z,documentation,community_central,ignored-beta
+column-003,"The page displays three available options.",file,alternate_column,en,2026-07-03T10:00:00Z,documentation,community_south,ignored-gamma
+column-004,"The example was helpful, although one term remained unclear.",file,alternate_column,en,2026-07-04T10:00:00Z,documentation,community_north,ignored-delta
+column-005,"I am glad the revised guide includes a troubleshooting section.",file,alternate_column,en,2026-07-05T10:00:00Z,documentation,community_central,ignored-epsilon

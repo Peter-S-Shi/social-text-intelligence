@@ -98,6 +98,24 @@ class TriageRouteTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 302)
 
+    def test_every_workspace_view_has_an_explicit_application_home_link(
+        self,
+    ) -> None:
+        base = self.create_triage()
+        self.add_ticket(base)
+        for path in (
+            "/guide",
+            "/workspace",
+            "/tickets/support-001",
+            "/summary",
+        ):
+            with self.subTest(path=path):
+                page = self.client.get(base + path)
+                self.assertEqual(page.status_code, 200)
+                self.assertIn(b'href="/"', page.data)
+                self.assertIn(b"Social Text Intelligence home", page.data)
+                self.assertIn(b'aria-label="Application navigation"', page.data)
+
     def test_independent_draft_atomic_finalize_reveal_revision_and_no_store(
         self,
     ) -> None:
@@ -170,6 +188,17 @@ class TriageRouteTests(unittest.TestCase):
         self.assertNotIn(
             b'value="recover_account_access" selected', page.data
         )
+
+    def test_no_mock_is_explicit_and_never_claimed_visible(self) -> None:
+        for mode in ("independent", "mock_assisted"):
+            with self.subTest(mode=mode):
+                base = self.create_triage(mode=mode)
+                self.add_ticket(base, "support-015")
+                page = self.client.get(base + "/tickets/support-015")
+                self.assertEqual(page.status_code, 200)
+                self.assertIn(b"Mock unavailable", page.data)
+                self.assertIn(b"Nothing has been fabricated or inferred", page.data)
+                self.assertNotIn(b"the visible suggestion is", page.data)
 
     def test_summary_separates_finalized_and_mock_sample_notices(self) -> None:
         base = self.create_triage()

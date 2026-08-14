@@ -1,0 +1,10 @@
+record_id,text,source_type,source_label,language,timestamp,topic,community,notes
+edge-ok-001,"This ordinary synthetic record should complete analysis.",file,edge_suite,en,2026-07-10T12:00:00Z,edge_testing,community_north,valid English control
+edge-fr-001,"Le service est disponible, mais les instructions restent difficiles à comprendre.",file,edge_suite,fr,2026-07-11T12:00:00Z,edge_testing,community_central,valid parsed row with unsupported model language
+edge-duplicate,"The first duplicate identity should be rejected.",file,edge_suite,en,2026-07-12T12:00:00Z,edge_testing,community_north,duplicate identity one
+edge-duplicate,"The second duplicate identity should also be rejected.",file,edge_suite,en,2026-07-13T12:00:00Z,edge_testing,community_south,duplicate identity two
+edge-empty,"",file,edge_suite,en,2026-07-14T12:00:00Z,edge_testing,community_unassigned,empty text
+edge-source-001,"This row uses an unsupported source type.",social,edge_suite,en,2026-07-15T12:00:00Z,edge_testing,community_unassigned,invalid source type
+edge-time-001,"This row uses an invalid timestamp.",file,edge_suite,en,"July 16, 2026",edge_testing,community_unassigned,invalid timestamp
+edge-language-001,"This row uses an invalid language tag.",file,edge_suite,english,2026-07-17T12:00:00Z,edge_testing,community_unassigned,invalid language
+edge-ok-002,"The final synthetic control record should complete successfully.",file,edge_suite,en-CA,2026-07-18T12:00:00-04:00,edge_testing,community_south,valid English control

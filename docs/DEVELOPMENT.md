@@ -89,7 +89,7 @@ The mutable lifecycle plan is maintained in
 - add no new product domain, language, model system, connector, account,
   persistence layer, or top-level workflow;
 - update only the affected sections of the living
-  [Manual QA artifact](../manual_review_questionnaire.html);
+  [Manual QA artifact](../manual-qa/manual_review_questionnaire.html);
 - update project status after each coherent hardening increment.
 
 ### Full Regression and Manual Acceptance
@@ -124,6 +124,11 @@ sti-web
 The first analysis lazily loads both models. Use `sti-web --offline` to require
 an existing cache. Flask route tests inject deterministic providers and do not
 download weights.
+
+Windows reviewers may instead double-click `start_social_text_intelligence.bat`
+from the repository root. The launcher resolves the local `.venv` relative to
+itself, starts the same offline server, and opens the loopback URL; it performs
+no installation or download.
 
 Use `sti-web --help` to configure `--max-batch-bytes`, `--max-batch-rows`, and
 `--max-text-length` for a local run. Defaults are 2 MiB, 500 rows, and 20,000

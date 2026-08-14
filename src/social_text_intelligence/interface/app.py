@@ -1004,6 +1004,12 @@ def create_app(
 
     @app.post("/batch/<token>/clear")
     def batch_clear(token: str) -> ResponseReturnValue:
+        if request.form.get("confirm") != "clear":
+            return Response(
+                "Confirm the destructive clear action before removing this "
+                "temporary batch.",
+                status=400,
+            )
         batch_store.delete(token)
         return redirect(url_for("batch_home"))
 

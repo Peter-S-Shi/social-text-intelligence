@@ -1,0 +1,21 @@
+record_id,text,source_type,source_label,language,timestamp,topic,community,parent_record_id,notes
+account-001,"I cannot sign in after resetting my password, and I am worried I will miss the deadline.",platform,web_form,en-CA,2026-06-03T14:15:00-04:00,account_access,community_north,thread-account-01,synthetic access concern
+account-002,"The new sign-in instructions were clear, and I got back into my account quickly.",platform,email,en-CA,2026-06-08T10:30:00-04:00,account_access,community_central,thread-account-01,synthetic successful recovery
+account-003,"The verification screen asks for a code before showing the account page.",file,forum,en,2026-07-02T09:00:00Z,account_access,community_south,,synthetic factual description
+account-004,"I appreciate the quick reply, but the repeated identity checks are frustrating.",platform,web_form,en-CA,2026-07-12T16:45:00-04:00,account_access,community_north,thread-account-02,synthetic mixed reaction
+billing-001,"I was charged twice for the same month, and this is extremely frustrating.",platform,email,en-CA,2026-06-04T08:20:00-04:00,billing,community_central,thread-billing-01,synthetic duplicate charge
+billing-002,"The refund arrived earlier than expected, and I appreciate the clear updates.",platform,web_form,en-CA,2026-06-11T13:10:00-04:00,billing,community_south,thread-billing-02,synthetic positive resolution
+billing-003,"The invoice lists a monthly fee and a separate usage fee.",file,forum,en,2026-06-18T12:00:00Z,billing,community_north,,synthetic invoice description
+billing-004,"The price change was unexpected and disappointing.",platform,email,en-CA,2026-07-05T11:05:00-04:00,billing,community_central,thread-billing-03,synthetic pricing concern
+billing-005,"Support explained the charges politely, but I am still confused about the total.",platform,web_form,en-CA,2026-07-15T15:25:00-04:00,billing,community_south,thread-billing-03,synthetic unresolved confusion
+billing-006,"The renewal reminder was helpful, and I cancelled in time without any trouble.",platform,forum,en,2026-07-21T18:40:00Z,billing,community_north,,synthetic cancellation success
+reliability-001,"The application froze twice while I was writing an important message.",platform,web_form,en-CA,2026-06-01T09:45:00-04:00,service_reliability,community_north,thread-reliability-01,synthetic freeze report
+reliability-002,"The upload completed on the first attempt with no issues.",file,email,en,2026-06-06T17:15:00Z,service_reliability,community_central,,synthetic successful upload
+reliability-003,"Scheduled maintenance starts on Saturday and ends before sunrise.",platform,forum,en,2026-06-10T07:00:00Z,service_reliability,community_south,,synthetic maintenance notice
+reliability-004,"Notifications arrived several hours late, which was annoying.",platform,web_form,en-CA,2026-06-14T19:20:00-04:00,service_reliability,community_north,thread-reliability-02,synthetic delay report
+reliability-005,"The latest update feels faster and the screen transitions are much smoother.",platform,email,en-CA,2026-06-23T10:50:00-04:00,service_reliability,community_central,,synthetic performance praise
+reliability-006,"The status page said everything was normal while I still could not connect, and that worried me.",platform,forum,en,2026-07-01T21:30:00Z,service_reliability,community_south,thread-reliability-03,synthetic status mismatch
+reliability-007,"The reconnect button restored my session, and I was relieved not to lose my work.",platform,web_form,en-CA,2026-07-07T08:35:00-04:00,service_reliability,community_north,thread-reliability-01,synthetic recovery relief
+reliability-008,"The service restarted at 02:00 and returned at 02:05.",file,email,en,2026-07-13T02:10:00Z,service_reliability,community_central,,synthetic restart observation
+reliability-009,"Intermittent errors continued, but the suggested workaround helped me finish.",platform,forum,en,2026-07-19T14:00:00Z,service_reliability,community_south,thread-reliability-04,synthetic mixed workaround
+reliability-010,"There were no outages today, and everything worked as expected.",platform,web_form,en-CA,2026-07-24T16:10:00-04:00,service_reliability,community_north,,synthetic stable service

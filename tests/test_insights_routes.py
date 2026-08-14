@@ -4,7 +4,13 @@ import csv
 import io
 import unittest
 
-from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
+from social_text_intelligence.contracts import (
+    AnalysisReport,
+    EmotionLabel,
+    NormalizedTextInput,
+    SentimentLabel,
+)
+from social_text_intelligence.contracts.errors import ProviderError
 from social_text_intelligence.interface.app import create_app
 from social_text_intelligence.providers import (
     DeterministicEmotionProvider,
@@ -36,6 +42,29 @@ def synthetic_csv() -> bytes:
     return ("\n".join(rows) + "\n").encode()
 
 
+class SelectiveFailureGateway:
+    initialized = True
+
+    def __init__(self) -> None:
+        self.service = AnalysisService(
+            sentiment_provider=DeterministicSentimentProvider(
+                SentimentLabel.POSITIVE
+            ),
+            emotion_provider=DeterministicEmotionProvider(
+                EmotionLabel.GRATITUDE
+            ),
+        )
+
+    def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
+        if record.record_id == "provider-fail":
+            raise ProviderError(
+                provider="synthetic-failing-provider",
+                code="model_load_failed",
+                message="Synthetic route failure.",
+            )
+        return self.service.analyze(record)
+
+
 class InsightRouteTests(unittest.TestCase):
     def setUp(self) -> None:
         self.app = create_app(
@@ -65,6 +94,9 @@ class InsightRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Group Explorer", response.data)
         self.assertIn(b"6 eligible / 6 group rows", response.data)
+        self.assertIn(b"6 successful analysis rows", response.data)
+        self.assertIn(b"0 failed rows assigned reliably", response.data)
+        self.assertIn(b"0 failed rows unassigned across this grouping", response.data)
         self.assertIn(b"Small sample", response.data)
         self.assertIn(b"One AI sentiment label per successful row", response.data)
         self.assertIn(b"deterministic-sentiment@mock-v1", response.data)
@@ -72,6 +104,46 @@ class InsightRouteTests(unittest.TestCase):
         self.assertIn(b'aria-label="Insight views"', response.data)
         self.assertIn(b"<label", response.data)
         self.assertEqual(response.headers["Cache-Control"], "no-store")
+
+    def test_group_context_explicitly_separates_failed_and_unassigned_rows(
+        self,
+    ) -> None:
+        app = create_app(
+            {
+                "TESTING": True,
+                "MAX_BATCH_BYTES": 20_000,
+                "MAX_BATCH_ROWS": 20,
+                "MAX_TEXT_LENGTH": 100,
+            },
+            analysis_gateway=SelectiveFailureGateway(),
+        )
+        client = app.test_client()
+        uploaded = client.post(
+            "/batch/upload",
+            data={
+                "file": (
+                    io.BytesIO(
+                        b"record_id,text,topic\n"
+                        b"ok,Synthetic success.,edge_testing\n"
+                        b"provider-fail,Synthetic failure.,edge_testing\n"
+                        b"invalid-text,," + (b"x" * 513) + b"\n"
+                    ),
+                    "synthetic-edge.csv",
+                )
+            },
+            content_type="multipart/form-data",
+        )
+        workspace_url = uploaded.headers["Location"]
+        client.post(workspace_url + "/analyze")
+        response = client.get(
+            workspace_url
+            + "/insights?grouping=topic&group=edge_testing"
+            + "&perspective=ai&metric=ai_sentiment"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"1 successful analysis row", response.data)
+        self.assertIn(b"1 failed row assigned reliably", response.data)
+        self.assertIn(b"1 failed row unassigned across this grouping", response.data)
 
     def test_comparison_accepts_two_groups_and_rejects_one(self) -> None:
         comparison = self.client.get(
@@ -108,6 +180,8 @@ class InsightRouteTests(unittest.TestCase):
         self.assertEqual(created.status_code, 200)
         self.assertIn(b"=synthetic phrase", created.data)
         self.assertIn(b"Human annotation", created.data)
+        self.assertIn(b"Created at (UTC):", created.data)
+        self.assertRegex(created.data, rb"Created at \(UTC\):.*\+00:00")
 
         invalid = self.client.post(
             self.insight_url + "/notes",
@@ -177,7 +251,9 @@ class InsightRouteTests(unittest.TestCase):
         self.assertRegex(note["created_at"], r"\+00:00$")
 
     def test_cleared_workspace_fails_safely(self) -> None:
-        self.client.post(self.workspace_url + "/clear")
+        self.client.post(
+            self.workspace_url + "/clear", data={"confirm": "clear"}
+        )
         response = self.client.get(self.insight_url)
         self.assertEqual(response.status_code, 404)
         self.assertIn(b"expired or was cleared", response.data)

@@ -14,7 +14,7 @@
   </header>
   <main>
     <nav class="mode-nav" aria-label="Application modes">
-      <a href="{{ url_for('analyze_text') }}">Single text</a>
+      <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
       <a href="{{ url_for('batch_workspace', token=token) }}">Batch CSV</a>
       <a href="{{ url_for('triage.home') }}">Support Triage</a>
       <a href="{{ url_for('review_index', token=token) }}">Human review</a>
@@ -87,6 +87,7 @@
     {% if summaries %}<section class="insight-grid" aria-label="Group metric summaries">
       {% for summary in summaries %}<article class="panel metric-card">
         <div class="section-heading"><h2>{{ summary.group }}</h2><span>{{ summary.eligible_count }} eligible / {{ summary.total_count }} group rows</span></div>
+        <p><small><strong>Group context:</strong> {{ summary.successful_count }} successful analysis row{{ '' if summary.successful_count == 1 else 's' }} · {{ summary.failed_count }} failed row{{ '' if summary.failed_count == 1 else 's' }} assigned reliably to this group · {{ summary.unassigned_failed_count }} failed row{{ '' if summary.unassigned_failed_count == 1 else 's' }} unassigned across this grouping. No group is guessed.</small></p>
         {% if summary.sample.message %}<p class="sample-warning status-{{ summary.sample.level }}"><strong>{{ summary.sample.message }}</strong>{% if summary.sample.level == 'insufficient' %}; comparative emphasis is suppressed.{% endif %}</p>{% endif %}
         <div class="distribution-list">
           {% for value in summary.values %}<div class="distribution-row">
@@ -126,7 +127,7 @@
     <section class="panel"><h2>Current context notes</h2>
       {% if insight_state.notes %}<div class="note-list">{% for note in insight_state.notes %}<article>
         <div class="section-heading"><strong>{{ note.phrase }}</strong><span>{{ note.association }}: {{ note.association_value }}</span></div>
-        <p>{{ note.explanation }}</p><p><strong>Why context matters:</strong> {{ note.context_importance }}</p><p><small>Tags: {{ note.tags|join(', ') or 'none' }}</small></p>
+        <p>{{ note.explanation }}</p><p><strong>Why context matters:</strong> {{ note.context_importance }}</p><p><small><strong>Created at (UTC):</strong> {{ note.created_at.isoformat() }} · Tags: {{ note.tags|join(', ') or 'none' }}</small></p>
         <form method="post" action="{{ url_for('remove_context_note', token=token, note_id=note.note_id) }}"><button class="danger-button compact" type="submit">Delete note</button></form>
       </article>{% endfor %}</div>{% else %}<p>No context notes have been added.</p>{% endif %}
     </section>

@@ -14,7 +14,7 @@
   </header>
   <main>
     <nav class="mode-nav" aria-label="Application modes">
-      <a href="{{ url_for('analyze_text') }}">Single text</a>
+      <a href="{{ url_for('analyze_text') }}">← Social Text Intelligence home</a>
       <a href="{{ url_for('batch_workspace', token=token) }}">Batch CSV</a>
       <a href="{{ url_for('triage.home') }}">Support Triage</a>
       <a class="active" href="{{ url_for('review_index', token=token) }}">Human review</a>
@@ -47,6 +47,7 @@
         <button type="submit">Apply filters</button>
       </form>
     </section>
+    {% if summary.progress.reviewable_records and summary.progress.unreviewed == 0 %}<section class="panel callout" role="status"><strong>Review queue complete.</strong> All {{ summary.progress.reviewable_records }} reviewable records have a saved human decision. You can still revisit decisions or export the reviewed CSV.</section>{% endif %}
 
     <section class="panel export-panel">
       <div><h2>Explicit reviewed export</h2><p>Includes every batch row, immutable AI outputs, separate human fields, provenance, errors, and agreement values. Native emotion scores remain optional.</p></div>
