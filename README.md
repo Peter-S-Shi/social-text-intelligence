@@ -89,6 +89,14 @@ console window open while using the application; press Ctrl+C there to stop it.
 The launcher uses only project-relative paths and does not install, download, or
 persist anything.
 
+The local server enforces a 3 MiB HTTP request-body ceiling before form or
+multipart processing. Oversized requests receive a fixed privacy-safe 413
+response and cannot create or modify temporary workflow state. This ceiling is
+separate from the 2 MiB CSV payload limit and includes 1 MiB of multipart/form
+encoding capacity. Advanced local runs may configure it with
+`sti-web --max-request-bytes`, but it must remain greater than
+`--max-batch-bytes`.
+
 Run the dependency-free test suite:
 
 ```text

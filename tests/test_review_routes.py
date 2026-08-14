@@ -160,6 +160,26 @@ class ReviewRouteTests(unittest.TestCase):
         self.assertIn(b"emotion_native_joy", native.data)
         self.assertEqual(compact.headers["Cache-Control"], "no-store")
 
+    def test_oversized_review_post_is_413_without_state_change(self) -> None:
+        store = self.app.extensions["sti_batch_store"]
+        before = store.get(self.token)
+        assert before is not None
+        self.app.config["MAX_CONTENT_LENGTH"] = 256
+        marker = "SYNTHETIC-PRIVATE-REVIEW-MARKER"
+
+        response = self.client.post(
+            self.workspace_url + "/review/1",
+            data={
+                "action": "accept_both",
+                "review_note": marker + ("x" * 1024),
+            },
+        )
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.headers["Cache-Control"], "no-store")
+        self.assertNotIn(marker.encode(), response.data)
+        self.assertEqual(store.get(self.token), before)
+
 
 if __name__ == "__main__":
     unittest.main()

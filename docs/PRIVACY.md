@@ -38,6 +38,14 @@ model's complete encoded-input budget is rejected before inference; the app
 does not create or expose partial-text scores as if they described the whole
 submission.
 
+Every HTTP request is subject to a 3 MiB framework-level body ceiling before
+form or multipart content reaches workflow logic. Declared oversized bodies are
+rejected before temporary state can change; read-time enforcement covers parsed
+forms and files. The fixed 413 response does not echo submitted text, filenames,
+or file content and receives the same `Cache-Control: no-store` and
+`Pragma: no-cache` headers as other responses. This request ceiling is separate
+from the 2 MiB validated CSV payload limit.
+
 CSV uploads are read into a bounded, expiring in-memory workspace. The batch
 workflow creates no upload directory, temporary file, database, automatic
 export, or history. Responses use `Cache-Control: no-store`. Users explicitly
