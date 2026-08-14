@@ -10,8 +10,8 @@ sections use the same stable `FCR-XXX` identifiers.
 
 ## 1. 当前状态与使用方法
 
-- 当前阶段：**Feature Complete Review（功能完备审查）**
-- Feature Freeze：**尚未开始**
+- 当前阶段：**Product Hardening（产品加固）**
+- Feature Freeze：**PASS（2026-08-13 用户明确批准）**
 - Release readiness：**否**
 - 操作型逐项测试记录：
   [Manual QA](../manual-qa/manual_review_questionnaire.html)
@@ -120,7 +120,7 @@ Final Outcome / 最终结果
 | ID | 审计主题 | 必须核查的决定 | 初始状态 |
 | --- | --- | --- | --- |
 | FCR-001 | 启动与本地边界 | 安装、离线启动、loopback、限制和数据生命周期是否清楚 | OPEN |
-| FCR-002 | 顶层导航 | 所有主要工作流是否可发现且层级一致 | OPEN |
+| FCR-002 | 顶层导航 | 所有主要工作流是否可发现且层级一致 | VERIFIED |
 | FCR-003 | 直接文本输入 | 空白、超长、英文与不支持语言的反馈是否可恢复 | OPEN |
 | FCR-004 | Sentiment 输出 | 标签、分数、置信度、模型和 revision 是否透明 | OPEN |
 | FCR-005 | Emotion 输出 | native/compact、多标签阈值和 neutral 语义是否明确 | OPEN |
@@ -152,17 +152,17 @@ Final Outcome / 最终结果
 | FCR-031 | 当前版本范围 | 是否存在必须添加、移除、合并、隐藏或简化的能力 | OPEN |
 | FCR-032 | 延后范围 | French、long-form、connectors、persistence 等是否明确隔离 | OPEN |
 | FCR-033 | 本地模型缓存冗余 | 固定模型能否在不复制权重或产生未审计转换 revision 的情况下离线运行 | VERIFIED |
-| FCR-034 | Emotion neutral 阈值回退语义 | neutral 是否明确表示阈值回退，而非最高 raw score | IMPLEMENTED；待人工复测 |
-| FCR-035 | Batch 筛选后位置 | 筛选后是否返回 Results，而不是页面顶部 | IMPLEMENTED |
-| FCR-036 | Batch 清理确认 | 销毁临时关联状态前是否明确警告并确认 | IMPLEMENTED；待人工复测 |
-| FCR-037 | Human Review 完成提示 | 队列完成是否明确显示 | IMPLEMENTED |
-| FCR-038 | Context Note UTC 可见性 | note 卡片是否直接显示 UTC created_at | IMPLEMENTED |
-| FCR-039 | Insights 失败分组计数 | 成功、可靠分组失败、未分组失败是否显式分开 | IMPLEMENTED；待人工复测 |
-| FCR-040 | Triage 无 mock 状态 | 无 mock 时是否明确 unavailable 且不显示误导 copy | IMPLEMENTED；待人工复测 |
-| FCR-041 | Batch 到 Triage 关联入口 | 正常 UI 是否保留 batch token 进入 Triage | IMPLEMENTED；待人工复测 |
+| FCR-034 | Emotion neutral 阈值回退语义 | neutral 是否明确表示阈值回退，而非最高 raw score | VERIFIED |
+| FCR-035 | Batch 筛选后位置 | 筛选后是否返回 Results，而不是页面顶部 | VERIFIED |
+| FCR-036 | Batch 清理确认 | 销毁临时关联状态前是否明确警告并确认 | VERIFIED |
+| FCR-037 | Human Review 完成提示 | 队列完成是否明确显示 | VERIFIED |
+| FCR-038 | Context Note UTC 可见性 | note 卡片是否直接显示 UTC created_at | VERIFIED |
+| FCR-039 | Insights 失败分组计数 | 成功、可靠分组失败、未分组失败是否显式分开 | VERIFIED |
+| FCR-040 | Triage 无 mock 状态 | 无 mock 时是否明确 unavailable 且不显示误导 copy | VERIFIED |
+| FCR-041 | Batch 到 Triage 关联入口 | 正常 UI 是否保留 batch token 进入 Triage | VERIFIED |
 | FCR-042 | 分数列表排序 | 分数列表是否需要更强的排序可读性 | OPEN；非 blocker |
 | FCR-043 | 说明与错误信息层级 | 次要说明、警告、错误的视觉层级是否足够清楚 | OPEN；非 blocker |
-| FCR-044 | 嵌套工作流返回主界面 | Triage 四个内部界面及同类深层页面是否有明确主界面返回链接 | IMPLEMENTED；blocker 人工复测待完成 |
+| FCR-044 | 嵌套工作流返回主界面 | Triage 四个内部界面及同类深层页面是否有明确主界面返回链接 | VERIFIED；人工复测通过 |
 
 ## 5. Feature decision index
 
@@ -171,17 +171,17 @@ Final Outcome / 最终结果
 | ID | Decision Class | Decision | 状态 | 简要理由 | 实施/验证引用 |
 | --- | --- | --- | --- | --- | --- |
 | FCR-033 | `HARDENING` | Keep and harden | `VERIFIED` | 清除重复缓存，并固定已审计的 sentiment 权重格式；无产品或模型输出变化 | provider 回归、完整质量检查及真实离线双模型测试 |
-| FCR-034 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 明确 neutral threshold fallback，不改模型语义 | 定向回归通过；待 `direct-multilabel` 人工复测 |
-| FCR-035 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 筛选后回到 Results anchor | Batch route 回归 |
-| FCR-036 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 清理前要求显式确认并说明关联状态 | Batch clear route 回归；待人工复测 |
-| FCR-037 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 明确显示 review queue 完成 | Review route 回归 |
-| FCR-038 | `HARDENING` | Keep and harden | `IMPLEMENTED` | note 卡片显示 timezone-aware UTC created_at | Insights route 回归 |
-| FCR-039 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 显式分开可靠分组失败与未分组失败，不猜测 | Insights service/route 回归；待人工复测 |
-| FCR-040 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 无 mock 明确 unavailable，assisted copy 按可用性显示 | Triage route 回归；待人工复测 |
-| FCR-041 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Batch Results 增加保留 token 的 Triage 入口 | Batch/Triage 关联回归；待人工隐私复测 |
+| FCR-034 | `HARDENING` | Keep and harden | `VERIFIED` | 明确 neutral threshold fallback，不改模型语义 | 定向回归与 final-candidate 人工复测通过 |
+| FCR-035 | `HARDENING` | Keep and harden | `VERIFIED` | 筛选后回到 Results anchor | Batch route 回归与人工复测通过 |
+| FCR-036 | `HARDENING` | Keep and harden | `VERIFIED` | 清理前要求显式确认并说明关联状态 | Batch clear route 回归与委托技术复测通过 |
+| FCR-037 | `HARDENING` | Keep and harden | `VERIFIED` | 明确显示 review queue 完成 | Review route 回归与人工复测通过 |
+| FCR-038 | `HARDENING` | Keep and harden | `VERIFIED` | note 卡片显示 timezone-aware UTC created_at | Insights route 回归与人工复测通过 |
+| FCR-039 | `HARDENING` | Keep and harden | `VERIFIED` | 显式分开可靠分组失败与未分组失败，不猜测 | Insights service/route 回归与人工复测通过 |
+| FCR-040 | `HARDENING` | Keep and harden | `VERIFIED` | 无 mock 明确 unavailable，assisted copy 按可用性显示 | Triage route 回归与人工复测通过 |
+| FCR-041 | `HARDENING` | Keep and harden | `VERIFIED` | Batch Results 增加保留 token 的 Triage 入口 | Batch/Triage 关联回归与人工隐私复测通过 |
 | FCR-042 | `HARDENING` | Keep and harden | `OPEN` | 分数排序是独立可读性改进，不阻碍当前 contract | 后续 Product Hardening |
 | FCR-043 | `HARDENING` | Keep and harden | `OPEN` | 说明/错误层级是跨页面视觉改进，当前可恢复性未失败 | 后续 Product Hardening |
-| FCR-044 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 复测证明缺失返回路径造成重大操作困难；所有嵌套工作流增加明确 home link | 导航 route regressions 通过；待人工复测 |
+| FCR-044 | `HARDENING` | Keep and harden | `VERIFIED` | 复测证明缺失返回路径造成重大操作困难；所有嵌套工作流增加明确 home link | exact behavioral SHA 人工复测与 CI 通过 |
 
 ### 2026-08-13 最新反馈分类
 
@@ -197,17 +197,17 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 | 输入包含箭头时分数略有变化 | QA guidance | 输入字符已变化，分数小幅变化属预期；补充 exact-input 指南，不创建 FCR |
 | 分数列表排序 | Product FCR / Hardening | FCR-042，非 blocker |
 | 说明/错误文字视觉层级 | Product FCR / Hardening | FCR-043，非 blocker |
-| Triage/嵌套工作流返回主界面 | Product FCR / Hardening | FCR-044；最新人工证据将其提升为 pre-freeze blocker，本轮已修，待复测 |
+| Triage/嵌套工作流返回主界面 | Product FCR / Hardening | FCR-044；pre-freeze blocker 已修并在 exact behavioral SHA 上人工复测通过 |
 
 ### 2026-08-13 既有 FCR disposition map
 
-- `VERIFIED / Keep as-is`: FCR-001, 004, 006–013, 016, 018–020,
+- `VERIFIED / Keep as-is`: FCR-001–002, 004, 006–013, 016, 018–020,
   022, 025, 027–029, 032–033。
-- `IMPLEMENTED / Keep and harden`: FCR-034–041；其中 034、036、039、040、
-  041 仍需在最终 candidate SHA 上人工复测。
-- `OPEN verification`: FCR-002、003、005、014、015、017、021、023、026、
-  030、031。FCR-002 因 FCR-044 的新人工证据重新打开；自动化/静态证据已覆盖
-  V-03–V-06，V-01 仍要求最终 candidate-specific 证据。
+- `VERIFIED / Keep and harden`: FCR-034–041 与 FCR-044；final-candidate
+  人工或委托技术复测均已完成。
+- `OPEN verification`: FCR-003、005、014、015、017、021、023、026、030、031。
+  FCR-002 已由 FCR-044 final-head smoke test 重新关闭；V-01 已由 exact tested
+  behavioral SHA 满足，V-03–V-06 已由自动化/静态/委托技术复测覆盖。
 - `OPEN / non-blocking Hardening`: FCR-042–043。
 
 ### FCR-034–FCR-041 — 固定审计记录
@@ -229,7 +229,7 @@ Feature Complete Review。分支、candidate commit、PR 与 CI 在本轮 Git �
 - **Acceptance Criteria / 验收标准:** fallback 与 raw-score ranking 可区分；secondary/native/threshold 语义不变；自动化通过并人工复测。
 - **Risks and Regression Scope / 风险与回归范围:** Direct template；重跑 direct route 与全套回归。
 - **Git / PR Record / Git 与 PR 记录:** `hardening/pre-freeze-manual-qa`; candidate/PR/CI 待 Git 交付。
-- **Final Outcome / 最终结果:** 实现完成；人工复测前不得标记 VERIFIED 或通过 Freeze。
+- **Final Outcome / 最终结果:** 定向回归与 final-candidate 人工复测通过；状态 `VERIFIED`。
 
 #### FCR-035 — Batch 筛选后结果位置
 
@@ -259,7 +259,7 @@ Feature Complete Review。分支、candidate commit、PR 与 CI 在本轮 Git �
 - **Acceptance Criteria / 验收标准:** 未确认不删除；确认后旧 token 失效；无关 workspace 保留。
 - **Risks and Regression Scope / 风险与回归范围:** Batch clear 与 linked state；全套 route 回归。
 - **Git / PR Record / Git 与 PR 记录:** 当前 hardening 分支；candidate/PR/CI 待填写。
-- **Final Outcome / 最终结果:** 自动化通过；待 `batch-clear` 人工复测。
+- **Final Outcome / 最终结果:** 自动化与委托技术复测通过；状态 `VERIFIED`。
 
 #### FCR-037 — Human Review 完成提示
 
@@ -304,7 +304,7 @@ Feature Complete Review。分支、candidate commit、PR 与 CI 在本轮 Git �
 - **Acceptance Criteria / 验收标准:** 三类 count 明确；raw metrics/denominators/filters 不变。
 - **Risks and Regression Scope / 风险与回归范围:** Insights group summaries/export consistency。
 - **Git / PR Record / Git 与 PR 记录:** 当前 hardening 分支；candidate/PR/CI 待填写。
-- **Final Outcome / 最终结果:** 自动化通过；待 `insights-failures` 人工复测。
+- **Final Outcome / 最终结果:** 自动化与人工复测通过；状态 `VERIFIED`。
 
 #### FCR-040 — Support Triage explicit no-mock state
 
@@ -319,7 +319,7 @@ Feature Complete Review。分支、candidate commit、PR 与 CI 在本轮 Git �
 - **Acceptance Criteria / 验收标准:** unavailable 明确；visible/hidden counts 仍排除 unavailable；人类表单不预填。
 - **Risks and Regression Scope / 风险与回归范围:** Triage source, visibility, summary。
 - **Git / PR Record / Git 与 PR 记录:** 当前 hardening 分支；candidate/PR/CI 待填写。
-- **Final Outcome / 最终结果:** 自动化通过；待两项原 QA 人工复测。
+- **Final Outcome / 最终结果:** 自动化与两项原 QA 人工复测通过；状态 `VERIFIED`。
 
 #### FCR-041 — Batch Results linked Support Triage entry
 
@@ -334,7 +334,7 @@ Feature Complete Review。分支、candidate commit、PR 与 CI 在本轮 Git �
 - **Acceptance Criteria / 验收标准:** main/edge batch 可从 UI 进入；失败推理行仍可选；signals/review/notes/metadata 仅作 supporting context。
 - **Risks and Regression Scope / 风险与回归范围:** Batch/Triage token、expiry、privacy exports。
 - **Git / PR Record / Git 与 PR 记录:** 当前 hardening 分支；candidate/PR/CI 待填写。
-- **Final Outcome / 最终结果:** 自动化入口/资格测试通过；V-04 六种 opt-in 仍需人工复测。
+- **Final Outcome / 最终结果:** 自动化入口/资格测试与 V-04 委托技术复测通过；状态 `VERIFIED`。
 
 ### FCR-042–FCR-044 — 最新产品发现
 
@@ -390,11 +390,19 @@ Source & Guide、Workspace、Ticket、Summary 四个内部界面均没有可发�
 嵌套工作流全局导航缺口。FCR-044 现为 pre-freeze blocker，Status 更新为
 `IMPLEMENTED`：所有非主页面使用明确、可键盘操作的
 `← Social Text Intelligence home` 链接，Triage/Moderation 深层页面将全局导航与
-工作流 subnav 分开。FCR-002 重新打开 verification；targeted route regression
-通过，最终 candidate 上的人工返回测试仍未完成。
+工作流 subnav 分开。该时点 FCR-002 重新打开 verification；targeted route
+regression 通过，人工返回测试尚未完成。下方 final verification update 已取代
+这一中间状态。
 
 **Git / PR update：** FCR-044 implementation commit `67eaa33`，Draft PR #16；
 最终 head 与 CI 以 PR checks 为准。
+
+**2026-08-13 Final verification update / 最终验证更新：** 在 tested behavioral
+SHA `16acb0f5931b022b57f0c5cdbe4501973aa3ad11` 上完成 final-head smoke
+test，FCR-044 人工复测 PASS；四个 Triage 内部界面与同类深层页面均可明确返回
+Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status 更新为
+`VERIFIED`，FCR-002 navigation verification 重新关闭为 `VERIFIED`。V-01 已由
+该 exact SHA 满足。后续治理文档 commit 不改变 behavioral candidate。
 
 ### FCR-033 — 本地模型缓存冗余
 
@@ -491,6 +499,26 @@ Evidence:
 Feature Freeze 只能通过明确记录产生。完成 Milestone 10、完成本清单或没有已知
 缺陷都不能自动代表冻结通过。
 
+### 2026-08-13 正式 Feature Freeze 决定
+
+```text
+Feature Freeze decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-13
+Tested behavioral SHA: 16acb0f5931b022b57f0c5cdbe4501973aa3ad11
+Decision: PASS
+Governance closure SHA: PENDING_THIS_DOCUMENTATION_ONLY_COMMIT
+Open current-version blockers: None
+Approved exceptions: FCR-042 and FCR-043 are non-blocking Product Hardening backlog
+Deferred next-version items: French/multilingual, long-form/transcripts, connectors, persistence, accounts/shared/cloud, and other approved future expansions
+Required regression: Final-head smoke PASS; 127 tests passed and 2 opt-in real-model tests skipped; Ruff, strict MyPy, compileall, pip check, documentation/privacy checks, and GitHub CI passed
+Approver: User / project owner
+Evidence: PR #16 candidate-specific manual evidence; exact behavioral SHA above; FCR-044/FCR-002 final verification; Python 3.11/3.12/3.13 CI
+```
+
+此 PASS 仅冻结上述 tested behavioral SHA。其后的 closure commits 只记录治理与
+状态，不是新的 behavioral candidate。FCR-042、FCR-043 留在 Product Hardening
+backlog，不阻碍本次 Feature Freeze；Release readiness 仍为 No。
+
 ## 7. Codex 维护规则
 
 1. 新发现使用下一个永久 `FCR-XXX` ID。
@@ -509,8 +537,8 @@ Feature Freeze 只能通过明确记录产生。完成 Milestone 10、完成本�
 
 ## 1. Current state and use
 
-- Current phase: **Feature Complete Review**
-- Feature Freeze: **Not started**
+- Current phase: **Product Hardening**
+- Feature Freeze: **PASS (explicit user approval on 2026-08-13)**
 - Release readiness: **No**
 - Repeatable operational checklist:
   [Manual QA](../manual-qa/manual_review_questionnaire.html)
@@ -622,7 +650,7 @@ predeclare a pass.
 | ID | Audit topic | Required decision | Initial status |
 | --- | --- | --- | --- |
 | FCR-001 | Startup and local boundary | Are installation, offline startup, loopback binding, limits, and data lifecycle clear? | OPEN |
-| FCR-002 | Top-level navigation | Are all major workflows discoverable and consistently organized? | OPEN |
+| FCR-002 | Top-level navigation | Are all major workflows discoverable and consistently organized? | VERIFIED |
 | FCR-003 | Direct text input | Are blank, oversized, English, and unsupported-language outcomes recoverable? | OPEN |
 | FCR-004 | Sentiment output | Are labels, scores, confidence, model, and revision transparent? | OPEN |
 | FCR-005 | Emotion output | Are native/compact, multi-label threshold, and neutral semantics explicit? | OPEN |
@@ -654,17 +682,17 @@ predeclare a pass.
 | FCR-031 | Current-version scope | Must any capability be added, removed, merged, hidden, or simplified? | OPEN |
 | FCR-032 | Deferred scope | Are French, long-form, connectors, persistence, and other expansion isolated? | OPEN |
 | FCR-033 | Local model-cache redundancy | Can pinned models run offline without duplicate weights or an unaudited conversion revision? | VERIFIED |
-| FCR-034 | Emotion neutral fallback semantics | Is neutral explicit as threshold fallback rather than highest raw score? | IMPLEMENTED; manual retest pending |
-| FCR-035 | Batch filter result position | Do filters return to Results rather than the page top? | IMPLEMENTED |
-| FCR-036 | Batch clear confirmation | Is linked temporary state explained and confirmed before destruction? | IMPLEMENTED; manual retest pending |
-| FCR-037 | Human Review completion | Is queue completion explicit? | IMPLEMENTED |
-| FCR-038 | Context Note UTC visibility | Does the note card expose UTC created_at? | IMPLEMENTED |
-| FCR-039 | Insight failure group counts | Are success, reliably assigned failure, and unassigned failure explicit? | IMPLEMENTED; manual retest pending |
-| FCR-040 | Triage no-mock state | Is unavailable explicit without misleading assisted copy? | IMPLEMENTED; manual retest pending |
-| FCR-041 | Linked Batch-to-Triage entry | Can normal UI preserve the batch token into Triage? | IMPLEMENTED; manual retest pending |
+| FCR-034 | Emotion neutral fallback semantics | Is neutral explicit as threshold fallback rather than highest raw score? | VERIFIED |
+| FCR-035 | Batch filter result position | Do filters return to Results rather than the page top? | VERIFIED |
+| FCR-036 | Batch clear confirmation | Is linked temporary state explained and confirmed before destruction? | VERIFIED |
+| FCR-037 | Human Review completion | Is queue completion explicit? | VERIFIED |
+| FCR-038 | Context Note UTC visibility | Does the note card expose UTC created_at? | VERIFIED |
+| FCR-039 | Insight failure group counts | Are success, reliably assigned failure, and unassigned failure explicit? | VERIFIED |
+| FCR-040 | Triage no-mock state | Is unavailable explicit without misleading assisted copy? | VERIFIED |
+| FCR-041 | Linked Batch-to-Triage entry | Can normal UI preserve the batch token into Triage? | VERIFIED |
 | FCR-042 | Score-list ordering | Would stronger score ordering improve scanability? | OPEN; non-blocking |
 | FCR-043 | Explanatory/error hierarchy | Are secondary copy, warnings, and errors visually distinct enough? | OPEN; non-blocking |
-| FCR-044 | Nested-workflow return navigation | Do all four Triage internals and comparable deep views expose an explicit application-home link? | IMPLEMENTED; blocker manual retest pending |
+| FCR-044 | Nested-workflow return navigation | Do all four Triage internals and comparable deep views expose an explicit application-home link? | VERIFIED; manual retest passed |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -674,17 +702,17 @@ evidence and disposition.
 | ID | Decision Class | Decision | Status | Short rationale | Implementation/verification reference |
 | --- | --- | --- | --- | --- | --- |
 | FCR-033 | `HARDENING` | Keep and harden | `VERIFIED` | Remove redundant cache artifacts and pin the audited sentiment weight format without product or model-output changes | Provider regression, full quality suite, and real offline two-model tests |
-| FCR-034 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Explain neutral threshold fallback without changing model semantics | Targeted regression passed; manual `direct-multilabel` retest pending |
-| FCR-035 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Return filter submissions to the Results anchor | Batch route regression |
-| FCR-036 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Require explicit confirmation and explain linked state | Batch clear regression; manual retest pending |
-| FCR-037 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Surface review-queue completion | Review route regression |
-| FCR-038 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Show timezone-aware UTC created_at on note cards | Insights route regression |
-| FCR-039 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Separate reliably grouped and unassigned failures without guessing | Insights service/route regression; manual retest pending |
-| FCR-040 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Mark absent mocks unavailable and condition assisted copy | Triage route regression; manual retest pending |
-| FCR-041 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Add a Batch Results Triage entry that preserves the token | Linked Batch/Triage regression; manual privacy retest pending |
+| FCR-034 | `HARDENING` | Keep and harden | `VERIFIED` | Explain neutral threshold fallback without changing model semantics | Targeted regression and final-candidate manual retest passed |
+| FCR-035 | `HARDENING` | Keep and harden | `VERIFIED` | Return filter submissions to the Results anchor | Batch route regression and manual retest passed |
+| FCR-036 | `HARDENING` | Keep and harden | `VERIFIED` | Require explicit confirmation and explain linked state | Batch clear regression and delegated technical retest passed |
+| FCR-037 | `HARDENING` | Keep and harden | `VERIFIED` | Surface review-queue completion | Review route regression and manual retest passed |
+| FCR-038 | `HARDENING` | Keep and harden | `VERIFIED` | Show timezone-aware UTC created_at on note cards | Insights route regression and manual retest passed |
+| FCR-039 | `HARDENING` | Keep and harden | `VERIFIED` | Separate reliably grouped and unassigned failures without guessing | Insights service/route regression and manual retest passed |
+| FCR-040 | `HARDENING` | Keep and harden | `VERIFIED` | Mark absent mocks unavailable and condition assisted copy | Triage route regression and manual retest passed |
+| FCR-041 | `HARDENING` | Keep and harden | `VERIFIED` | Add a Batch Results Triage entry that preserves the token | Linked Batch/Triage regression and manual privacy retest passed |
 | FCR-042 | `HARDENING` | Keep and harden | `OPEN` | Score ordering is an independent readability improvement, not a current contract blocker | Later Product Hardening |
 | FCR-043 | `HARDENING` | Keep and harden | `OPEN` | Information hierarchy is cross-page visual hardening; recovery behavior did not fail | Later Product Hardening |
-| FCR-044 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Retest proved that missing return paths cause material operating difficulty; every nested workflow now has an explicit home link | Navigation route regressions passed; manual retest pending |
+| FCR-044 | `HARDENING` | Keep and harden | `VERIFIED` | Retest proved that missing return paths cause material operating difficulty; every nested workflow now has an explicit home link | Exact behavioral SHA manual retest and CI passed |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -701,18 +729,18 @@ CI status are authoritative in the PR checks.
 | Small score change after adding arrow characters | QA guidance | The analyzed input changed; document exact-input comparison, no FCR |
 | Score-list ordering | Product FCR / Hardening | FCR-042, non-blocking |
 | Explanatory/error text hierarchy | Product FCR / Hardening | FCR-043, non-blocking |
-| Triage/nested-workflow return to application home | Product FCR / Hardening | FCR-044; latest evidence elevated it to a pre-freeze blocker, now corrected pending retest |
+| Triage/nested-workflow return to application home | Product FCR / Hardening | FCR-044; pre-freeze blocker corrected and manually passed on the exact behavioral SHA |
 
 ### 2026-08-13 existing-FCR disposition map
 
-- `VERIFIED / Keep as-is`: FCR-001, 004, 006–013, 016, 018–020,
+- `VERIFIED / Keep as-is`: FCR-001–002, 004, 006–013, 016, 018–020,
   022, 025, 027–029, 032–033.
-- `IMPLEMENTED / Keep and harden`: FCR-034–041; 034, 036, 039, 040, and
-  041 still require manual retest on the final candidate SHA.
-- `OPEN verification`: FCR-002, 003, 005, 014, 015, 017, 021, 023, 026,
-  030, 031. FCR-002 reopened because of the new FCR-044 manual evidence;
-  automated/static evidence covers V-03–V-06, while V-01 still requires final
-  candidate-specific evidence.
+- `VERIFIED / Keep and harden`: FCR-034–041 and FCR-044; final-candidate
+  manual or delegated technical retesting is complete.
+- `OPEN verification`: FCR-003, 005, 014, 015, 017, 021, 023, 026, 030, 031.
+  FCR-002 is re-closed by the FCR-044 final-head smoke test; V-01 is satisfied
+  by the exact tested behavioral SHA, and V-03–V-06 are covered by automated,
+  static, or delegated technical retest evidence.
 - `OPEN / non-blocking Hardening`: FCR-042–043.
 
 ### FCR-034–FCR-041 — fixed audit records
@@ -735,7 +763,7 @@ PR, and CI are finalized during Git delivery.
 - **Acceptance Criteria:** Fallback and raw ranking are distinguishable; secondary/native/threshold semantics remain intact; automated and manual checks pass.
 - **Risks and Regression Scope:** Direct template; direct routes and full regression.
 - **Git / PR Record:** `hardening/pre-freeze-manual-qa`; candidate/PR/CI pending delivery.
-- **Final Outcome:** Implemented; cannot become VERIFIED or pass Freeze before manual retest.
+- **Final Outcome:** Targeted regression and final-candidate manual retest passed; status `VERIFIED`.
 
 #### FCR-035 — Batch filter result-position usability
 
@@ -810,7 +838,7 @@ PR, and CI are finalized during Git delivery.
 - **Acceptance Criteria:** Counts are explicit; raw metrics/denominators/filters remain unchanged.
 - **Risks and Regression Scope:** Insight group summaries/export consistency.
 - **Git / PR Record:** Current hardening branch; candidate/PR/CI pending.
-- **Final Outcome:** Automated check passed; `insights-failures` manual retest pending.
+- **Final Outcome:** Automated and manual retesting passed; status `VERIFIED`.
 
 #### FCR-040 — Support Triage explicit no-mock state
 
@@ -825,7 +853,7 @@ PR, and CI are finalized during Git delivery.
 - **Acceptance Criteria:** Unavailable is explicit; unavailable stays outside visible/hidden counts; form remains unfilled.
 - **Risks and Regression Scope:** Triage source, visibility, and summary.
 - **Git / PR Record:** Current hardening branch; candidate/PR/CI pending.
-- **Final Outcome:** Automated checks passed; both original QA items need manual retest.
+- **Final Outcome:** Automated checks and both original QA manual retests passed; status `VERIFIED`.
 
 #### FCR-041 — Linked Support Triage entry from Batch Results
 
@@ -840,7 +868,7 @@ PR, and CI are finalized during Git delivery.
 - **Acceptance Criteria:** Main/edge batches enter from UI; failed-inference parsed rows remain eligible; context remains supporting only.
 - **Risks and Regression Scope:** Batch/Triage token, expiry, privacy exports.
 - **Git / PR Record:** Current hardening branch; candidate/PR/CI pending.
-- **Final Outcome:** Automated entry/eligibility tests passed; V-04 six-option manual retest remains.
+- **Final Outcome:** Automated entry/eligibility tests and V-04 delegated technical retest passed; status `VERIFIED`.
 
 ### FCR-042–FCR-044 — latest product findings
 
@@ -898,11 +926,20 @@ cause remains nested-workflow global navigation. FCR-044 is now a pre-freeze
 blocker with Status `IMPLEMENTED`: every non-root view uses an explicit,
 keyboard-operable `← Social Text Intelligence home` link, and deep Triage and
 Moderation views separate global navigation from workflow subnavigation.
-FCR-002 is reopened for verification. Targeted route regression passed; manual
-return-navigation retest on the final candidate remains pending.
+At that point FCR-002 was reopened for verification. Targeted route regression
+passed and manual return-navigation retest remained pending. The final
+verification update below supersedes that intermediate status.
 
 **Git / PR update:** FCR-044 implementation commit `67eaa33` in Draft PR #16;
 final head and CI are authoritative in the PR checks.
+
+**2026-08-13 Final verification update:** Final-head smoke testing passed on
+tested behavioral SHA `16acb0f5931b022b57f0c5cdbe4501973aa3ad11`.
+FCR-044 manual retest is PASS: all four internal Triage views and comparable
+deep views expose a clear return to Social Text Intelligence home without
+clearing temporary workspace state. FCR-044 is `VERIFIED`, FCR-002 navigation
+verification is re-closed as `VERIFIED`, and V-01 is satisfied by that exact
+SHA. Later governance-document commits do not move the behavioral candidate.
 
 ### FCR-033 — Local model-cache redundancy
 
@@ -999,6 +1036,27 @@ Evidence:
 Feature Freeze exists only through this explicit decision. Milestone 10
 completion, checklist completion, or the absence of known defects does not pass
 the gate automatically.
+
+### 2026-08-13 formal Feature Freeze decision
+
+```text
+Feature Freeze decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-13
+Tested behavioral SHA: 16acb0f5931b022b57f0c5cdbe4501973aa3ad11
+Decision: PASS
+Governance closure SHA: PENDING_THIS_DOCUMENTATION_ONLY_COMMIT
+Open current-version blockers: None
+Approved exceptions: FCR-042 and FCR-043 are non-blocking Product Hardening backlog
+Deferred next-version items: French/multilingual, long-form/transcripts, connectors, persistence, accounts/shared/cloud, and other approved future expansions
+Required regression: Final-head smoke PASS; 127 tests passed and 2 opt-in real-model tests skipped; Ruff, strict MyPy, compileall, pip check, documentation/privacy checks, and GitHub CI passed
+Approver: User / project owner
+Evidence: PR #16 candidate-specific manual evidence; exact behavioral SHA above; FCR-044/FCR-002 final verification; Python 3.11/3.12/3.13 CI
+```
+
+This PASS freezes only the tested behavioral SHA above. Later closure commits
+record governance/status only and are not a new behavioral candidate. FCR-042
+and FCR-043 remain Product Hardening backlog and do not block this gate. Release
+readiness remains No.
 
 ## 7. Codex maintenance rules
 
