@@ -22,20 +22,22 @@ principles.
 | Product Hardening Batch A4 evidence | FCR-048 `VERIFIED` — real offline 1/50/500-row CPU probe; no product behavior change required |
 | Product Hardening Batch A4 merged main SHA | `5778f8f8804c3014f16940af1d7254c202dbcf41` — PR #21 merged; A5 synchronized baseline |
 | Product Hardening Batch A5 behavioral candidate SHA | `a3ec11b674c11148d66be73475b43d0796329a54` — current-state mutation/concurrency integrity review PASS; behavioral-head CI PASS |
+| Product Hardening Batch A5 merged main SHA | `3a0bb9c9460379b55a6488f966034419e40cf91d` — PR #22 merged; A6 synchronized baseline |
+| Product Hardening Batch A6 behavioral candidate SHA | `1a2d25fafc532215b45cf8d6310e8e1b2b16140d` — Host/same-origin/CSP/security-header review, behavioral-head CI, and real-browser smoke PASS |
 | Current lifecycle phase | **Product Hardening** |
 | Feature milestone status | Milestones 1–10 complete |
 | Feature Complete Review status | **Completed** |
 | Feature Freeze status | **PASS — explicitly approved 2026-08-13** |
-| Product Hardening status | **Batches A1–A4 merged; Batch A5 reviewed and verified in PR #22**; FCR-045–049 are `VERIFIED`; FCR-042 and FCR-043 remain non-blocking backlog |
+| Product Hardening status | **Batches A1–A5 merged; Batch A6 reviewed and verified in PR #23**; FCR-045–050 are `VERIFIED`; FCR-042 and FCR-043 remain non-blocking backlog |
 | Manual Acceptance status | Not started |
 | Release Candidate status | Not started |
 | Release readiness | **No** |
-| Open blockers | PH-006 is closed as FCR-049 `VERIFIED`; PH-007 remains unstarted and outside Batch A5 |
-| Approved audit items | FCR-045 reconciles PH-001/PH-002 and remains `VERIFIED`; FCR-046 reconciles PH-003 and remains `VERIFIED`; FCR-047 reconciles PH-004 and remains `VERIFIED`; FCR-048 reconciles PH-005 and remains `VERIFIED`; FCR-049 reconciles PH-006 and is `VERIFIED` on behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54`; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
+| Open blockers | PH-007 is closed as FCR-050 `VERIFIED`; no later PH item is started |
+| Approved audit items | FCR-045 reconciles PH-001/PH-002 and remains `VERIFIED`; FCR-046 reconciles PH-003 and remains `VERIFIED`; FCR-047 reconciles PH-004 and remains `VERIFIED`; FCR-048 reconciles PH-005 and remains `VERIFIED`; FCR-049 reconciles PH-006 and remains `VERIFIED`; FCR-050 reconciles PH-007 and is `VERIFIED` on behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; FCR-036 remains separately `VERIFIED`; FCR-042–043 remain `OPEN` non-blocking Product Hardening backlog |
 | Deferred next-version items | Transcript/long-form analysis; French capability; platform connectors; persistence; other approved future expansions |
-| Latest validation | Product Hardening Batch A5 behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54`: code review PASS; behavioral-head Python 3.11/3.12/3.13 CI PASS; 9 focused deterministic concurrency/state tests passed; full suite 157 passed and 2 opt-in integration tests skipped; Ruff, strict MyPy for 70 files, compileall, and pip check passed |
-| Next required action | Merge the governance-closed PR #22 after final-head CI passes; do not start PH-007 without a separately authorized hardening batch |
-| Last updated | 2026-08-13 |
+| Latest validation | Product Hardening Batch A6 behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`: code review PASS; behavioral-head Python 3.11/3.12/3.13 CI PASS; real-browser Direct, Batch/Review, Insights progress/note, Moderation/Triage, CSV, and CSP-console smoke PASS; 12 focused regressions and full suite 163 passed with 2 opt-in model integrations skipped; Ruff, strict MyPy for 71 files, compileall, and pip check passed |
+| Next required action | Merge governance-closed PR #23 after final-head CI passes; do not start a later hardening item without separate authorization |
+| Last updated | 2026-08-14 |
 
 ## Required maintenance
 

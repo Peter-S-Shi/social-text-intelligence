@@ -83,8 +83,10 @@ th, td { padding: .65rem; border-bottom: 1px solid var(--line); text-align: left
 .status-insufficient { border-left: 4px solid var(--danger); }
 .distribution-list { display: grid; gap: .75rem; }
 .distribution-row > div:first-child { display: flex; justify-content: space-between; gap: 1rem; }
-.bar-track { height: .55rem; overflow: hidden; border-radius: 999px; background: #e7ece9; }
-.bar-track span { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+.metric-progress { width: 100%; height: .55rem; border: 0; border-radius: 999px; overflow: hidden; background: #e7ece9; }
+.metric-progress::-webkit-progress-bar { background: #e7ece9; border-radius: 999px; }
+.metric-progress::-webkit-progress-value { background: var(--accent); border-radius: 999px; }
+.metric-progress::-moz-progress-bar { background: var(--accent); border-radius: 999px; }
 .methodology { border-left: 4px solid var(--accent); }
 .note-form { display: grid; gap: .8rem; }
 .note-form textarea { min-height: 100px; }

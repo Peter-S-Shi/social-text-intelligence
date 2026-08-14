@@ -6,10 +6,11 @@ import argparse
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any, Protocol
+from urllib.parse import urlsplit
 
 from flask import Flask, Response, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
-from werkzeug.exceptions import RequestEntityTooLarge
+from werkzeug.exceptions import RequestEntityTooLarge, SecurityError
 
 from ..contracts import (
     AnalysisReport,
@@ -90,6 +91,51 @@ INSIGHT_METRICS_BY_PERSPECTIVE = {
     ),
 }
 
+TRUSTED_LOCAL_HOSTS = ("127.0.0.1", "localhost")
+UNSAFE_HTTP_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+CONTENT_SECURITY_POLICY = "; ".join(
+    (
+        "default-src 'self'",
+        "base-uri 'none'",
+        "connect-src 'self'",
+        "font-src 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+        "img-src 'self'",
+        "object-src 'none'",
+        "script-src 'self'",
+        "style-src 'self'",
+    )
+)
+
+
+def _effective_origin(value: str, *, allow_path: bool) -> tuple[str, str, int] | None:
+    """Return a strict HTTP origin tuple without trusting proxy headers."""
+
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError:
+        return None
+    if (
+        parsed.scheme not in {"http", "https"}
+        or parsed.hostname is None
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+        or (not allow_path and (parsed.path not in {"", "/"} or parsed.query))
+    ):
+        return None
+    if port is None:
+        port = 443 if parsed.scheme == "https" else 80
+    return parsed.scheme, parsed.hostname.lower(), port
+
+
+def _same_request_origin(value: str, *, allow_path: bool) -> bool:
+    candidate = _effective_origin(value, allow_path=allow_path)
+    current = _effective_origin(request.host_url, allow_path=False)
+    return candidate is not None and candidate == current
+
 DEFAULT_MAX_REQUEST_BYTES = 3 * 1024 * 1024
 
 
@@ -150,6 +196,7 @@ def create_app(
         EMOTION_THRESHOLD=DEFAULT_EMOTION_THRESHOLD,
         MAX_TEXT_LENGTH=20_000,
         MAX_CONTENT_LENGTH=DEFAULT_MAX_REQUEST_BYTES,
+        TRUSTED_HOSTS=TRUSTED_LOCAL_HOSTS,
         MAX_BATCH_BYTES=DEFAULT_MAX_BATCH_BYTES,
         MAX_BATCH_ROWS=DEFAULT_MAX_BATCH_ROWS,
         BATCH_WORKSPACE_TTL_SECONDS=30 * 60,
@@ -225,10 +272,49 @@ def create_app(
     app.register_blueprint(triage)
 
     @app.after_request
-    def prevent_private_response_caching(response: Response) -> Response:
+    def apply_browser_response_boundaries(response: Response) -> Response:
         response.headers["Cache-Control"] = "no-store"
         response.headers["Pragma"] = "no-cache"
+        response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "same-origin"
+        response.headers["X-Frame-Options"] = "DENY"
         return response
+
+    @app.before_request
+    def enforce_local_browser_boundary() -> Response | None:
+        routing_error = request.routing_exception
+        if isinstance(routing_error, SecurityError):
+            raise routing_error
+        if request.method not in UNSAFE_HTTP_METHODS:
+            return None
+
+        origin = request.headers.get("Origin")
+        if origin is not None:
+            if origin.strip().lower() == "null" or not _same_request_origin(
+                origin.strip(), allow_path=False
+            ):
+                return Response(
+                    "Cross-origin unsafe request rejected. No submitted "
+                    "content was processed or saved.",
+                    status=403,
+                    mimetype="text/plain",
+                )
+            return None
+
+        referer = request.headers.get("Referer")
+        if referer is not None and not _same_request_origin(
+            referer.strip(), allow_path=True
+        ):
+            return Response(
+                "Cross-origin unsafe request rejected. No submitted content "
+                "was processed or saved.",
+                status=403,
+                mimetype="text/plain",
+            )
+        # A request with neither header is treated as a local non-browser client.
+        # The trusted Host boundary still applies.
+        return None
 
     @app.before_request
     def enforce_declared_request_body_limit() -> None:
@@ -243,6 +329,15 @@ def create_app(
             f"{max_request_bytes}-byte request-body limit. No submitted "
             "content was processed or saved.",
             status=413,
+            mimetype="text/plain",
+        )
+
+    @app.errorhandler(SecurityError)
+    def untrusted_host(_error: SecurityError) -> Response:
+        return Response(
+            "Request rejected because the Host is not an approved loopback "
+            "host. No submitted content was processed or saved.",
+            status=400,
             mimetype="text/plain",
         )
 

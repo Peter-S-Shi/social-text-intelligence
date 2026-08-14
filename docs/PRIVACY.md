@@ -46,6 +46,21 @@ or file content and receives the same `Cache-Control: no-store` and
 `Pragma: no-cache` headers as other responses. This request ceiling is separate
 from the 2 MiB validated CSV payload limit.
 
+Browser requests also remain inside an explicit loopback boundary. Only
+`127.0.0.1` and `localhost` Host values are accepted. Explicit cross-origin or
+`null` Origin values cannot run unsafe methods; when Origin is absent, an
+existing Referer must be same-origin. Requests with neither header remain
+available to local non-browser clients and still pass trusted-Host validation.
+Rejected Host/Origin requests receive fixed text that does not include submitted
+content, host values, filenames, or internal paths, and they run before model
+inference or temporary-state mutation.
+
+All browser responses use a self-only Content Security Policy, MIME sniffing
+protection, same-origin referrer behavior, anti-framing protection, and no-store
+caching. Application CSS and JavaScript remain checked-in local resources; no
+CDN, wildcard source, CSP reporting service, CORS, telemetry, HSTS, TLS promise,
+LAN binding, or remote deployment capability is added.
+
 CSV uploads are read into a bounded, expiring in-memory workspace. The batch
 workflow creates no upload directory, temporary file, database, automatic
 export, or history. Responses use `Cache-Control: no-store`. Users explicitly

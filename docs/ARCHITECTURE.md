@@ -90,8 +90,24 @@ rejects declared oversized bodies before route or state logic, including routes
 that do not otherwise parse the request body; Flask enforces the same ceiling
 while reading form and multipart data. A single minimal handler returns a fixed
 413 response. The 2 MiB CSV payload limit remains a separate service-level rule,
-leaving 1 MiB for multipart/form encoding overhead. This boundary adds no
-deployment, account, persistence, CSP, Origin, or Host policy.
+leaving 1 MiB for multipart/form encoding overhead.
+
+The browser boundary remains loopback-only. Flask trusted-host validation
+accepts exactly `127.0.0.1` and `localhost`, with any local listening port, and
+rejects other Host values before business dispatch. Unsafe methods (`POST`,
+`PUT`, `PATCH`, and `DELETE`) accept an exact same-origin `Origin`; if Origin is
+absent, an existing Referer must also be same-origin. When both headers are
+absent, the request is treated as a local non-browser client and remains bounded
+by trusted Host. Fixed 400/403 responses do not echo request data or internal
+paths. This is not authentication or a session-based CSRF design.
+
+Every response, including redirects, errors, 413s, static resources, and CSV
+downloads, receives no-store plus a self-only Content Security Policy. Templates
+use local CSS/JavaScript and a native progress element instead of inline style,
+so the policy requires neither `unsafe-inline`, wildcards, nor external origins.
+`nosniff`, `Referrer-Policy: same-origin`, and anti-framing via both CSP
+`frame-ancestors 'none'` and `X-Frame-Options: DENY` complete the boundary.
+There is no HSTS on the intentional loopback HTTP product, and CORS remains off.
 
 `services/review.py` owns the human-review contracts and all label validation,
 record-status semantics, navigation selection, agreement calculations, summary

@@ -97,6 +97,16 @@ encoding capacity. Advanced local runs may configure it with
 `sti-web --max-request-bytes`, but it must remain greater than
 `--max-batch-bytes`.
 
+The browser interface accepts only `127.0.0.1` and `localhost` Host values
+(ports are allowed) and the CLI continues to bind only `127.0.0.1`. Unsafe
+browser methods require a same-origin `Origin`, or a same-origin `Referer` when
+Origin is absent. Requests with neither header remain supported as explicit
+local non-browser clients behind the trusted-Host boundary. Explicit external,
+cross-origin, or `null` origins are rejected before route logic, model loading,
+or workspace mutation. Responses use a strict self-hosted CSP, `nosniff`, a
+same-origin referrer policy, anti-framing protection, and no-store caching. The
+loopback HTTP product intentionally does not emit HSTS or enable CORS.
+
 Run the dependency-free test suite:
 
 ```text
