@@ -29,6 +29,9 @@ of the CSV byte limit. The full suite passed 148 with 2 opt-in real
 model tests skipped; Ruff, strict MyPy for 69 files, compileall, and pip check
 passed. Behavioral candidate:
 `def0577feb3c43d4e9e81577003c43da821b6ba2`.
+The user-approved code review and PR #20 pre-closure final-head CI passed, so
+FCR-047 is closed as `VERIFIED` on that exact behavioral candidate. This
+governance closure changes no product behavior or test.
 
 Batch A2 was merged through PR #19 at main SHA
 `1c9764ba7bcd45b07a07a93077b86070e358a0ab`; this is the synchronized A3
