@@ -69,6 +69,7 @@ from .moderation_routes import moderation
 from .moderation_state import EphemeralModerationStore
 from .triage_routes import triage
 from .triage_state import EphemeralTriageStore
+from .workspace_mutation import WorkspaceMutationConflict
 
 INSIGHT_METRICS_BY_PERSPECTIVE = {
     InsightPerspective.AI: (
@@ -401,19 +402,30 @@ def create_app(
 
     @app.post("/batch/<token>/select")
     def batch_select_column(token: str) -> ResponseReturnValue:
-        workspace = batch_store.get(token)
-        if workspace is None or workspace.pending is None:
-            return redirect(url_for("batch_workspace", token=token))
         try:
-            preview = prepare_csv_batch(
-                workspace.pending,
-                text_column=request.form.get("text_column", ""),
-                max_rows=int(app.config["MAX_BATCH_ROWS"]),
-                max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
-            )
+            selected = request.form.get("text_column", "")
+
+            def select_column(current: BatchWorkspace) -> BatchWorkspace:
+                if current.pending is None:
+                    raise WorkspaceMutationConflict(
+                        "This Batch setup changed in another request. Reload "
+                        "the current workspace before selecting a column."
+                    )
+                preview = prepare_csv_batch(
+                    current.pending,
+                    text_column=selected,
+                    max_rows=int(app.config["MAX_BATCH_ROWS"]),
+                    max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+                )
+                return BatchWorkspace(preview=preview)
+
+            updated = batch_store.mutate(token, select_column)
+        except WorkspaceMutationConflict as error:
+            return Response(str(error), status=409)
         except SocialTextIntelligenceError:
             return redirect(url_for("batch_workspace", token=token))
-        batch_store.replace(token, BatchWorkspace(preview=preview))
+        if updated is None:
+            return redirect(url_for("batch_workspace", token=token))
         return redirect(url_for("batch_workspace", token=token))
 
     @app.post("/batch/<token>/analyze")
@@ -626,60 +638,78 @@ def create_app(
         if current is None:
             return Response("Review record not found.", status=404)
         action = request.form.get("action", "save_next")
+        record_id = current.review.record_id
         try:
-            if action == "accept_both":
-                updated = accept_both(
-                    workspace.result,
-                    workspace.reviews,
-                    record_id=current.review.record_id,
-                    note=request.form.get("review_note", ""),
+            def mutate_review(current_workspace: BatchWorkspace) -> BatchWorkspace:
+                assert current_workspace.result is not None
+                assert current_workspace.reviews is not None
+                if action == "accept_both":
+                    updated_reviews = accept_both(
+                        current_workspace.result,
+                        current_workspace.reviews,
+                        record_id=record_id,
+                        note=request.form.get("review_note", ""),
+                    )
+                else:
+                    updated_reviews = update_review(
+                        current_workspace.result,
+                        current_workspace.reviews,
+                        record_id=record_id,
+                        sentiment_judgment=request.form.get(
+                            "sentiment_judgment"
+                        ),
+                        human_sentiment=request.form.get("human_sentiment"),
+                        emotion_judgment=request.form.get("emotion_judgment"),
+                        human_dominant_emotion=request.form.get(
+                            "human_dominant_emotion"
+                        ),
+                        human_secondary_emotions=request.form.getlist(
+                            "human_secondary_emotions"
+                        ),
+                        note=request.form.get("review_note", ""),
+                    )
+                return BatchWorkspace(
+                    pending=current_workspace.pending,
+                    preview=current_workspace.preview,
+                    result=current_workspace.result,
+                    reviews=updated_reviews,
+                    insights=current_workspace.insights,
                 )
-            else:
-                updated = update_review(
-                    workspace.result,
-                    workspace.reviews,
-                    record_id=current.review.record_id,
-                    sentiment_judgment=request.form.get("sentiment_judgment"),
-                    human_sentiment=request.form.get("human_sentiment"),
-                    emotion_judgment=request.form.get("emotion_judgment"),
-                    human_dominant_emotion=request.form.get(
-                        "human_dominant_emotion"
-                    ),
-                    human_secondary_emotions=request.form.getlist(
-                        "human_secondary_emotions"
-                    ),
-                    note=request.form.get("review_note", ""),
-                )
+
+            replacement = batch_store.mutate(token, mutate_review)
+        except WorkspaceMutationConflict as error:
+            return Response(str(error), status=409)
         except ValidationError as error:
+            current_workspace = batch_store.get(token)
+            if current_workspace is None:
+                return Response(
+                    "This temporary review expired or was cleared.", 404
+                )
             return render_review(
                 token,
-                workspace,
+                current_workspace,
                 row_number,
                 error_message=error.message,
                 submitted=True,
                 status=400,
             )
-
-        replacement = BatchWorkspace(
-            preview=workspace.preview,
-            result=workspace.result,
-            reviews=updated,
-            insights=workspace.insights,
-        )
-        if not batch_store.replace(token, replacement):
+        if replacement is None:
             return Response("This temporary review expired or was cleared.", 404)
+        assert replacement.result is not None
+        assert replacement.reviews is not None
+        updated = replacement.reviews
         review_filter, sentiment_filter, emotion_filter = review_filters()
         filtered = filter_review_cases(
-            workspace.result,
+            replacement.result,
             updated,
             review_filter=review_filter,
             sentiment_filter=sentiment_filter,
             emotion_filter=emotion_filter,
         )
         navigation = review_navigation(
-            workspace.result,
+            replacement.result,
             updated,
-            current_record_id=current.review.record_id,
+            current_record_id=record_id,
             filtered_cases=filtered,
         )
         target = (
@@ -840,16 +870,38 @@ def create_app(
             notes=insight_state.notes, selection=selection
         )
         if updated_insight_state != insight_state:
-            batch_store.replace(
-                token,
-                BatchWorkspace(
-                    preview=workspace.preview,
-                    result=result,
-                    reviews=reviews,
-                    insights=updated_insight_state,
-                ),
-            )
-            insight_state = updated_insight_state
+            try:
+                replacement = batch_store.mutate(
+                    token,
+                    lambda current: BatchWorkspace(
+                        pending=current.pending,
+                        preview=current.preview,
+                        result=current.result,
+                        reviews=current.reviews,
+                        insights=InsightState(
+                            notes=(
+                                current.insights.notes
+                                if current.insights is not None
+                                else ()
+                            ),
+                            selection=selection,
+                        ),
+                    ),
+                )
+            except WorkspaceMutationConflict as error:
+                return Response(str(error), status=409)
+            if replacement is None:
+                return Response(
+                    "This temporary insight workspace expired or was cleared.",
+                    404,
+                )
+            assert replacement.result is not None
+            assert replacement.reviews is not None
+            assert replacement.insights is not None
+            workspace = replacement
+            result = replacement.result
+            reviews = replacement.reviews
+            insight_state = replacement.insights
 
         example_mode_value = request.values.get(
             "example_mode", ExampleMode.LOWEST_AI_CONFIDENCE
@@ -951,27 +1003,46 @@ def create_app(
                 "This temporary insight workspace expired or was cleared.", 404
             )
         try:
-            updated = add_context_note(
-                workspace.insights,
-                workspace.result,
-                association=request.form.get("association", ""),
-                association_value=request.form.get("association_value", ""),
-                phrase=request.form.get("phrase", ""),
-                explanation=request.form.get("explanation", ""),
-                context_importance=request.form.get("context_importance", ""),
-                tags=request.form.getlist("tags"),
-            )
+            def mutate_note(current: BatchWorkspace) -> BatchWorkspace:
+                assert current.insights is not None
+                assert current.result is not None
+                updated_insights = add_context_note(
+                    current.insights,
+                    current.result,
+                    association=request.form.get("association", ""),
+                    association_value=request.form.get("association_value", ""),
+                    phrase=request.form.get("phrase", ""),
+                    explanation=request.form.get("explanation", ""),
+                    context_importance=request.form.get(
+                        "context_importance", ""
+                    ),
+                    tags=request.form.getlist("tags"),
+                )
+                return BatchWorkspace(
+                    pending=current.pending,
+                    preview=current.preview,
+                    result=current.result,
+                    reviews=current.reviews,
+                    insights=updated_insights,
+                )
+
+            replacement = batch_store.mutate(token, mutate_note)
+        except WorkspaceMutationConflict as error:
+            return Response(str(error), status=409)
         except ValidationError as error:
+            current_workspace = batch_store.get(token)
+            if current_workspace is None:
+                return Response(
+                    "This temporary insight workspace expired or was cleared.",
+                    404,
+                )
             return render_insights(
-                token, workspace, error_message=error.message, status=400
+                token,
+                current_workspace,
+                error_message=error.message,
+                status=400,
             )
-        replacement = BatchWorkspace(
-            preview=workspace.preview,
-            result=workspace.result,
-            reviews=workspace.reviews,
-            insights=updated,
-        )
-        if not batch_store.replace(token, replacement):
+        if replacement is None:
             return Response(
                 "This temporary insight workspace expired or was cleared.", 404
             )
@@ -985,19 +1056,36 @@ def create_app(
                 "This temporary insight workspace expired or was cleared.", 404
             )
         try:
-            updated = delete_context_note(workspace.insights, note_id=note_id)
+            def mutate_note(current: BatchWorkspace) -> BatchWorkspace:
+                assert current.insights is not None
+                updated_insights = delete_context_note(
+                    current.insights, note_id=note_id
+                )
+                return BatchWorkspace(
+                    pending=current.pending,
+                    preview=current.preview,
+                    result=current.result,
+                    reviews=current.reviews,
+                    insights=updated_insights,
+                )
+
+            replacement = batch_store.mutate(token, mutate_note)
+        except WorkspaceMutationConflict as error:
+            return Response(str(error), status=409)
         except ValidationError as error:
+            current_workspace = batch_store.get(token)
+            if current_workspace is None:
+                return Response(
+                    "This temporary insight workspace expired or was cleared.",
+                    404,
+                )
             return render_insights(
-                token, workspace, error_message=error.message, status=404
+                token,
+                current_workspace,
+                error_message=error.message,
+                status=404,
             )
-        replacement = BatchWorkspace(
-            pending=workspace.pending,
-            preview=workspace.preview,
-            result=workspace.result,
-            reviews=workspace.reviews,
-            insights=updated,
-        )
-        if not batch_store.replace(token, replacement):
+        if replacement is None:
             return Response(
                 "This temporary insight workspace expired or was cleared.", 404
             )

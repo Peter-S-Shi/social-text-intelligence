@@ -3,6 +3,7 @@
 import csv
 import io
 import unittest
+from unittest.mock import patch
 
 from social_text_intelligence.contracts import (
     AnalysisReport,
@@ -28,6 +29,18 @@ def gateway() -> LazyAnalysisService:
             emotion_provider=DeterministicEmotionProvider(EmotionLabel.GRATITUDE),
         )
     )
+
+
+def valid_decision_form(note: str) -> dict[str, str]:
+    return {
+        "action": "submit",
+        "disposition": "allow",
+        "primary_violation": "no_violation",
+        "severity": "none",
+        "escalate": "false",
+        "reasoning": "Synthetic concurrent decision.",
+        "reviewer_note": note,
+    }
 
 
 class FailingGateway:
@@ -142,6 +155,98 @@ class ModerationRouteTests(unittest.TestCase):
         self.assertIn(b"'=retain synthetic reasoning", export.data)
         self.assertIn(b"allow_with_violation", export.data)
         self.assertIn(b"built_in_default;user_excluded", export.data)
+
+    def test_interleaved_decisions_for_different_cases_are_both_retained(
+        self,
+    ) -> None:
+        workspace_url = self.create_workspace()
+        started = self.client.post(
+            workspace_url + "/sessions",
+            data={
+                "case_ids": ["synthetic-001", "synthetic-002"],
+                "case_count": "2",
+                "mode": "independent",
+                "feedback_timing": "immediate_feedback",
+                "order_mode": "original_order",
+                "content_notice_confirmed": "true",
+            },
+        )
+        session_url = started.headers["Location"]
+        token = workspace_url.rsplit("/", 1)[-1]
+        session_id = session_url.rsplit("/", 1)[-1]
+        store = self.app.extensions["sti_moderation_store"]
+        original_mutate = store.mutate
+        nested_client = self.app.test_client()
+        interleaved = False
+
+        def mutate_with_interleaving(
+            workspace_token: str, mutation: object
+        ) -> object:
+            nonlocal interleaved
+            if not interleaved:
+                interleaved = True
+                nested = nested_client.post(
+                    session_url + "/cases/synthetic-002",
+                    data=valid_decision_form("Second tab decision."),
+                )
+                self.assertEqual(nested.status_code, 302)
+            return original_mutate(workspace_token, mutation)
+
+        with patch.object(store, "mutate", side_effect=mutate_with_interleaving):
+            first = self.client.post(
+                session_url + "/cases/synthetic-001",
+                data=valid_decision_form("First tab decision."),
+            )
+
+        self.assertEqual(first.status_code, 302)
+        current = store.get(token)
+        assert current is not None
+        session = current.session(session_id)
+        assert session is not None
+        self.assertEqual(
+            {attempt.case_id for attempt in session.attempts},
+            {"synthetic-001", "synthetic-002"},
+        )
+
+    def test_competing_first_decision_returns_conflict_without_rewrite(
+        self,
+    ) -> None:
+        workspace_url = self.create_workspace()
+        started = self.client.post(
+            workspace_url + "/sessions",
+            data={
+                "case_ids": ["synthetic-001"],
+                "case_count": "1",
+                "mode": "independent",
+                "feedback_timing": "immediate_feedback",
+                "order_mode": "original_order",
+                "content_notice_confirmed": "true",
+            },
+        )
+        session_url = started.headers["Location"]
+        first = self.client.post(
+            session_url + "/cases/synthetic-001",
+            data=valid_decision_form("Accepted first decision."),
+        )
+        competing = self.client.post(
+            session_url + "/cases/synthetic-001",
+            data=valid_decision_form("Rejected stale decision."),
+        )
+
+        self.assertEqual(first.status_code, 302)
+        self.assertEqual(competing.status_code, 409)
+        self.assertIn(b"already submitted", competing.data)
+        token = workspace_url.rsplit("/", 1)[-1]
+        session_id = session_url.rsplit("/", 1)[-1]
+        current = self.app.extensions["sti_moderation_store"].get(token)
+        assert current is not None
+        session = current.session(session_id)
+        assert session is not None
+        self.assertEqual(len(session.attempts), 1)
+        self.assertEqual(
+            session.attempts[0].first_decision.reviewer_note,
+            "Accepted first decision.",
+        )
 
     def test_successful_batch_record_can_be_snapshotted_explicitly(
         self,

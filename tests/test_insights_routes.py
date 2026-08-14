@@ -3,6 +3,7 @@
 import csv
 import io
 import unittest
+from unittest.mock import patch
 
 from social_text_intelligence.contracts import (
     AnalysisReport,
@@ -196,6 +197,50 @@ class InsightRouteTests(unittest.TestCase):
         )
         self.assertEqual(invalid.status_code, 400)
         self.assertIn(b"supported tags", invalid.data)
+
+    def test_interleaved_context_notes_preserve_both_mutations(self) -> None:
+        token = self.workspace_url.rsplit("/", 1)[-1]
+        store = self.app.extensions["sti_batch_store"]
+        original_mutate = store.mutate
+        nested_client = self.app.test_client()
+        interleaved = False
+
+        def note_data(phrase: str) -> dict[str, object]:
+            return {
+                "association": "record",
+                "association_value": "row-1",
+                "phrase": phrase,
+                "explanation": f"Explanation for {phrase}",
+                "context_importance": f"Context for {phrase}",
+                "tags": ["other"],
+            }
+
+        def mutate_with_interleaving(
+            workspace_token: str, mutation: object
+        ) -> object:
+            nonlocal interleaved
+            if not interleaved:
+                interleaved = True
+                nested = nested_client.post(
+                    self.insight_url + "/notes",
+                    data=note_data("Second tab note."),
+                )
+                self.assertEqual(nested.status_code, 302)
+            return original_mutate(workspace_token, mutation)
+
+        with patch.object(store, "mutate", side_effect=mutate_with_interleaving):
+            first = self.client.post(
+                self.insight_url + "/notes",
+                data=note_data("First tab note."),
+            )
+
+        self.assertEqual(first.status_code, 302)
+        current = store.get(token)
+        assert current is not None and current.insights is not None
+        self.assertEqual(
+            {note.phrase for note in current.insights.notes},
+            {"First tab note.", "Second tab note."},
+        )
 
     def test_examples_explain_selection_and_avoid_representative_claims(
         self,

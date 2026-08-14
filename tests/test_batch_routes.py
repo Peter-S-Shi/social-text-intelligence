@@ -215,6 +215,53 @@ class BatchRouteTests(unittest.TestCase):
         self.assertEqual(selected.status_code, 302)
         self.assertIn(b"<strong>1</strong> rows", self.client.get(workspace_url).data)
 
+    def test_interleaved_column_selection_returns_conflict_without_overwrite(
+        self,
+    ) -> None:
+        uploaded = self.client.post(
+            "/batch/upload",
+            data={
+                "file": (
+                    io.BytesIO(
+                        b"message,alternate\nSynthetic message.,Alternate text.\n"
+                    ),
+                    "columns.csv",
+                )
+            },
+            content_type="multipart/form-data",
+        )
+        workspace_url = uploaded.headers["Location"]
+        token = workspace_url.rsplit("/", 1)[-1]
+        store = self.app.extensions["sti_batch_store"]
+        original_mutate = store.mutate
+        nested_client = self.app.test_client()
+        interleaved = False
+
+        def mutate_with_interleaving(
+            workspace_token: str, mutation: object
+        ) -> object:
+            nonlocal interleaved
+            if not interleaved:
+                interleaved = True
+                nested = nested_client.post(
+                    workspace_url + "/select",
+                    data={"text_column": "alternate"},
+                )
+                self.assertEqual(nested.status_code, 302)
+            return original_mutate(workspace_token, mutation)
+
+        with patch.object(store, "mutate", side_effect=mutate_with_interleaving):
+            stale = self.client.post(
+                workspace_url + "/select",
+                data={"text_column": "message"},
+            )
+
+        self.assertEqual(stale.status_code, 409)
+        self.assertIn(b"changed in another request", stale.data)
+        current = store.get(token)
+        assert current is not None and current.preview is not None
+        self.assertEqual(current.preview.text_column, "alternate")
+
     def test_oversized_upload_is_rejected_without_traceback(self) -> None:
         app = create_app(
             {"TESTING": True, "MAX_BATCH_BYTES": 5},

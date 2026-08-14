@@ -74,6 +74,16 @@ and explicit clear cannot remove that workspace until analysis commits or
 fails. Only the current lease may write the completed state, and a rejected
 write-back is reported as a conflict rather than success.
 
+All read-modify-write workspace changes use the shared atomic mutation primitive
+in `interface/workspace_mutation.py`. A mutation callback runs under the owning
+store lock and receives the current accepted workspace, so it validates and
+derives its immutable replacement at commit time. Independent Review, Insight,
+Moderation, or Triage actions therefore compose on the latest state instead of
+replacing it with a stale snapshot. A business transition that cannot compose,
+such as a competing first decision or finalize, returns an explicit conflict and
+leaves the accepted state unchanged. Batch mutation callbacks cannot bypass an
+active analysis lease.
+
 The Flask application has a framework-level 3 MiB HTTP request-body boundary,
 configured through `MAX_CONTENT_LENGTH`. A `before_request` content-length gate
 rejects declared oversized bodies before route or state logic, including routes
@@ -111,8 +121,8 @@ model and never interprets user text.
 `interface/moderation_state.py` retains random-token training workspaces in
 bounded, expiring process memory. Capacity and object limits block creation
 rather than evicting older work. `interface/moderation_routes.py` parses forms
-and replaces immutable workspace state; it does not define policy semantics or
-persist content.
+and submits current-state atomic mutations; it does not define policy semantics
+or persist content.
 
 `contracts/triage.py` owns support triage taxonomies, legal draft structure,
 finalized structural requirements, guide departures, snapshots, provenance, and
@@ -124,7 +134,7 @@ sample safeguards, and export shaping.
 
 `interface/triage_state.py` provides a random-token, capacity-blocking,
 sliding-expiry process-memory store. `interface/triage_routes.py` parses HTTP
-inputs and replaces immutable workspace values. Templates display already
+inputs and submits current-state atomic mutations. Templates display already
 validated decisions and summaries; they do not define routing semantics.
 
 ## Intended layers

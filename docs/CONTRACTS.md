@@ -106,6 +106,27 @@ Expected contract failures use typed exceptions:
 
 The core performs no persistence, networking, telemetry, or full-text logging.
 
+## Ephemeral workspace mutation integrity
+
+Batch, Review, Insights, Moderation, and Triage business mutations are derived
+from the current workspace while the process-memory store lock is held. Routes
+do not commit whole workspaces derived from an earlier `get()`. Independent
+changes to different records, notes, cases, sessions, or tickets are retained.
+
+One-shot transitions are revalidated against commit-time state. A competing
+first moderation decision, stale Batch column selection, or repeated Triage
+finalize cannot silently replace the accepted mutation; the incompatible request
+receives HTTP 409. Explicit revision workflows remain valid and retain their
+existing first/final provenance. Missing, expired, or cleared workspaces retain
+their existing 404 behavior.
+
+Rendering, filters, navigation, summaries, and exports are read-only transient
+operations and need no mutation transaction. Insight selection remains a
+lightweight remembered UI selection, but its atomic update preserves the latest
+notes. Creates and explicit clears already execute as single locked store
+operations. Batch analysis continues to use its stronger exclusive lease and
+lease-identity write-back contract.
+
 ## Insights and context notes
 
 Insight grouping accepts only `source_type`, `source_label`, `topic`,

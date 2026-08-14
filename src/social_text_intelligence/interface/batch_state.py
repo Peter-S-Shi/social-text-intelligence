@@ -11,6 +11,7 @@ from threading import Lock
 from ..services.batch import BatchPreview, BatchResult, PendingBatchUpload
 from ..services.insights import InsightState
 from ..services.review import ReviewState
+from .workspace_mutation import StoredWorkspace, apply_atomic_mutation
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,13 +21,6 @@ class BatchWorkspace:
     result: BatchResult | None = None
     reviews: ReviewState | None = None
     insights: InsightState | None = None
-
-
-@dataclass(slots=True)
-class _StoredWorkspace:
-    workspace: BatchWorkspace
-    expires_at: float
-    active_analysis_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,14 +47,14 @@ class EphemeralBatchStore:
         self._ttl_seconds = ttl_seconds
         self._capacity = capacity
         self._clock = clock
-        self._items: dict[str, _StoredWorkspace] = {}
+        self._items: dict[str, StoredWorkspace[BatchWorkspace]] = {}
         self._lock = Lock()
 
     def _purge(self, now: float) -> None:
         expired = [
             token
             for token, item in self._items.items()
-            if item.expires_at <= now and item.active_analysis_id is None
+            if item.expires_at <= now and item.active_operation_id is None
         ]
         for token in expired:
             del self._items[token]
@@ -75,7 +69,7 @@ class EphemeralBatchStore:
                     "workspace or wait for expiry. Existing work was not removed."
                 )
             token = secrets.token_urlsafe(24)
-            self._items[token] = _StoredWorkspace(
+            self._items[token] = StoredWorkspace(
                 workspace=workspace,
                 expires_at=now + self._ttl_seconds,
             )
@@ -91,16 +85,28 @@ class EphemeralBatchStore:
             stored.expires_at = now + self._ttl_seconds
             return stored.workspace
 
-    def replace(self, token: str, workspace: BatchWorkspace) -> bool:
+    def mutate(
+        self,
+        token: str,
+        mutation: Callable[[BatchWorkspace], BatchWorkspace],
+    ) -> BatchWorkspace | None:
+        """Apply one current-state mutation atomically; never accept stale state."""
+
         with self._lock:
             now = self._clock()
             self._purge(now)
             stored = self._items.get(token)
-            if stored is None or stored.active_analysis_id is not None:
-                return False
-            stored.workspace = workspace
-            stored.expires_at = now + self._ttl_seconds
-            return True
+            if stored is None:
+                return None
+            return apply_atomic_mutation(
+                stored,
+                mutation,
+                expires_at=now + self._ttl_seconds,
+                blocked_message=(
+                    "This temporary batch is being analyzed. Retry the mutation "
+                    "after analysis finishes."
+                ),
+            )
 
     def begin_analysis(self, token: str) -> BatchAnalysisLease | None:
         """Reserve a workspace so expiry or another analysis cannot remove it."""
@@ -111,13 +117,13 @@ class EphemeralBatchStore:
             stored = self._items.get(token)
             if stored is None:
                 return None
-            if stored.active_analysis_id is not None:
+            if stored.active_operation_id is not None:
                 raise RuntimeError(
                     "This temporary batch is already being analyzed. Wait for the "
                     "active analysis to finish before trying again."
                 )
             analysis_id = secrets.token_urlsafe(24)
-            stored.active_analysis_id = analysis_id
+            stored.active_operation_id = analysis_id
             stored.expires_at = now + self._ttl_seconds
             return BatchAnalysisLease(
                 token=token,
@@ -134,11 +140,11 @@ class EphemeralBatchStore:
             stored = self._items.get(lease.token)
             if (
                 stored is None
-                or stored.active_analysis_id != lease.analysis_id
+                or stored.active_operation_id != lease.analysis_id
             ):
                 return False
             stored.workspace = workspace
-            stored.active_analysis_id = None
+            stored.active_operation_id = None
             stored.expires_at = self._clock() + self._ttl_seconds
             return True
 
@@ -149,17 +155,17 @@ class EphemeralBatchStore:
             stored = self._items.get(lease.token)
             if (
                 stored is None
-                or stored.active_analysis_id != lease.analysis_id
+                or stored.active_operation_id != lease.analysis_id
             ):
                 return False
-            stored.active_analysis_id = None
+            stored.active_operation_id = None
             stored.expires_at = self._clock() + self._ttl_seconds
             return True
 
     def delete(self, token: str) -> bool:
         with self._lock:
             stored = self._items.get(token)
-            if stored is not None and stored.active_analysis_id is not None:
+            if stored is not None and stored.active_operation_id is not None:
                 raise RuntimeError(
                     "This temporary batch is being analyzed and cannot be cleared "
                     "until the active analysis finishes."
