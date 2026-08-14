@@ -10,7 +10,7 @@ sections use the same stable `FCR-XXX` identifiers.
 
 ## 1. 当前状态与使用方法
 
-- 当前阶段：**Release Candidate（发布候选）**；Full Regression and Manual Acceptance 已 **PASS**（2026-08-14）
+- 当前阶段：**Release Candidate（发布候选）**；Full Regression and Manual Acceptance 已 **PASS**（2026-08-14）；Release Candidate Gate 已 **PASS**（2026-08-14）
 - Feature Freeze：**PASS（2026-08-13 用户明确批准）**
 - Release readiness：**否**
 - 操作型逐项测试记录：
@@ -870,6 +870,74 @@ pre-freeze `OPEN verification` carried-forward FCR（FCR-003、005、014、
 `VERIFIED`；本阶段不再有未关闭的 carried-forward 核查项遗留给 Release
 Candidate。
 
+### 2026-08-14 Release Candidate Gate 通过决定
+
+```text
+Release Candidate Gate decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-14
+RC candidate SHA: 427984a5d39b7e20eafc53e588aa5a53b6bd320d（PR #31 合并；
+  独立 post-merge main CI 在 Python 3.11/3.12/3.13 全部 PASS）
+Decision: PASS
+Baseline comparison: 71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1..
+  427984a5d39b7e20eafc53e588aa5a53b6bd320d 仅涉及
+  DEVLOG.md、PROJECT_STATUS.md、README.md、ROADMAP.md、
+  docs/FEATURE_COMPLETE_MANUAL_AUDIT.md、tests/test_lifecycle_consistency.py
+  六个治理/文档/lifecycle-test 文件；未触及 src/、模板、package 配置或模型
+  pin，因此 Manual Acceptance 的运行时证据在本次 RC 中保持有效，未重跑
+Package identity: social-text-intelligence 0.10.0，Requires-Python
+  >=3.11，console scripts sti/sti-web，extras
+  sentiment/emotion/web/dev；pyproject.toml 与构建出的 wheel METADATA/
+  entry_points.txt 一致；未改为 1.0.0 或 prerelease 标签
+Wheel build/artifact: 在候选 SHA 的干净 detached worktree 中构建
+  social_text_intelligence-0.10.0-py3-none-any.whl；内容核实完整（13 个
+  模板、5 个 static 文件、4 个 packaged JSON 资源、LICENSE）且干净（无
+  tests、cache、模型权重、私有数据或本机路径）
+Clean core install: 全新 venv、不带任何 extra 安装该 wheel；pip check
+  clean；已安装版本报告 0.10.0；sti about 与 sti contracts 均正常工作
+Clean web-extra install/startup: 全新 venv、[web] extra 安装；
+  sti-web --help 正常；服务仅绑定 127.0.0.1（经 netstat 确认，非
+  0.0.0.0）；已安装 wheel 的首页与 /static/app.css 均返回 200，证明
+  模板/静态资源确实被正确打包
+Missing-model-extras behavior: 未安装 sentiment/emotion extras 时，
+  Direct 提交返回 HTTP 200 与清楚的页内错误（"Local model dependencies
+  are not installed. Install the model extras."，role="alert"），无
+  500、无 traceback、不暴露内部路径
+Supported Python evidence: 复用候选 exact-SHA CI 在 Python
+  3.11/3.12/3.13 的 PASS；本地 wheel smoke 仅在可用的 Python 3.12 上
+  执行，未为此新建 3.11/3.13 本地环境
+Model pin/offline contract: 候选源码中的 sentiment/emotion revision 与
+  已批准记录逐字一致（cardiffnlp/twitter-roberta-base-sentiment-latest@
+  3216a57f2a0d9c45a2e6c20157c20c49fb4bf9c7、SamLowe/roberta-base-
+  go_emotions@d75048347613a25d77de8cf6412eaae9fa7b26be），以显式非
+  floating revision= 参数传入；wheel 中未打包任何模型权重；模型/运行时
+  依赖保持为可选 extras
+License/attribution/notices: LICENSE（MIT）、THIRD_PARTY_NOTICES.md、
+  pyproject.toml 与 wheel METADATA 相互一致；Flask（BSD-3-Clause）、
+  PyTorch/Transformers 及两个模型的 license/revision/provenance 均已
+  记录且与代码完全匹配；未发现与"不再分发模型权重"声明相矛盾之处
+Privacy/repository/package hygiene: .gitignore 保护 dist/、build/、
+  model_cache/、manual-qa/results/、.env、.pytest_cache/；.prompt-drafts/
+  经 .git/info/exclude 排除且未被跟踪；tracked 文件与构建出的 wheel 中
+  均未发现模型权重、数据库、凭据或密钥
+Regression evidence reconciliation: 复用候选 exact-SHA CI 作为自动化回归
+  证据；复用 2026-08-14 Full Regression and Manual Acceptance PASS（含
+  20/20 required fresh-interaction profile 与九项 carried-forward FCR
+  的 VERIFIED disposition）作为运行时人工验收证据；打包/安装/启动证据为
+  本次 RC Gate 新生成
+Release blockers found: 无；未执行任何 RC-scoped correction
+FCR-042/FCR-043 disposition: 未改动，保持既有 OPEN non-blocking
+Result: Release Candidate Gate = PASS
+Next required action: repository owner 的显式 Version / Delivery Decision
+  （tag、GitHub Release 及任何公开交付决定）；release readiness 不因此
+  自动变为 Yes；本任务未创建 tag、未创建 GitHub Release、未开始下一版本
+  开发
+Approver: User / project owner
+```
+
+本决定不代表 `1.0.0`、production-ready、公开托管、公开发布、GitHub
+Release 已创建，或 release readiness 已变为 Yes；这些均需 repository
+owner 另行、显式决定。
+
 ## 7. Codex 维护规则
 
 1. 新发现使用下一个永久 `FCR-XXX` ID。
@@ -888,7 +956,7 @@ Candidate。
 
 ## 1. Current state and use
 
-- Current phase: **Release Candidate**; Full Regression and Manual Acceptance is **PASS** (2026-08-14)
+- Current phase: **Release Candidate**; Full Regression and Manual Acceptance is **PASS** (2026-08-14); Release Candidate Gate is **PASS** (2026-08-14)
 - Feature Freeze: **PASS (explicit user approval on 2026-08-13)**
 - Release readiness: **No**
 - Repeatable operational checklist:
@@ -1790,6 +1858,83 @@ nine Roadmap-required pre-freeze `OPEN verification` carried-forward FCRs
 (FCR-003, 005, 014, 015, 017, 021, 023, 026, 031) all received an explicit
 disposition in this decision and are closed `VERIFIED`; no unresolved
 carried-forward verification item remains for Release Candidate.
+
+### 2026-08-14 Release Candidate Gate PASS decision
+
+```text
+Release Candidate Gate decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-14
+RC candidate SHA: 427984a5d39b7e20eafc53e588aa5a53b6bd320d (PR #31 merged;
+  independent post-merge main CI PASS on Python 3.11/3.12/3.13)
+Decision: PASS
+Baseline comparison: 71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1..
+  427984a5d39b7e20eafc53e588aa5a53b6bd320d touches only six governance/
+  docs/lifecycle-test files (DEVLOG.md, PROJECT_STATUS.md, README.md,
+  ROADMAP.md, docs/FEATURE_COMPLETE_MANUAL_AUDIT.md,
+  tests/test_lifecycle_consistency.py); no src/, template, package
+  configuration, or model pin changed, so Manual Acceptance runtime
+  evidence remains valid for this RC and was not retested
+Package identity: social-text-intelligence 0.10.0, Requires-Python
+  >=3.11, console scripts sti/sti-web, extras sentiment/emotion/web/dev;
+  pyproject.toml and the built wheel's METADATA/entry_points.txt agree;
+  not changed to 1.0.0 or a prerelease tag
+Wheel build/artifact: built social_text_intelligence-0.10.0-py3-none-any.whl
+  from a clean detached worktree at the candidate SHA; contents verified
+  complete (13 templates, 5 static files, 4 packaged JSON resources,
+  LICENSE) and clean (no tests, caches, model weights, private data, or
+  machine paths)
+Clean core install: fresh venv, no-extras wheel install; pip check clean;
+  installed version reports 0.10.0; sti about and sti contracts both work
+Clean web-extra install/startup: fresh venv, [web] extra install;
+  sti-web --help works; server binds to 127.0.0.1 only (confirmed via
+  netstat, not 0.0.0.0); the installed wheel's home page and
+  /static/app.css both return 200, proving templates/static were actually
+  packaged
+Missing-model-extras behavior: with no sentiment/emotion extras installed,
+  a Direct submission returns HTTP 200 with a clear in-page error ("Local
+  model dependencies are not installed. Install the model extras.",
+  role="alert"); no 500, no traceback, no internal path exposed
+Supported Python evidence: reused exact-SHA CI PASS on Python
+  3.11/3.12/3.13; local wheel smoke performed only on the locally
+  available Python 3.12, no new 3.11/3.13 local environments created
+Model pin/offline contract: candidate source's sentiment/emotion
+  revisions match the approved records exactly
+  (cardiffnlp/twitter-roberta-base-sentiment-latest@
+  3216a57f2a0d9c45a2e6c20157c20c49fb4bf9c7, SamLowe/roberta-base-
+  go_emotions@d75048347613a25d77de8cf6412eaae9fa7b26be), passed as
+  explicit non-floating revision= arguments; no weights bundled in the
+  wheel; model/runtime dependencies remain optional extras
+License/attribution/notices: LICENSE (MIT), THIRD_PARTY_NOTICES.md,
+  pyproject.toml, and the wheel METADATA are mutually consistent; Flask
+  (BSD-3-Clause), PyTorch/Transformers, and both models' license/
+  revision/provenance are recorded and match code exactly; no
+  redistribution-of-weights claim contradicted
+Privacy/repository/package hygiene: .gitignore protects dist/, build/,
+  model_cache/, manual-qa/results/, .env, .pytest_cache/;
+  .prompt-drafts/ is excluded via .git/info/exclude and untracked; no
+  weights, databases, credentials, or secrets found in tracked files or
+  the built wheel
+Regression evidence reconciliation: reused candidate exact-SHA CI as
+  automated regression evidence; reused the 2026-08-14 Full Regression
+  and Manual Acceptance PASS (including the 20/20 required
+  fresh-interaction profile and the VERIFIED disposition of all nine
+  carried-forward FCRs) as runtime manual-acceptance evidence;
+  packaging/install/startup evidence newly generated for this RC Gate
+Release blockers found: none; no RC-scoped correction was performed
+FCR-042/FCR-043 disposition: untouched, remain OPEN non-blocking
+Result: Release Candidate Gate = PASS
+Next required action: an explicit Version / Delivery Decision by the
+  repository owner (tag, GitHub Release, and any public-delivery
+  decision); release readiness does not become Yes automatically; no
+  tag, GitHub Release, or next-version development was started in this
+  task
+Approver: User / project owner
+```
+
+This decision does not mean `1.0.0`, production-ready, publicly hosted,
+publicly released, or a GitHub Release created, or that release readiness
+has changed to Yes; those all require a separate, explicit decision by the
+repository owner.
 
 ## 7. Codex maintenance rules
 

@@ -1,5 +1,61 @@
 # Development Log
 
+## Release Candidate Gate — PASS
+
+Executed the Release Candidate milestone against candidate SHA
+`427984a5d39b7e20eafc53e588aa5a53b6bd320d` (PR #31 merged; independent
+post-merge `main` CI PASS on 3.11/3.12/3.13). First confirmed
+`71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1..427984a5d39b7e20eafc53e588aa5a53b6bd320d`
+touches only six governance/docs/lifecycle-test files, so the 2026-08-14
+Full Regression and Manual Acceptance evidence (20/20 required items PASS,
+0 blocking defects, all nine carried-forward FCRs VERIFIED) remains valid
+runtime evidence and was not re-executed.
+
+Built the actual installable wheel from a clean detached worktree at the
+candidate SHA (`git worktree add`, `python -m build --wheel`) rather than
+building from the working tree, and inspected it directly rather than
+assuming: `social_text_intelligence-0.10.0-py3-none-any.whl` contains all
+13 templates, 5 static files, and 4 packaged JSON resources plus `LICENSE`,
+and nothing else (no tests, caches, weights, or private data). `METADATA`
+and `entry_points.txt` confirm `social-text-intelligence` `0.10.0`,
+`Requires-Python >=3.11`, `sti`/`sti-web` console scripts, and the
+`sentiment`/`emotion`/`web`/`dev` extras with correct constraints.
+
+Ran two clean-install smokes in fresh temporary venvs, not the working
+`.venv`: a no-extras core install (`pip check` clean, installed version
+`0.10.0`, `sti about` and `sti contracts` both work) and a `[web]`-extra
+install (`sti-web --help` works; the server bound to `127.0.0.1` only,
+confirmed via `netstat` rather than assumed from source; the installed
+wheel's home page and `/static/app.css` both returned 200, proving
+templates/static were genuinely packaged, not just declared). With no
+model extras installed, POSTing a Direct analysis returned HTTP 200 with
+an honest in-page error ("Local model dependencies are not installed.
+Install the model extras.", `role="alert"`) rather than a crash or
+misleading partial success — verified live, not assumed from the RC
+prompt's expectation.
+
+Reconciled model pins (`cardiffnlp/twitter-roberta-base-sentiment-latest@
+3216a57f2a0d9c45a2e6c20157c20c49fb4bf9c7`,
+`SamLowe/roberta-base-go_emotions@d75048347613a25d77de8cf6412eaae9fa7b26be`)
+against the candidate source directly rather than trusting memory: both
+match exactly and are passed as explicit non-floating `revision=`
+arguments. Reconciled `LICENSE`/`THIRD_PARTY_NOTICES.md`/`pyproject.toml`
+against the built wheel's `METADATA`: mutually consistent, no
+redistribution-of-weights claim contradicted. Confirmed `.gitignore`
+protects `dist/`/`build/`/`model_cache/`/`manual-qa/results/`, confirmed
+`.prompt-drafts/` is excluded via `.git/info/exclude` and untracked, and
+found no bundled weights/databases/credentials/secrets in either tracked
+files or the built wheel.
+
+No release blocker was found; no RC-scoped correction was necessary.
+**Release Candidate Gate: PASS.** Updated `PROJECT_STATUS.md`, `ROADMAP.md`,
+`README.md`, and `docs/FEATURE_COMPLETE_MANUAL_AUDIT.md` (new dated PASS
+decision, bilingual) to record the result. Did not bump the version to
+`1.0.0`, did not create a tag or GitHub Release, and did not set release
+readiness to Yes — the next required action is an explicit Version /
+Delivery Decision by the repository owner. No product code, template,
+route, or model behavior was touched.
+
 ## PR #31 corrective governance patch — carried-forward FCR reconciliation
 
 Formal review of PR #31 found that its Full Regression and Manual

@@ -54,13 +54,14 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Freeze status | **PASS" in status
     assert (
         "| Current lifecycle phase | **Release Candidate** — Full Regression "
-        "and Manual Acceptance is **PASS** |" in status
+        "and Manual Acceptance is **PASS**; Release Candidate Gate is "
+        "**PASS** |" in status
     )
     assert (
         "| Manual Acceptance status | **PASS — 2026-08-14, 20/20 required "
         "items, 0 blocking defects** |" in status
     )
-    assert "| Release Candidate status | Not started |" in status
+    assert "| Release Candidate status | **PASS — 2026-08-14** |" in status
     assert "| Release readiness | **No** |" in status
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
@@ -68,8 +69,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "**Status: Completed.**" in roadmap
     assert "**Status: Complete.**" in roadmap
     assert "**Status: PASS.**" in roadmap
-    assert "**Status: PASS — 2026-08-14.**" in roadmap
-    assert "**Status: Current phase. Not started.**" in roadmap
+    assert roadmap.count("**Status: PASS — 2026-08-14.**") == 2
     assert roadmap.count("**Status: Not started.**") == 0
 
 
