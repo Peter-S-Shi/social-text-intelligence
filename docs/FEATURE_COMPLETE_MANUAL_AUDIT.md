@@ -168,7 +168,7 @@ Final Outcome / 最终结果
 | FCR-047 | 全局 HTTP request-body 边界 | 异常大的 form / multipart request 是否会在字段验证或临时状态操作前统一拒绝 | VERIFIED；behavioral candidate review 与 CI 通过 |
 | FCR-048 | 真实模型 Batch 容量与性能证据 | 500 行真实双模型分析是否可完成、内存稳定且跨 TTL 安全提交 | VERIFIED；A4 离线 CPU probe 证据充分 |
 | FCR-049 | 并发 workspace mutation 完整性 | stale workspace mutation 是否可能静默覆盖已接受的新状态 | VERIFIED；A5 behavioral review 与 CI PASS |
-| FCR-050 | 本地浏览器安全边界 | 非可信 Host、跨源 unsafe request 或缺失安全 headers 是否可能越过 loopback browser boundary | IMPLEMENTED；A6 targeted/full regression 待 PR review/CI |
+| FCR-050 | 本地浏览器安全边界 | 非可信 Host、跨源 unsafe request 或缺失安全 headers 是否可能越过 loopback browser boundary | VERIFIED；A6 code review、CI 与 real-browser smoke PASS |
 
 ## 5. Feature decision index
 
@@ -193,7 +193,7 @@ Final Outcome / 最终结果
 | FCR-047 | `HARDENING` | Keep and harden | `VERIFIED` | 以 3 MiB Flask 全局 ceiling 在 form/multipart 解析和状态操作前统一 413；CSV 2 MiB payload limit 保持独立 | Product Hardening Batch A3 behavioral SHA review PASS；PR #20 CI PASS |
 | FCR-048 | `HARDENING` | Keep and harden | `VERIFIED` | opt-in 真实离线双模型 probe 证明 500 行完成、加载后 RSS 稳定、active lease 跨短 TTL 原子写回；无需产品 patch | [A4 容量证据](REAL_MODEL_CAPACITY_EVIDENCE.md)；PR #21 review/CI PASS 并已合并 |
 | FCR-049 | `HARDENING` | Keep and harden | `VERIFIED` | 共享 store-level atomic mutation 始终基于 current state；安全独立变更串行保留，不可合并 one-shot 竞争明确返回 409 | behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54` review PASS；PR #22 behavioral-head CI PASS |
-| FCR-050 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 只信任 loopback Host；unsafe methods 执行 lightweight same-origin 检查；全部响应采用严格 self-only CSP 与统一安全 headers | Product Hardening Batch A6 targeted/full regression；Draft PR checks 为远程依据 |
+| FCR-050 | `HARDENING` | Keep and harden | `VERIFIED` | 只信任 loopback Host；unsafe methods 执行 lightweight same-origin 检查；全部响应采用严格 self-only CSP 与统一安全 headers | behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d` review/CI PASS；real-browser smoke PASS |
 
 ### 2026-08-13 最新反馈分类
 
@@ -496,18 +496,18 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 
 ### FCR-050 — 本地浏览器安全边界
 
-- **Basic Information / 基本信息:** loopback Flask Host、unsafe-method same-origin 与全局 response headers；2026-08-14；状态 `IMPLEMENTED`。
+- **Basic Information / 基本信息:** loopback Flask Host、unsafe-method same-origin 与全局 response headers；2026-08-14；状态 `VERIFIED`。
 - **Current Behavior / 当前行为:** A6 前 CLI 只绑定 `127.0.0.1`，但 Flask 未配置 trusted hosts，unsafe browser POST 没有 Origin/Referer 边界，响应除 no-store/no-cache 外缺少统一 CSP、nosniff、referrer 与 anti-framing headers。
 - **Manual Observation / 人工观察:** Phase 0 审计确认所有 CSS/JavaScript 已 self-hosted，唯一严格 CSP 冲突是 Insights 的动态 inline width style；Direct 和全部临时 workflow mutation 都通过普通 browser POST 进入。
 - **User Impact / 用户影响:** 即使服务只绑定 loopback，恶意页面仍可能尝试向本地端口发送请求；未验证 Host 或明确跨源 unsafe request 可能触发 inference、改变临时状态，缺失浏览器 headers 也会扩大 framing、MIME sniffing 和资源注入风险。
 - **Core Assessment / 核心评估:** release-risk browser boundary hardening；不重新打开 Feature Freeze，不扩展为 authentication、session、TLS、remote deployment 或 production-server security。
-- **Decision / 决定:** Class `HARDENING`；Decision `Keep and harden`；Status `IMPLEMENTED`。
+- **Decision / 决定:** Class `HARDENING`；Decision `Keep and harden`；Status `VERIFIED`。
 - **Rationale / 理由:** FCR-047 仅覆盖 HTTP request-body capacity，FCR-049 仅覆盖已进入业务层后的并发 mutation integrity；均不定义 Host、browser same-origin 或 response security-header 根因。PH-007 因此建立为永久 FCR-050。
 - **Implementation Scope / 实施范围:** Flask `TRUSTED_HOSTS` 只接受 `127.0.0.1`/`localhost`；`POST`/`PUT`/`PATCH`/`DELETE` 要求 exact same-origin Origin，Origin 缺失时已有 Referer 必须同源，两者都缺失则按 trusted-Host 后的本地非浏览器请求兼容；全局增加 self-only CSP、`nosniff`、`Referrer-Policy: same-origin`、CSP `frame-ancestors 'none'` 与 `X-Frame-Options: DENY`；把唯一 inline style 改为本地 CSS 控制的原生 progress。
 - **Acceptance Criteria / 验收标准:** approved local Host 与 same-origin workflow 正常；非可信 Host 固定 400，显式跨源/`null`/malformed Origin 或不匹配 Referer 固定 403；拒绝发生在 inference、body parsing 与 mutation 前且不回显用户数据/路径；HTML、redirect、error/413、CSV、CSS/JS 均带统一 headers；CSP 无 wildcard、external source、`unsafe-inline`；A3/A5 合同保持。
-- **Risks and Regression Scope / 风险与回归范围:** Origin 缺失兼容仅面向 trusted-Host 本地非浏览器客户端，不是远程访问或认证合同；浏览器 manual smoke 仍需确认真实 console 无 CSP violation。HSTS、CORS、TLS、LAN、reverse proxy、production WSGI、account/session、CSRF framework、reporting service、后续 PH 与 FCR-042/043 均排除。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A6 Draft PR；本地 targeted/full quality suite 与最终 remote head/CI 以 PR checks 为准。
-- **Final Outcome / 最终结果:** trusted Host、same-origin unsafe-method gate、严格统一 headers 与 CSP-compatible template 已实现，等待 Draft PR review 与 final-head CI 后决定是否关闭为 `VERIFIED`。FCR-049 保持 `VERIFIED`，Feature Freeze 保持 PASS，不开始后续 PH。
+- **Risks and Regression Scope / 风险与回归范围:** Origin 缺失兼容仅面向 trusted-Host 本地非浏览器客户端，不是远程访问或认证合同；已完成的真实浏览器 smoke 确认 console 无 CSP violation 或 blocked local resource。HSTS、CORS、TLS、LAN、reverse proxy、production WSGI、account/session、CSRF framework、reporting service、后续 PH 与 FCR-042/043 均排除。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A6 PR #23；behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`；Host/same-origin/CSP/security-header code review PASS；behavioral-head Python 3.11/3.12/3.13 CI PASS；real-browser smoke PASS。
+- **Final Outcome / 最终结果:** trusted Host、same-origin unsafe-method gate、严格统一 headers 与 CSP-compatible template 已通过 review、CI 和真实浏览器 smoke；Direct、Batch/Review、Insights progress/note、Moderation/Triage、CSV 均正常，DevTools Console 无 CSP violation 或 blocked local resource。FCR-050 在固定 behavioral SHA 上关闭为 `VERIFIED`；本次 closure 仅修改治理文档。FCR-049 保持 `VERIFIED`，Feature Freeze 保持 PASS，不开始后续 PH。
 
 ### FCR-033 — 本地模型缓存冗余
 
@@ -803,7 +803,7 @@ predeclare a pass.
 | FCR-047 | Global HTTP request-body boundary | Are abnormal form and multipart bodies rejected before field validation or temporary-state operations? | VERIFIED; behavioral candidate review and CI passed |
 | FCR-048 | Real-model Batch capacity and performance evidence | Can 500 rows complete with both real models, stable memory, and TTL-safe commit? | VERIFIED; A4 offline CPU probe evidence sufficient |
 | FCR-049 | Concurrent workspace mutation integrity | Can a stale workspace mutation silently overwrite newer accepted state? | VERIFIED; A5 behavioral review and CI passed |
-| FCR-050 | Local browser security boundary | Can an untrusted Host, cross-origin unsafe request, or missing headers bypass the loopback browser boundary? | IMPLEMENTED; A6 targeted/full regression pending PR review/CI |
+| FCR-050 | Local browser security boundary | Can an untrusted Host, cross-origin unsafe request, or missing headers bypass the loopback browser boundary? | VERIFIED; A6 code review, CI, and real-browser smoke passed |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -829,7 +829,7 @@ evidence and disposition.
 | FCR-047 | `HARDENING` | Keep and harden | `VERIFIED` | Apply a 3 MiB Flask-wide ceiling before form/multipart parsing and state operations; keep the 2 MiB CSV payload limit separate | Product Hardening Batch A3 behavioral SHA review PASS; PR #20 CI PASS |
 | FCR-048 | `HARDENING` | Keep and harden | `VERIFIED` | An opt-in offline real-model probe demonstrates 500-row completion, stable post-load RSS, and atomic active-lease commit across a short TTL; no product patch is required | [A4 capacity evidence](REAL_MODEL_CAPACITY_EVIDENCE.md); PR #21 review/CI passed and merged |
 | FCR-049 | `HARDENING` | Keep and harden | `VERIFIED` | A shared store-level atomic mutation always uses current state; safe independent changes serialize and incompatible one-shot races return an explicit 409 | behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54` review PASS; PR #22 behavioral-head CI PASS |
-| FCR-050 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Trust loopback Hosts only, apply a lightweight same-origin gate to unsafe methods, and give every response strict self-only CSP and security headers | Product Hardening Batch A6 targeted/full regression; Draft PR checks are the remote authority |
+| FCR-050 | `HARDENING` | Keep and harden | `VERIFIED` | Trust loopback Hosts only, apply a lightweight same-origin gate to unsafe methods, and give every response strict self-only CSP and security headers | behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d` review/CI PASS; real-browser smoke PASS |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -1138,18 +1138,18 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 
 ### FCR-050 — Local browser security boundary
 
-- **Basic Information:** Loopback Flask Host, unsafe-method same-origin, and global response headers; 2026-08-14; status `IMPLEMENTED`.
+- **Basic Information:** Loopback Flask Host, unsafe-method same-origin, and global response headers; 2026-08-14; status `VERIFIED`.
 - **Current Behavior:** Before A6, the CLI bound only to `127.0.0.1`, but Flask had no trusted-host configuration, unsafe browser POSTs had no Origin/Referer boundary, and responses lacked unified CSP, nosniff, referrer, and anti-framing headers beyond no-store/no-cache.
 - **Manual Observation:** The Phase 0 audit confirmed that CSS and JavaScript are already self-hosted. The only strict-CSP conflict was a dynamic inline width style in Insights. Direct inference and every temporary-workspace mutation are reachable through ordinary browser POSTs.
 - **User Impact:** Even with loopback binding, a malicious page can try to send requests to a local port. Without Host and explicit cross-origin unsafe-request validation, such a request could trigger inference or change temporary state. Missing browser headers also increases framing, MIME-sniffing, and resource-injection exposure.
 - **Core Assessment:** Release-risk browser-boundary hardening. Feature Freeze remains closed, and this is not authentication, sessions, TLS, remote deployment, or production-server security.
-- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `VERIFIED`.
 - **Rationale:** FCR-047 covers only HTTP request-body capacity, and FCR-049 covers concurrent mutation integrity after business dispatch. Neither defines the Host, browser same-origin, or response security-header root cause. PH-007 therefore becomes permanent FCR-050.
 - **Implementation Scope:** Flask `TRUSTED_HOSTS` accepts only `127.0.0.1` and `localhost`. `POST`, `PUT`, `PATCH`, and `DELETE` require an exact same-origin Origin; when Origin is absent, an existing Referer must be same-origin; when both are absent, compatibility is limited to a local non-browser request behind trusted Host. Add global self-only CSP, `nosniff`, `Referrer-Policy: same-origin`, CSP `frame-ancestors 'none'`, and `X-Frame-Options: DENY`. Replace the sole inline style with a native progress element controlled by local CSS.
 - **Acceptance Criteria:** Approved local Hosts and same-origin workflows operate normally; untrusted Host returns fixed 400; explicit cross-origin, `null`, or malformed Origin and mismatched Referer return fixed 403; rejection occurs before inference, body parsing, or mutation and echoes no user data/path; HTML, redirect, error/413, CSV, CSS, and JavaScript carry unified headers; CSP has no wildcard, external source, or `unsafe-inline`; A3/A5 contracts remain intact.
-- **Risks and Regression Scope:** Missing-Origin compatibility is only for local non-browser clients behind trusted Host; it is not remote access or authentication. A real-browser smoke should still confirm no CSP console violations. HSTS, CORS, TLS, LAN, reverse proxy, production WSGI, account/session, a CSRF framework, reporting service, later PH work, and FCR-042/043 are excluded.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A6 Draft PR; local targeted/full quality suite and final remote head/CI are authoritative in PR checks.
-- **Final Outcome:** Trusted Host, the same-origin unsafe-method gate, strict global headers, and the CSP-compatible template are implemented, pending Draft PR review and final-head CI before `VERIFIED` closure. FCR-049 remains `VERIFIED`, Feature Freeze remains PASS, and no later PH item is started.
+- **Risks and Regression Scope:** Missing-Origin compatibility is only for local non-browser clients behind trusted Host; it is not remote access or authentication. The completed real-browser smoke confirms no CSP violation or blocked local resource in the console. HSTS, CORS, TLS, LAN, reverse proxy, production WSGI, account/session, a CSRF framework, reporting service, later PH work, and FCR-042/043 are excluded.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A6 PR #23; behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; Host/same-origin/CSP/security-header code review PASS; behavioral-head Python 3.11/3.12/3.13 CI PASS; real-browser smoke PASS.
+- **Final Outcome:** Trusted Host, the same-origin unsafe-method gate, strict global headers, and the CSP-compatible template passed review, CI, and real-browser smoke. Direct, Batch/Review, Insights progress/notes, Moderation/Triage, and CSV operated normally, with no CSP violation or blocked local resource in DevTools Console. FCR-050 closes as `VERIFIED` on the fixed behavioral SHA; this closure changes governance documentation only. FCR-049 remains `VERIFIED`, Feature Freeze remains PASS, and no later hardening item is started.
 
 ### FCR-033 — Local model-cache redundancy
 

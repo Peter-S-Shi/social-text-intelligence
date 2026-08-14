@@ -7,6 +7,15 @@ ephemeral capacity/state, complete-input inference, request-body capacity,
 real-model evidence, and concurrent mutations; none defines the browser Host,
 same-origin, or response-header boundary.
 
+Behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`
+passed Host/same-origin/CSP/security-header code review and PR #23
+behavioral-head CI on Python 3.11, 3.12, and 3.13. The user also completed a
+real-browser smoke: Direct, Batch/Review, Insights distribution progress and
+notes, Moderation/Triage forms, and CSV downloads operated normally, with no CSP
+violation or blocked local resource in DevTools Console. FCR-050 is therefore
+`VERIFIED`. This closure changes governance documentation only; FCR-049 remains
+`VERIFIED`, Feature Freeze remains PASS, and no later hardening item is started.
+
 Configured Flask trusted hosts for exactly `127.0.0.1` and `localhost`, while
 the CLI continues binding only `127.0.0.1`. A fixed private 400 handles rejected
 Host values before route dispatch. Unsafe methods now require an exact
