@@ -6,6 +6,12 @@ Reconciled Phase 0 PH-006 as permanent FCR-049. FCR-045 protects Batch
 capacity, TTL, and active-analysis write-back, but it does not cover stale
 read/derive/replace races across the broader process-memory workspace stores.
 
+Behavioral candidate `a3ec11b674c11148d66be73475b43d0796329a54`
+passed current-state mutation/concurrency integrity code review and PR #22
+behavioral-head CI on Python 3.11, 3.12, and 3.13. FCR-049 is therefore
+`VERIFIED`. This closure changes governance documentation only; FCR-048 remains
+`VERIFIED`, Feature Freeze remains PASS, and PH-007 is not started.
+
 Added one shared store-level atomic mutation primitive. Batch, Moderation, and
 Triage stores now invoke each mutation against the current workspace while the
 store lock is held, then save that result atomically. Independent mutations

@@ -167,7 +167,7 @@ Final Outcome / 最终结果
 | FCR-046 | 完整输入推理真实性 | 合法长文本是否可能被模型静默截断并作为整篇分析返回 | VERIFIED；behavioral candidate review 与 CI 通过 |
 | FCR-047 | 全局 HTTP request-body 边界 | 异常大的 form / multipart request 是否会在字段验证或临时状态操作前统一拒绝 | VERIFIED；behavioral candidate review 与 CI 通过 |
 | FCR-048 | 真实模型 Batch 容量与性能证据 | 500 行真实双模型分析是否可完成、内存稳定且跨 TTL 安全提交 | VERIFIED；A4 离线 CPU probe 证据充分 |
-| FCR-049 | 并发 workspace mutation 完整性 | stale workspace mutation 是否可能静默覆盖已接受的新状态 | IMPLEMENTED；A5 atomic current-state mutation 待 PR review/CI |
+| FCR-049 | 并发 workspace mutation 完整性 | stale workspace mutation 是否可能静默覆盖已接受的新状态 | VERIFIED；A5 behavioral review 与 CI PASS |
 
 ## 5. Feature decision index
 
@@ -191,7 +191,7 @@ Final Outcome / 最终结果
 | FCR-046 | `HARDENING` | Keep and harden | `VERIFIED` | 以真实 tokenizer 编码长度拒绝超出 pinned 模型预算的完整输入，禁止静默截断与 partial-text success | Product Hardening Batch A2 behavioral SHA review PASS；PR #19 CI PASS |
 | FCR-047 | `HARDENING` | Keep and harden | `VERIFIED` | 以 3 MiB Flask 全局 ceiling 在 form/multipart 解析和状态操作前统一 413；CSV 2 MiB payload limit 保持独立 | Product Hardening Batch A3 behavioral SHA review PASS；PR #20 CI PASS |
 | FCR-048 | `HARDENING` | Keep and harden | `VERIFIED` | opt-in 真实离线双模型 probe 证明 500 行完成、加载后 RSS 稳定、active lease 跨短 TTL 原子写回；无需产品 patch | [A4 容量证据](REAL_MODEL_CAPACITY_EVIDENCE.md)；PR #21 review/CI PASS 并已合并 |
-| FCR-049 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 共享 store-level atomic mutation 始终基于 current state；安全独立变更串行保留，不可合并 one-shot 竞争明确返回 409 | Product Hardening Batch A5 deterministic interleaving regression；Draft PR checks 为远程依据 |
+| FCR-049 | `HARDENING` | Keep and harden | `VERIFIED` | 共享 store-level atomic mutation 始终基于 current state；安全独立变更串行保留，不可合并 one-shot 竞争明确返回 409 | behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54` review PASS；PR #22 behavioral-head CI PASS |
 
 ### 2026-08-13 最新反馈分类
 
@@ -479,18 +479,18 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 
 ### FCR-049 — 并发 workspace mutation 完整性
 
-- **Basic Information / 基本信息:** Batch、Moderation、Triage process-memory workspace 并发写入；2026-08-13；状态 `IMPLEMENTED`。
+- **Basic Information / 基本信息:** Batch、Moderation、Triage process-memory workspace 并发写入；2026-08-13；状态 `VERIFIED`。
 - **Current Behavior / 当前行为:** A5 前，多条 POST route 会先读取 workspace、在锁外派生完整新对象，再整体 replace；两个请求从同一旧快照出发时，后写入者可能静默擦除先接受的 mutation。
 - **Manual Observation / 人工观察:** Phase 0 代码审计发现 Batch column selection、Review/Insights、Moderation 和 Triage 均存在同一 read/derive/replace 根因；确定性 nested interleaving 测试复现了 stale snapshot 风险并验证修复后的最终保存状态。
 - **User Impact / 用户影响:** 多 tab、重复提交或并发请求可能丢失 review、note、training decision 或 triage decision，同时界面仍表现为成功，属于 release-blocking data-integrity 风险。
 - **Core Assessment / 核心评估:** current hardening correctness/data integrity；不重新打开 Feature Freeze，不增加数据库、后台任务或分布式并发架构。
-- **Decision / 决定:** Class `HARDENING`；Decision `Keep and harden`；Status `IMPLEMENTED`。
+- **Decision / 决定:** Class `HARDENING`；Decision `Keep and harden`；Status `VERIFIED`。
 - **Rationale / 理由:** FCR-045 只覆盖 Batch capacity、TTL 与 active-analysis lease/write-back；它没有承载跨 Batch/Moderation/Triage 的普通 workspace mutation lost-update 根因。PH-006 因此建立为永久 FCR-049，而不是改写或重复 FCR-045。
 - **Implementation Scope / 实施范围:** 三个 store 复用单一 atomic mutation primitive：在 store lock 内读取 current workspace、执行纯 mutation callback 并原子保存。保护 Batch selection、Review、持久 Insight selection/note、全部 Moderation state action 与全部 Triage state action。GET navigation、filter、summary、export 和纯 request-local presentation state 不纳入，因为它们不替换持久 workspace。
 - **Acceptance Criteria / 验收标准:** 独立 mutation 均保留；one-shot 规则在提交时 current state 上复验；不可安全合并的竞争返回 409；conflict 不破坏新状态；expired/cleared 保持 404；A1 active lease 不被绕过；显式 revision 与 single-tab workflow 保持正常。
 - **Risks and Regression Scope / 风险与回归范围:** store lock 中 callback 必须保持纯内存且短时；deterministic tests 验证最终保存状态。process-memory、bounded capacity、TTL、loopback 和无 persistence 边界保持；PH-007、WebSocket、distributed lock、external cache、async、FCR-042/043 均排除。
-- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A5 Draft PR；本地 targeted/full quality suite 与最终 remote head/CI 以 PR checks 为准。
-- **Final Outcome / 最终结果:** atomic current-state mutation 与明确 409 conflict 已实现，等待 Draft PR review 与 final-head CI 后决定是否关闭为 `VERIFIED`。FCR-048 保持 `VERIFIED`，Feature Freeze 保持 PASS，PH-007 未开始。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A5 PR #22；behavioral candidate `a3ec11b674c11148d66be73475b43d0796329a54`；current-state mutation/concurrency integrity review PASS；behavioral-head Python 3.11/3.12/3.13 CI PASS。
+- **Final Outcome / 最终结果:** atomic current-state mutation 与明确 409 conflict 已通过 behavioral review 与 CI，FCR-049 在固定 behavioral SHA 上关闭为 `VERIFIED`。本次 closure 仅修改治理文档；FCR-048 保持 `VERIFIED`，Feature Freeze 保持 PASS，PH-007 未开始。
 
 ### FCR-033 — 本地模型缓存冗余
 
@@ -785,7 +785,7 @@ predeclare a pass.
 | FCR-046 | Complete-input inference truthfulness | Can valid long text be silently truncated and returned as whole-text analysis? | VERIFIED; behavioral candidate review and CI passed |
 | FCR-047 | Global HTTP request-body boundary | Are abnormal form and multipart bodies rejected before field validation or temporary-state operations? | VERIFIED; behavioral candidate review and CI passed |
 | FCR-048 | Real-model Batch capacity and performance evidence | Can 500 rows complete with both real models, stable memory, and TTL-safe commit? | VERIFIED; A4 offline CPU probe evidence sufficient |
-| FCR-049 | Concurrent workspace mutation integrity | Can a stale workspace mutation silently overwrite newer accepted state? | IMPLEMENTED; A5 atomic current-state mutation pending PR review/CI |
+| FCR-049 | Concurrent workspace mutation integrity | Can a stale workspace mutation silently overwrite newer accepted state? | VERIFIED; A5 behavioral review and CI passed |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -810,7 +810,7 @@ evidence and disposition.
 | FCR-046 | `HARDENING` | Keep and harden | `VERIFIED` | Reject over-budget complete input by real tokenizer length; prohibit silent truncation and partial-text success | Product Hardening Batch A2 behavioral SHA review PASS; PR #19 CI PASS |
 | FCR-047 | `HARDENING` | Keep and harden | `VERIFIED` | Apply a 3 MiB Flask-wide ceiling before form/multipart parsing and state operations; keep the 2 MiB CSV payload limit separate | Product Hardening Batch A3 behavioral SHA review PASS; PR #20 CI PASS |
 | FCR-048 | `HARDENING` | Keep and harden | `VERIFIED` | An opt-in offline real-model probe demonstrates 500-row completion, stable post-load RSS, and atomic active-lease commit across a short TTL; no product patch is required | [A4 capacity evidence](REAL_MODEL_CAPACITY_EVIDENCE.md); PR #21 review/CI passed and merged |
-| FCR-049 | `HARDENING` | Keep and harden | `IMPLEMENTED` | A shared store-level atomic mutation always uses current state; safe independent changes serialize and incompatible one-shot races return an explicit 409 | Product Hardening Batch A5 deterministic interleaving regression; Draft PR checks are the remote authority |
+| FCR-049 | `HARDENING` | Keep and harden | `VERIFIED` | A shared store-level atomic mutation always uses current state; safe independent changes serialize and incompatible one-shot races return an explicit 409 | behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54` review PASS; PR #22 behavioral-head CI PASS |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -1104,18 +1104,18 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 
 ### FCR-049 — Concurrent workspace mutation integrity
 
-- **Basic Information:** Concurrent writes to Batch, Moderation, and Triage process-memory workspaces; 2026-08-13; status `IMPLEMENTED`.
+- **Basic Information:** Concurrent writes to Batch, Moderation, and Triage process-memory workspaces; 2026-08-13; status `VERIFIED`.
 - **Current Behavior:** Before A5, multiple POST routes read a workspace, derived a complete replacement outside the lock, and then replaced it. Two requests starting from one old snapshot could let the later writer silently erase the earlier accepted mutation.
 - **Manual Observation:** The Phase 0 code audit found the same read/derive/replace root cause in Batch column selection, Review/Insights, Moderation, and Triage. Deterministic nested interleaving tests reproduce the stale-snapshot risk and verify final stored state after the fix.
 - **User Impact:** Multiple tabs, repeated submits, or concurrent requests could lose a review, note, training decision, or triage decision while appearing successful, which is a release-blocking data-integrity risk.
 - **Core Assessment:** Current hardening for correctness and data integrity. Feature Freeze stays closed, with no database, background work, or distributed concurrency architecture.
-- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `VERIFIED`.
 - **Rationale:** FCR-045 covers Batch capacity, TTL, and the active-analysis lease/write-back contract. It does not cover ordinary workspace mutation lost updates across Batch, Moderation, and Triage. PH-006 therefore becomes permanent FCR-049 rather than rewriting or duplicating FCR-045.
 - **Implementation Scope:** The three stores reuse one atomic mutation primitive that reads current workspace state, executes a pure mutation callback, and saves atomically under the store lock. It protects Batch selection, Review, persisted Insight selection/notes, every Moderation state action, and every Triage state action. GET navigation, filters, summaries, exports, and request-local presentation state stay outside because they do not replace persisted workspace state.
 - **Acceptance Criteria:** Preserve independent mutations; revalidate one-shot rules against current state at submit time; return 409 for races that cannot be merged safely; preserve newer state after conflicts; retain 404 for expired/cleared workspaces; do not bypass the A1 active lease; preserve explicit revision and normal single-tab workflows.
 - **Risks and Regression Scope:** Callbacks under the store lock remain short and in-memory; deterministic tests assert final stored state. Process-memory, bounded capacity, TTL, loopback, and no-persistence boundaries remain. PH-007, WebSocket, distributed locks, external cache, async, and FCR-042/043 are excluded.
-- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A5 Draft PR; local targeted/full quality suite and the final remote head/CI are authoritative in PR checks.
-- **Final Outcome:** Atomic current-state mutation and explicit 409 conflicts are implemented, pending Draft PR review and final-head CI before `VERIFIED` closure. FCR-048 remains `VERIFIED`, Feature Freeze remains PASS, and PH-007 is unstarted.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A5 PR #22; behavioral candidate `a3ec11b674c11148d66be73475b43d0796329a54`; current-state mutation/concurrency integrity review PASS; behavioral-head Python 3.11/3.12/3.13 CI PASS.
+- **Final Outcome:** Atomic current-state mutation and explicit 409 conflicts passed behavioral review and CI, closing FCR-049 as `VERIFIED` on the fixed behavioral SHA. This closure changes governance documentation only. FCR-048 remains `VERIFIED`, Feature Freeze remains PASS, and PH-007 is unstarted.
 
 ### FCR-033 — Local model-cache redundancy
 
