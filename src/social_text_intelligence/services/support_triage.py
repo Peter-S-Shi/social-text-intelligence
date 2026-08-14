@@ -706,6 +706,50 @@ def _metadata(entry: TicketTriageState) -> Mapping[str, str]:
     return dict(snapshot.trusted_metadata) if snapshot is not None else {}
 
 
+_TIMESTAMP_BUCKET_AWARE = 0
+_TIMESTAMP_BUCKET_NAIVE = 1
+_TIMESTAMP_BUCKET_ABSENT = 2
+_TIMESTAMP_ABSENT_PLACEHOLDER = datetime.min
+
+
+def _timestamp_sort_key(entry: TicketTriageState) -> tuple[int, datetime, int]:
+    """Order tickets without inventing a timezone for unspecified timestamps.
+
+    Offset-aware timestamps sort first by real instant; Python compares aware
+    datetimes by their UTC instant, so different offsets are ordered correctly
+    and two spellings of one instant compare equal. Timezone-unspecified
+    timestamps are never assigned a zone and form a separate later bucket
+    ordered by wall-clock value. Missing or unparsable timestamps sort last.
+    Because the leading bucket always differs, values from different buckets
+    are never compared with each other, and `original_order` breaks every tie.
+
+    The aware value is kept in its original offset rather than converted with
+    `astimezone`, which raises `OverflowError` for extreme-but-parsable inputs
+    such as `9999-12-31T23:59:59-14:00`.
+    """
+
+    snapshot = entry.ticket.source_snapshot
+    original_order = entry.ticket.original_order
+    raw = snapshot.source_timestamp.strip() if snapshot is not None else ""
+    if not raw:
+        return (
+            _TIMESTAMP_BUCKET_ABSENT,
+            _TIMESTAMP_ABSENT_PLACEHOLDER,
+            original_order,
+        )
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return (
+            _TIMESTAMP_BUCKET_ABSENT,
+            _TIMESTAMP_ABSENT_PLACEHOLDER,
+            original_order,
+        )
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return (_TIMESTAMP_BUCKET_NAIVE, parsed, original_order)
+    return (_TIMESTAMP_BUCKET_AWARE, parsed, original_order)
+
+
 def filter_triage_entries(
     workspace: TriageWorkspace,
     filters: TriageFilter,
@@ -818,14 +862,7 @@ def filter_triage_entries(
     elif sort_by == "status":
         entries.sort(key=lambda item: (item.status.value, item.ticket.original_order))
     elif sort_by == "timestamp":
-        entries.sort(
-            key=lambda item: (
-                item.ticket.source_snapshot.source_timestamp
-                if item.ticket.source_snapshot
-                else "",
-                item.ticket.original_order,
-            )
-        )
+        entries.sort(key=_timestamp_sort_key)
     else:
         entries.sort(key=lambda item: item.ticket.original_order)
     return tuple(entries)

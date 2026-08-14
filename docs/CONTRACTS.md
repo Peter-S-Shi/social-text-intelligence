@@ -68,6 +68,21 @@ supplied IDs are explicit `duplicate_record_id` row errors. Each input row yield
 one `ok` or `error` outcome with a typed error code and message. File size, row
 count, and per-text length limits are enforced before or during preview.
 
+An optional `timestamp` must be ISO 8601. Its semantics are preserved, not
+necessarily its exact spelling: a stated UTC offset is kept as stated and a
+value with no timezone stays timezone-unspecified, but the parsed value may be
+re-rendered in a normalized ISO form (for example `Z` becomes `+00:00`, and a
+date-only value gains an explicit midnight time). The parsed CSV field value is
+retained separately in `PreparedBatchRow.input_values`. Batch export uses that
+field value rather than the parsed datetime representation. Export still
+applies the existing spreadsheet-safety escaping and normal CSV serialization,
+so this is not a byte-for-byte preservation guarantee of the original CSV
+source syntax. The application never infers a timezone for a
+timezone-unspecified value and never normalizes a user timestamp's offset to
+UTC. This is deliberately distinct from system-generated audit timestamps —
+review, moderation, triage, context-note, and export times are always
+timezone-aware UTC.
+
 Sentiment distribution counts mutually exclusive selected labels. Dominant
 emotion distribution counts one selected compact label per successful row.
 Compact activation rates independently count scores at or above each result's
@@ -166,6 +181,12 @@ Group membership is never inferred from record text or model output. An
 `InsightSelection` binds one grouping, one or more exact group values, one
 perspective, one compatible metric, and optional existing AI-label/date filters.
 
+Timestamp-month grouping and the result-date filters read the date each record
+itself states, without converting it to UTC or to any other zone. A record that
+states an offset is therefore grouped by its own local calendar date, not by
+its UTC date. This keeps grouping faithful to the supplied value instead of
+substituting an inferred one.
+
 AI distributions use successful rows. Human distributions use only
 whole-record reviewed, definitive dimensions. Disagreement uses the same
 definitive eligibility and means descriptive AI-human disagreement, not
@@ -257,3 +278,25 @@ only the current final decision and increments a revision count.
 unavailable is explicit. Core human–mock comparisons cover intent, category,
 urgency, recommended queue, escalation, and primary next action. They define
 descriptive agreement and overrides, never accuracy or quality.
+
+### Timestamp sort ordering
+
+Workspace sorting by timestamp reads the record timestamp captured in the
+frozen snapshot and never rewrites, converts, or normalizes the stored value.
+Ordering is deterministic and separates timestamps that state an offset from
+timestamps that do not:
+
+1. Records whose timestamp states a UTC offset sort first, ascending by real
+   instant rather than by the raw ISO text. Two different offsets that denote
+   the same instant compare equal.
+2. Records whose timestamp states no timezone sort next, in a separate bucket
+   ordered by their stated wall-clock value. They are never assigned UTC, a
+   local zone, or any geographic zone, and are never merged into the
+   offset-aware timeline. A date-only value keeps its existing parsed meaning.
+3. Records with a missing or unusable timestamp sort last.
+
+Every tie inside a bucket falls back to the original workspace order, so the
+sort is stable, and values from different buckets are never compared with each
+other. Because timestamps that state no timezone cannot be placed on a shared
+real timeline, the interface presents the three groups as an explicit ordering
+rule and does not imply that they share one.

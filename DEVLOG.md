@@ -1,5 +1,69 @@
 # Development Log
 
+## Product Hardening Batch A9 — Triage timestamp ordering integrity
+
+Reconciled Phase 0 PH-010 as new permanent `FCR-051`. Existing FCR-015 and
+FCR-038 govern Context Note UTC display, FCR-042 governs score-list ordering,
+and FCR-043 governs visual hierarchy; none defines the timestamp-ordering root
+cause, so a new permanent ID was created rather than stretching an existing
+one. The post-A8 governance sync PR #26 is recorded as merged at main SHA
+`7ef4d29d2bb98af2a60003748a575de8c5bcda96`, the baseline for this batch.
+
+The Support Triage `Sort: Timestamp` control sorted the stored ISO timestamp as
+a raw string. Batch CSV accepts any valid ISO 8601 value and keeps its stated
+offset (or its unspecified-timezone status) rather than normalizing it, so one
+workspace can hold several offsets at once, and lexicographic order is not
+real-instant order: `2026-07-01T08:00:00-05:00` is 13:00Z but sorts as text
+before `2026-07-01T10:00:00+00:00`, which is 10:00Z. The wrong order was
+silent, and the branch had no test coverage.
+
+Ordering now parses the value and applies one explicit contract. Offset-aware
+timestamps sort first, ascending by real instant. Timezone-unspecified values
+are never assigned a zone; they form a separate later bucket ordered by stated
+wall-clock value. Missing or unparsable values sort last. `original_order`
+breaks every tie, and because the leading bucket always differs, values from
+different buckets are never compared with each other. Aware values keep their
+original offset and rely on native instant comparison instead of
+`astimezone(UTC)`, which raises `OverflowError` on parsable extremes such as
+`9999-12-31T23:59:59-14:00` and would otherwise crash the page.
+
+Nothing about timestamp truth changed. The accepted Batch input range,
+`NormalizedTextInput.timestamp`, Review display, Triage trusted metadata, the
+Batch/Insights/Triage export representation, and system-generated UTC audit
+timestamps are all untouched, and user timestamps are still never normalized to
+UTC. `docs/CONTRACTS.md` now states the sort contract, the boundary between
+user timestamps and system audit timestamps, and the unchanged Insights
+month/date grouping semantics. The workspace sort control carries associated
+help text so the interface does not imply that timezone-unspecified and
+offset-aware values share one timeline.
+
+Nine targeted regressions cover instant-versus-string ordering, the stable
+tie-break for one instant spelled with two offsets, naive wall-clock ordering,
+the mixed-bucket contract, missing-last ordering, extreme-offset safety,
+non-interference with the other sort modes, and preservation of stored values.
+Five of them fail against the pre-fix implementation, and the extreme-offset
+case fails against an `astimezone` variant. The complete suite passed 181 tests
+with 2 opt-in model integrations skipped; Ruff, strict MyPy for 74 files,
+compileall, and pip check passed.
+
+A real-browser smoke drove the actual Batch upload, analysis, workspace-ticket,
+and `Sort: Timestamp` path with a synthetic batch holding two different
+offsets, one timezone-unspecified timestamp, and one missing timestamp. The
+rendered order was 10:00Z, 13:00Z, timezone-unspecified 1999, then missing; the
+other sort modes were unaffected; and every stored timestamp remained its
+original text with no conversion. Behavioral candidate:
+`076fbe4f883073a1961b024d52d06d9cac22a58a`. FCR-051 is `IMPLEMENTED` pending
+PR review. FCR-042 and FCR-043 remain open non-blocking, and Feature Freeze
+remains PASS.
+
+PR #27 formal review subsequently passed on reviewed head
+`ef9b54adc3eeed98ef4154f71ae7f69e5f6000cb`, which also passed final-head CI on
+Python 3.11, 3.12, and 3.13. FCR-051 is therefore `VERIFIED` and PH-010 is
+closed; FCR-027, FCR-030, and FCR-045–050 remain `VERIFIED`, Feature Freeze
+remains PASS, FCR-042/043 remain `OPEN` non-blocking, and the parked
+filter/select applied-state finding remains a separate, unresolved item outside
+FCR-051.
+
 ## Product Hardening Batch A8 — accessibility semantics and keyboard recovery
 
 Reconciled Phase 0 PH-009 with existing FCR-027 rather than creating FCR-051.
