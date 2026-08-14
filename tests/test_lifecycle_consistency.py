@@ -18,6 +18,9 @@ STALE_CURRENT_PHRASES = (
     "Current phase: Product Hardening",
     "Current lifecycle phase: Product Hardening",
     "| Current lifecycle phase | **Product Hardening** |",
+    "Current phase: Full Regression and Manual Acceptance",
+    "Current lifecycle phase: Full Regression and Manual Acceptance",
+    "| Current lifecycle phase | **Full Regression and Manual Acceptance** |",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -50,19 +53,24 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
     assert (
-        "| Current lifecycle phase | **Full Regression and Manual Acceptance** |"
-        in status
+        "| Current lifecycle phase | **Release Candidate** — Full Regression "
+        "and Manual Acceptance is **PASS** |" in status
     )
-    assert "| Manual Acceptance status | Not started |" in status
+    assert (
+        "| Manual Acceptance status | **PASS — 2026-08-14, 20/20 required "
+        "items, 0 blocking defects** |" in status
+    )
     assert "| Release Candidate status | Not started |" in status
     assert "| Release readiness | **No** |" in status
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert "**Current phase: Full Regression and Manual Acceptance**" in roadmap
+    assert "**Current phase: Release Candidate**" in roadmap
     assert "**Status: Completed.**" in roadmap
     assert "**Status: Complete.**" in roadmap
     assert "**Status: PASS.**" in roadmap
-    assert roadmap.count("**Status: Not started.**") == 1
+    assert "**Status: PASS — 2026-08-14.**" in roadmap
+    assert "**Status: Current phase. Not started.**" in roadmap
+    assert roadmap.count("**Status: Not started.**") == 0
 
 
 def test_source_of_truth_responsibilities_are_explicit() -> None:

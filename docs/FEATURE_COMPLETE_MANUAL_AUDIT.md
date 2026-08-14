@@ -10,7 +10,7 @@ sections use the same stable `FCR-XXX` identifiers.
 
 ## 1. 当前状态与使用方法
 
-- 当前阶段：**Full Regression and Manual Acceptance（全面回归与人工验收）**；Product Hardening 已 COMPLETE
+- 当前阶段：**Release Candidate（发布候选）**；Full Regression and Manual Acceptance 已 **PASS**（2026-08-14）
 - Feature Freeze：**PASS（2026-08-13 用户明确批准）**
 - Release readiness：**否**
 - 操作型逐项测试记录：
@@ -742,6 +742,63 @@ Evidence: PR #18–#28 各自的 behavioral candidate/reviewed head 远程 CI；
 本决定不代表 Manual Acceptance 已通过、Release Candidate 已开始，或 release
 readiness 已变为 Yes；这些仍是后续独立的 gate。
 
+### 2026-08-14 Full Regression and Manual Acceptance 通过决定
+
+```text
+Full Regression and Manual Acceptance decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-14
+Tested candidate SHA: 71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1（PR #30 合并；
+  独立 post-merge main CI 在 Python 3.11/3.12/3.13 全部 PASS）
+Decision: PASS
+Executor: repository owner 明确授权的 interactive coding agent；在真实本地
+  离线服务（sti-web --offline，真实 pinned 模型）与真实浏览器中操作
+Automated Full Regression evidence: 复用该 exact SHA 的独立 post-merge main
+  CI（pytest、Ruff、MyPy、compile、依赖安装）；不重复本地跑一遍相同证据；
+  真实模型容量、并发完整性、HTTP 边界与浏览器安全边界证据复用既有 Product
+  Hardening 记录（FCR-046–050）
+Required fresh interactive profile: repository owner 定义的 20 项最小
+  profile（setup-launch、setup-nav、setup-boundary、direct-validation、
+  direct-limits、batch-busy-state、batch-edge-preview、batch-edge-analysis、
+  batch-clear、review-formula、moderation-structural、moderation-warning、
+  triage-timestamp-sort、cross-applied-state、cross-keyboard、
+  cross-a11y-semantics、cross-privacy、cross-no-store、cross-expiry、
+  cross-errors）
+Result: 20/20 PASS；0 FAIL；0 blocking defect
+Six consolidated scenarios: A（Startup + Direct）、B（Batch edge workflow，
+  9-row edge CSV：3 valid/6 invalid preview，2 analyzed/7 failed 分析，
+  aria-busy busy state，显式 clear 与 cleared-token 恢复）、C（Review formula
+  export，=SYNTHETIC_FORMULA_TEST 安全转义确认）、D（Moderation
+  structural/warning pair，reasoning-required 结构错误与
+  allow_with_violation non-blocking warning）、E（专为 triage-timestamp-sort
+  构造的 4 行合成 batch：aware +05:00、aware -05:00（字典序与真实 instant
+  顺序相反）、naive、missing，link 到 Triage 后按 Timestamp 排序结果与契约
+  完全一致；cross-applied-state 在 Triage Workspace、Moderation Prepare、
+  Insights Representative Cases 三个 surface 上分别验证非默认 query state
+  回显）、F（cross-cutting：真实 skip-link 键盘激活、aria-current/
+  aria-invalid/aria-describedby/role=alert 语义、完整会话期间服务端日志
+  隐私复核、导出响应 no-store/CSP header、batch-clear 证明的 process-memory
+  过期恢复路径）
+FCR-042/FCR-043 disposition: 未改动，保持既有 OPEN non-blocking
+FCR-003 disposition: 由本次 direct-limits 项直接验证，确认与当前版本产品
+  行为一致（Direct 无语言选择控件，仅执行长度上限与 English-only 边界；
+  不支持语言标签场景由 Batch CSV language 列覆盖），不构成 blocker
+Other carried-forward pre-freeze items (FCR-005, 014, 015, 017, 021, 023,
+  026, 031): 未在本次最小 profile 范围内，移交 Release Candidate 做最终
+  disposition
+Evidence export: manual-qa/results/
+  sti-full-regression-manual-acceptance-71fa608-2026-08-14.{json,md}
+  （本地文件，受 .gitignore 保护，未提交到仓库）
+Next lifecycle phase: Release Candidate
+Release Candidate status: Not started
+Release readiness: No
+Approver: User / project owner
+```
+
+本决定不代表 Release Candidate 已开始或 release readiness 已变为 Yes；RC
+仍是后续独立的 gate。所有 84 项问卷检查中，仅上述 20 项在本次会话中获得新鲜
+交互证据；其余项目继续由既有自动化、Feature Freeze、Product Hardening 与
+历史版本证据支持，未被标记、也未被强制置为 N/A。
+
 ## 7. Codex 维护规则
 
 1. 新发现使用下一个永久 `FCR-XXX` ID。
@@ -760,7 +817,7 @@ readiness 已变为 Yes；这些仍是后续独立的 gate。
 
 ## 1. Current state and use
 
-- Current phase: **Full Regression and Manual Acceptance**; Product Hardening is **COMPLETE**
+- Current phase: **Release Candidate**; Full Regression and Manual Acceptance is **PASS** (2026-08-14)
 - Feature Freeze: **PASS (explicit user approval on 2026-08-13)**
 - Release readiness: **No**
 - Repeatable operational checklist:
@@ -1513,6 +1570,70 @@ Evidence: PR #18-#28 behavioral candidate/reviewed head remote CI; closure
 This decision does not mean Manual Acceptance has passed, a Release Candidate
 has started, or release readiness has changed to Yes; those remain separate,
 later gates.
+
+### 2026-08-14 Full Regression and Manual Acceptance PASS decision
+
+```text
+Full Regression and Manual Acceptance decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-14
+Tested candidate SHA: 71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1 (PR #30
+  merged; independent post-merge main CI PASS on Python 3.11/3.12/3.13)
+Decision: PASS
+Executor: repository-owner-authorized interactive coding agent, operating a
+  real local offline server (sti-web --offline, real pinned models) and a
+  real browser
+Automated Full Regression evidence: reused the exact-SHA independent
+  post-merge main CI (pytest, Ruff, MyPy, compile, dependency install)
+  rather than duplicating it locally; real-model capacity, concurrency
+  integrity, HTTP boundary, and browser security evidence reused from the
+  existing Product Hardening record (FCR-046-050)
+Required fresh interactive profile: repository-owner-defined minimum
+  20-item profile (setup-launch, setup-nav, setup-boundary,
+  direct-validation, direct-limits, batch-busy-state, batch-edge-preview,
+  batch-edge-analysis, batch-clear, review-formula, moderation-structural,
+  moderation-warning, triage-timestamp-sort, cross-applied-state,
+  cross-keyboard, cross-a11y-semantics, cross-privacy, cross-no-store,
+  cross-expiry, cross-errors)
+Result: 20/20 PASS; 0 FAIL; 0 blocking defects
+Six consolidated scenarios: A (Startup + Direct), B (Batch edge workflow:
+  9-row edge CSV, 3 valid/6 invalid preview, 2 analyzed/7 failed analysis,
+  aria-busy running state, explicit clear and cleared-token recovery), C
+  (Review formula export: =SYNTHETIC_FORMULA_TEST safely escaped on export),
+  D (Moderation structural/warning pair: reasoning-required structural
+  rejection and a non-blocking allow_with_violation guidance warning), E (a
+  4-row synthetic batch purpose-built for triage-timestamp-sort: aware
+  +05:00, aware -05:00 with lexical order reversed from real-instant order,
+  a timezone-unspecified row, and a missing-timestamp row, linked into
+  Triage and sorted exactly per contract; cross-applied-state verified on
+  Triage Workspace, Moderation Prepare, and Insights Representative Cases),
+  F (cross-cutting: real skip-link keyboard activation, aria-current/
+  aria-invalid/aria-describedby/role=alert semantics, a full-session server
+  log privacy review, no-store/CSP export response headers, and the
+  process-memory expiry/recovery path proven via batch-clear)
+FCR-042/FCR-043 disposition: untouched, remain OPEN non-blocking
+FCR-003 disposition: directly exercised by direct-limits and found
+  consistent with current-version product behavior (Direct has no
+  language-selection control and enforces only the length limit and
+  English-only boundary; the unsupported-language-tag scenario is covered
+  by the Batch CSV language column instead); not a blocker
+Other carried-forward pre-freeze items (FCR-005, 014, 015, 017, 021, 023,
+  026, 031): outside this session's minimum profile, carried into Release
+  Candidate for final disposition
+Evidence export: manual-qa/results/
+  sti-full-regression-manual-acceptance-71fa608-2026-08-14.{json,md}
+  (local file, protected by .gitignore, not committed to the repository)
+Next lifecycle phase: Release Candidate
+Release Candidate status: Not started
+Release readiness: No
+Approver: User / project owner
+```
+
+This decision does not mean a Release Candidate has started or release
+readiness has changed to Yes; RC remains a separate, later gate. Of all 84
+questionnaire checks, only the 20 listed above received fresh interactive
+evidence in this session; the remainder continue to be supported by
+existing automated, Feature Freeze, Product Hardening, and prior
+version-specific evidence, and were neither marked nor forced to N/A.
 
 ## 7. Codex maintenance rules
 

@@ -1,5 +1,74 @@
 # Development Log
 
+## Full Regression and Manual Acceptance — PASS
+
+Repository-owner-authorized agent-operated session executed Full Regression
+and Manual Acceptance against tested SHA
+`71fa608ec523ecc17b160568c6b4ffcd0a7b0fd1` (PR #30 merged; independent
+post-merge `main` CI PASS on Python 3.11/3.12/3.13). Automated Full
+Regression evidence reused that exact-SHA CI rather than re-running pytest/
+Ruff/MyPy/compile locally, per explicit cost-minimization instructions, plus
+existing Product Hardening real-model/concurrency/HTTP-boundary/
+browser-security evidence.
+
+Manual Acceptance used a repository-owner-defined minimum required
+fresh-interaction profile of 20 questionnaire IDs, executed as six
+consolidated scenarios in a real offline `sti-web` server (real pinned
+models) and a real browser rather than 20 separate procedures:
+
+- **A (Startup + Direct):** app launch, all four top-level routes, visible
+  privacy/English-only/non-diagnostic boundaries, blank-input rejection, and
+  a genuine server-side over-length rejection (21999 chars, client
+  `maxlength` bypassed) with no truncation or stack trace.
+- **B (Batch edge workflow):** one 9-row edge-case CSV through preview (3
+  valid / 6 invalid, each error typed correctly), a captured `aria-busy`/
+  disabled-button/`role=status` running state during analysis, completed
+  analysis (2 analyzed / 7 failed, including a correct
+  `unsupported_language` failure for the French row), and an explicit
+  clear with confirmed cleared-token recovery.
+- **C (Review formula export):** `=SYNTHETIC_FORMULA_TEST` in a review note
+  exported with a safe apostrophe prefix.
+- **D (Moderation structural/warning pair):** a submission with
+  `reasoning`/`reviewer_note` required-attributes bypassed was rejected
+  server-side with no partial save; a structurally valid `allow` +
+  `harassment_abuse` + `severity=none` submission was saved with retained,
+  non-rewriting guidance warnings.
+- **E (A9/A10 state integrity):** a 4-row synthetic batch purpose-built for
+  the sort contract (aware `+05:00`, aware `-05:00` with lexical order
+  reversed from real-instant order, a timezone-unspecified row, and a
+  missing-timestamp row) linked into Triage and sorted by Timestamp
+  rendered exactly aware-by-instant, then naive, then missing — confirmed
+  by opening each ticket, not by trusting row position alone.
+  `cross-applied-state` was verified on all three required surfaces (Triage
+  Workspace, Moderation Prepare, Insights Representative Cases) with a
+  non-default query state reflected correctly on reload.
+- **F (cross-cutting):** the real skip-link was the first Tab stop and
+  moved focus to `<main>` on activation; the active nav link carried
+  `aria-current="page"`; a validation failure set `aria-invalid`,
+  `aria-describedby`, `autofocus`, and `role="alert"`; the full session's
+  Werkzeug access log was reviewed and contains no submitted text or PII;
+  a CSV export response carried `Cache-Control: no-store` and a strict CSP/
+  security-header set; and clearing a Batch workspace proved immediate
+  process-memory loss with a clean, non-crashing recovery message on the
+  cleared token.
+
+Result: 20/20 PASS, 0 FAIL, 0 blocking defects. FCR-042/FCR-043 untouched.
+FCR-003 was directly exercised by `direct-limits` and found consistent with
+current-version product behavior (Direct enforces only length and
+English-only; the unsupported-language-tag case belongs to Batch). The
+remaining carried-forward pre-freeze items (FCR-005, 014, 015, 017, 021,
+023, 026, 031) were outside this minimum profile and carry into Release
+Candidate. Evidence exported to
+`manual-qa/results/sti-full-regression-manual-acceptance-71fa608-2026-08-14.{json,md}`
+(local-only, gitignored).
+
+Updated `PROJECT_STATUS.md`, `ROADMAP.md`, `README.md`, and
+`docs/FEATURE_COMPLETE_MANUAL_AUDIT.md` (new dated PASS decision, bilingual)
+to record the PASS and advance the current lifecycle phase to Release
+Candidate (not started). Updated `tests/test_lifecycle_consistency.py`'s
+hardcoded phase/status assertions to match. No product code, template, or
+route was touched.
+
 ## PR #30 corrective patch — FCR-003 Direct acceptance alignment
 
 Formal readiness review of PR #30 found that the newly added `direct-limits`
