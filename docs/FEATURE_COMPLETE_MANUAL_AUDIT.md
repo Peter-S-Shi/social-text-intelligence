@@ -169,6 +169,7 @@ Final Outcome / 最终结果
 | FCR-048 | 真实模型 Batch 容量与性能证据 | 500 行真实双模型分析是否可完成、内存稳定且跨 TTL 安全提交 | VERIFIED；A4 离线 CPU probe 证据充分 |
 | FCR-049 | 并发 workspace mutation 完整性 | stale workspace mutation 是否可能静默覆盖已接受的新状态 | VERIFIED；A5 behavioral review 与 CI PASS |
 | FCR-050 | 本地浏览器安全边界 | 非可信 Host、跨源 unsafe request 或缺失安全 headers 是否可能越过 loopback browser boundary | VERIFIED；A6 code review、CI 与 real-browser smoke PASS |
+| FCR-051 | Triage timestamp 排序完整性 | 按 timestamp 排序在不同 UTC offset、无时区与缺失值下是否给出正确且不误导的顺序 | IMPLEMENTED；PH-010 由本 finding 承载，待 A9 PR review |
 
 ## 5. Feature decision index
 
@@ -196,6 +197,7 @@ Final Outcome / 最终结果
 | FCR-048 | `HARDENING` | Keep and harden | `VERIFIED` | opt-in 真实离线双模型 probe 证明 500 行完成、加载后 RSS 稳定、active lease 跨短 TTL 原子写回；无需产品 patch | [A4 容量证据](REAL_MODEL_CAPACITY_EVIDENCE.md)；PR #21 review/CI PASS 并已合并 |
 | FCR-049 | `HARDENING` | Keep and harden | `VERIFIED` | 共享 store-level atomic mutation 始终基于 current state；安全独立变更串行保留，不可合并 one-shot 竞争明确返回 409 | behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54` review PASS；PR #22 behavioral-head CI PASS |
 | FCR-050 | `HARDENING` | Keep and harden | `VERIFIED` | 只信任 loopback Host；unsafe methods 执行 lightweight same-origin 检查；全部响应采用严格 self-only CSP 与统一安全 headers | behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d` review/CI PASS；real-browser smoke PASS |
+| FCR-051 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Triage `Sort: Timestamp` 原按 ISO 字符串字典序排序，不同 UTC offset 下会静默产生错误时间顺序；改为 aware 按真实 instant、naive 独立 wall-clock bucket、missing 最后 | Product Hardening Batch A9；9 个定向回归；真实浏览器 smoke PASS |
 
 ### 2026-08-13 最新反馈分类
 
@@ -231,6 +233,8 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
 - `VERIFIED / Product Hardening`: FCR-045；exact correction SHA 的 targeted/full
   local validation 与 PR #18 remote CI 均通过，PR #18 已合并到 main
   `1b36fe8c024823c1f4829621a7bcc733b2915c93`。
+- `IMPLEMENTED / Product Hardening`: FCR-051；PH-010 的唯一 material gap，由
+  Product Hardening Batch A9 承载，待 PR review。
 
 ### FCR-027 — 键盘与可访问性 Product Hardening 复核
 
@@ -546,6 +550,21 @@ Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status �
 - **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；Product Hardening Batch A6 PR #23；behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`；Host/same-origin/CSP/security-header code review PASS；behavioral-head Python 3.11/3.12/3.13 CI PASS；real-browser smoke PASS；PR #23 已合并到 main SHA `cfcd13ef582996b8c75aa20524dcc212e2ab8922`。
 - **Final Outcome / 最终结果:** trusted Host、same-origin unsafe-method gate、严格统一 headers 与 CSP-compatible template 已通过 review、CI 和真实浏览器 smoke；Direct、Batch/Review、Insights progress/note、Moderation/Triage、CSV 均正常，DevTools Console 无 CSP violation 或 blocked local resource。FCR-050 在固定 behavioral SHA 上关闭为 `VERIFIED`；PR #23 已合并。FCR-049 保持 `VERIFIED`，Feature Freeze 保持 PASS；后续 PH-008 由既有 FCR-030 承载。
 
+### FCR-051 — Support Triage timestamp 排序完整性
+
+- **Basic Information / 基本信息:** Support Triage workspace 的 `Sort: Timestamp`；Product Hardening PH-010；2026-08-14；状态 `IMPLEMENTED`。
+- **Current Behavior / 当前行为:** A9 前该分支直接对 `source_snapshot.source_timestamp` 这个 ISO **字符串**做字典序排序。本批改为解析真实值后排序：offset-aware 按真实 instant，timezone-unspecified 进入独立 bucket 按 wall-clock 排序，missing/unparsable 排在最后，全部以 `original_order` 稳定 tie-break。
+- **Manual Observation / 人工观察:** PH-010 read-only audit 追踪了全部 timestamp 的产生、保存、展示、导出与排序路径。system-generated audit timestamp 已由 contracts 层 `require_utc` 强制 UTC，无缺陷；用户记录 timestamp 经 Batch CSV `_parse_timestamp` 进入，允许 naive 与任意 offset 且原样保留。字典序因此不等价于真实时刻顺序：`2026-07-01T08:00:00-05:00`（13:00Z）的字符串排在 `2026-07-01T10:00:00+00:00`（10:00Z）之前，顺序被静默颠倒。该分支此前无任何测试覆盖。
+- **User Impact / 用户影响:** 人工分诊按时间排序是判断处理优先级的依据。错误顺序不会报错也不会崩溃，只会静默呈现错误的先后关系，可能导致更早的工单被排在后面。
+- **Core Assessment / 核心评估:** 这是独立的 timestamp ordering root cause。FCR-015/FCR-038 属于 Context Note 的 UTC 展示，FCR-042 属于分数列表排序，FCR-043 属于视觉层级，均不覆盖本问题，因此建立永久 FCR-051。
+- **Decision / 决定:** Class `HARDENING`；Decision `Keep and harden`；Status `IMPLEMENTED`。
+- **Rationale / 理由:** 不能为 timezone-unspecified 的值推断一个并不存在的时区，因此不做全局 UTC 归一，而是用显式三段 bucket 契约区分「有 offset 的真实时刻」「无时区的墙钟值」「缺失值」。aware 值保留原 offset 由 Python 原生按 instant 比较，而非 `astimezone(UTC)`——后者对 `9999-12-31T23:59:59-14:00` 这类可解析的极端值会抛 `OverflowError` 并使页面崩溃。
+- **Implementation Scope / 实施范围:** 新增 `_timestamp_sort_key()` 并让 `Sort: Timestamp` 使用它；`triage_workspace.html` 增加与 sort 控件 `aria-describedby` 关联的说明文字；`docs/CONTRACTS.md` 明确 timestamp sort 契约、用户 timestamp 与 system audit timestamp 的区别，以及 Insights month/date 分组沿用记录自身声明日期的现状。
+- **Acceptance Criteria / 验收标准:** aware 按真实 instant 升序且不按字符串；同一 instant 的不同 offset 稳定 tie-break；naive 独立 bucket 按 wall-clock；missing/unparsable 最后并保持 `original_order`；timestamp 排序不影响 urgency/status/original 排序；metadata、展示与导出中的 timestamp 不被改写或 UTC 归一；极端 offset 不导致崩溃。
+- **Risks and Regression Scope / 风险与回归范围:** 仅影响 Triage workspace 的排序顺序；不改变 Batch 接受的输入范围、`NormalizedTextInput.timestamp`、Review 展示、trusted metadata、Batch/Insights/Triage 导出表示或 system UTC audit timestamp。FCR-042/FCR-043 与 Batch timestamp 输入 UX 不在本批。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/a9-timestamp-ordering`；baseline main SHA `7ef4d29d2bb98af2a60003748a575de8c5bcda96`；Product Hardening Batch A9 Draft PR。
+- **Final Outcome / 最终结果:** 9 个定向回归通过，其中 5 个在修复前的实现上确实失败，证明覆盖真实缺陷；完整 suite 181 passed / 2 opt-in skipped，Ruff、strict MyPy(74 files)、compileall、pip check 全部通过。真实浏览器 smoke 使用含两个不同 offset、一个 naive 与一个 missing timestamp 的 synthetic batch，确认顺序为 10:00Z → 13:00Z → naive 1999 → missing，且排序后存储值仍为原始文本。PR review 前状态为 `IMPLEMENTED`，Feature Freeze 保持 PASS，FCR-042/043 保持 `OPEN` non-blocking。
+
 ### FCR-033 — 本地模型缓存冗余
 
 **Basic Information / 基本信息**
@@ -841,6 +860,7 @@ predeclare a pass.
 | FCR-048 | Real-model Batch capacity and performance evidence | Can 500 rows complete with both real models, stable memory, and TTL-safe commit? | VERIFIED; A4 offline CPU probe evidence sufficient |
 | FCR-049 | Concurrent workspace mutation integrity | Can a stale workspace mutation silently overwrite newer accepted state? | VERIFIED; A5 behavioral review and CI passed |
 | FCR-050 | Local browser security boundary | Can an untrusted Host, cross-origin unsafe request, or missing headers bypass the loopback browser boundary? | VERIFIED; A6 code review, CI, and real-browser smoke passed |
+| FCR-051 | Triage timestamp ordering integrity | Does sorting by timestamp give a correct, non-misleading order across differing UTC offsets, timezone-unspecified values, and missing values? | IMPLEMENTED; PH-010 is carried here pending A9 PR review |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -869,6 +889,7 @@ evidence and disposition.
 | FCR-048 | `HARDENING` | Keep and harden | `VERIFIED` | An opt-in offline real-model probe demonstrates 500-row completion, stable post-load RSS, and atomic active-lease commit across a short TTL; no product patch is required | [A4 capacity evidence](REAL_MODEL_CAPACITY_EVIDENCE.md); PR #21 review/CI passed and merged |
 | FCR-049 | `HARDENING` | Keep and harden | `VERIFIED` | A shared store-level atomic mutation always uses current state; safe independent changes serialize and incompatible one-shot races return an explicit 409 | behavioral SHA `a3ec11b674c11148d66be73475b43d0796329a54` review PASS; PR #22 behavioral-head CI PASS |
 | FCR-050 | `HARDENING` | Keep and harden | `VERIFIED` | Trust loopback Hosts only, apply a lightweight same-origin gate to unsafe methods, and give every response strict self-only CSP and security headers | behavioral SHA `1a2d25fafc532215b45cf8d6310e8e1b2b16140d` review/CI PASS; real-browser smoke PASS |
+| FCR-051 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Triage `Sort: Timestamp` sorted raw ISO strings lexicographically and silently produced the wrong order across UTC offsets; ordering now compares real instants, keeps timezone-unspecified values in a separate wall-clock bucket, and puts missing values last | Product Hardening Batch A9; 9 targeted regressions; real-browser smoke PASS |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -908,6 +929,8 @@ CI status are authoritative in the PR checks.
 - `VERIFIED / Product Hardening`: FCR-045; targeted/full local validation and
   PR #18 remote CI passed on the exact correction SHA, and PR #18 merged to main
   at `1b36fe8c024823c1f4829621a7bcc733b2915c93`.
+- `IMPLEMENTED / Product Hardening`: FCR-051; the single material PH-010 gap,
+  carried by Product Hardening Batch A9 and pending PR review.
 
 ### FCR-027 — Product Hardening keyboard and accessibility revalidation
 
@@ -1226,6 +1249,21 @@ SHA. Later governance-document commits do not move the behavioral candidate.
 - **Risks and Regression Scope:** Missing-Origin compatibility is only for local non-browser clients behind trusted Host; it is not remote access or authentication. The completed real-browser smoke confirms no CSP violation or blocked local resource in the console. HSTS, CORS, TLS, LAN, reverse proxy, production WSGI, account/session, a CSRF framework, reporting service, later PH work, and FCR-042/043 are excluded.
 - **Git / PR Record:** `hardening/product-hardening-cycle`; Product Hardening Batch A6 PR #23; behavioral candidate `1a2d25fafc532215b45cf8d6310e8e1b2b16140d`; Host/same-origin/CSP/security-header code review PASS; behavioral-head Python 3.11/3.12/3.13 CI PASS; real-browser smoke PASS; PR #23 merged to main SHA `cfcd13ef582996b8c75aa20524dcc212e2ab8922`.
 - **Final Outcome:** Trusted Host, the same-origin unsafe-method gate, strict global headers, and the CSP-compatible template passed review, CI, and real-browser smoke. Direct, Batch/Review, Insights progress/notes, Moderation/Triage, and CSV operated normally, with no CSP violation or blocked local resource in DevTools Console. FCR-050 closes as `VERIFIED` on the fixed behavioral SHA, and PR #23 is merged. FCR-049 remains `VERIFIED`, Feature Freeze remains PASS; later PH-008 is carried by existing FCR-030.
+
+### FCR-051 — Support Triage timestamp ordering integrity
+
+- **Basic Information:** The Support Triage workspace `Sort: Timestamp` control; Product Hardening PH-010; 2026-08-14; status `IMPLEMENTED`.
+- **Current Behavior:** Before A9 this branch sorted `source_snapshot.source_timestamp` as a raw ISO **string**. Ordering now parses the real value: offset-aware timestamps sort by real instant, timezone-unspecified timestamps form a separate wall-clock bucket, missing or unparsable timestamps sort last, and `original_order` breaks every tie.
+- **Manual Observation:** The PH-010 read-only audit traced every timestamp creation, storage, display, export, and ordering path. System-generated audit timestamps are already forced to timezone-aware UTC by `require_utc` in the contracts layer and showed no defect. User record timestamps enter through the Batch CSV `_parse_timestamp`, which permits naive values and any offset and preserves them verbatim. Lexicographic order therefore does not equal real-instant order: `2026-07-01T08:00:00-05:00` (13:00Z) sorts as text before `2026-07-01T10:00:00+00:00` (10:00Z), silently reversing them. The branch had no test coverage at all.
+- **User Impact:** Sorting triage work by time is how a human judges handling priority. A wrong order neither errors nor crashes; it silently misrepresents which report came first, so an earlier ticket can be presented as later.
+- **Core Assessment:** This is an independent timestamp-ordering root cause. FCR-015 and FCR-038 concern Context Note UTC display, FCR-042 concerns score-list ordering, and FCR-043 concerns visual hierarchy; none covers it, so permanent FCR-051 is created.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`.
+- **Rationale:** A timezone-unspecified value must not be given a timezone it does not have, so the fix avoids global UTC normalization and instead uses an explicit three-bucket contract separating real instants, stated wall-clock values, and absent values. Aware values keep their original offset and rely on Python's native instant comparison rather than `astimezone(UTC)`, which raises `OverflowError` on parsable extremes such as `9999-12-31T23:59:59-14:00` and would crash the page.
+- **Implementation Scope:** Add `_timestamp_sort_key()` and use it for `Sort: Timestamp`; add help text in `triage_workspace.html` associated with the sort control through `aria-describedby`; record in `docs/CONTRACTS.md` the sort contract, the distinction between user timestamps and system audit timestamps, and the unchanged Insights month/date grouping semantics.
+- **Acceptance Criteria:** Aware timestamps ascend by real instant rather than by string; one instant spelled with two offsets ties and keeps original order; naive values order by wall clock in their own bucket; missing or unparsable values sort last in original order; timestamp sorting does not affect urgency/status/original sorting; stored, displayed, and exported timestamps are never rewritten or UTC-normalized; extreme offsets do not crash the page.
+- **Risks and Regression Scope:** Only the Triage workspace ordering changes. The accepted Batch input range, `NormalizedTextInput.timestamp`, Review display, trusted metadata, Batch/Insights/Triage export representation, and system UTC audit timestamps are unchanged. FCR-042, FCR-043, and Batch timestamp input UX are outside this batch.
+- **Git / PR Record:** `hardening/a9-timestamp-ordering`; baseline main SHA `7ef4d29d2bb98af2a60003748a575de8c5bcda96`; Product Hardening Batch A9 Draft PR.
+- **Final Outcome:** Nine targeted regressions passed, and five of them genuinely fail against the pre-fix implementation, confirming they cover the real defect. The full suite passed 181 tests with 2 opt-in model integrations skipped, and Ruff, strict MyPy for 74 files, compileall, and pip check passed. A real-browser smoke using a synthetic batch with two different offsets, one naive timestamp, and one missing timestamp confirmed the order 10:00Z, 13:00Z, naive 1999, missing, and confirmed that the stored values remained their original text after sorting. Status remains `IMPLEMENTED` before PR review, Feature Freeze remains PASS, and FCR-042/043 remain `OPEN` non-blocking.
 
 ### FCR-033 — Local model-cache redundancy
 
