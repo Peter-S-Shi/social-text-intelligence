@@ -18,11 +18,45 @@ class BatchStateTests(unittest.TestCase):
         now = 111.0
         self.assertIsNone(store.get(token))
 
-    def test_capacity_evicts_oldest_workspace(self) -> None:
+    def test_capacity_blocks_without_eviction_and_clear_releases_capacity(
+        self,
+    ) -> None:
         now = 10.0
         store = EphemeralBatchStore(capacity=1, clock=lambda: now)
         first = store.create(BatchWorkspace())
         now = 11.0
-        second = store.create(BatchWorkspace())
-        self.assertIsNone(store.get(first))
-        self.assertIsNotNone(store.get(second))
+        with self.assertRaisesRegex(RuntimeError, "capacity reached"):
+            store.create(BatchWorkspace())
+        self.assertIsNotNone(store.get(first))
+        store.delete(first)
+        self.assertIsNotNone(store.create(BatchWorkspace()))
+
+    def test_active_analysis_survives_expiry_and_commits_atomically(self) -> None:
+        now = 100.0
+        original = BatchWorkspace()
+        completed = BatchWorkspace()
+        store = EphemeralBatchStore(
+            ttl_seconds=10, capacity=1, clock=lambda: now
+        )
+        token = store.create(original)
+        lease = store.begin_analysis(token)
+        self.assertIsNotNone(lease)
+        assert lease is not None
+
+        now = 111.0
+        with self.assertRaisesRegex(RuntimeError, "capacity reached"):
+            store.create(BatchWorkspace())
+        with self.assertRaisesRegex(RuntimeError, "cannot be cleared"):
+            store.delete(token)
+        self.assertTrue(store.complete_analysis(lease, completed))
+        self.assertIs(store.get(token), completed)
+
+    def test_stale_or_cancelled_analysis_cannot_write_back(self) -> None:
+        store = EphemeralBatchStore()
+        token = store.create(BatchWorkspace())
+        lease = store.begin_analysis(token)
+        self.assertIsNotNone(lease)
+        assert lease is not None
+        self.assertTrue(store.cancel_analysis(lease))
+        self.assertFalse(store.complete_analysis(lease, BatchWorkspace()))
+        self.assertIsNotNone(store.get(token))

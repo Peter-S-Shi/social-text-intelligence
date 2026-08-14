@@ -1,5 +1,25 @@
 # Development Log
 
+## Product Hardening Batch A1 — Ephemeral Batch state integrity
+
+Reconciled Phase 0 findings PH-001 and PH-002 as one permanent product finding,
+FCR-045. FCR-036 remains the separate, already-verified confirmation contract
+for user-initiated clear; FCR-045 addresses the shared Batch-store root cause:
+capacity eviction and missing active-analysis write-back protection.
+
+Batch capacity now blocks new uploads with an explicit conflict instead of
+deleting existing work. Synchronous analysis acquires an exclusive in-memory
+lease, remains protected from normal TTL purge and clear while active, and may
+commit only through its current lease. A rejected write-back is an explicit
+409 and never follows the success path. Explicit clear still releases capacity,
+inactive TTL expiry remains unchanged, and no database, persistence, recovery
+worker, background task, model, threshold, or privacy contract was added.
+
+Targeted regressions cover `capacity+1`, inactive expiry, active analysis across
+TTL, duplicate/stale write-back, clear conflict and recovery, and preservation
+of existing Batch results, Review, Insights, and linked Triage workspaces when
+a new upload is blocked.
+
 ## Feature Freeze closure
 
 Recorded the user's explicit Feature Freeze PASS for tested behavioral SHA

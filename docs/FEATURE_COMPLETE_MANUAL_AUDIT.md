@@ -163,6 +163,7 @@ Final Outcome / 最终结果
 | FCR-042 | 分数列表排序 | 分数列表是否需要更强的排序可读性 | OPEN；非 blocker |
 | FCR-043 | 说明与错误信息层级 | 次要说明、警告、错误的视觉层级是否足够清楚 | OPEN；非 blocker |
 | FCR-044 | 嵌套工作流返回主界面 | Triage 四个内部界面及同类深层页面是否有明确主界面返回链接 | VERIFIED；人工复测通过 |
+| FCR-045 | 临时 Batch 状态完整性 | 容量、TTL 与 active analysis 是否可能静默销毁或丢失现有工作 | IMPLEMENTED；等待 PR review/CI |
 
 ## 5. Feature decision index
 
@@ -182,6 +183,7 @@ Final Outcome / 最终结果
 | FCR-042 | `HARDENING` | Keep and harden | `OPEN` | 分数排序是独立可读性改进，不阻碍当前 contract | 后续 Product Hardening |
 | FCR-043 | `HARDENING` | Keep and harden | `OPEN` | 说明/错误层级是跨页面视觉改进，当前可恢复性未失败 | 后续 Product Hardening |
 | FCR-044 | `HARDENING` | Keep and harden | `VERIFIED` | 复测证明缺失返回路径造成重大操作困难；所有嵌套工作流增加明确 home link | exact behavioral SHA 人工复测与 CI 通过 |
+| FCR-045 | `HARDENING` | Keep and harden | `IMPLEMENTED` | 容量必须阻止新建而非驱逐；active analysis 必须跨 TTL 原子写回或明确失败 | Product Hardening Batch A1 targeted/full regression；PR review/CI 待完成 |
 
 ### 2026-08-13 最新反馈分类
 
@@ -209,6 +211,8 @@ Git/PR 占位记录由本更新取代；最终远程 head 与 CI 状态以 PR ch
   FCR-002 已由 FCR-044 final-head smoke test 重新关闭；V-01 已由 exact tested
   behavioral SHA 满足，V-03–V-06 已由自动化/静态/委托技术复测覆盖。
 - `OPEN / non-blocking Hardening`: FCR-042–043。
+- `IMPLEMENTED / pending Product Hardening review`: FCR-045；targeted/full
+  local validation 通过，等待 Draft PR CI/review 后再决定是否关闭为 `VERIFIED`。
 
 ### FCR-034–FCR-041 — 固定审计记录
 
@@ -403,6 +407,21 @@ test，FCR-044 人工复测 PASS；四个 Triage 内部界面与同类深层页�
 Social Text Intelligence home，临时 workspace 状态保持。FCR-044 Status 更新为
 `VERIFIED`，FCR-002 navigation verification 重新关闭为 `VERIFIED`。V-01 已由
 该 exact SHA 满足。后续治理文档 commit 不改变 behavioral candidate。
+
+### FCR-045 — 临时 Batch 状态完整性
+
+- **Basic Information / 基本信息:** Batch process-memory store；2026-08-13；状态 `IMPLEMENTED`，等待 Draft PR review/CI。
+- **Current Behavior / 当前行为:** Phase 0 基线在容量满时静默删除最早到期 workspace；长时间分析先读取、后计算、再忽略 `replace()` 失败，可能把未保存结果表现为成功路径。
+- **Manual Observation / 人工观察:** Product Hardening Phase 0 technical audit 以容量探针、TTL/write-back 探针及路由检查复现两种失败模式。
+- **User Impact / 用户影响:** 未导出的 Batch、Review、Insights 及其关联来源可能无提示失效；已完成的本地推理可能没有保存却被误认为成功。
+- **Core Assessment / 核心评估:** release-blocking data-integrity hardening；不重新打开 Feature Freeze，不新增功能域。
+- **Decision / 决定:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`。
+- **Rationale / 理由:** FCR-036 只覆盖用户主动 clear 的确认；PH-001 与 PH-002 共享 Batch store 缺少容量阻止与 active-operation 状态保证的根因，因此合并为一个新的永久 finding，而不重复或改写 FCR-036。
+- **Implementation Scope / 实施范围:** 容量达到上限时以 409 阻止新 upload；active analysis 使用独占 lease，在同步请求期间免于 TTL purge，并只允许持有当前 lease 的结果原子提交；冲突写回明确返回 409；仍为 process-memory、TTL、无数据库/后台任务。
+- **Acceptance Criteria / 验收标准:** `capacity+1` 不删除既有 workspace；过期的非 active workspace 正常清除；active analysis 跨 TTL 可提交；清理/重复分析冲突被阻止；写回失败不显示成功；显式 clear 释放容量；既有 Review、Insights 与 linked workspace 不因新 upload 消失。
+- **Risks and Regression Scope / 风险与回归范围:** Batch store lifecycle、upload/analyze/clear routes、Review/Insights 可达性、linked Moderation/Triage 来源；不触及模型、阈值、privacy export 或其他 hardening finding。
+- **Git / PR Record / Git 与 PR 记录:** `hardening/product-hardening-cycle`；candidate commit、Draft PR 与 CI 待本批交付后填写。
+- **Final Outcome / 最终结果:** 最小状态完整性修复已实现；targeted 34 passed，full suite 131 passed / 2 opt-in real-model tests skipped，Ruff、strict MyPy、compileall、pip check 通过；远程 PR review/CI 待完成。
 
 ### FCR-033 — 本地模型缓存冗余
 
@@ -693,6 +712,7 @@ predeclare a pass.
 | FCR-042 | Score-list ordering | Would stronger score ordering improve scanability? | OPEN; non-blocking |
 | FCR-043 | Explanatory/error hierarchy | Are secondary copy, warnings, and errors visually distinct enough? | OPEN; non-blocking |
 | FCR-044 | Nested-workflow return navigation | Do all four Triage internals and comparable deep views expose an explicit application-home link? | VERIFIED; manual retest passed |
+| FCR-045 | Ephemeral Batch state integrity | Can capacity, TTL, or active analysis silently destroy or lose existing work? | IMPLEMENTED; PR review/CI pending |
 
 Do not mark an item passed from automated coverage alone. Record its manual
 evidence and disposition.
@@ -713,6 +733,7 @@ evidence and disposition.
 | FCR-042 | `HARDENING` | Keep and harden | `OPEN` | Score ordering is an independent readability improvement, not a current contract blocker | Later Product Hardening |
 | FCR-043 | `HARDENING` | Keep and harden | `OPEN` | Information hierarchy is cross-page visual hardening; recovery behavior did not fail | Later Product Hardening |
 | FCR-044 | `HARDENING` | Keep and harden | `VERIFIED` | Retest proved that missing return paths cause material operating difficulty; every nested workflow now has an explicit home link | Exact behavioral SHA manual retest and CI passed |
+| FCR-045 | `HARDENING` | Keep and harden | `IMPLEMENTED` | Capacity must block instead of evicting, and active analysis must commit atomically across TTL or fail explicitly | Product Hardening Batch A1 targeted/full regression; PR review/CI pending |
 
 ### 2026-08-13 latest-feedback classification
 
@@ -742,6 +763,8 @@ CI status are authoritative in the PR checks.
   by the exact tested behavioral SHA, and V-03–V-06 are covered by automated,
   static, or delegated technical retest evidence.
 - `OPEN / non-blocking Hardening`: FCR-042–043.
+- `IMPLEMENTED / pending Product Hardening review`: FCR-045; targeted/full
+  local validation passed, pending Draft PR CI/review before `VERIFIED` closure.
 
 ### FCR-034–FCR-041 — fixed audit records
 
@@ -940,6 +963,21 @@ deep views expose a clear return to Social Text Intelligence home without
 clearing temporary workspace state. FCR-044 is `VERIFIED`, FCR-002 navigation
 verification is re-closed as `VERIFIED`, and V-01 is satisfied by that exact
 SHA. Later governance-document commits do not move the behavioral candidate.
+
+### FCR-045 — Ephemeral Batch state integrity
+
+- **Basic Information:** Batch process-memory store; 2026-08-13; status `IMPLEMENTED`, pending Draft PR review/CI.
+- **Current Behavior:** At the Phase 0 baseline, reaching capacity silently deleted the earliest-expiring workspace. Long analysis read state, performed inference, ignored `replace()` failure, and could follow the success redirect without saving its result.
+- **Manual Observation:** Product Hardening Phase 0 technical audit reproduced both failure modes with capacity and TTL/write-back probes plus route inspection.
+- **User Impact:** Unexported Batch, Review, Insights, and linked source state could disappear without warning; completed local inference could be mistaken for a saved result.
+- **Core Assessment:** Release-blocking data-integrity hardening; it does not reopen Feature Freeze or add a feature domain.
+- **Decision:** Class `HARDENING`; Decision `Keep and harden`; Status `IMPLEMENTED`.
+- **Rationale:** FCR-036 governs confirmation for user-initiated clear only. PH-001 and PH-002 share one missing Batch-store capacity/active-operation integrity contract, so they become one permanent finding rather than duplicating or rewriting FCR-036.
+- **Implementation Scope:** Return 409 and block new uploads at capacity; protect synchronous active analysis with an exclusive lease that survives TTL purge and permits only the current lease to commit; return an explicit 409 on write-back conflict; retain process memory, TTL, and no database/background tasks.
+- **Acceptance Criteria:** `capacity+1` preserves existing work; inactive expiry still clears state; active analysis can commit across TTL; clear/duplicate-analysis conflicts are blocked; write-back failure is never success; explicit clear releases capacity; existing Review, Insights, and linked workspaces survive a blocked upload.
+- **Risks and Regression Scope:** Batch store lifecycle, upload/analyze/clear routes, Review/Insights reachability, and linked Moderation/Triage sources; models, thresholds, privacy exports, and other hardening findings remain unchanged.
+- **Git / PR Record:** `hardening/product-hardening-cycle`; candidate commit, Draft PR, and CI recorded at delivery.
+- **Final Outcome:** Minimal state-integrity correction implemented; targeted 34 passed, full suite 131 passed with 2 opt-in real-model tests skipped, and Ruff, strict MyPy, compileall, and pip check passed; remote PR review/CI remains pending.
 
 ### FCR-033 — Local model-cache redundancy
 

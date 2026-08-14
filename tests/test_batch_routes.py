@@ -2,6 +2,7 @@
 
 import io
 import unittest
+from unittest.mock import patch
 
 from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
 from social_text_intelligence.interface import create_app
@@ -141,3 +142,87 @@ class BatchRouteTests(unittest.TestCase):
         )
         self.assertIn(b"exceeds the 5-byte limit", response.data)
         self.assertNotIn(b"Traceback", response.data)
+
+    def test_capacity_blocks_new_upload_without_destroying_linked_state(
+        self,
+    ) -> None:
+        app = create_app(
+            {
+                "TESTING": True,
+                "BATCH_WORKSPACE_CAPACITY": 1,
+                "MAX_BATCH_BYTES": 10_000,
+                "MAX_BATCH_ROWS": 10,
+                "MAX_TEXT_LENGTH": 100,
+            },
+            analysis_gateway=gateway(),
+        )
+        client = app.test_client()
+        content = b"record_id,text\nrow-1,A synthetic success.\n"
+        first = client.post(
+            "/batch/upload",
+            data={"file": (io.BytesIO(content), "first.csv")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(first.status_code, 302)
+        workspace_url = first.headers["Location"]
+        self.assertEqual(client.post(workspace_url + "/analyze").status_code, 302)
+        batch_token = workspace_url.rsplit("/", 1)[-1]
+        linked = client.post(
+            "/triage/start",
+            data={"mode": "independent", "batch_token": batch_token},
+        )
+        self.assertEqual(linked.status_code, 302)
+        linked_url = linked.headers["Location"]
+
+        blocked = client.post(
+            "/batch/upload",
+            data={"file": (io.BytesIO(content), "second.csv")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(blocked.status_code, 409)
+        self.assertIn(b"capacity reached", blocked.data)
+        self.assertIn(b"Existing work was not removed", blocked.data)
+        self.assertIn(b"Sentiment distribution", client.get(workspace_url).data)
+        self.assertEqual(
+            client.get(workspace_url + "/review", follow_redirects=True).status_code,
+            200,
+        )
+        self.assertEqual(client.get(workspace_url + "/insights").status_code, 200)
+        self.assertEqual(client.get(linked_url).status_code, 200)
+
+        cleared = client.post(
+            workspace_url + "/clear", data={"confirm": "clear"}
+        )
+        self.assertEqual(cleared.status_code, 302)
+        recovered = client.post(
+            "/batch/upload",
+            data={"file": (io.BytesIO(content), "third.csv")},
+            content_type="multipart/form-data",
+        )
+        self.assertEqual(recovered.status_code, 302)
+        self.assertEqual(client.get(linked_url).status_code, 200)
+
+    def test_analysis_write_back_failure_is_explicit_and_recoverable(self) -> None:
+        content = b"record_id,text\nrow-1,A synthetic success.\n"
+        uploaded = self.client.post(
+            "/batch/upload",
+            data={"file": (io.BytesIO(content), "synthetic.csv")},
+            content_type="multipart/form-data",
+        )
+        workspace_url = uploaded.headers["Location"]
+        store = self.app.extensions["sti_batch_store"]
+
+        with patch.object(store, "complete_analysis", return_value=False):
+            failed = self.client.post(workspace_url + "/analyze")
+
+        self.assertEqual(failed.status_code, 409)
+        self.assertIn(b"result could not be saved", failed.data)
+        self.assertIn(b"No success was recorded", failed.data)
+        workspace = store.get(workspace_url.rsplit("/", 1)[-1])
+        self.assertIsNotNone(workspace)
+        assert workspace is not None
+        self.assertIsNone(workspace.result)
+        self.assertEqual(
+            self.client.post(workspace_url + "/analyze").status_code,
+            302,
+        )
