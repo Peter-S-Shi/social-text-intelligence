@@ -265,6 +265,9 @@ def create_app(
                 max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
                 max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
                 max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+                max_batch_workspaces=int(
+                    app.config["BATCH_WORKSPACE_CAPACITY"]
+                ),
             )
         try:
             content = upload.stream.read(int(app.config["MAX_BATCH_BYTES"]) + 1)

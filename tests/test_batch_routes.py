@@ -143,6 +143,21 @@ class BatchRouteTests(unittest.TestCase):
         self.assertIn(b"exceeds the 5-byte limit", response.data)
         self.assertNotIn(b"Traceback", response.data)
 
+    def test_missing_upload_keeps_workspace_capacity_limit_visible(self) -> None:
+        app = create_app(
+            {"TESTING": True, "BATCH_WORKSPACE_CAPACITY": 3},
+            analysis_gateway=gateway(),
+        )
+        response = app.test_client().post(
+            "/batch/upload",
+            data={},
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Choose a UTF-8 CSV file", response.data)
+        self.assertIn(b"3 concurrent temporary batch workspaces", response.data)
+
     def test_capacity_blocks_new_upload_without_destroying_linked_state(
         self,
     ) -> None:
