@@ -17,6 +17,9 @@ class AnalysisService:
     def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
         """Analyze one record while preserving provider and result boundaries."""
 
+        # Preflight every required provider before either model performs inference.
+        self.sentiment_provider.validate_input(record)
+        self.emotion_provider.validate_input(record)
         sentiment = self.sentiment_provider.analyze(record)
         emotion = self.emotion_provider.analyze(record)
         return AnalysisReport(record=record, sentiment=sentiment, emotion=emotion)

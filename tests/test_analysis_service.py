@@ -2,7 +2,11 @@
 
 import unittest
 
-from social_text_intelligence.contracts import NormalizedTextInput
+from social_text_intelligence.contracts import (
+    ModelInputTooLongError,
+    NormalizedTextInput,
+    SentimentResult,
+)
 from social_text_intelligence.providers import (
     DeterministicEmotionProvider,
     DeterministicSentimentProvider,
@@ -39,6 +43,33 @@ class AnalysisServiceTests(unittest.TestCase):
         result = service.analyze(record)
 
         self.assertEqual(result.record_id, record.record_id)
+
+    def test_combined_preflight_rejects_before_either_provider_analyzes(self) -> None:
+        sentiment = DeterministicSentimentProvider()
+
+        class RejectingEmotionProvider(DeterministicEmotionProvider):
+            def validate_input(self, record: NormalizedTextInput) -> None:
+                raise ModelInputTooLongError(
+                    provider="synthetic-emotion",
+                    encoded_length=513,
+                    max_input_tokens=512,
+                )
+
+        class RecordingSentimentProvider(DeterministicSentimentProvider):
+            analyzed = False
+
+            def analyze(self, record: NormalizedTextInput) -> SentimentResult:
+                self.analyzed = True
+                return sentiment.analyze(record)
+
+        recording_sentiment = RecordingSentimentProvider()
+        service = AnalysisService(recording_sentiment, RejectingEmotionProvider())
+        record = NormalizedTextInput.from_text("synthetic " * 300, language="en")
+
+        with self.assertRaises(ModelInputTooLongError):
+            service.analyze(record)
+
+        self.assertFalse(recording_sentiment.analyzed)
 
 
 if __name__ == "__main__":

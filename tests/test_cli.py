@@ -2,11 +2,17 @@
 
 import io
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from unittest.mock import patch
 
 from social_text_intelligence.cli import main
-from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
+from social_text_intelligence.contracts import (
+    EmotionLabel,
+    ModelInputTooLongError,
+    NormalizedTextInput,
+    SentimentLabel,
+    SentimentResult,
+)
 from social_text_intelligence.providers import (
     DeterministicEmotionProvider,
     DeterministicSentimentProvider,
@@ -99,6 +105,42 @@ class CliTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertIn("usage:", output.getvalue())
+
+    def test_sentiment_and_combined_commands_reject_partial_analysis(self) -> None:
+        class RejectingSentimentProvider(DeterministicSentimentProvider):
+            def analyze(self, record: NormalizedTextInput) -> SentimentResult:
+                raise ModelInputTooLongError(
+                    provider="synthetic-sentiment",
+                    encoded_length=513,
+                    max_input_tokens=512,
+                )
+
+            def validate_input(self, record: NormalizedTextInput) -> None:
+                raise ModelInputTooLongError(
+                    provider="synthetic-sentiment",
+                    encoded_length=513,
+                    max_input_tokens=512,
+                )
+
+        for command in ("sentiment", "analyze"):
+            with self.subTest(command=command):
+                errors = io.StringIO()
+                with (
+                    patch(
+                        "social_text_intelligence.cli.CardiffSentimentProvider",
+                        return_value=RejectingSentimentProvider(),
+                    ),
+                    patch(
+                        "social_text_intelligence.cli.SamLoweEmotionProvider",
+                        return_value=DeterministicEmotionProvider(),
+                    ),
+                    redirect_stderr(errors),
+                    self.assertRaises(SystemExit) as raised,
+                ):
+                    main([command, "synthetic input"])
+
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn("No truncation or partial analysis", errors.getvalue())
 
 
 if __name__ == "__main__":

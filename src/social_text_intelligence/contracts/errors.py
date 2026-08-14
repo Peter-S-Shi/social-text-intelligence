@@ -27,6 +27,29 @@ class ProviderError(SocialTextIntelligenceError):
         self.message = message
 
 
+class ModelInputTooLongError(ProviderError):
+    """The pinned model cannot consume the complete encoded input."""
+
+    def __init__(
+        self,
+        *,
+        provider: str,
+        encoded_length: int,
+        max_input_tokens: int,
+    ) -> None:
+        super().__init__(
+            provider=provider,
+            code="model_input_too_long",
+            message=(
+                "The complete text exceeds the current model encoded-input limit "
+                f"({encoded_length} tokens including special tokens; maximum "
+                f"{max_input_tokens}). No truncation or partial analysis was performed."
+            ),
+        )
+        self.encoded_length = encoded_length
+        self.max_input_tokens = max_input_tokens
+
+
 class UnsupportedLanguageError(ProviderError):
     """The selected provider does not support the input language."""
 

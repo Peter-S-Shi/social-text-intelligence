@@ -1,10 +1,17 @@
 """End-to-end Flask batch workflow tests with synthetic CSV data."""
 
+import csv
 import io
 import unittest
 from unittest.mock import patch
 
-from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
+from social_text_intelligence.contracts import (
+    AnalysisReport,
+    EmotionLabel,
+    ModelInputTooLongError,
+    NormalizedTextInput,
+    SentimentLabel,
+)
 from social_text_intelligence.interface import create_app
 from social_text_intelligence.providers import (
     DeterministicEmotionProvider,
@@ -22,6 +29,27 @@ def gateway() -> LazyAnalysisService:
             emotion_provider=DeterministicEmotionProvider(EmotionLabel.GRATITUDE),
         )
     )
+
+
+class MixedInputBudgetGateway:
+    initialized = True
+
+    def __init__(self) -> None:
+        self._service = AnalysisService(
+            sentiment_provider=DeterministicSentimentProvider(
+                SentimentLabel.POSITIVE
+            ),
+            emotion_provider=DeterministicEmotionProvider(EmotionLabel.GRATITUDE),
+        )
+
+    def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
+        if "encoded-over-limit" in record.text:
+            raise ModelInputTooLongError(
+                provider="synthetic-emotion",
+                encoded_length=513,
+                max_input_tokens=512,
+            )
+        return self._service.analyze(record)
 
 
 class BatchRouteTests(unittest.TestCase):
@@ -109,6 +137,63 @@ class BatchRouteTests(unittest.TestCase):
         )
         self.assertEqual(cleared.status_code, 302)
         self.assertEqual(self.client.get(workspace_url).status_code, 404)
+
+    def test_mixed_batch_rejects_only_over_budget_row_and_exports_no_scores(
+        self,
+    ) -> None:
+        app = create_app(
+            {
+                "TESTING": True,
+                "MAX_BATCH_BYTES": 10_000,
+                "MAX_BATCH_ROWS": 10,
+                "MAX_TEXT_LENGTH": 100,
+            },
+            analysis_gateway=MixedInputBudgetGateway(),
+        )
+        client = app.test_client()
+        uploaded = client.post(
+            "/batch/upload",
+            data={
+                "file": (
+                    io.BytesIO(
+                        b"record_id,text\n"
+                        b"within,A synthetic success.\n"
+                        b"over,encoded-over-limit synthetic text.\n"
+                    ),
+                    "synthetic.csv",
+                )
+            },
+            content_type="multipart/form-data",
+        )
+        workspace_url = uploaded.headers["Location"]
+
+        self.assertEqual(client.post(workspace_url + "/analyze").status_code, 302)
+        rendered = client.get(workspace_url)
+        self.assertIn(b"1 analyzed", rendered.data)
+        self.assertIn(b"1 failed", rendered.data)
+        self.assertIn(b"model_input_too_long", rendered.data)
+        self.assertIn(b"No truncation or partial analysis", rendered.data)
+
+        exported = client.get(workspace_url + "/export.csv")
+        rows = {
+            row["record_id"]: row
+            for row in csv.DictReader(io.StringIO(exported.get_data(as_text=True)))
+        }
+        self.assertEqual(rows["within"]["status"], "ok")
+        self.assertEqual(rows["within"]["sentiment_label"], "positive")
+        self.assertEqual(rows["over"]["status"], "error")
+        self.assertEqual(rows["over"]["error_code"], "model_input_too_long")
+        for field in (
+            "sentiment_label",
+            "sentiment_confidence",
+            "sentiment_positive",
+            "dominant_emotion",
+            "emotion_confidence",
+            "emotion_joy",
+            "sentiment_model",
+            "emotion_model",
+        ):
+            self.assertEqual(rows["over"][field], "")
 
     def test_nonstandard_text_column_requires_selection(self) -> None:
         uploaded = self.client.post(

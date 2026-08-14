@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch
 
 from social_text_intelligence.contracts import (
     InvalidProviderOutputError,
+    ModelInputTooLongError,
     NormalizedTextInput,
     SentimentLabel,
     UnsupportedLanguageError,
@@ -33,12 +34,31 @@ class StubRuntime:
         self.received_text = text
         return self.probabilities
 
+    def validate_input(self, text: str) -> None:
+        self.received_text = text
+
+
+class RejectingRuntime(StubRuntime):
+    def validate_input(self, text: str) -> None:
+        raise ModelInputTooLongError(
+            provider="cardiffnlp-transformers",
+            encoded_length=513,
+            max_input_tokens=512,
+        )
+
+    def predict(self, text: str) -> tuple[float, ...]:
+        self.validate_input(text)
+        return super().predict(text)
+
 
 class CardiffSentimentProviderTests(unittest.TestCase):
     def test_runtime_requires_pinned_bin_weights_without_auto_conversion(self) -> None:
         tokenizer_loader = Mock()
-        tokenizer_loader.from_pretrained.return_value = object()
+        tokenizer_loader.from_pretrained.return_value = SimpleNamespace(
+            model_max_length=512
+        )
         loaded_model = Mock()
+        loaded_model.config.max_position_embeddings = 514
         model_loader = Mock()
         model_loader.from_pretrained.return_value = loaded_model
         fake_transformers = SimpleNamespace(
@@ -134,6 +154,17 @@ class CardiffSentimentProviderTests(unittest.TestCase):
             provider.analyze(record)
 
         self.assertIsNone(runtime.received_text)
+
+    def test_standalone_provider_rejects_incomplete_model_input(self) -> None:
+        provider = CardiffSentimentProvider(
+            runtime=RejectingRuntime((0.1, 0.8, 0.1))
+        )
+        record = NormalizedTextInput.from_text("synthetic " * 300, language="en")
+
+        with self.assertRaisesRegex(
+            ModelInputTooLongError, "No truncation or partial analysis"
+        ):
+            provider.analyze(record)
 
     def test_rejects_missing_or_invalid_probability_output(self) -> None:
         record = NormalizedTextInput.from_text(

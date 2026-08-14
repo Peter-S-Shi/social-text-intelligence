@@ -5,6 +5,7 @@ import unittest
 from social_text_intelligence.contracts import (
     AnalysisReport,
     EmotionLabel,
+    ModelInputTooLongError,
     NormalizedTextInput,
     SentimentLabel,
 )
@@ -36,6 +37,17 @@ class FailingGateway:
             provider="synthetic-provider",
             code="model_load_failed",
             message="Synthetic internal detail must not be rendered.",
+        )
+
+
+class InputTooLongGateway:
+    initialized = True
+
+    def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
+        raise ModelInputTooLongError(
+            provider="synthetic-provider",
+            encoded_length=513,
+            max_input_tokens=512,
         )
 
 
@@ -112,3 +124,15 @@ class WebAppTests(unittest.TestCase):
         self.assertIn(b"could not be loaded", response.data)
         self.assertNotIn(b"Synthetic internal detail", response.data)
         self.assertNotIn(b"Traceback", response.data)
+
+    def test_model_encoded_limit_is_distinct_and_produces_no_report(self) -> None:
+        app = create_app(
+            {"TESTING": True, "MAX_TEXT_LENGTH": 20_000},
+            analysis_gateway=InputTooLongGateway(),
+        )
+        response = app.test_client().post("/", data={"text": "word " * 511})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"513 tokens including special tokens", response.data)
+        self.assertIn(b"No truncation or partial analysis", response.data)
+        self.assertNotIn(b"Models and provenance", response.data)

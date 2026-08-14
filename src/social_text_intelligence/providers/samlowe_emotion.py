@@ -24,9 +24,11 @@ from ..contracts.results import (
     ProviderMetadata,
     TaskType,
 )
+from .input_budget import encode_complete_text, resolve_model_input_budget
 
 EMOTION_MODEL_ID = "SamLowe/roberta-base-go_emotions"
 EMOTION_MODEL_REVISION = "d75048347613a25d77de8cf6412eaae9fa7b26be"
+EMOTION_MODEL_INPUT_TOKEN_LIMIT = 512
 DEFAULT_EMOTION_THRESHOLD = 0.5
 NATIVE_EMOTION_LABELS = (
     "admiration",
@@ -94,6 +96,10 @@ class EmotionRuntime(Protocol):
         """Return independent probabilities in native-label order."""
         ...
 
+    def validate_input(self, text: str) -> None:
+        """Reject text the pinned model cannot consume in full."""
+        ...
+
 
 class TransformersEmotionRuntime:
     """Load immutable Safetensors weights and execute local multi-label inference."""
@@ -137,14 +143,26 @@ class TransformersEmotionRuntime:
 
         self._torch: Any = torch
         self._model.eval()
+        self._max_input_tokens = resolve_model_input_budget(
+            tokenizer=self._tokenizer,
+            model=self._model,
+            provider="samlowe-transformers",
+            approved_max_input_tokens=EMOTION_MODEL_INPUT_TOKEN_LIMIT,
+        )
+
+    def _encode_complete(self, text: str) -> Any:
+        return encode_complete_text(
+            tokenizer=self._tokenizer,
+            text=text,
+            provider="samlowe-transformers",
+            max_input_tokens=self._max_input_tokens,
+        )
+
+    def validate_input(self, text: str) -> None:
+        self._encode_complete(text)
 
     def predict(self, text: str) -> Sequence[float]:
-        encoded = self._tokenizer(
-            text,
-            return_tensors="pt",
-            truncation=True,
-            max_length=512,
-        )
+        encoded = self._encode_complete(text)
         with self._torch.inference_mode():
             logits = self._model(**encoded).logits[0]
             probabilities = self._torch.sigmoid(logits).tolist()
@@ -180,21 +198,8 @@ class SamLoweEmotionProvider:
             )
 
     def analyze(self, record: NormalizedTextInput) -> EmotionResult:
-        if record.language is not None:
-            primary_language = record.language.split("-", maxsplit=1)[0].lower()
-            if primary_language != "en":
-                raise UnsupportedLanguageError(
-                    provider=self.metadata.provider,
-                    language=record.language,
-                )
-
-        runtime = self.runtime
-        if runtime is None:
-            runtime = TransformersEmotionRuntime(
-                cache_dir=self.cache_dir,
-                offline=self.offline,
-            )
-            self.runtime = runtime
+        self._validate_language(record)
+        runtime = self._runtime()
 
         probabilities = tuple(float(score) for score in runtime.predict(record.text))
         self._validate_probabilities(probabilities)
@@ -236,6 +241,29 @@ class SamLoweEmotionProvider:
             native_scores=native_scores,
             provider=self.metadata,
         )
+
+    def validate_input(self, record: NormalizedTextInput) -> None:
+        self._validate_language(record)
+        self._runtime().validate_input(record.text)
+
+    def _runtime(self) -> EmotionRuntime:
+        runtime = self.runtime
+        if runtime is None:
+            runtime = TransformersEmotionRuntime(
+                cache_dir=self.cache_dir,
+                offline=self.offline,
+            )
+            self.runtime = runtime
+        return runtime
+
+    def _validate_language(self, record: NormalizedTextInput) -> None:
+        if record.language is not None:
+            primary_language = record.language.split("-", maxsplit=1)[0].lower()
+            if primary_language != "en":
+                raise UnsupportedLanguageError(
+                    provider=self.metadata.provider,
+                    language=record.language,
+                )
 
     def _validate_probabilities(self, probabilities: tuple[float, ...]) -> None:
         if len(probabilities) != len(NATIVE_EMOTION_LABELS) or not all(

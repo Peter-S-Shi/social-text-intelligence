@@ -19,6 +19,10 @@ class SentimentProvider(Protocol):
         """Analyze one normalized record without persistence side effects."""
         ...
 
+    def validate_input(self, record: NormalizedTextInput) -> None:
+        """Confirm the provider can consume the complete normalized record."""
+        ...
+
 
 @runtime_checkable
 class EmotionProvider(Protocol):
@@ -29,4 +33,8 @@ class EmotionProvider(Protocol):
 
     def analyze(self, record: NormalizedTextInput) -> EmotionResult:
         """Analyze one normalized record without persistence side effects."""
+        ...
+
+    def validate_input(self, record: NormalizedTextInput) -> None:
+        """Confirm the provider can consume the complete normalized record."""
         ...
