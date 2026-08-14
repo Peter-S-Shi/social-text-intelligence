@@ -6,6 +6,9 @@ from social_text_intelligence.interface.batch_state import (
     BatchWorkspace,
     EphemeralBatchStore,
 )
+from social_text_intelligence.interface.workspace_mutation import (
+    WorkspaceMutationConflict,
+)
 
 
 class BatchStateTests(unittest.TestCase):
@@ -48,6 +51,10 @@ class BatchStateTests(unittest.TestCase):
             store.create(BatchWorkspace())
         with self.assertRaisesRegex(RuntimeError, "cannot be cleared"):
             store.delete(token)
+        with self.assertRaisesRegex(
+            WorkspaceMutationConflict, "being analyzed"
+        ):
+            store.mutate(token, lambda current: current)
         self.assertTrue(store.complete_analysis(lease, completed))
         self.assertIs(store.get(token), completed)
 
@@ -60,3 +67,11 @@ class BatchStateTests(unittest.TestCase):
         self.assertTrue(store.cancel_analysis(lease))
         self.assertFalse(store.complete_analysis(lease, BatchWorkspace()))
         self.assertIsNotNone(store.get(token))
+
+    def test_expired_workspace_rejects_mutation_without_recreation(self) -> None:
+        now = 100.0
+        store = EphemeralBatchStore(ttl_seconds=10, clock=lambda: now)
+        token = store.create(BatchWorkspace())
+        now = 111.0
+        self.assertIsNone(store.mutate(token, lambda current: current))
+        self.assertIsNone(store.get(token))

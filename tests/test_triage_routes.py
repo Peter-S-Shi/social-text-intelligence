@@ -5,6 +5,7 @@ import io
 import unittest
 from dataclasses import replace
 from datetime import UTC, datetime
+from unittest.mock import patch
 
 from social_text_intelligence.contracts import (
     AnalysisReport,
@@ -175,6 +176,73 @@ class TriageRouteTests(unittest.TestCase):
         self.assertIn(b"Coverage", summary.data)
         self.assertIn(b"Mock comparison", summary.data)
 
+    def test_interleaved_ticket_finalizations_preserve_both_tickets(self) -> None:
+        base = self.create_triage()
+        self.add_ticket(base, "support-001")
+        self.add_ticket(base, "support-002")
+        token = base.rsplit("/", 1)[-1]
+        store = self.app.extensions["sti_triage_store"]
+        original_mutate = store.mutate
+        nested_client = self.app.test_client()
+        interleaved = False
+
+        def mutate_with_interleaving(
+            workspace_token: str, mutation: object
+        ) -> object:
+            nonlocal interleaved
+            if not interleaved:
+                interleaved = True
+                nested = nested_client.post(
+                    base + "/tickets/support-002/finalize",
+                    data=valid_form(),
+                )
+                self.assertEqual(nested.status_code, 302)
+            return original_mutate(workspace_token, mutation)
+
+        with patch.object(store, "mutate", side_effect=mutate_with_interleaving):
+            first = self.client.post(
+                base + "/tickets/support-001/finalize",
+                data=valid_form(),
+            )
+
+        self.assertEqual(first.status_code, 302)
+        current = store.get(token)
+        assert current is not None
+        self.assertTrue(
+            all(
+                current.entry(ticket_id).final is not None
+                for ticket_id in ("support-001", "support-002")
+            )
+        )
+
+    def test_competing_finalize_returns_conflict_and_preserves_first(self) -> None:
+        base = self.create_triage()
+        self.add_ticket(base)
+        accepted_form = valid_form()
+        accepted_form["human_notes"] = "Accepted first finalization."
+        stale_form = valid_form()
+        stale_form["human_notes"] = "Rejected stale finalization."
+
+        first = self.client.post(
+            base + "/tickets/support-001/finalize", data=accepted_form
+        )
+        competing = self.client.post(
+            base + "/tickets/support-001/finalize", data=stale_form
+        )
+
+        self.assertEqual(first.status_code, 302)
+        self.assertEqual(competing.status_code, 409)
+        self.assertIn(b"explicit revision", competing.data)
+        token = base.rsplit("/", 1)[-1]
+        current = self.app.extensions["sti_triage_store"].get(token)
+        assert current is not None
+        entry = current.entry("support-001")
+        assert entry is not None and entry.final is not None
+        self.assertEqual(
+            entry.final.fields.human_notes, "Accepted first finalization."
+        )
+        self.assertEqual(entry.revision_count, 0)
+
     def test_oversized_decision_post_is_413_without_state_change(self) -> None:
         base = self.create_triage()
         self.add_ticket(base)
@@ -261,10 +329,11 @@ class TriageRouteTests(unittest.TestCase):
         token = base.split("/")[-1]
         store = self.app.extensions["sti_triage_store"]
         workspace = store.get(token)
-        store.replace(
+        assert workspace is not None
+        store.mutate(
             token,
-            replace(
-                workspace,
+            lambda current: replace(
+                current,
                 entries=tuple(
                     entry
                     if index == 0
@@ -275,7 +344,7 @@ class TriageRouteTests(unittest.TestCase):
                             mock_suggestion=None,
                         ),
                     )
-                    for index, entry in enumerate(workspace.entries)
+                    for index, entry in enumerate(current.entries)
                 ),
             ),
         )
@@ -360,10 +429,10 @@ class TriageRouteTests(unittest.TestCase):
         batch_store = self.app.extensions["sti_batch_store"]
         batch = batch_store.get(batch_token)
         assert batch is not None
-        batch_store.replace(
+        batch_store.mutate(
             batch_token,
-            replace(
-                batch,
+            lambda current: replace(
+                current,
                 reviews=ReviewState(
                     reviews=(
                         HumanReview(

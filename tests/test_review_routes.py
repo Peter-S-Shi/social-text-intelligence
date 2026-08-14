@@ -2,6 +2,7 @@
 
 import io
 import unittest
+from unittest.mock import patch
 
 from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
 from social_text_intelligence.interface import create_app
@@ -128,6 +129,83 @@ class ReviewRouteTests(unittest.TestCase):
         after = store.get(self.token)
         assert after is not None and after.result is not None
         self.assertIs(after.result.outcomes[0].report, original_report)
+
+    def test_interleaved_reviews_from_two_tabs_preserve_both_rows(self) -> None:
+        store = self.app.extensions["sti_batch_store"]
+        self.assertIsInstance(store, EphemeralBatchStore)
+        original_mutate = store.mutate
+        nested_client = self.app.test_client()
+        interleaved = False
+
+        def mutate_with_interleaving(token: str, mutation: object) -> object:
+            nonlocal interleaved
+            if not interleaved:
+                interleaved = True
+                nested = nested_client.post(
+                    self.workspace_url + "/review/3",
+                    data={"action": "accept_both", "review_note": "Second tab."},
+                )
+                self.assertEqual(nested.status_code, 302)
+            return original_mutate(token, mutation)
+
+        with patch.object(store, "mutate", side_effect=mutate_with_interleaving):
+            first = self.client.post(
+                self.workspace_url + "/review/1",
+                data={"action": "accept_both", "review_note": "First tab."},
+            )
+
+        self.assertEqual(first.status_code, 302)
+        current = store.get(self.token)
+        assert current is not None and current.reviews is not None
+        by_id = {item.record_id: item for item in current.reviews.reviews}
+        self.assertIsNotNone(by_id["first"].reviewed_at)
+        self.assertIsNotNone(by_id["third"].reviewed_at)
+        self.assertEqual(by_id["first"].note, "First tab.")
+        self.assertEqual(by_id["third"].note, "Second tab.")
+
+    def test_interleaved_review_and_insight_note_preserve_both(self) -> None:
+        store = self.app.extensions["sti_batch_store"]
+        self.assertIsInstance(store, EphemeralBatchStore)
+        original_mutate = store.mutate
+        nested_client = self.app.test_client()
+        interleaved = False
+
+        def mutate_with_interleaving(token: str, mutation: object) -> object:
+            nonlocal interleaved
+            if not interleaved:
+                interleaved = True
+                nested = nested_client.post(
+                    self.workspace_url + "/insights/notes",
+                    data={
+                        "association": "record",
+                        "association_value": "first",
+                        "phrase": "Synthetic concurrent phrase.",
+                        "explanation": "Synthetic concurrent explanation.",
+                        "context_importance": "Synthetic concurrent context.",
+                        "tags": ["other"],
+                    },
+                )
+                self.assertEqual(nested.status_code, 302)
+            return original_mutate(token, mutation)
+
+        with patch.object(store, "mutate", side_effect=mutate_with_interleaving):
+            review = self.client.post(
+                self.workspace_url + "/review/1",
+                data={"action": "accept_both", "review_note": "Review retained."},
+            )
+
+        self.assertEqual(review.status_code, 302)
+        current = store.get(self.token)
+        assert current is not None
+        assert current.reviews is not None and current.insights is not None
+        first_review = next(
+            item for item in current.reviews.reviews if item.record_id == "first"
+        )
+        self.assertEqual(first_review.note, "Review retained.")
+        self.assertEqual(len(current.insights.notes), 1)
+        self.assertEqual(
+            current.insights.notes[0].phrase, "Synthetic concurrent phrase."
+        )
 
     def test_cleared_review_fails_safely(self) -> None:
         self.client.post(

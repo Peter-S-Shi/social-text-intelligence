@@ -1,5 +1,47 @@
 # Development Log
 
+## Product Hardening Batch A5 — Concurrent workspace mutation integrity
+
+Reconciled Phase 0 PH-006 as permanent FCR-049. FCR-045 protects Batch
+capacity, TTL, and active-analysis write-back, but it does not cover stale
+read/derive/replace races across the broader process-memory workspace stores.
+
+Behavioral candidate `a3ec11b674c11148d66be73475b43d0796329a54`
+passed current-state mutation/concurrency integrity code review and PR #22
+behavioral-head CI on Python 3.11, 3.12, and 3.13. FCR-049 is therefore
+`VERIFIED`. This closure changes governance documentation only; FCR-048 remains
+`VERIFIED`, Feature Freeze remains PASS, and PH-007 is not started.
+
+Added one shared store-level atomic mutation primitive. Batch, Moderation, and
+Triage stores now invoke each mutation against the current workspace while the
+store lock is held, then save that result atomically. Independent mutations
+therefore compose instead of replacing one another from stale snapshots.
+One-shot rules are revalidated against current state: competing Moderation
+first decisions and Triage finalization return an explicit HTTP 409 instead of
+silently overwriting an accepted decision. Missing or expired workspaces retain
+404 semantics, and Batch active-analysis mutations remain blocked by the A1
+lease contract.
+
+Protected mutations include Batch column selection; Human Review decisions;
+persisted Insight selections and context-note add/delete; Moderation prepared
+cases, sessions, decisions, feedback, cancellation, and restart; and Triage
+ticket addition, draft, finalize, revise, and mock reveal. Render-only GET
+navigation, filters, summaries, exports, and request-local presentation choices
+remain transient because they do not replace persisted workspace state.
+
+Deterministic nested interleaving regressions verify final saved state for
+independent Review rows, Review plus Insight note, two notes, Moderation cases,
+competing first decisions, separate Triage tickets, competing finalize, expiry,
+and the active Batch lease. Feature Freeze remains PASS; PH-007 is not started.
+
+Nine focused concurrency/state tests passed. The complete deterministic suite
+passed 157 tests with 2 opt-in model integration tests skipped. Ruff, strict
+MyPy for 70 files, compileall, and pip check passed.
+
+Batch A4 / PR #21 was merged at main SHA
+`5778f8f8804c3014f16940af1d7254c202dbcf41`, the synchronized A5 baseline;
+FCR-048 remains `VERIFIED`.
+
 ## Product Hardening Batch A4 — Real-model capacity evidence
 
 Reconciled Phase 0 PH-005 as permanent FCR-048. FCR-045 governs Batch capacity,

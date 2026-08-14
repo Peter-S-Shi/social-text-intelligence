@@ -381,6 +381,9 @@ def prepare_case(token: str) -> ResponseReturnValue:
             ),
             status=400,
         )
+    source_result = source.result
+    source_reviews = source.reviews
+    source_insights = source.insights
     try:
         reference = None
         if _form_value("include_reference") == "true":
@@ -405,27 +408,30 @@ def prepare_case(token: str) -> ResponseReturnValue:
                 provider_version=EXPECTED_MOCK_PROVIDER_VERSION,
             )
         policy = _policy()
-        updated = prepare_workspace_case(
-            workspace,
-            source.result,
-            source.reviews,
-            source.insights,
-            record_id=_form_value("record_id"),
-            excerpt=_form_value("excerpt"),
-            difficulty=CaseDifficulty(_form_value("difficulty")),
-            learning_objective=LearningObjective(
-                _form_value("learning_objective")
+        updated = _moderation_store().mutate(
+            token,
+            lambda current: prepare_workspace_case(
+                current,
+                source_result,
+                source_reviews,
+                source_insights,
+                record_id=_form_value("record_id"),
+                excerpt=_form_value("excerpt"),
+                difficulty=CaseDifficulty(_form_value("difficulty")),
+                learning_objective=LearningObjective(
+                    _form_value("learning_objective")
+                ),
+                reference=reference,
+                mock_recommendation=mock,
+                policy_id=policy.policy_id,
+                policy_version=policy.policy_version,
+                valid_policy_clause_ids=tuple(
+                    clause.clause_id
+                    for category in policy.categories
+                    for clause in category.clauses
+                ),
+                limits=_limits(),
             ),
-            reference=reference,
-            mock_recommendation=mock,
-            policy_id=policy.policy_id,
-            policy_version=policy.policy_version,
-            valid_policy_clause_ids=tuple(
-                clause.clause_id
-                for category in policy.categories
-                for clause in category.clauses
-            ),
-            limits=_limits(),
         )
     except (ValidationError, ValueError) as error:
         message = (
@@ -436,7 +442,8 @@ def prepare_case(token: str) -> ResponseReturnValue:
         return _render_prepare(
             token, workspace, error_message=message, status=400
         )
-    _moderation_store().replace(token, updated)
+    if updated is None:
+        return Response("Moderation workspace not found.", status=404)
     return redirect(url_for("moderation.prepare", token=token))
 
 
@@ -446,12 +453,13 @@ def clear_cases(token: str) -> ResponseReturnValue:
     if workspace is None:
         return Response("Moderation workspace not found.", status=404)
     try:
-        updated = clear_prepared_cases(workspace)
+        updated = _moderation_store().mutate(token, clear_prepared_cases)
     except ValidationError as error:
         return _render_prepare(
             token, workspace, error_message=error.message, status=409
         )
-    _moderation_store().replace(token, updated)
+    if updated is None:
+        return Response("Moderation workspace not found.", status=404)
     return redirect(url_for("moderation.prepare", token=token))
 
 
@@ -488,19 +496,21 @@ def create_session(token: str) -> ResponseReturnValue:
                 else None
             ),
         )
-        available = filter_training_cases(_all_cases(workspace), filters)
-        updated = start_training_session(
-            workspace,
-            available,
-            case_ids=request.form.getlist("case_ids"),
-            case_count=int(_form_value("case_count") or "0"),
-            mode=TrainingMode(_form_value("mode")),
-            feedback_timing=FeedbackTiming(_form_value("feedback_timing")),
-            order_mode=CaseOrderMode(_form_value("order_mode")),
-            content_notice_confirmed=(
-                _form_value("content_notice_confirmed") == "true"
+        updated = _moderation_store().mutate(
+            token,
+            lambda current: start_training_session(
+                current,
+                filter_training_cases(_all_cases(current), filters),
+                case_ids=request.form.getlist("case_ids"),
+                case_count=int(_form_value("case_count") or "0"),
+                mode=TrainingMode(_form_value("mode")),
+                feedback_timing=FeedbackTiming(_form_value("feedback_timing")),
+                order_mode=CaseOrderMode(_form_value("order_mode")),
+                content_notice_confirmed=(
+                    _form_value("content_notice_confirmed") == "true"
+                ),
+                limits=_limits(),
             ),
-            limits=_limits(),
         )
     except (ValidationError, ValueError) as error:
         message = (
@@ -511,7 +521,8 @@ def create_session(token: str) -> ResponseReturnValue:
         return _render_prepare(
             token, workspace, error_message=message, status=400
         )
-    _moderation_store().replace(token, updated)
+    if updated is None:
+        return Response("Moderation workspace not found.", status=404)
     assert updated.active_session_id is not None
     return redirect(
         url_for(
@@ -545,29 +556,44 @@ def submit_case(
     try:
         decision = _trainee_from_form()
         if _form_value("action") == "revise":
-            updated = revise_final_decision(
-                workspace,
-                session_id=session_id,
-                case_id=case_id,
-                decision=decision,
+            updated = _moderation_store().mutate(
+                token,
+                lambda current: revise_final_decision(
+                    current,
+                    session_id=session_id,
+                    case_id=case_id,
+                    decision=decision,
+                ),
             )
         else:
-            updated = submit_first_decision(
-                workspace,
-                session_id=session_id,
-                case_id=case_id,
-                decision=decision,
+            updated = _moderation_store().mutate(
+                token,
+                lambda current: submit_first_decision(
+                    current,
+                    session_id=session_id,
+                    case_id=case_id,
+                    decision=decision,
+                ),
             )
     except ValidationError as error:
+        current = _workspace_or_none(token)
+        if current is None:
+            return Response("Moderation workspace not found.", status=404)
         return _render_session(
             token,
-            workspace,
+            current,
             session_id,
             case_id=case_id,
             error_message=error.message,
-            status=400,
+            status=(
+                409
+                if error.code
+                in {"duplicate_submission", "missing_active_session"}
+                else 400
+            ),
         )
-    _moderation_store().replace(token, updated)
+    if updated is None:
+        return Response("Moderation workspace not found.", status=404)
     updated_session = updated.session(session_id)
     assert updated_session is not None
     if updated_session.status.value != "active":
@@ -598,8 +624,11 @@ def reveal_feedback(
     if workspace is None:
         return Response("Moderation workspace not found.", status=404)
     try:
-        updated = mark_feedback_viewed(
-            workspace, session_id=session_id, case_id=case_id
+        updated = _moderation_store().mutate(
+            token,
+            lambda current: mark_feedback_viewed(
+                current, session_id=session_id, case_id=case_id
+            ),
         )
     except ValidationError as error:
         return _render_session(
@@ -610,7 +639,8 @@ def reveal_feedback(
             error_message=error.message,
             status=400,
         )
-    _moderation_store().replace(token, updated)
+    if updated is None:
+        return Response("Moderation workspace not found.", status=404)
     return redirect(
         url_for(
             "moderation.session",
@@ -627,7 +657,10 @@ def cancel(token: str, session_id: str) -> ResponseReturnValue:
     if workspace is None:
         return Response("Moderation workspace not found.", status=404)
     try:
-        updated = cancel_session(workspace, session_id=session_id)
+        updated = _moderation_store().mutate(
+            token,
+            lambda current: cancel_session(current, session_id=session_id),
+        )
     except ValidationError as error:
         return _render_session(
             token,
@@ -636,7 +669,8 @@ def cancel(token: str, session_id: str) -> ResponseReturnValue:
             error_message=error.message,
             status=409,
         )
-    _moderation_store().replace(token, updated)
+    if updated is None:
+        return Response("Moderation workspace not found.", status=404)
     return redirect(
         url_for(
             "moderation.results", token=token, session_id=session_id
@@ -650,8 +684,11 @@ def restart(token: str, session_id: str) -> ResponseReturnValue:
     if workspace is None:
         return Response("Moderation workspace not found.", status=404)
     try:
-        updated = restart_session(
-            workspace, session_id=session_id, limits=_limits()
+        updated = _moderation_store().mutate(
+            token,
+            lambda current: restart_session(
+                current, session_id=session_id, limits=_limits()
+            ),
         )
     except ValidationError as error:
         return _render_results(
@@ -661,7 +698,8 @@ def restart(token: str, session_id: str) -> ResponseReturnValue:
             error_message=error.message,
             status=409,
         )
-    _moderation_store().replace(token, updated)
+    if updated is None:
+        return Response("Moderation workspace not found.", status=404)
     assert updated.active_session_id is not None
     return redirect(
         url_for(

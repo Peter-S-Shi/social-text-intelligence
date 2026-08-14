@@ -5,16 +5,10 @@ from __future__ import annotations
 import secrets
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
 from threading import Lock
 
 from ..services import ModerationWorkspace
-
-
-@dataclass(slots=True)
-class _StoredModerationWorkspace:
-    workspace: ModerationWorkspace
-    expires_at: float
+from .workspace_mutation import StoredWorkspace, apply_atomic_mutation
 
 
 class EphemeralModerationStore:
@@ -32,7 +26,7 @@ class EphemeralModerationStore:
         self._ttl_seconds = ttl_seconds
         self._capacity = capacity
         self._clock = clock
-        self._items: dict[str, _StoredModerationWorkspace] = {}
+        self._items: dict[str, StoredWorkspace[ModerationWorkspace]] = {}
         self._lock = Lock()
 
     def _purge(self, now: float) -> None:
@@ -54,7 +48,7 @@ class EphemeralModerationStore:
                     "workspace or wait for expiry."
                 )
             token = secrets.token_urlsafe(24)
-            self._items[token] = _StoredModerationWorkspace(
+            self._items[token] = StoredWorkspace(
                 workspace=workspace,
                 expires_at=now + self._ttl_seconds,
             )
@@ -70,16 +64,24 @@ class EphemeralModerationStore:
             stored.expires_at = now + self._ttl_seconds
             return stored.workspace
 
-    def replace(self, token: str, workspace: ModerationWorkspace) -> bool:
+    def mutate(
+        self,
+        token: str,
+        mutation: Callable[[ModerationWorkspace], ModerationWorkspace],
+    ) -> ModerationWorkspace | None:
+        """Apply one current-state mutation atomically; never accept stale state."""
+
         with self._lock:
             now = self._clock()
             self._purge(now)
             stored = self._items.get(token)
             if stored is None:
-                return False
-            stored.workspace = workspace
-            stored.expires_at = now + self._ttl_seconds
-            return True
+                return None
+            return apply_atomic_mutation(
+                stored,
+                mutation,
+                expires_at=now + self._ttl_seconds,
+            )
 
     def delete(self, token: str) -> None:
         with self._lock:

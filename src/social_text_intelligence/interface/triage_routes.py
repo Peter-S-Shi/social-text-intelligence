@@ -364,17 +364,21 @@ def add_synthetic(token: str) -> ResponseReturnValue:
     if workspace is None:
         return Response("Support triage workspace not found.", status=404)
     try:
-        updated = add_synthetic_tickets(
-            workspace,
-            _tickets(),
-            ticket_ids=request.form.getlist("ticket_ids"),
-            limits=_limits(),
+        updated = _store().mutate(
+            token,
+            lambda current: add_synthetic_tickets(
+                current,
+                _tickets(),
+                ticket_ids=request.form.getlist("ticket_ids"),
+                limits=_limits(),
+            ),
         )
-        _store().replace(token, updated)
     except ValidationError as error:
         return _render_guide(
             token, workspace, error_message=error.message, status=400
         )
+    if updated is None:
+        return Response("Support triage workspace not found.", status=404)
     return redirect(url_for("triage.workspace", token=token))
 
 
@@ -391,6 +395,7 @@ def add_workspace_ticket(token: str) -> ResponseReturnValue:
             error_message="A current analyzed batch workspace is required.",
             status=400,
         )
+    source_result = source.result
     try:
         mock = None
         if _form_value("include_self_authored_mock") == "true":
@@ -403,20 +408,22 @@ def add_workspace_ticket(token: str) -> ResponseReturnValue:
                 provider_version="workspace-v1",
                 provenance=MockProvenance.SELF_AUTHORED_MOCK,
             )
-        updated = prepare_workspace_ticket(
-            workspace,
-            source.result,
-            source.reviews,
-            source.insights,
-            record_id=_form_value("record_id"),
-            excerpt=_form_value("excerpt"),
-            complexity=TicketComplexity(_form_value("complexity")),
-            guide=_guide(),
-            applicable_rule_ids=request.form.getlist("rule_ids"),
-            mock_suggestion=mock,
-            limits=_limits(),
+        updated = _store().mutate(
+            token,
+            lambda current: prepare_workspace_ticket(
+                current,
+                source_result,
+                source.reviews,
+                source.insights,
+                record_id=_form_value("record_id"),
+                excerpt=_form_value("excerpt"),
+                complexity=TicketComplexity(_form_value("complexity")),
+                guide=_guide(),
+                applicable_rule_ids=request.form.getlist("rule_ids"),
+                mock_suggestion=mock,
+                limits=_limits(),
+            ),
         )
-        _store().replace(token, updated)
     except (ValidationError, ValueError) as error:
         message = (
             error.message if isinstance(error, ValidationError) else str(error)
@@ -424,6 +431,8 @@ def add_workspace_ticket(token: str) -> ResponseReturnValue:
         return _render_guide(
             token, workspace, error_message=message, status=400
         )
+    if updated is None:
+        return Response("Support triage workspace not found.", status=404)
     return redirect(url_for("triage.workspace", token=token))
 
 
@@ -458,27 +467,40 @@ def _save_action(
     try:
         fields = _fields_from_request()
         if action == "draft":
-            updated = save_triage_draft(
-                workspace, ticket_id=ticket_id, fields=fields
+            updated = _store().mutate(
+                token,
+                lambda current: save_triage_draft(
+                    current, ticket_id=ticket_id, fields=fields
+                ),
             )
         elif action == "finalize":
-            updated = finalize_ticket(
-                workspace, ticket_id=ticket_id, fields=fields
+            updated = _store().mutate(
+                token,
+                lambda current: finalize_ticket(
+                    current, ticket_id=ticket_id, fields=fields
+                ),
             )
         else:
-            updated = revise_ticket(
-                workspace, ticket_id=ticket_id, fields=fields
+            updated = _store().mutate(
+                token,
+                lambda current: revise_ticket(
+                    current, ticket_id=ticket_id, fields=fields
+                ),
             )
-        _store().replace(token, updated)
     except ValidationError as error:
+        current = _workspace(token)
+        if current is None:
+            return Response("Support triage workspace not found.", status=404)
         return _render_ticket(
             token,
-            workspace,
+            current,
             ticket_id,
             error_message=error.message,
             submitted_fields=fields,
-            status=400,
+            status=409 if error.code == "already_finalized" else 400,
         )
+    if updated is None:
+        return Response("Support triage workspace not found.", status=404)
     return redirect(url_for("triage.ticket", token=token, ticket_id=ticket_id))
 
 
@@ -503,8 +525,10 @@ def reveal(token: str, ticket_id: str) -> ResponseReturnValue:
     if workspace is None:
         return Response("Support triage workspace not found.", status=404)
     try:
-        updated = reveal_ticket_mock(workspace, ticket_id=ticket_id)
-        _store().replace(token, updated)
+        updated = _store().mutate(
+            token,
+            lambda current: reveal_ticket_mock(current, ticket_id=ticket_id),
+        )
     except ValidationError as error:
         return _render_ticket(
             token,
@@ -513,6 +537,8 @@ def reveal(token: str, ticket_id: str) -> ResponseReturnValue:
             error_message=error.message,
             status=400,
         )
+    if updated is None:
+        return Response("Support triage workspace not found.", status=404)
     return redirect(url_for("triage.ticket", token=token, ticket_id=ticket_id))
 
 
