@@ -1014,6 +1014,7 @@ def create_app(
             example_emotion = EmotionLabel.ANGER
             example_tag = None
             error_message = error_message or "Select a supported example rule."
+        requested_record_ids = request.values.getlist("record_id")
         examples = select_representative_examples(
             result,
             reviews,
@@ -1021,7 +1022,12 @@ def create_app(
             mode=example_mode,
             emotion_label=example_emotion,
             context_tag=example_tag,
-            record_ids=request.values.getlist("record_id"),
+            record_ids=requested_record_ids,
+        )
+        selected_record_ids = (
+            frozenset(requested_record_ids)
+            if example_mode is ExampleMode.USER_SELECTED
+            else frozenset()
         )
         first_report = next(
             outcome.report for outcome in result.outcomes if outcome.report is not None
@@ -1061,6 +1067,7 @@ def create_app(
                 example_mode=example_mode,
                 example_emotion=example_emotion,
                 example_tag=example_tag,
+                selected_record_ids=selected_record_ids,
                 emotion_labels=tuple(EmotionLabel),
                 sentiment_labels=tuple(SentimentLabel),
                 first_report=first_report,

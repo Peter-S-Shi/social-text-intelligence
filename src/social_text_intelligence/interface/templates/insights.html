@@ -140,7 +140,7 @@
         <label>Selection rule <select name="example_mode">{% for mode in example_modes %}<option value="{{ mode }}" {% if example_mode == mode %}selected{% endif %}>{{ mode|replace('_',' ')|title }}</option>{% endfor %}</select></label>
         <label>Compact emotion for highest-score rule <select name="example_emotion">{% for label in emotion_labels if label != 'neutral' %}<option value="{{ label }}" {% if example_emotion == label %}selected{% endif %}>{{ label|title }}</option>{% endfor %}</select></label>
         <label>Optional context-note tag <select name="example_tag"><option value="">Any tag</option>{% for tag in context_tags %}<option value="{{ tag }}" {% if example_tag == tag %}selected{% endif %}>{{ tag|replace('_',' ')|title }}</option>{% endfor %}</select></label>
-        <fieldset class="record-options"><legend>Optional user-selected records</legend>{% for outcome in successful_outcomes %}<label><input type="checkbox" name="record_id" value="{{ outcome.prepared.identity }}"> {{ outcome.prepared.identity }}</label>{% endfor %}</fieldset>
+        <fieldset class="record-options"><legend>Optional user-selected records</legend>{% for outcome in successful_outcomes %}<label><input type="checkbox" name="record_id" value="{{ outcome.prepared.identity }}" {% if outcome.prepared.identity in selected_record_ids %}checked{% endif %}> {{ outcome.prepared.identity }}</label>{% endfor %}</fieldset>
         <button type="submit">Select cases</button>
       </form>
       <p>Cases are selected by the displayed deterministic rule and are not representative of every person, record, or community.</p>

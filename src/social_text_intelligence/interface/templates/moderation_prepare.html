@@ -43,11 +43,11 @@
     <section class="panel">
       <div class="section-heading"><div><h2>Built-in synthetic case library</h2><p>{{ built_in_cases|length }} cases match the current filters.</p></div></div>
       <form class="filters" method="get">
-        <label>Category <select name="category"><option value="">all</option>{% for item in violation_categories %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
-        <label>Difficulty <select name="difficulty"><option value="">all</option>{% for item in difficulties %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
-        <label>Ambiguity <select name="ambiguity"><option value="">all</option>{% for item in ambiguity_levels %}<option value="{{ item.value }}">{{ item.value }}</option>{% endfor %}</select></label>
-        <label>Objective <select name="learning_objective"><option value="">all</option>{% for item in learning_objectives %}<option value="{{ item.value }}">{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
-        <label>Safety-sensitive <select name="safety_sensitive"><option value="">all</option><option value="true">yes</option><option value="false">no</option></select></label>
+        <label>Category <select name="category"><option value="" {% if filters.category is none %}selected{% endif %}>all</option>{% for item in violation_categories %}<option value="{{ item.value }}" {% if filters.category == item %}selected{% endif %}>{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+        <label>Difficulty <select name="difficulty"><option value="" {% if filters.difficulty is none %}selected{% endif %}>all</option>{% for item in difficulties %}<option value="{{ item.value }}" {% if filters.difficulty == item %}selected{% endif %}>{{ item.value }}</option>{% endfor %}</select></label>
+        <label>Ambiguity <select name="ambiguity"><option value="" {% if filters.ambiguity is none %}selected{% endif %}>all</option>{% for item in ambiguity_levels %}<option value="{{ item.value }}" {% if filters.ambiguity == item %}selected{% endif %}>{{ item.value }}</option>{% endfor %}</select></label>
+        <label>Objective <select name="learning_objective"><option value="" {% if filters.learning_objective is none %}selected{% endif %}>all</option>{% for item in learning_objectives %}<option value="{{ item.value }}" {% if filters.learning_objective == item %}selected{% endif %}>{{ item.value|replace('_', ' ') }}</option>{% endfor %}</select></label>
+        <label>Safety-sensitive <select name="safety_sensitive"><option value="" {% if filters.safety_sensitive is none %}selected{% endif %}>all</option><option value="true" {% if filters.safety_sensitive is sameas true %}selected{% endif %}>yes</option><option value="false" {% if filters.safety_sensitive is sameas false %}selected{% endif %}>no</option></select></label>
         <button type="submit">Filter library</button>
       </form>
       <div class="case-library">

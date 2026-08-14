@@ -300,3 +300,30 @@ sort is stable, and values from different buckets are never compared with each
 other. Because timestamps that state no timezone cannot be placed on a shared
 real timeline, the interface presents the three groups as an explicit ordering
 rule and does not imply that they share one.
+
+## Applied filter and selection state reflection
+
+For a server-rendered GET view whose result set is already narrowed or ordered
+by query parameters, the form controls that produced that result must reflect
+the effective state the server actually applied, not silently reset to a
+default appearance:
+
+- a single-select control marks the option matching the effective value
+  `selected`;
+- a text or date input carries the effective value in its `value` attribute;
+- a multi-select or checkbox group marks each effective selection `selected`
+  or `checked`;
+- an unspecified or default parameter continues to render as the existing
+  default option or empty value;
+- reflection uses only the state the server already recognized while
+  producing the current result set — no separate client-side URL parser is
+  introduced, and a parameter that does not affect the current result (for
+  example a stale `record_id` selection carried into an Insights example rule
+  that does not use per-record selection) is not shown as if it were still
+  effective.
+
+This governs Support Triage Workspace filter/sort controls, the Moderation
+Prepare built-in case-library filters, and Insights Representative Cases
+record selection. It does not change any filtering, sorting, or selection
+logic, and does not apply to one-shot export forms, whose checkboxes describe
+what to include in the next export rather than a persisted view.

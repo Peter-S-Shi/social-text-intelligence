@@ -234,6 +234,7 @@ def _render_prepare(
             workspace=workspace,
             source_batch=source,
             successful_records=successful_records,
+            filters=filters,
             built_in_cases=filter_training_cases(
                 _built_in_cases(), filters
             ),
