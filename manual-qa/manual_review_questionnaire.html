@@ -212,6 +212,46 @@
       gap: 20px;
     }
 
+    .gate-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-top: 6px;
+    }
+
+    .gate-block {
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--slate-soft);
+    }
+
+    .gate-block h3 {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+    }
+
+    .gate-block ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .gate-block li {
+      margin: 0 0 6px;
+    }
+
+    .gate-executor {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-left: 5px solid var(--navy);
+      border-radius: 0 14px 14px 0;
+      background: var(--surface-strong);
+    }
+
+    .gate-executor h3 {
+      margin: 0 0 8px;
+    }
+
     .callout {
       border-left: 5px solid var(--teal);
       background: var(--teal-soft);
@@ -596,7 +636,7 @@
   <header class="hero">
     <div class="hero-top">
       <div>
-        <p class="eyebrow" data-copy="eyebrow">Feature Complete Review · 0.10.0</p>
+        <p class="eyebrow" data-copy="eyebrow">Full Regression &amp; Manual Acceptance · 0.10.0</p>
         <h1 data-copy="title">Social Text Intelligence 人工核查问卷</h1>
       </div>
       <div class="language-switch" role="group" aria-label="Language">
@@ -621,6 +661,33 @@
         <div class="save-state" id="save-state">尚未保存</div>
       </div>
       <div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+    </section>
+
+    <section class="panel" id="gate-standard">
+      <h2 data-copy="gateTitle">验收标准</h2>
+      <p data-copy="gateIntro">本节概括了 docs/MANUAL_ACCEPTANCE_GATE.md 中记录的永久验收合同；完整版本以该文档为准。</p>
+      <div class="gate-grid">
+        <div class="gate-block">
+          <h3 data-copy="gatePassTitle">何时可以 PASS</h3>
+          <ul id="gate-pass-list"></ul>
+        </div>
+        <div class="gate-block">
+          <h3 data-copy="gateFailTitle">哪些属于 blocking</h3>
+          <ul id="gate-fail-list"></ul>
+        </div>
+        <div class="gate-block">
+          <h3 data-copy="gateNaTitle">N/A / 未测</h3>
+          <ul id="gate-na-list"></ul>
+        </div>
+        <div class="gate-block">
+          <h3 data-copy="gateEvidenceTitle">证据要求</h3>
+          <ul id="gate-evidence-list"></ul>
+        </div>
+      </div>
+      <div class="gate-executor">
+        <h3 data-copy="gateExecutorTitle">执行者模型</h3>
+        <p data-copy="gateExecutorCopy">经明确授权后，交互式 coding agent 可代为执行本问卷；agent 必须真实操作本机应用与浏览器，通过真实交互/DOM/浏览器状态判定结果，不得仅凭源码推断标记 Pass；无法执行的项目必须报告并记为 N/A，不得静默跳过或臆测。</p>
+      </div>
     </section>
 
     <section class="intro-grid">
@@ -720,18 +787,55 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
 
     const COPY = {
       zh: {
-        eyebrow: "Feature Complete Review · 0.10.0",
+        eyebrow: "Full Regression & Manual Acceptance · 0.10.0",
         title: "Social Text Intelligence 人工核查问卷",
-        heroCopy: "按模块完成操作、记录通过或失败，并留下可复核证据。模型标签不是标准答案；核查重点是功能正确性、透明度、边界说明和人工控制。",
-        answered: "已记录", passed: "通过", failed: "失败", notTested: "未测",
+        heroCopy: "本问卷是 Full Regression & Manual Acceptance 阶段的规范交互式验收记录；Product Hardening 已 COMPLETE。按模块完成操作、记录 Pass / Fail / N/A，并留下可复核证据。模型标签不是标准答案；核查重点是功能正确性、透明度、边界说明和人工控制。经明确授权后，交互式 coding agent 可代为执行本问卷，但必须真实操作应用与浏览器，不得仅凭代码推断判定 Pass。",
+        answered: "已记录", passed: "通过", failed: "失败", notTested: "N/A",
         notSaved: "尚未保存", savedAt: "已自动保存 · {time}", storageUnavailable: "浏览器存储不可用，请导出 JSON",
         howTitle: "怎样使用",
         how: [
           "启动软件：.\\.venv\\Scripts\\sti-web.exe --offline，然后打开 http://127.0.0.1:5000。",
-          "保持服务窗口运行，并按下面模块顺序使用配套样本。",
-          "每项选择 ✓ 通过、✕ 失败或 — 未测；失败时记录实际表现、复现步骤和截图文件名。",
-          "完成后导出 JSON。以后可重新导入，或把 JSON / Markdown 报告交给 Codex 审阅。"
+          "保持服务窗口运行，并按下面模块顺序使用配套样本；核查前先阅读上方“验收标准”。",
+          "每项选择 ✓ 通过、✕ 失败或 — N/A/未测；失败时记录实际表现和复现步骤，N/A 时记录原因，重要或复杂交互的通过也建议留下简要证据。",
+          "完成后导出 JSON。以后可重新导入，或把 JSON / Markdown 报告交给审阅者。若由授权 agent 执行，agent 必须真实操作应用与浏览器，不得仅凭源码推断标记通过。"
         ],
+        gateTitle: "验收标准",
+        gateIntro: "本节概括 docs/MANUAL_ACCEPTANCE_GATE.md 记录的永久验收合同；完整版本、Fix→Retest 流程与两条证据链（自动化 Full Regression 与交互式 Manual Acceptance）均以该文档为准。建立本标准本身不是一次验收决定，不会启动 Manual Acceptance、改变 RC 状态或改变 release readiness。",
+        gatePassTitle: "何时可以 PASS",
+        gatePass: [
+          "所有必需的自动化回归/质量检查通过；",
+          "所有必需的当前版本交互式验收项均已真实执行，而非推断；",
+          "没有遗留的 blocking 缺陷；",
+          "每个观察到的失败都有明确、永久的处置（已修复并复测，或按下方标准正式接受为 non-blocking）；",
+          "已接受的 non-blocking 发现被明确记录，并在存在对应永久 FCR 时注明；",
+          "每个 N/A / 未测项都有说明理由。"
+        ],
+        gateFailTitle: "哪些属于 blocking",
+        gateFail: [
+          "正确性；数据/状态完整性；隐私或安全边界；",
+          "关键工作流是否可完成；用户可控输出的丢失或损坏；",
+          "产品状态或结果具有实质性误导；",
+          "必需的可访问性或恢复路径；",
+          "当前版本工作流中可复现的崩溃或死路。",
+          "纯粹的视觉/可读性/打磨类问题不自动视为 blocking——参照 FCR-042/FCR-043 的复核方式：先判断是否触及以上风险，再决定是否 blocking，不因“存在”就阻断，也不因“OPEN”就强行修复。"
+        ],
+        gateNaTitle: "N/A / 未测",
+        gateNa: [
+          "必需的当前版本检查不得静默跳过；",
+          "只有在测试环境/配置下确实不适用时才可标 N/A；",
+          "每个 N/A 都必须在证据栏说明理由；",
+          "无法执行某项检查不自动等于 PASS——应记为 N/A 并说明原因，若无法执行本身就证明存在缺陷，则记为 FAIL。"
+        ],
+        gateEvidenceTitle: "证据要求",
+        gateEvidence: [
+          "每个 FAIL 需记录实际表现与可复现的复现步骤；",
+          "重要或复杂交互的 PASS 建议保留可复核证据，但不要求每个普通 PASS 都截图；",
+          "只有在截图对核实视觉/浏览器行为确有帮助时才需要截图；",
+          "记录本次核查的应用版本/commit SHA 与环境（见下方本次核查信息）；",
+          "checklist 要求真实交互时，禁止仅凭代码阅读推断 PASS。"
+        ],
+        gateExecutorTitle: "执行者模型",
+        gateExecutorCopy: "经明确授权后，交互式 coding agent（例如 Claude Code）可代为执行本问卷；“人工”在此指自动化测试套件之外的交互式端到端核查，不要求仓库所有者亲自完成每一次操作。执行时 agent 必须：真实操作本机应用与浏览器（启动真实服务、加载真实页面、真实点击/输入/提交）；通过真实交互、DOM 或浏览器状态判定结果；不得仅凭源码推断标记通过；对确实无法执行的项目须报告并记为 N/A 并说明原因，不得静默跳过或臆测。本标准只定义授权后如何执行，不构成该次授权本身；具体一次执行仍需仓库所有者明确同意。",
         sessionWarningTitle: "会话与隐私提醒",
         sessionWarning: "软件工作区保存在进程内，关闭服务或闲置过期会丢失未导出的结果。本问卷仅保存在当前浏览器；请在结束时导出 JSON。不要填写真实姓名、账户、客户信息或真实消息。",
         sampleTitle: "核查样本",
@@ -742,12 +846,12 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         sessionMeta: "本次核查信息",
         reviewAlias: "核查者代号（不要填写真实身份）",
         reviewDate: "核查日期",
-        appRevision: "应用版本或 commit SHA（可选）",
+        appRevision: "应用版本或 commit SHA（建议填写，作为可追溯证据）",
         environment: "浏览器与环境（可选）",
         operationGuide: "分步操作",
         expected: "预期结果",
         resultLegend: "核查结果",
-        pass: "✓ 通过", fail: "✕ 失败", na: "— 未测",
+        pass: "✓ 通过", fail: "✕ 失败", na: "— N/A / 未测",
         evidence: "证据 / 实际表现 / 改进建议（可选）",
         sectionRecorded: "{done}/{total} 已记录",
         sessionNavTitle: "Session 导航",
@@ -770,18 +874,55 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         exported: "已生成导出文件。"
       },
       en: {
-        eyebrow: "Feature Complete Review · 0.10.0",
+        eyebrow: "Full Regression & Manual Acceptance · 0.10.0",
         title: "Social Text Intelligence Manual Review",
-        heroCopy: "Follow each module, record pass or fail, and keep reviewable evidence. Model labels are not answer keys; review functional behavior, transparency, boundaries, and human control.",
-        answered: "Recorded", passed: "Pass", failed: "Fail", notTested: "Not tested",
+        heroCopy: "This questionnaire is the canonical interactive acceptance record for the Full Regression and Manual Acceptance phase; Product Hardening is COMPLETE. Follow each module, record Pass, Fail, or N/A, and keep reviewable evidence. Model labels are not answer keys; review functional behavior, transparency, boundaries, and human control. An authorized interactive coding agent may execute this questionnaire on the reviewer's behalf, but it must operate the real application and browser and must never mark Pass from code reasoning alone.",
+        answered: "Recorded", passed: "Pass", failed: "Fail", notTested: "N/A",
         notSaved: "Not saved yet", savedAt: "Auto-saved · {time}", storageUnavailable: "Browser storage unavailable; export JSON",
         howTitle: "How to use this review",
         how: [
           "Start the app with .\\.venv\\Scripts\\sti-web.exe --offline, then open http://127.0.0.1:5000.",
-          "Keep the server window open and use the supplied samples in module order.",
-          "Choose ✓ Pass, ✕ Fail, or — Not tested for every check. For a failure, record the observed behavior, reproduction steps, and any screenshot filename.",
-          "Export JSON when finished. You can import it later or give the JSON / Markdown report to Codex for review."
+          "Keep the server window open and use the supplied samples in module order; read the Acceptance Gate Standard above first.",
+          "Choose ✓ Pass, ✕ Fail, or — N/A / Not tested for every check. For a failure, record the observed behavior and reproduction steps; for N/A, record the reason; keeping brief evidence is recommended for important or complex-interaction passes too.",
+          "Export JSON when finished. You can import it later or give the JSON / Markdown report to the reviewer. If an authorized agent executes this questionnaire, it must operate the real application and browser and must never mark a check Pass from source-code reasoning alone."
         ],
+        gateTitle: "Acceptance Gate Standard",
+        gateIntro: "This section summarizes the permanent acceptance contract recorded in docs/MANUAL_ACCEPTANCE_GATE.md; that document is authoritative for the full standard, the Fix → Retest workflow, and the two evidence streams (automated Full Regression and interactive Manual Acceptance). Establishing this standard is not itself an acceptance decision: it does not start Manual Acceptance, change Release Candidate status, or change release readiness.",
+        gatePassTitle: "When this may PASS",
+        gatePass: [
+          "Every required automated regression/quality check passes;",
+          "every required current-version interactive acceptance check has been executed for real, not inferred;",
+          "no unresolved blocking defect remains;",
+          "every observed failure has an explicit, permanent disposition (fixed and retested, or formally accepted as non-blocking below);",
+          "every accepted non-blocking finding is explicitly documented, with its permanent FCR reference when one exists;",
+          "every N/A / not-tested case carries a stated reason."
+        ],
+        gateFailTitle: "What counts as blocking",
+        gateFail: [
+          "Correctness; data/state integrity; a privacy or security boundary;",
+          "completion of a critical workflow; loss or corruption of user-controlled output;",
+          "product state or a result that is materially misleading;",
+          "a required accessibility or recovery path;",
+          "a reproducible crash or dead end in a current-version workflow.",
+          "Pure cosmetic/readability/polish issues are not automatically blocking — mirror how FCR-042/FCR-043 were adjudicated: decide whether the finding actually carries one of the risks above before calling it blocking, and do not implement a fix merely because an item is open."
+        ],
+        gateNaTitle: "N/A / Not tested",
+        gateNa: [
+          "A required current-version check must never be silently skipped;",
+          "N/A is valid only when the check is genuinely inapplicable to the tested environment or configuration;",
+          "every N/A must carry a reason in the evidence field;",
+          "being unable to execute a required check is not automatically PASS — record it as N/A with the reason, or FAIL if the inability itself demonstrates a defect."
+        ],
+        gateEvidenceTitle: "Evidence expectations",
+        gateEvidence: [
+          "Every FAIL records observed behavior and reproducible steps;",
+          "important or complex-interaction PASS cases keep reviewable evidence, though not every ordinary PASS needs one;",
+          "screenshots are required only when they materially help verify visual/browser behavior;",
+          "record the tested app version/commit SHA and environment (see the review-session fields below);",
+          "never infer PASS from source-code reading alone when a checklist item requires real interaction."
+        ],
+        gateExecutorTitle: "Executor model",
+        gateExecutorCopy: "Once explicitly authorized, an interactive coding agent (such as Claude Code) may execute this questionnaire on the reviewer's behalf. “Manual” here means interactive end-to-end verification outside the ordinary automated test suite; it does not require the repository owner to personally perform every interaction. When executing, the agent must: operate the real application and a real browser (start the actual server, load the actual page, click/type/submit through the actual UI); judge results through real interaction, the DOM, or real browser state; never mark a check PASS merely from source-code reasoning; and report — rather than guess — anything it genuinely cannot execute, recording it as N/A with a stated reason rather than a silent skip. This standard governs how an agent executes once authorized; it is not itself that authorization — a specific session still requires the repository owner's explicit go-ahead.",
         sessionWarningTitle: "Session and privacy reminder",
         sessionWarning: "Application workspaces live in process memory. Closing the server or inactivity expiry removes unexported work. This questionnaire saves only in this browser; export JSON before finishing. Do not enter real names, accounts, customer data, or real messages.",
         sampleTitle: "Review samples",
@@ -792,12 +933,12 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         sessionMeta: "Review session",
         reviewAlias: "Reviewer alias (do not enter a real identity)",
         reviewDate: "Review date",
-        appRevision: "App version or commit SHA (optional)",
+        appRevision: "App version or commit SHA (recommended, for traceable evidence)",
         environment: "Browser and environment (optional)",
         operationGuide: "Step-by-step guide",
         expected: "Expected",
         resultLegend: "Review result",
-        pass: "✓ Pass", fail: "✕ Fail", na: "— Not tested",
+        pass: "✓ Pass", fail: "✕ Fail", na: "— N/A / Not tested",
         evidence: "Evidence / observed behavior / improvement idea (optional)",
         sectionRecorded: "{done}/{total} recorded",
         sessionNavTitle: "Session navigation",
@@ -865,10 +1006,11 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
           ["direct-mixed", "D04 与 D06 的混合/礼貌批评没有被界面表述成绝对事实。", "D04 and D06 mixed or polite criticism are not presented as objective fact.", "分数与不确定性可见，限制说明仍在页面。", "Scores and uncertainty remain visible together with limitations."],
           ["direct-negation", "D05 的否定结构产生可审阅、非崩溃的输出。", "D05 negation produces reviewable output without failure.", "无输入重写；结果保留原始文本含义供人工判断。", "The text is not rewritten and remains available for human interpretation."],
           ["direct-sarcasm", "D07 明确暴露 sarcasm-like 文本的模型局限。", "D07 exposes the model limitation around sarcasm-like wording.", "即使预测看起来不合理，页面也不声称准确或诊断。", "Even a questionable prediction is not claimed as accuracy or diagnosis."],
-          ["direct-multilabel", "D08 的情绪结果支持 dominant、secondary 与多个独立分数。", "D08 emotion output supports dominant, secondary, and multiple independent scores.", "界面说明多标签分数不要求总和为 100%，阈值语义清楚。", "The UI explains independent multi-label scores and clear threshold semantics."],
+          ["direct-multilabel", "D08 的情绪结果支持 dominant、secondary 与多个独立分数。", "D08 emotion output supports dominant, secondary, and multiple independent scores.", "界面说明多标签分数不要求总和为 100%，阈值语义清楚；neutral 明确表示阈值回退，而不是最高的 raw score。", "The UI explains independent multi-label scores and clear threshold semantics; neutral is explicit as a threshold fallback rather than the highest raw score."],
           ["direct-native", "展开 native emotion scores 后可看到完整原生标签和分数。", "Expanding native emotion scores reveals the full native labels and scores.", "compact 与 native 输出没有混为一谈。", "Compact and native outputs remain distinguishable."],
           ["direct-provenance", "两个模型的名称和固定 revision 均可见。", "Both model names and pinned revisions are visible.", "sentiment 与 emotion provenance 分开显示。", "Sentiment and emotion provenance are shown separately."],
-          ["direct-validation", "空白输入不能产生伪结果。", "Blank input cannot produce a fabricated result.", "浏览器或服务端给出清楚的验证反馈，既有结果不被冒充为本次结果。", "Browser or server validation is clear and an earlier result is not misrepresented as current."]
+          ["direct-validation", "空白输入不能产生伪结果。", "Blank input cannot produce a fabricated result.", "浏览器或服务端给出清楚的验证反馈，既有结果不被冒充为本次结果。", "Browser or server validation is clear and an earlier result is not misrepresented as current."],
+          ["direct-limits", "超出应用长度上限的文本被清楚拒绝，且页面诚实声明 Direct 仅支持英文。", "Text over the application length limit is clearly rejected, and the page honestly states that Direct is English-only.", "拒绝发生在推理前，不做静默截断；错误信息不暴露内部路径或堆栈。Direct 没有语言选择控件，用户无法在此提交语言标签，因此不存在可测试的“不受支持语言标签被拒绝”交互；该场景改由 Batch CSV 的 language 列覆盖，见 batch-edge-preview。", "Rejection happens before inference with no silent truncation, and the error does not expose an internal path or stack trace. Direct has no language-selection control and a user cannot submit a language tag here, so there is no reachable \"unsupported language tag rejected\" interaction to test on this page; that scenario is covered instead by the Batch CSV language column, see batch-edge-preview."]
         ]
       },
       {
@@ -889,6 +1031,7 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         items: [
           ["batch-main-preview", "主流程 CSV 预览显示 20 rows、20 valid、0 invalid。", "The main workflow CSV preview shows 20 rows, 20 valid, and 0 invalid.", "text 自动选中；支持的 metadata 均保留。", "The text column is selected automatically and supported metadata is retained."],
           ["batch-main-analysis", "主流程分析完成后显示 20 analyzed、0 failed。", "Main workflow analysis completes with 20 analyzed and 0 failed.", "单行异常不会终止整个工作区；本文件预计全部成功。", "A row problem would not abort the workspace; this file is expected to succeed completely."],
+          ["batch-busy-state", "分析进行中时，界面公开可辨识的运行状态。", "While analysis is running, the interface exposes a discernible busy/running state.", "运行状态在 accessibility tree 中可读（例如 status/progress 与 aria-busy），不只是视觉动画。", "The running state is legible in the accessibility tree (for example status/progress and aria-busy), not only a visual animation."],
           ["batch-aggregates", "三类 aggregate 的语义相互区分。", "The three aggregate families remain semantically distinct.", "sentiment 是互斥计数；dominant emotion 每行一个；activation rates 可重叠且不需合计 100%。", "Sentiment is mutually exclusive, dominant emotion is one per row, and activation rates may overlap."],
           ["batch-filters", "状态、sentiment 与 dominant emotion 筛选可组合且可恢复 all。", "Status, sentiment, and dominant-emotion filters combine and can return to all.", "表格行与当前筛选一致，不改写底层结果。", "Visible rows match filters without mutating underlying outcomes."],
           ["batch-exports", "normalized 与 native 两种 CSV 只在点击时下载。", "Normalized and native CSV downloads occur only when clicked.", "native 版本增加原生分数；两者保留状态、错误和模型 provenance。", "The native export adds native scores; both preserve status, errors, and model provenance."],
@@ -986,12 +1129,14 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         zhGuide: [
           "创建 Independent workspace，加入至少一个有 mock 和一个无 mock 的 built-in ticket。",
           "保存 Draft，再 Finalize，再进行一次 Revision；随后建立 Assisted workspace 对比 mock 可见性。",
-          "从主流程和边界 Batch 分别建立 linked workspace，测试成功记录和 edge-fr-001。"
+          "从主流程和边界 Batch 分别建立 linked workspace，测试成功记录和 edge-fr-001。",
+          "上传一份至少含两种不同 UTC offset、一条无时区和一条缺失 timestamp 的合成 CSV，建立 workspace-derived tickets 并使用 Sort: Timestamp。"
         ],
         enGuide: [
           "Create an Independent workspace and add at least one built-in ticket with a mock and one without.",
           "Save Draft, Finalize, then make one Revision; create an Assisted workspace to compare mock visibility.",
-          "Create linked workspaces from the main and edge batches to test a success and edge-fr-001."
+          "Create linked workspaces from the main and edge batches to test a success and edge-fr-001.",
+          "Upload a synthetic CSV with at least two different UTC offsets, one timezone-unspecified timestamp, and one missing timestamp, create workspace-derived tickets from it, and use Sort: Timestamp."
         ],
         items: [
           ["triage-source", "Source & Guide 显示版本化 synthetic guide、稳定 rules 与 ticket provenance。", "Source & Guide shows the versioned synthetic guide, stable rules, and ticket provenance.", "内置 tickets 说明为 synthetic；recommended queue/action 不表示真实操作已执行。", "Built-in tickets are synthetic and recommended queues/actions are not represented as executed operations."],
@@ -1002,6 +1147,7 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
           ["triage-warning", "guidance warning 可提交但不改写人工选择，并要求可审计 human note。", "A guidance warning can be submitted without rewriting the human decision and requires an auditable human note.", "structural error 与 non-blocking warning 在视觉和行为上分离。", "Structural errors and non-blocking warnings are visually and behaviorally distinct."],
           ["triage-visibility", "Independent 模式只在 first finalize 后揭示 available mock；Assisted 可提前显示。", "Independent mode reveals an available mock only after first finalize; Assisted may show it first.", "Assisted form 不被 mock 自动预填；无 mock ticket 始终明确 unavailable。", "The Assisted form is never prefilled by the mock and no-mock tickets remain unavailable."],
           ["triage-workspace", "linked workspace 可显式 snapshot 成功记录，也可选择 edge-fr-001 失败分析记录。", "A linked workspace can explicitly snapshot a successful record and the failed-analysis edge-fr-001 record.", "parsed-but-failed 仍可进入 triage；NLP、review、notes、metadata 只是 supporting context。", "Parsed-but-failed records remain triage-eligible and NLP/review/notes/metadata are supporting context only."],
+          ["triage-timestamp-sort", "Sort: Timestamp 对混合 UTC offset、无时区与缺失 timestamp 给出正确、不误导的顺序。", "Sort: Timestamp gives a correct, non-misleading order across mixed UTC offsets, a timezone-unspecified timestamp, and a missing timestamp.", "顺序为「按真实 instant 的 offset-aware」→「按墙钟值的 timezone-unspecified」→「missing」；不按原始字符串字典序排序，且排序不改写已存储的 timestamp 表示。", "The order is offset-aware by real instant, then timezone-unspecified by wall-clock value, then missing; it does not sort by raw string, and sorting does not rewrite the stored timestamp representation."],
           ["triage-summary", "Finalized distributions 使用 finalized denominator；mock agreement 使用各自 mock-eligible denominator。", "Finalized distributions use the finalized denominator and mock agreement uses each mock-eligible denominator.", "总 ticket 数不能掩盖小样本；finalized notice 与 mock notice 分开。", "Total ticket count cannot mask a small sample; finalized and mock notices are separate."],
           ["triage-counts", "mock visibility counts 只统计有 available mock 的 finalized tickets。", "Mock visibility counts include only finalized tickets with an available mock.", "无 mock 的 Independent 与 Assisted tickets 都不进入 visible 或 hidden count。", "No-mock tickets in either mode enter neither visible nor hidden count."],
           ["triage-export", "privacy-default export 对 workspace text/signals/review/context/metadata 默认留空。", "Privacy-default export leaves workspace text, signals, review, context, and metadata blank.", "各上下文类别需单独 opt-in；built-in synthetic text 可默认包含；UTC、guide、lifecycle、warnings 和 denominators 保留。", "Each context category requires separate opt-in; built-in synthetic text may appear; UTC, guide, lifecycle, warnings, and denominators remain."]
@@ -1013,17 +1159,21 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         zhSubtitle: "从整体产品角度检查安全边界和可操作性。",
         enSubtitle: "Review safety boundaries and operability across the product.",
         zhGuide: [
-          "仅使用键盘走查一个完整表单，并在窄窗口查看布局。",
+          "仅使用键盘走查一个完整表单，并在窄窗口查看布局；用 Tab 到达并激活至少一个 skip link。",
           "检查下载行为、浏览器开发者工具 Network headers（可选）和服务控制台。",
-          "验证清除、过期或重启后的状态边界，不使用真实数据。"
+          "验证清除、过期或重启后的状态边界，不使用真实数据。",
+          "在 Triage Workspace、Moderation Prepare 与 Insights Representative Cases 分别应用一个非默认 filter/sort/selection，刷新或重新提交后核对控件显示。"
         ],
         enGuide: [
-          "Complete one full form with keyboard only and inspect a narrow viewport.",
+          "Complete one full form with keyboard only and inspect a narrow viewport; Tab to and activate at least one skip link.",
           "Inspect downloads, optional Network response headers, and the server console.",
-          "Verify state boundaries after clear, expiry, or restart without using real data."
+          "Verify state boundaries after clear, expiry, or restart without using real data.",
+          "Apply a non-default filter/sort/selection in Triage Workspace, Moderation Prepare, and Insights Representative Cases, then refresh or resubmit and check what the controls display."
         ],
         items: [
           ["cross-keyboard", "主要页面、表单、details 与按钮可用键盘完成。", "Primary pages, forms, details, and buttons are keyboard-operable.", "焦点可见、标签与控件关联、错误信息可被定位。", "Focus is visible, labels map to controls, and errors are locatable."],
+          ["cross-a11y-semantics", "每个完整页面提供可聚焦的 skip link，当前主导航/子步骤有明确标记，验证失败后焦点恢复到错误或提示。", "Every full page offers a focusable skip link, the active primary navigation/step is explicitly marked, and focus returns to an error or alert after a failed validation.", "skip link 在获得焦点时可见；当前位置在 accessibility tree 中可辨识（如 aria-current）；提交失败后键盘用户不必重新从页首开始查找错误。", "The skip link is visible on focus, the current location is identifiable in the accessibility tree (for example aria-current), and a keyboard user does not have to hunt from the top of the page after a failed submission."],
+          ["cross-applied-state", "Triage Workspace、Moderation Prepare 与 Insights Representative Cases 的 filter/sort/selection 控件在应用后如实回显已生效状态。", "The Triage Workspace, Moderation Prepare, and Insights Representative Cases filter/sort/selection controls faithfully reflect the effective state after it is applied.", "刷新或重新提交同一 query 后，下拉框/输入框/复选框显示与实际结果集一致的当前值，不回到默认外观；对当前视图无效的参数（例如非 user_selected 模式下的 record_id）不被误显为生效。", "After refreshing or resubmitting the same query, the select/input/checkbox controls show the current value consistent with the actual result set instead of reverting to a default appearance; a parameter with no effect on the current view (for example record_id outside user_selected mode) is not shown as if it were effective."],
           ["cross-responsive", "窄窗口下表格可滚动，表单和导航不遮挡关键操作。", "At narrow width, tables scroll and forms/navigation do not hide critical actions.", "没有重要文本裁切或无法触达的按钮。", "No essential text is clipped and no action becomes unreachable."],
           ["cross-language", "产品持续明确 English-only model boundary。", "The product consistently states the English-only model boundary.", "非英文 metadata 不被误作平台或身份推断；无文化/心理泛化。", "Metadata is not turned into platform or identity inference and no cultural/psychological generalization appears."],
           ["cross-privacy", "服务控制台不打印提交文本、人工标签、notes 或导出内容。", "The server console does not print submitted text, human labels, notes, or export content.", "普通 request-line logging 可见，但无 full-text logging、telemetry 或后台上传。", "Ordinary request-line logging may appear, but there is no full-text logging, telemetry, or background upload."],
@@ -1034,18 +1184,18 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
       },
       {
         id: "freeze", number: "08",
-        zhTitle: "Feature Freeze：范围确认", enTitle: "Feature Freeze: scope confirmation",
-        zhSubtitle: "在正式冻结决定前，核对所有功能发现均已分类和处置。",
-        enSubtitle: "Before a formal freeze decision, confirm every feature finding is classified and disposed.",
+        zhTitle: "Feature Freeze：范围确认（已通过，历史复核）", enTitle: "Feature Freeze: scope confirmation (already PASS, historical review)",
+        zhSubtitle: "Feature Freeze 已于 2026-08-13 正式 PASS；本节用于核对该记录在当前 baseline 下仍然一致，而非重新决定是否冻结。",
+        enSubtitle: "Feature Freeze formally passed on 2026-08-13; this section confirms that record remains consistent under the current baseline rather than re-deciding whether to freeze.",
         zhGuide: [
           "打开 docs/FEATURE_COMPLETE_MANUAL_AUDIT.md 与 PROJECT_STATUS.md。",
           "核对每个 FCR 项目的证据、决定类别、状态和当前版本理由。",
-          "只有在没有未分类决定和当前版本 blocker 时，才准备正式 Feature Freeze 决定。"
+          "确认没有新的未分类决定或当前版本 blocker 使已通过的 Feature Freeze 记录失真。"
         ],
         enGuide: [
           "Open docs/FEATURE_COMPLETE_MANUAL_AUDIT.md and PROJECT_STATUS.md.",
           "Check each FCR item's evidence, decision class, status, and current-version rationale.",
-          "Prepare a formal Feature Freeze decision only when no unclassified decision or current-version blocker remains."
+          "Confirm no new unclassified decision or current-version blocker has made the already-passed Feature Freeze record inaccurate."
         ],
         items: [
           ["freeze-workflows", "主要用户工作流均已实际执行并留下版本化证据。", "Every major user workflow has been exercised with version-specific evidence.", "自动化测试不能替代人工证据；未执行项保持 Not tested。", "Automated tests do not replace manual evidence; unexecuted items remain Not tested."],
@@ -1056,18 +1206,18 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
       },
       {
         id: "hardening", number: "09",
-        zhTitle: "Product Hardening：冻结范围回归", enTitle: "Product Hardening: frozen-scope regression",
-        zhSubtitle: "Feature Freeze 通过后，对冻结功能集进行质量收敛，不增加新产品域。",
-        enSubtitle: "After Feature Freeze passes, converge quality over the frozen set without adding product domains.",
+        zhTitle: "Product Hardening：冻结范围回归（已 COMPLETE，历史复核）", enTitle: "Product Hardening: frozen-scope regression (COMPLETE, historical review)",
+        zhSubtitle: "Product Hardening 已于 A1–A10（FCR-027、FCR-030、FCR-045–052）全部 VERIFIED 后 COMPLETE；本节核对该记录，不代表本节仍在进行新的 hardening 批次。",
+        enSubtitle: "Product Hardening is COMPLETE after A1-A10 (FCR-027, FCR-030, FCR-045-052) all closed VERIFIED; this section confirms that record rather than representing an active new hardening batch.",
         zhGuide: [
-          "仅在 PROJECT_STATUS.md 明确进入 Product Hardening 后执行本节。",
-          "针对已修复的 defect、UX、accessibility、privacy、error state 或容量问题重跑受影响模块。",
-          "完成后再运行全套回归；任何范围扩展先走 freeze reopening。"
+          "打开 PROJECT_STATUS.md 与 docs/FEATURE_COMPLETE_MANUAL_AUDIT.md 的 Product Hardening 关闭决定。",
+          "抽查已修复的 defect、UX、accessibility、privacy、error state 或容量问题在当前 baseline 下仍然成立。",
+          "确认没有借 Full Regression 名义悄悄开始新的 hardening 批次；任何范围扩展仍需先走 freeze reopening。"
         ],
         enGuide: [
-          "Use this section only after PROJECT_STATUS.md explicitly enters Product Hardening.",
-          "Rerun affected modules for defect, UX, accessibility, privacy, error-state, or capacity corrections.",
-          "Run the full regression afterward; route every scope expansion through freeze reopening first."
+          "Open the Product Hardening closure decision in PROJECT_STATUS.md and docs/FEATURE_COMPLETE_MANUAL_AUDIT.md.",
+          "Spot-check that fixed defect, UX, accessibility, privacy, error-state, or capacity corrections still hold under the current baseline.",
+          "Confirm no new hardening batch is quietly starting under the Full Regression label; any scope expansion still requires freeze reopening first."
         ],
         items: [
           ["hardening-no-expansion", "每个 hardening change 都是冻结范围内的质量修正。", "Every hardening change is a quality correction inside frozen scope.", "没有新语言、模型、connector、account、persistence 或顶层 workflow。", "No language, model, connector, account, persistence layer, or top-level workflow was added."],
@@ -1107,7 +1257,7 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
       ["modelTrust", "模型分数、阈值、provenance 与限制说明是否足以支持人工判断？", "Do scores, thresholds, provenance, and limitations adequately support human judgment?"],
       ["privacyTrust", "本地、临时、显式导出和 opt-in 隐私边界是否清楚？", "Are the local, temporary, explicit-export, and opt-in privacy boundaries clear?"],
       ["accessibility", "键盘、视觉层次、移动/窄窗口和阅读负担如何？", "How are keyboard use, visual hierarchy, narrow-screen behavior, and reading load?"],
-      ["blocking", "是否存在阻止进入 Feature Freeze 的缺陷？请列出复现步骤。", "Are there defects that should block Feature Freeze? Include reproduction steps."],
+      ["blocking", "按验收标准的 blocking 定义，是否存在应阻止本次 Full Regression & Manual Acceptance 通过的缺陷？请列出复现步骤。", "Under the Gate Standard's blocking definition, are there defects that should block this Full Regression & Manual Acceptance pass? Include reproduction steps."],
       ["priority", "你建议最先改良的三项内容是什么？", "What are the top three improvements you recommend?"],
       ["overall", "其他主观反应或观察", "Other qualitative reactions or observations"]
     ];
@@ -1117,7 +1267,7 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         schemaVersion: SCHEMA_VERSION,
         project: "Social Text Intelligence",
         appVersion: "0.10.0",
-        questionnaireVersion: "2.0",
+        questionnaireVersion: "3.0",
         createdAt: new Date().toISOString(),
         updatedAt: null,
         language: "zh",
@@ -1194,6 +1344,7 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
         button.setAttribute("aria-pressed", String(button.dataset.langButton === state.language));
       });
       renderHow();
+      renderGateStandard();
       renderSections();
       renderQualitative();
       syncMeta();
@@ -1204,6 +1355,20 @@ qa-010,"The final result is neutral and needs human review.",review,survey,synth
       } else {
         target.textContent = text("notSaved");
       }
+    }
+
+    function renderCopyList(elementId, key) {
+      const list = document.getElementById(elementId);
+      if (!list) return;
+      list.replaceChildren();
+      (COPY[state.language][key] || []).forEach((item) => list.append(element("li", "", item)));
+    }
+
+    function renderGateStandard() {
+      renderCopyList("gate-pass-list", "gatePass");
+      renderCopyList("gate-fail-list", "gateFail");
+      renderCopyList("gate-na-list", "gateNa");
+      renderCopyList("gate-evidence-list", "gateEvidence");
     }
 
     function renderHow() {

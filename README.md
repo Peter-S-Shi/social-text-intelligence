@@ -27,6 +27,7 @@ state are maintained separately:
 - [Product Roadmap](ROADMAP.md)
 - [Project Status](PROJECT_STATUS.md)
 - [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md)
+- [Manual Acceptance Gate Standard](docs/MANUAL_ACCEPTANCE_GATE.md)
 - [Living Manual QA](manual-qa/manual_review_questionnaire.html)
 
 ## Quick start

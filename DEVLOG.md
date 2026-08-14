@@ -1,5 +1,107 @@
 # Development Log
 
+## PR #30 corrective patch — FCR-003 Direct acceptance alignment
+
+Formal readiness review of PR #30 found that the newly added `direct-limits`
+questionnaire item claimed Direct analysis clearly rejects "an unsupported
+language tag," but Direct exposes only a text field: it declares "English
+only," has no language-selection control, and constructs
+`NormalizedTextInput` with a hardcoded `language="en"` internally
+(`src/social_text_intelligence/interface/app.py`). There is no reachable
+interaction on Direct through which a reviewer could submit a language tag
+for the product to reject, so the item described a test that cannot
+actually be performed against the current-version product.
+
+Re-read the full FCR-003 permanent record: it remains a carried-forward
+pre-freeze `OPEN verification` item asking whether blank, oversized,
+English, and unsupported-language outcomes are recoverable, evaluated across
+the product rather than mandating that every one of those cases be
+reachable specifically through Direct. Nothing in the record requires
+Direct to gain a language control, and no product code was changed.
+
+This is an acceptance-artifact-only correction. `direct-limits` now checks
+only what Direct actually enforces: the application text-length limit is
+rejected before inference with no silent truncation, and the English-only
+boundary is honestly stated on the page. The unsupported-language-tag case
+remains covered — through Batch's `language` CSV column, exercised by the
+existing `batch-edge-preview` item — and the corrected `direct-limits` item
+text says so explicitly rather than silently dropping the language half of
+FCR-003's audit topic. `direct-validation` (blank input) is unchanged.
+Corrected the matching description in this file's own prior entry below.
+Gate Standard, questionnaire v3.0/schema compatibility, English
+completeness, all other new items, current lifecycle phase/status, and
+FCR-042/FCR-043 dispositions are untouched.
+
+## Full Regression and Manual Acceptance — readiness preparation
+
+Readiness preparation only: establishes the acceptance standard and upgrades
+the canonical questionnaire so a future authorized session can execute Full
+Regression and Manual Acceptance without re-deriving either. Does not execute
+that phase, does not change product behavior, and does not change Manual
+Acceptance status (Not started), Release Candidate status (Not started), or
+release readiness (No).
+
+Added `docs/MANUAL_ACCEPTANCE_GATE.md`, the permanent acceptance contract:
+PASS conditions, a blocking definition (correctness, data/state integrity,
+privacy/security, critical-workflow completion, user-controlled-output
+loss, materially misleading state, required accessibility/recovery paths,
+or a reproducible crash/dead end — explicitly excluding pure cosmetic
+findings), N/A rules requiring a stated reason, evidence expectations, a
+Fix → Retest workflow, and an explicit executor model: an authorized
+interactive coding agent may execute Manual Acceptance by operating the
+real application and a real browser, judging results through genuine
+interaction/DOM/browser state, and never marking PASS from source-code
+reasoning alone. The two evidence streams — automated Full Regression and
+interactive Manual Acceptance — are named as jointly required; neither
+alone is sufficient.
+
+Upgraded `manual-qa/manual_review_questionnaire.html` (questionnaireVersion
+2.0 -> 3.0; schemaVersion left at 2.0 so existing exported JSON still
+imports). Reframed the hero eyebrow/copy from "Feature Complete Review" to
+"Full Regression & Manual Acceptance · 0.10.0," added a rendered Acceptance
+Gate Standard panel (PASS/blocking/N/A/evidence/executor summaries, fully
+bilingual), relabeled the na status to make its N/A-and-not-tested meaning
+explicit, and adjusted the historical Feature Freeze and Product Hardening
+sections to read as retrospective confirmation rather than upcoming work
+now that both are closed.
+
+Reconciled checklist coverage against the final 0.10.0 product and the
+A1-A10 hardening contracts rather than assuming gaps. Five items were
+genuinely missing and added: `triage-timestamp-sort` (FCR-051 aware/
+timezone-unspecified/missing ordering), `cross-applied-state` (FCR-052
+filter/sort/selection reflection across Triage Workspace, Moderation
+Prepare, and Insights Representative Cases), `cross-a11y-semantics` and
+`batch-busy-state` (FCR-027/A8 skip-link, current-step, focus-recovery, and
+Batch busy-state semantics that predate the original questionnaire), and
+`direct-limits` (FCR-003's over-length case for Direct analysis, which
+existing coverage did not exercise). One
+existing item (`direct-multilabel`) gained a clause for FCR-034's neutral
+threshold-fallback semantics rather than a new item. All other requested
+categories — privacy defaults, no-store/local boundaries,
+formula-injection-safe export, partial Batch failures, threshold
+boundaries, expiry/recovery, and the remaining carried-forward pre-freeze
+items (FCR-014, 015, 017, 021, 023, 026, 031) — already had sufficient
+existing coverage and were left untouched; formula-injection protection in
+particular is a single shared `safe_spreadsheet_text()` function already
+exercised once via `review-formula`, so a duplicate check per export
+surface was not added.
+
+Verified live in a real browser rather than by code reading alone: the page
+loads and both languages render with identical key sets (62/62, checked
+programmatically); marking items updates progress/pass/fail/na counts;
+JSON export round-trips through the real `importJson()` file-input path
+including a language switch on import; a simulated pre-upgrade export
+(schemaVersion 2.0, old item set) still imports cleanly with new items left
+unanswered rather than erroring; Markdown export includes the new items.
+Confirmed the questionnaire's pre-existing narrow-width horizontal overflow
+(present identically on unmodified `main`) is unrelated to this change and
+out of this readiness-prep scope.
+
+Also updated `PROJECT_STATUS.md`, `ROADMAP.md`, `docs/DEVELOPMENT.md`,
+`README.md`, and `manual-qa/README.md` to point to the new standard, without
+touching FCR-042/043 dispositions, release readiness, or any filtering/
+sorting/model behavior.
+
 ## Product Hardening closure — entering Full Regression and Manual Acceptance
 
 Product Hardening Batch A10 / PR #28 is recorded as merged to main at SHA
