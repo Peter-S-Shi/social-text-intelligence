@@ -117,7 +117,14 @@ Consult `PROJECT_STATUS.md` before starting any lifecycle batch.
 - complete the full automated validation suite;
 - execute the living manual-QA artifact with representative synthetic data;
 - record every blocker and its disposition;
-- do not propose a release candidate while a release blocker remains.
+- do not propose a release candidate while a release blocker remains;
+- follow the permanent [Manual Acceptance Gate Standard](MANUAL_ACCEPTANCE_GATE.md)
+  for PASS/FAIL/N/A semantics, blocking classification, evidence expectations,
+  and the Fix → Retest workflow;
+- Manual Acceptance may be executed by an authorized interactive coding agent
+  operating the real local application and a real browser, once the
+  repository owner gives explicit authorization for that session; it must
+  never mark a check PASS from source-code reasoning alone.
 
 ### Release Candidate
 

@@ -23,7 +23,11 @@ messages, names, accounts, organizations, or platform data.
 ## Directory governance
 
 - `manual_review_questionnaire.html` is the tracked bilingual, offline review
-  form. Its sidebar and previous/next controls support long review sessions.
+  form for the Full Regression and Manual Acceptance phase. Its sidebar and
+  previous/next controls support long review sessions. The permanent
+  PASS/FAIL/N/A, blocking, evidence, and executor-model contract it
+  implements is defined once in
+  [`docs/MANUAL_ACCEPTANCE_GATE.md`](../docs/MANUAL_ACCEPTANCE_GATE.md).
 - `sample-data/` contains only tracked project-authored synthetic inputs.
 - `guidance/` contains tracked instructions and sanitized handoff records.
 - `results/` is deliberately ignored by the repository `.gitignore`. Keep raw

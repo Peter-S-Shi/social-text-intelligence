@@ -164,7 +164,11 @@ This phase requires:
 The canonical repeatable checklist is
 [Manual QA](manual-qa/manual_review_questionnaire.html). A completed exported record is
 evidence for a specific tested version; it does not replace the living
-checklist.
+checklist. What PASS, FAIL, and N/A mean for this phase, who may execute it,
+and what evidence a decision requires are defined once, permanently, in the
+[Manual Acceptance Gate Standard](docs/MANUAL_ACCEPTANCE_GATE.md). Establishing
+that standard is readiness preparation; it is not itself an acceptance
+decision and does not start this phase's execution.
 
 ## Release Candidate and Packaging
 

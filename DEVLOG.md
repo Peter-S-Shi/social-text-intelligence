@@ -1,5 +1,75 @@
 # Development Log
 
+## Full Regression and Manual Acceptance — readiness preparation
+
+Readiness preparation only: establishes the acceptance standard and upgrades
+the canonical questionnaire so a future authorized session can execute Full
+Regression and Manual Acceptance without re-deriving either. Does not execute
+that phase, does not change product behavior, and does not change Manual
+Acceptance status (Not started), Release Candidate status (Not started), or
+release readiness (No).
+
+Added `docs/MANUAL_ACCEPTANCE_GATE.md`, the permanent acceptance contract:
+PASS conditions, a blocking definition (correctness, data/state integrity,
+privacy/security, critical-workflow completion, user-controlled-output
+loss, materially misleading state, required accessibility/recovery paths,
+or a reproducible crash/dead end — explicitly excluding pure cosmetic
+findings), N/A rules requiring a stated reason, evidence expectations, a
+Fix → Retest workflow, and an explicit executor model: an authorized
+interactive coding agent may execute Manual Acceptance by operating the
+real application and a real browser, judging results through genuine
+interaction/DOM/browser state, and never marking PASS from source-code
+reasoning alone. The two evidence streams — automated Full Regression and
+interactive Manual Acceptance — are named as jointly required; neither
+alone is sufficient.
+
+Upgraded `manual-qa/manual_review_questionnaire.html` (questionnaireVersion
+2.0 -> 3.0; schemaVersion left at 2.0 so existing exported JSON still
+imports). Reframed the hero eyebrow/copy from "Feature Complete Review" to
+"Full Regression & Manual Acceptance · 0.10.0," added a rendered Acceptance
+Gate Standard panel (PASS/blocking/N/A/evidence/executor summaries, fully
+bilingual), relabeled the na status to make its N/A-and-not-tested meaning
+explicit, and adjusted the historical Feature Freeze and Product Hardening
+sections to read as retrospective confirmation rather than upcoming work
+now that both are closed.
+
+Reconciled checklist coverage against the final 0.10.0 product and the
+A1-A10 hardening contracts rather than assuming gaps. Five items were
+genuinely missing and added: `triage-timestamp-sort` (FCR-051 aware/
+timezone-unspecified/missing ordering), `cross-applied-state` (FCR-052
+filter/sort/selection reflection across Triage Workspace, Moderation
+Prepare, and Insights Representative Cases), `cross-a11y-semantics` and
+`batch-busy-state` (FCR-027/A8 skip-link, current-step, focus-recovery, and
+Batch busy-state semantics that predate the original questionnaire), and
+`direct-limits` (FCR-003's over-length/unsupported-language cases for
+Direct analysis, which existing coverage only exercised for Batch). One
+existing item (`direct-multilabel`) gained a clause for FCR-034's neutral
+threshold-fallback semantics rather than a new item. All other requested
+categories — privacy defaults, no-store/local boundaries,
+formula-injection-safe export, partial Batch failures, threshold
+boundaries, expiry/recovery, and the remaining carried-forward pre-freeze
+items (FCR-014, 015, 017, 021, 023, 026, 031) — already had sufficient
+existing coverage and were left untouched; formula-injection protection in
+particular is a single shared `safe_spreadsheet_text()` function already
+exercised once via `review-formula`, so a duplicate check per export
+surface was not added.
+
+Verified live in a real browser rather than by code reading alone: the page
+loads and both languages render with identical key sets (62/62, checked
+programmatically); marking items updates progress/pass/fail/na counts;
+JSON export round-trips through the real `importJson()` file-input path
+including a language switch on import; a simulated pre-upgrade export
+(schemaVersion 2.0, old item set) still imports cleanly with new items left
+unanswered rather than erroring; Markdown export includes the new items.
+Confirmed the questionnaire's pre-existing narrow-width horizontal overflow
+(present identically on unmodified `main`) is unrelated to this change and
+out of this readiness-prep scope.
+
+Also updated `PROJECT_STATUS.md`, `ROADMAP.md`, `docs/DEVELOPMENT.md`,
+`README.md`, and `manual-qa/README.md` to point to the new standard, without
+touching FCR-042/043 dispositions, release readiness, or any filtering/
+sorting/model behavior.
+
 ## Product Hardening closure — entering Full Regression and Manual Acceptance
 
 Product Hardening Batch A10 / PR #28 is recorded as merged to main at SHA
