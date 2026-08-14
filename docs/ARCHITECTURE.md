@@ -74,6 +74,15 @@ and explicit clear cannot remove that workspace until analysis commits or
 fails. Only the current lease may write the completed state, and a rejected
 write-back is reported as a conflict rather than success.
 
+The Flask application has a framework-level 3 MiB HTTP request-body boundary,
+configured through `MAX_CONTENT_LENGTH`. A `before_request` content-length gate
+rejects declared oversized bodies before route or state logic, including routes
+that do not otherwise parse the request body; Flask enforces the same ceiling
+while reading form and multipart data. A single minimal handler returns a fixed
+413 response. The 2 MiB CSV payload limit remains a separate service-level rule,
+leaving 1 MiB for multipart/form encoding overhead. This boundary adds no
+deployment, account, persistence, CSP, Origin, or Host policy.
+
 `services/review.py` owns the human-review contracts and all label validation,
 record-status semantics, navigation selection, agreement calculations, summary
 denominators, and reviewed export shaping. `HumanReview` never contains or

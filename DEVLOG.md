@@ -1,5 +1,39 @@
 # Development Log
 
+## Product Hardening Batch A3 — Global HTTP request-body boundary
+
+Reconciled Phase 0 PH-004 as permanent FCR-047. FCR-025 covers privacy and
+local-state consistency, while FCR-029 covers existing error and recovery
+states; neither defines a framework-level body limit before Flask parses form
+or multipart input.
+
+The local Flask app now uses a configurable 3 MiB `MAX_CONTENT_LENGTH` request
+ceiling. This is deliberately 1 MiB (50 percent) above the existing 2 MiB CSV
+payload limit so multipart headers and form encoding have clear capacity. The
+two limits remain independent, and configuration rejects a request ceiling
+that is not greater than the CSV payload limit.
+
+A lightweight `before_request` check rejects declared oversized bodies before
+any route or temporary-state operation, including POST routes that otherwise do
+not parse their bodies. Flask's request-reading limit provides the same boundary
+during form/multipart parsing. One minimal 413 handler returns only fixed copy
+and the configured byte limit; it never reads or echoes submitted content.
+Existing `Cache-Control: no-store` and `Pragma: no-cache` response handling
+continues to cover 413 responses.
+
+Targeted regressions passed 12/12: seven boundary cases across Direct, Batch
+multipart, an unparsed Batch action, Review, Insights notes, and Triage
+decisions, plus five unchanged normal-flow checks. They prove no input echo, no
+traceback/path disclosure, no state creation or mutation, and the independence
+of the CSV byte limit. The full suite passed 148 with 2 opt-in real
+model tests skipped; Ruff, strict MyPy for 69 files, compileall, and pip check
+passed. Behavioral candidate:
+`def0577feb3c43d4e9e81577003c43da821b6ba2`.
+
+Batch A2 was merged through PR #19 at main SHA
+`1c9764ba7bcd45b07a07a93077b86070e358a0ab`; this is the synchronized A3
+baseline. Feature Freeze remains PASS. PH-005 and PH-007 are not started.
+
 ## Product Hardening Batch A2 — Input truthfulness / no silent truncation
 
 Reconciled Phase 0 PH-003 as permanent FCR-046. Existing FCR-003, FCR-006,
