@@ -10,7 +10,7 @@ sections use the same stable `FCR-XXX` identifiers.
 
 ## 1. 当前状态与使用方法
 
-- 当前阶段：**Product Hardening（产品加固）**
+- 当前阶段：**Full Regression and Manual Acceptance（全面回归与人工验收）**；Product Hardening 已 COMPLETE
 - Feature Freeze：**PASS（2026-08-13 用户明确批准）**
 - Release readiness：**否**
 - 操作型逐项测试记录：
@@ -701,6 +701,47 @@ Evidence: PR #16 candidate-specific manual evidence; exact behavioral SHA above;
 状态，不是新的 behavioral candidate。FCR-042、FCR-043 留在 Product Hardening
 backlog，不阻碍本次 Feature Freeze；Release readiness 仍为 No。
 
+### 2026-08-14 Product Hardening 关闭决定
+
+```text
+Product Hardening closure decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-14
+Reviewed closure baseline main SHA: fc230c587c245cdb1cd75b399c91eb38ac82d768
+Decision: PASS
+Batches: A1–A10 全部合并；behavioral/reviewed head 各自通过定向、完整回归、
+  formal review 与远程 CI；关闭 baseline 通过独立 post-merge main CI
+Permanent findings closed this cycle: FCR-027、FCR-030、FCR-045–052（10 项，
+  全部 VERIFIED）
+Phase 0 disposition: PH-001–PH-002 → FCR-045；PH-003 → FCR-046；PH-004 →
+  FCR-047；PH-005 → FCR-048；PH-006 → FCR-049；PH-007 → FCR-050；PH-008 →
+  FCR-030；PH-009 → FCR-027；PH-010 → FCR-051。PH-001–PH-010 全部已关闭。
+  FCR-052 是本轮独立发现并关闭的 non-blocking finding，不对应任何 PH-0XX。
+Open current-version blockers: None
+Approved exceptions: FCR-042、FCR-043 明确保留为 `OPEN` non-blocking backlog——
+  重新核对后确认二者均无 correctness、safety、privacy、accessibility 或
+  state-integrity 风险，纯属视觉/可读性 polish，不需要在本次关闭前实施。
+  FCR-003、005、014、015、017、021、023、026、031 是 2026-08-13 Feature
+  Freeze 之前即已存在的 "OPEN verification" 清单项，早于 Product Hardening
+  范围，且 Feature Freeze 在这些项未验证的情况下已经通过；本次审计对
+  FCR-026（公式注入保护）做了代码与测试的直接复核，确认 `safe_spreadsheet_text()`
+  已应用于 Batch/Review/Insights/Moderation/Triage 全部 5 个导出路径且均有
+  对应回归测试，未发现真实缺陷。这些项目正式移交给 Full Regression and
+  Manual Acceptance 阶段做最终 disposition，不作为 Product Hardening 的
+  release blocker。
+Next lifecycle phase: Full Regression and Manual Acceptance
+Manual Acceptance status: Not started
+Release Candidate status: Not started
+Release readiness: No
+Approver: User / project owner
+Evidence: PR #18–#28 各自的 behavioral candidate/reviewed head 远程 CI；
+  关闭 baseline 完整 deterministic suite 195 passed / 2 opt-in skipped；
+  Ruff、strict MyPy（75 files）、compileall、pip check 全部通过；独立
+  post-merge main CI PASS（fc230c587c245cdb1cd75b399c91eb38ac82d768）
+```
+
+本决定不代表 Manual Acceptance 已通过、Release Candidate 已开始，或 release
+readiness 已变为 Yes；这些仍是后续独立的 gate。
+
 ## 7. Codex 维护规则
 
 1. 新发现使用下一个永久 `FCR-XXX` ID。
@@ -719,7 +760,7 @@ backlog，不阻碍本次 Feature Freeze；Release readiness 仍为 No。
 
 ## 1. Current state and use
 
-- Current phase: **Product Hardening**
+- Current phase: **Full Regression and Manual Acceptance**; Product Hardening is **COMPLETE**
 - Feature Freeze: **PASS (explicit user approval on 2026-08-13)**
 - Release readiness: **No**
 - Repeatable operational checklist:
@@ -1424,6 +1465,54 @@ This PASS freezes only the tested behavioral SHA above. Later closure commits
 record governance/status only and are not a new behavioral candidate. FCR-042
 and FCR-043 remain Product Hardening backlog and do not block this gate. Release
 readiness remains No.
+
+### 2026-08-14 Product Hardening closure decision
+
+```text
+Product Hardening closure decision: Social Text Intelligence 0.10.0
+Decision date: 2026-08-14
+Reviewed closure baseline main SHA: fc230c587c245cdb1cd75b399c91eb38ac82d768
+Decision: PASS
+Batches: A1-A10 all merged; each behavioral/reviewed head passed its own
+  targeted regression, full regression, formal review, and remote CI; the
+  closure baseline also passed independent post-merge main CI
+Permanent findings closed this cycle: FCR-027, FCR-030, FCR-045-052 (ten
+  items, all VERIFIED)
+Phase 0 disposition: PH-001-PH-002 -> FCR-045; PH-003 -> FCR-046; PH-004 ->
+  FCR-047; PH-005 -> FCR-048; PH-006 -> FCR-049; PH-007 -> FCR-050; PH-008 ->
+  FCR-030; PH-009 -> FCR-027; PH-010 -> FCR-051. PH-001-PH-010 are all closed.
+  FCR-052 is an independently discovered, closed, non-blocking finding from
+  this cycle that does not correspond to any PH-0XX item.
+Open current-version blockers: None
+Approved exceptions: FCR-042 and FCR-043 are explicitly retained as `OPEN`
+  non-blocking backlog. Re-reading both permanent records confirms neither
+  carries a correctness, safety, privacy, accessibility, or state-integrity
+  risk; both are visual/readability polish and do not need implementation
+  before this closure. FCR-003, 005, 014, 015, 017, 021, 023, 026, and 031
+  are pre-freeze "OPEN verification" checklist items that predate Product
+  Hardening; Feature Freeze already passed on 2026-08-13 while they remained
+  unverified. This audit directly re-checked FCR-026 (formula-injection
+  protection) against current code and tests: `safe_spreadsheet_text()` is
+  applied across all five export paths (Batch, Review, Insights, Moderation,
+  Triage), each with a dedicated regression test, and no defect was found.
+  These items are formally carried into Full Regression and Manual
+  Acceptance for final disposition rather than treated as a Product
+  Hardening blocker.
+Next lifecycle phase: Full Regression and Manual Acceptance
+Manual Acceptance status: Not started
+Release Candidate status: Not started
+Release readiness: No
+Approver: User / project owner
+Evidence: PR #18-#28 behavioral candidate/reviewed head remote CI; closure
+  baseline full deterministic suite 195 passed with 2 opt-in model
+  integrations skipped; Ruff, strict MyPy for 75 files, compileall, and pip
+  check passed; independent post-merge main CI PASS
+  (fc230c587c245cdb1cd75b399c91eb38ac82d768)
+```
+
+This decision does not mean Manual Acceptance has passed, a Release Candidate
+has started, or release readiness has changed to Yes; those remain separate,
+later gates.
 
 ## 7. Codex maintenance rules
 
