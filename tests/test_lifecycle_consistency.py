@@ -21,6 +21,10 @@ STALE_CURRENT_PHRASES = (
     "Current phase: Full Regression and Manual Acceptance",
     "Current lifecycle phase: Full Regression and Manual Acceptance",
     "| Current lifecycle phase | **Full Regression and Manual Acceptance** |",
+    "Current phase: Release Candidate",
+    "Current lifecycle phase: Release Candidate",
+    "| Current lifecycle phase | **Release Candidate**",
+    "| Release readiness | **No** |",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -53,19 +57,23 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
     assert (
-        "| Current lifecycle phase | **Release Candidate** — Full Regression "
-        "and Manual Acceptance is **PASS**; Release Candidate Gate is "
-        "**PASS** |" in status
+        "| Current lifecycle phase | **Public Portfolio Delivery** — "
+        "Release Candidate Gate is **PASS**; the repository owner's "
+        "Version / Delivery Decision approved public portfolio delivery "
+        "of `0.10.0` |" in status
     )
     assert (
         "| Manual Acceptance status | **PASS — 2026-08-14, 20/20 required "
         "items, 0 blocking defects** |" in status
     )
     assert "| Release Candidate status | **PASS — 2026-08-14** |" in status
-    assert "| Release readiness | **No** |" in status
+    assert (
+        "| Public portfolio delivery | **Yes — approved by the "
+        "repository owner, 2026-08-15.**" in status
+    )
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert "**Current phase: Release Candidate**" in roadmap
+    assert "**Current phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
     assert "**Status: Complete.**" in roadmap
     assert "**Status: PASS.**" in roadmap

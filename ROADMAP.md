@@ -27,13 +27,14 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## Current lifecycle phase
 
-**Current phase: Release Candidate**
+**Current phase: Public Portfolio Delivery**
 
 Feature Complete Review is completed, Feature Freeze is PASS, Product
 Hardening is complete, Full Regression and Manual Acceptance is PASS, and
-the Release Candidate Gate is PASS. The next required action is an explicit
-Version / Delivery Decision by the repository owner; release readiness
-remains No until that decision is made. Findings belong in the
+the Release Candidate Gate is PASS. The repository owner's Version /
+Delivery Decision approved public portfolio delivery of `0.10.0`; the
+GitHub repository is public. No version tag or GitHub Release has been
+created, and none is implied by this decision. Findings belong in the
 [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md), while
 the detailed live state belongs only in [Project Status](PROJECT_STATUS.md).
 
@@ -227,6 +228,18 @@ hosting, or public release. Version and delivery decisions require their own
 explicit gate — the next required action is an explicit Version / Delivery
 Decision by the repository owner. FCR-042 and FCR-043 remain `OPEN`
 non-blocking backlog, unchanged by this gate.
+
+## Public Portfolio Delivery
+
+**Status: PASS — 2026-08-15.** The repository owner made the previously
+pending Version / Delivery Decision: current version `0.10.0` is approved
+for public portfolio delivery. The GitHub repository visibility is public.
+
+This decision covers public portfolio delivery specifically. No version tag
+or GitHub Release has been created for `0.10.0`, and none is implied by it;
+a formal tagged release remains a separate, independent decision for the
+repository owner to make later if ever desired. FCR-042 and FCR-043 remain
+`OPEN` non-blocking backlog, unchanged by this closure.
 
 ## Deferred next-version backlog
 

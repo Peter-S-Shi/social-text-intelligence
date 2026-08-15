@@ -1,5 +1,27 @@
 # Development Log
 
+## Public Portfolio Delivery — Version / Delivery Decision resolved
+
+The repository owner made the previously pending Version / Delivery
+Decision recorded at the Release Candidate Gate: current version `0.10.0`
+is approved for public portfolio delivery, and the GitHub repository
+visibility is now public. No version tag or GitHub Release was created as
+part of this decision, and none is implied by it; a formal tagged release
+remains a separate, independent decision the repository owner has not made.
+
+Updated `PROJECT_STATUS.md`, `ROADMAP.md`, and `README.md` to record the
+current lifecycle phase as Public Portfolio Delivery instead of Release
+Candidate, and updated the hardcoded current-phase assertions in
+`tests/test_lifecycle_consistency.py` accordingly (the former Release
+Candidate phase strings were added to that test's stale-phrase blocklist,
+following the same pattern used at every earlier lifecycle transition).
+This is a governance/documentation-only closure: no product code, product
+behavior, test behavior beyond the lifecycle-phase assertions themselves,
+database/schema, or release version changed. Earlier gate records in this
+log and in `PROJECT_STATUS.md` describing the prior "no release decision
+yet" state were left untouched, since they were accurate at the time they
+were written.
+
 ## Release Candidate Gate — PASS
 
 Executed the Release Candidate milestone against candidate SHA

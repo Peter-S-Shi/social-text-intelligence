@@ -6,11 +6,12 @@ emotion evidence, then carries that evidence through human review,
 moderation-decision practice, and support triage. Every model runs on your
 own machine; text is not sent to an inference API.
 
-> **Current lifecycle phase: Release Candidate.** Feature milestones 1–10 are
-> complete, Feature Freeze is PASS, Product Hardening is complete, Full
-> Regression and Manual Acceptance is PASS, and the Release Candidate Gate is
-> PASS. An explicit Version / Delivery Decision by the repository owner is
-> still required, so the current version is not release-ready. Live status:
+> **Current lifecycle phase: Public Portfolio Delivery.** Feature milestones
+> 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,
+> Full Regression and Manual Acceptance is PASS, and the Release Candidate
+> Gate is PASS. The repository owner's Version / Delivery Decision approved
+> public portfolio delivery of `0.10.0`, and this repository is public. No
+> version tag or GitHub Release has been created. Live status:
 > [Project Status](PROJECT_STATUS.md).
 
 <p align="center">
@@ -404,9 +405,10 @@ meaning and must never be presented as real predictions. See
 - **Moderation and triage "mock" suggestions are fixtures**, not live
   classifiers, accuracy ground truth, or expert opinion — the interface
   labels them as such everywhere they appear.
-- **Not release-ready.** The Release Candidate Gate is PASS, but the
-  repository owner has not yet made an explicit Version / Delivery Decision;
-  see [Project Status](PROJECT_STATUS.md) for the live gate state.
+- **Public portfolio delivery, not a formal release.** The repository owner
+  approved public portfolio delivery of `0.10.0` and the repository is
+  public, but no version tag or GitHub Release has been created; see
+  [Project Status](PROJECT_STATUS.md) for the live gate state.
 
 ## Privacy and data
 
