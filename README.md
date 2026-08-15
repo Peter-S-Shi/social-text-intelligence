@@ -13,6 +13,11 @@ own machine; text is not sent to an inference API.
 > still required, so the current version is not release-ready. Live status:
 > [Project Status](PROJECT_STATUS.md).
 
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%"
+       alt="One synthetic social-text sentence enters Social Text Intelligence and returns structured intelligence: sentiment negative at 68.7% confidence with a three-way score bar, dominant emotion neutral with a threshold explanation, three supporting emotion signals, and local, offline model provenance.">
+</p>
+
 ## See it work
 
 A real Direct Analysis result from this repository's own local web interface
@@ -364,6 +369,11 @@ expiry by default. Limits block creation rather than evicting existing
 work. CSV export is explicit, formula-safe, and `no-store`. See
 [Support Triage](docs/SUPPORT_TRIAGE.md) for the complete contract and
 limitations.
+
+Milestone 10 is the last completed feature milestone for the current
+version. Deferred next-version candidates remain outside the `0.10.0`
+feature boundary. Detailed live execution state is maintained only in
+[Project Status](PROJECT_STATUS.md).
 
 ### Core contracts
 
