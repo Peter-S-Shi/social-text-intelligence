@@ -30,8 +30,8 @@ submitted text is logged or persisted.
 
 ### Reproduce it yourself
 
-Same report, same pinned models, from the CLI — a shorter path to verify the
-result above wasn't cherry-picked:
+Same report, same pinned models, from the CLI — a shorter path to
+independently reproduce the same result:
 
 ```text
 $ sti analyze "The new update finally fixed the login bug, but the app \
