@@ -31,10 +31,13 @@ gate. Actual gate decisions and live execution state are recorded in
 from the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is
 historical and unchanged. V2 Product Discovery is complete and the Product
 Scope Gate is PASS (2026-10-06); the owner decisions are recorded in
-[V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md). The current phase
-prepares the Architecture Gate, covering persistence design, desktop packaging
-feasibility, and V1 service reuse. Desktop packaging and UI redesign are
-approved V2 goals; no implementation has started.
+[V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md). The exploration for the
+Architecture Gate (persistence design, desktop packaging feasibility, and V1
+service reuse) is complete and recorded in
+[V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md);
+the Architecture Gate itself is pending the repository owner's decision.
+Desktop packaging and UI redesign are approved V2 goals; no implementation has
+started.
 
 ## V1 final lifecycle phase (historical)
 

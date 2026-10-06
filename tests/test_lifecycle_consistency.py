@@ -75,7 +75,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "of `0.10.0` |" in status
     )
     assert "| V2 Product Scope gate | **PASS — 2026-10-06.**" in status
-    assert "| V2 Architecture Gate | **Not started.**" in status
+    assert "| V2 Architecture Gate | **Pending — repository-owner decision.**" in status
     assert (
         "| Manual Acceptance status | **PASS — 2026-08-14, 20/20 required "
         "items, 0 blocking defects** |" in status

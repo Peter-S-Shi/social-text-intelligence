@@ -1,5 +1,25 @@
 # Development Log
 
+## V2 Desktop Architecture Exploration — complete, awaiting Architecture Gate
+
+Inspected the V1 architecture (services/providers/contracts contain no Flask
+references; route-level orchestration, three near-identical ephemeral stores,
+settings defaults, and error mapping live under `interface/`), evaluated desktop
+approaches against current framework/licence/packaging sources, and ran
+disposable spikes: a PySide6 shell and a wxPython shell calling the V1 service
+in-process (the Qt shell with the real pinned offline models), an SQLite
+persistence boundary (including a delete-semantics finding: SQLite's default
+leaves deleted text recoverable unless `secure_delete` is on), and PyInstaller
+onedir packaging with and without PyTorch. Spike code is preserved, out of
+`main`, on `prototype/v2-desktop-spikes`. The durable record is
+[docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md),
+ending with the Architecture Gate brief and owner decisions A1–A8.
+
+Governance change is minimal: `PROJECT_STATUS.md` and `ROADMAP.md` record the
+Architecture Gate as pending the owner's decision, and the lifecycle test row was
+updated. No product code, dependency, version, UI, or desktop implementation
+changed; V1 and earlier V2 records are untouched.
+
 ## V2 Product Scope Gate — PASS
 
 The repository owner decided the Product Scope Gate: Q1 persistent local
