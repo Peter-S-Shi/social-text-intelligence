@@ -1,5 +1,30 @@
 # Development Log
 
+## V2 Architecture Gate — PASS
+
+The repository owner approved A1–A7 with binding refinements and replaced A8:
+Windows-first; pinned model weights downloaded explicitly on first use (with
+progress, recovery, and an offline/pre-provisioned path) rather than bundled;
+one SQLite file per project under per-user LocalAppData, kept until manually
+deleted with no automatic expiry; Flask frozen as a development/compatibility
+surface and never a runtime dependency of the final desktop product; unsigned
+portfolio installers with honest SmartScreen documentation; PySide6 (Qt
+Widgets) with a wxPython fallback and a mandatory pre-distribution LGPL
+compliance gate. A8 no longer commits Moderation Training and Support Triage to
+"legacy-only for V2.0": they get no foundation investment and their final
+disposition (a single demoted native surface or explicit retirement) belongs to
+the later UI/IA gate.
+
+The architecture record's licensing section was rewritten from the now-readable
+official Qt LGPL obligations page: onedir is helpful but not proof of
+compliance; notice, source, relink/replacement, and installation-information
+obligations apply; GPL-only Qt modules must be avoided. SQLite deletion
+language stays conservative, and WAL/sidecar cleanup is deferred to the
+persistence implementation. `PROJECT_STATUS.md`, `ROADMAP.md`, and the README
+banner advance to V2 Application Foundation with seams S1–S4, S6, and S7 as
+the implementation boundary; the lifecycle test was updated. No product code,
+dependency, version, or prototype branch changed.
+
 ## V2 Desktop Architecture Exploration — complete, awaiting Architecture Gate
 
 Inspected the V1 architecture (services/providers/contracts contain no Flask

@@ -1,13 +1,15 @@
 # V2 Desktop Architecture Exploration
 
-Status: **Exploration complete — awaiting the Architecture Gate (repository-owner
-decision).** Evidence date: **2026-10-06**. Baseline: `main` at
+Status: **Exploration complete. Architecture Gate: PASS (2026-10-06; owner
+decisions in section 12).** Evidence date: **2026-10-06**. Baseline: `main` at
 `28a9b47` (V2 Product Scope Gate PASS recorded in
 [V2 Product Discovery](V2_PRODUCT_DISCOVERY.md), section 11).
 
-This is a decision record, not an implementation. No product code, test,
-dependency, version, UI, or desktop migration changed on the branch that carries
-this document. Disposable spikes are preserved, out of `main`, on branch
+This is a decision record, not an implementation. No product code, dependency,
+version, UI, or desktop migration changed on the branch that carries this
+document. Sections 1 to 11 are the exploration evidence and brief as submitted
+to the gate, except where section 12 or an inline note says it was refined;
+section 12 is authoritative. Disposable spikes are preserved, out of `main`, on branch
 `prototype/v2-desktop-spikes` (commit `01fb597`; section 5 lists what each proved).
 Live phase state is recorded only in [Project Status](../PROJECT_STATUS.md).
 
@@ -238,14 +240,16 @@ What this exposes:
 
 ## 6. Packaging, licensing, and footprint conclusions
 
-**Recommended path (subject to the owner decisions in section 11):** PySide6 in
+**Recommended path (approved at the Architecture Gate, section 12):** PySide6 in
 PyInstaller **onedir** (not onefile), delivered by a **per-user, non-admin
 installer** (Inno Setup is a candidate), **unpackaged** rather than MSIX.
 
-- **Why onedir.** The LGPL route relies on the user being able to replace the Qt
-  libraries; PyInstaller's documentation states onefile extracts to a temporary
-  folder at every launch and onefile Qt deployment is reported unreliable (B).
-  Onedir also starts faster and is easier to debug (A, PyInstaller docs).
+- **Why onedir.** PyInstaller's documentation states onefile extracts to a
+  temporary folder at every launch (A), and onefile Qt deployment is reported
+  unreliable (B). Onedir also starts faster and is easier to debug (A). Onedir
+  keeps the Qt libraries as separate files, which is **helpful** for the LGPL
+  replacement obligation below, but it is a packaging choice and is **not by
+  itself proof of LGPL compliance**.
 - **Why not MSIX for V2.0.** MSIX runs apps in a container that virtualises or
   redirects some file-system writes (A, Microsoft overview). The Product Scope
   decision requires data in the real per-user application-data directory and
@@ -257,13 +261,36 @@ installer** (Inno Setup is a candidate), **unpackaged** rather than MSIX.
   A code-signing certificate is a real recurring cost and still does not
   guarantee zero detections. For a portfolio audience this is a presentation
   risk to accept knowingly or to budget for.
-- **Qt licensing obligations.** PySide6 is offered under LGPL-3.0 or GPL for
-  open-source use (A, PyPI). Compliance details (notice, source offer, library
-  replaceability) were **not** confirmed from a readable primary page in this
-  exploration; the official Qt LGPL obligations page must be read before the
-  first public installer (H, unresolved risk R3). Qt Charts and Data
-  Visualization are GPL-only per the Riverbank FAQ for PyQt (A); do not use them
-  in V2 without re-checking for PySide6 Addons.
+- **Qt licensing obligations.** PySide6 is offered under LGPL-3.0, GPL, or
+  commercial terms (A, PyPI). The official Qt page "Obligations of the GPL and
+  LGPL" (A; undated, footer 2026) was read at the gate. It states, in summary,
+  that for an LGPLv3 application:
+  - the **complete corresponding source of the Qt libraries used** must ship
+    with the application or be offered in writing, **even when Qt is unmodified**;
+  - **dynamic linking** is recommended; with static linking the application may
+    stop being a "work that uses the library" and become subject to the LGPL;
+  - the user must be able to **change and re-link or replace** the library, and
+    "sufficient installation information must be provided" so the re-linked
+    binary can run;
+  - the LGPL text must be provided and a **prominent notice** that an LGPL
+    library is used must be shown; hiding it is not allowed;
+  - the licence may not be restricted by added terms, and some distribution
+    channels such as online app stores can conflict with it;
+  - "some parts of Qt are only provided under GPL for open source users, not
+    under LGPL", and using one **requires the application to be GPL**; the page
+    does not list which modules, and points to Qt's feature and third-party
+    licence pages, which were not read;
+  - the page says its list is incomplete, offers no legal guidance, and
+    recommends the commercial licence when compliance is in doubt.
+
+  The page does **not** address Python, PySide, or PyInstaller bundles, so
+  whether a particular frozen layout satisfies the replacement and installation-
+  information obligations is **unresolved** and cannot be inferred from onedir
+  alone. Qt Charts and Data Visualization were reported GPL-only in the
+  Riverbank FAQ for PyQt (A); V2 must avoid GPL-only Qt modules unless licensing
+  is deliberately reconsidered, and each Qt/PySide module used must be checked
+  against Qt's licence listing. This becomes the mandatory pre-distribution
+  compliance gate in section 12.
 - **Models.** The two pinned models are about 0.95 GB of unique weight files; the
   local V1 cache is 1.4 GB because it also holds a redundant `pytorch_model.bin`
   for the sentiment model (L). Bundling them would put an installer near or above
@@ -375,7 +402,9 @@ lines of tests are the regression net while services are re-homed; it lets
 seams S2 and S7 be checked behaviourally. Constraints: no new features, clearly
 marked legacy in its docs, a single shared set of use cases (S7), and an
 explicit retirement decision (A5). Retiring it earlier would orphan the
-preserved decision-practice material.
+preserved decision-practice material. *Refined at the gate (section 12):* it is
+a development and compatibility surface only and **must not be a runtime
+dependency of the final V2 desktop product**.
 
 ## 9. How the Q5 evidence gate fits the architecture
 
@@ -396,7 +425,7 @@ preserved decision-practice material.
 | --- | --- | --- | --- |
 | R1 | Packaged size and startup: 928 MB application before weights, 30.9 s frozen cold start (spike C2) | High | Decide model strategy (A2); minimise the build; measure on a clean machine |
 | R2 | Antivirus and SmartScreen friction for unsigned PyInstaller output | Medium | Accept for portfolio or budget signing (A6) |
-| R3 | Qt LGPL compliance steps not confirmed from a primary page | Medium | Read the official Qt LGPL obligations page before any public installer |
+| R3 | Qt LGPL obligations are now known from Qt's page, but compliance of a frozen PyInstaller layout is unproven and the page names no GPL-only modules | Medium | Mandatory pre-distribution LGPL compliance gate (section 12); module-by-module licence check; legal review if in doubt |
 | R4 | Qt accessibility on Windows has reported widget gaps (B); V1 A8 gains do not transfer | Medium | Plan an accessibility audit as a milestone gate; keep wx as fallback |
 | R5 | Cold start about 24 s on first analysis | Medium | Background preload plus loading state |
 | R6 | Cross-thread UI mistakes (spike A deadlock) | Medium | One job-runner abstraction; code review rule |
@@ -408,7 +437,11 @@ preserved decision-practice material.
 | U2 | Real-model quality on representative text (Q5) is unmeasured | n/a here | Later evaluation milestone |
 | U3 | Qt Quick or QML would give a more modern UI at the cost of a second language; not assessed | Low | Out of scope for the architecture decision |
 
-## 11. Architecture Gate brief
+## 11. Architecture Gate brief (as submitted)
+
+*This is the brief as submitted to the gate. Section 12 records what the owner
+approved, including refinements and the replacement of A8; where they differ,
+section 12 governs.*
 
 **Recommendation.**
 
@@ -453,7 +486,72 @@ preserved decision-practice material.
 Nothing else is escalated. Implementation does not start before the Gate
 decision.
 
-## 12. Reproducing the spikes
+## 12. Architecture Gate decision
+
+**Status: PASS — 2026-10-06.** The repository owner approved A1 to A7 with the
+binding refinements below and replaced the A8 recommendation. This section is
+authoritative.
+
+| ID | Decision | Binding refinement |
+| --- | --- | --- |
+| A1 | **Approved: Windows-first** | V2.0 targets Windows. Other platforms are unclaimed; the untested non-Windows path in the data-directory module is not a commitment |
+| A2 | **Approved: weights are not bundled** | Pinned model weights are downloaded **explicitly on first use**, with progress and recovery, and an **offline/pre-provisioned path**. Downloader design and its failure modes are implementation work |
+| A3 | **Approved: one SQLite file per project** | Under the Windows per-user LocalAppData location (`%LOCALAPPDATA%\SocialTextIntelligence\projects`), consistent with the Product Scope Gate |
+| A4 | **Approved: keep until manually deleted** | V2.0 defaults to keep-until-manually-deleted and adds **no automatic retention expiry** unless later UX evidence justifies it. This narrows section 7, which proposed an optional per-project retention period; that option is not part of V2.0 scope |
+| A5 | **Approved: Flask frozen** | Flask stays a development and compatibility surface during migration. It **cannot be a runtime dependency of the final V2 desktop product** and gets no new features |
+| A6 | **Approved: unsigned portfolio installers** | Acceptable, with honest documentation of the expected SmartScreen and antivirus warnings. A signing decision returns if distribution widens |
+| A7 | **Approved: PySide6 (Qt Widgets), wxPython fallback** | Subject to a **mandatory pre-distribution LGPL compliance gate** (below) |
+| A8 | **Replaced** | See below |
+
+### A8 — Moderation Training and Support Triage (replaces "legacy-only for V2.0")
+
+- They receive **no investment in the current desktop foundation** and may stay
+  legacy-only (served by the frozen Flask surface) during development.
+- Their **final disposition belongs to the later UI/IA gate**: either a single
+  demoted native Decision Practice surface, or explicit retirement from the V2
+  product surface.
+- Whichever is chosen, the final V2 product **must not depend on Flask to expose
+  them**. Section 11's recommendation 6 ("untouched in the legacy surface for
+  V2.0") is superseded by this.
+
+### Mandatory pre-distribution LGPL compliance gate (A7)
+
+No installer or build may be distributed beyond the owner until a recorded
+review confirms, against Qt's current obligations page (section 6) and the
+actual frozen layout, at least: preserved copyright and licence notices with a
+prominent LGPL notice; Qt source provision or a written offer for the exact
+Qt/PySide versions shipped; dynamic linking with Qt libraries kept as separate
+replaceable files and the installation information needed to run a relinked
+build; no GPL-only Qt or PySide module in the build (checked module by module);
+and a distribution channel that does not add conflicting terms. Onedir is a
+helpful choice, not proof of compliance. If compliance cannot be shown, the
+fallback is wxPython or a commercial Qt licence, which would be a new owner
+decision.
+
+### Refinements that stay conservative
+
+- **SQLite deletion language stays conservative.** UI and docs say data is
+  "removed from this application's data files", never "securely erased";
+  copies in exports, backups, or operating-system features are outside the
+  application's control. Spike B's `secure_delete=ON` finding stands.
+- **WAL and sidecar cleanup** (`-wal`, `-shm`, checkpointing, and removing
+  sidecar files on project deletion) is part of the later persistence
+  implementation and its tests, not decided here.
+
+### Next phase and implementation boundary
+
+The macro phase advances to **V2 Application Foundation**. Its implementation
+boundary is exactly the seams recorded in section 8: **S1** settings and
+composition root, **S2** application-layer use cases, **S3** error mapping,
+**S4** the `ProjectRepository` port with an in-memory implementation, **S6**
+batch progress and cancellation, and **S7** re-pointing Flask at the shared
+use cases. **S5** (SQLite repository and model provisioner) and **S8**
+(language detection) are not in that boundary and need their own scoping.
+No desktop UI, packaging, or persistence implementation is authorised by the
+Architecture Gate itself; scope for each is set when the corresponding
+milestone is defined.
+
+## 13. Reproducing the spikes
 
 From a scratch virtual environment that exposes the V1 source and dependencies
 read-only (a `.pth` file pointing at the V1 `src` and `site-packages`) with
@@ -476,7 +574,7 @@ Run the packaged build from a checkout of the prototype branch, not from a
 working tree that may change branch mid-build (see the discarded first C2
 attempt). Spikes use only synthetic text and write no project data.
 
-## 13. Source provenance
+## 14. Source provenance
 
 All sources accessed 2026-10-06.
 
@@ -485,6 +583,7 @@ All sources accessed 2026-10-06.
 | PySide6 6.11.2 (2026-08-18), Python 3.10–3.14, LGPL/GPL/commercial, "Production/Stable" | https://pypi.org/project/PySide6/ | A |
 | Qt exposes platform accessibility APIs; keyboard and system palette support | https://doc.qt.io/qt-6/accessible.html | A |
 | Qt Windows accessibility backend is UI Automation; widget-specific gaps reported | Qt source log, Qt bug tracker and forum search results | B |
+| Qt LGPL obligations: source for Qt libraries even if unmodified, relink/replace and installation information, notices, GPL-only parts, no Python/PySide guidance; page undated | https://www.qt.io/licensing/open-source-lgpl-obligations | A (read at the Architecture Gate) |
 | PyQt6 GPL-3.0 or commercial; commercial needed unless app is GPL-compatible; some Qt modules GPL-only | https://pypi.org/project/PyQt6/ , https://www.riverbankcomputing.com/commercial/license-faq | A |
 | wxPython 4.3.1 (2026-07-30), "Mature", wxWindows Library Licence, Windows wheels about 18.5 MB | https://pypi.org/project/wxPython/ | A |
 | wxPython uses native Windows controls; screen-reader label regression reports | https://discuss.wxpython.org/ threads from search results | B |
