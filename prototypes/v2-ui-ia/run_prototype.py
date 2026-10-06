@@ -1,7 +1,8 @@
 """PROTOTYPE - STI V2 UI/IA exploration (throwaway, never ship).
 
 Question: what desktop-native information architecture should STI V2 have?
-Plan: three structurally different directions (A, B, C) plus shared flows (S),
+Plan: round 2 directions D (Casebook), E (Instrument), F (Field); round 1
+(A, B, C) and shared flows (S) kept for comparison,
 switchable from a floating bottom bar, in one PySide6 window with synthetic data.
 
 Run:      python prototypes/v2-ui-ia/run_prototype.py [--variant A] [--screen a_review]
@@ -38,9 +39,14 @@ import shared_flows  # noqa: E402
 import variant_a_workbench  # noqa: E402
 import variant_b_pipeline  # noqa: E402
 import variant_c_desk  # noqa: E402
+import variant_d_casebook  # noqa: E402
+import variant_e_instrument  # noqa: E402
+import variant_f_field  # noqa: E402
 
-VARIANTS = [variant_a_workbench, variant_b_pipeline, variant_c_desk, shared_flows]
-WIDTH, HEIGHT = 1440, 900
+# Round 2 (D, E, F) first; round 1 (A, B, C, S) kept for comparison.
+VARIANTS = [variant_d_casebook, variant_e_instrument, variant_f_field,
+            variant_a_workbench, variant_b_pipeline, variant_c_desk, shared_flows]
+WIDTH, HEIGHT = 1600, 960
 
 
 class Switcher(QFrame):
@@ -113,6 +119,7 @@ class Shell(QWidget):
         if self.content is not None:
             self.lay.removeWidget(self.content)
             self.content.deleteLater()
+        getattr(mod, "theme", common.apply_theme)(QApplication.instance())
         self.content = mod.build(self.screen, lambda s: QTimer.singleShot(0, lambda: self.go(self.v, s)))
         self.lay.addWidget(self.content)
         self.switcher.sync()
@@ -156,13 +163,15 @@ class Keys(QObject):
         return False
 
 
-def capture(out: Path):
+def capture(out: Path, only: str = ""):
     out.mkdir(parents=True, exist_ok=True)
     shell = Shell()
     shell.switcher.hide()
     shell.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True)
     shell.show()
     for vi, mod in enumerate(VARIANTS):
+        if only and mod.KEY not in only:
+            continue
         for key, _title in mod.SCREENS:
             shell.go(vi, key)
             shell.switcher.hide()
@@ -175,14 +184,15 @@ def capture(out: Path):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--variant", default="A")
+    ap.add_argument("--variant", default="D")
     ap.add_argument("--screen")
     ap.add_argument("--capture", type=Path)
+    ap.add_argument("--only", default="", help="capture only these direction keys, e.g. DEF")
     args = ap.parse_args()
     app = QApplication(sys.argv)
     common.apply_theme(app)
     if args.capture:
-        capture(args.capture)
+        capture(args.capture, args.only.upper())
         return
     shell = Shell()
     keys = Keys(shell)

@@ -1,4 +1,7 @@
-# V2 UI/IA exploration: Human Gate brief
+# V2 UI/IA exploration: Human Gate brief (round 1, superseded)
+
+> Rejected by the owner as too close to V1's visual language. See
+> [UI_IA_GATE_R2.md](UI_IA_GATE_R2.md) for the current brief.
 
 Sidecar exploration, run in parallel with V2 Application Foundation. It changes
 no production code, no lifecycle state, and no dependency. Everything here is a

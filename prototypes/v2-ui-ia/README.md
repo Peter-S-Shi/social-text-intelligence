@@ -10,7 +10,12 @@ and visual hierarchy should STI V2 use, inside the fixed V2 thesis and the
 Architecture Gate (Windows-first, PySide6 Qt Widgets, persistent projects,
 review at the centre, AI record separate from human judgment, no Flask)?
 
-**Plan:** three structurally different directions on one PySide6 window,
+**Round 2 (current):** D Casebook, E Instrument, F Field. Each has its own
+art direction and structure; see [UI_IA_GATE_R2.md](UI_IA_GATE_R2.md).
+Round 1 (below) was rejected as too close to V1 and is kept only for
+comparison.
+
+**Round 1 plan:** three structurally different directions on one PySide6 window,
 switchable from a floating bottom bar, plus a shared set of flows and states:
 
 | Key | Direction | Structure |
@@ -31,12 +36,12 @@ own dependencies are not changed):
 ```text
 python -m venv <scratch-venv>
 <scratch-venv>\Scripts\python -m pip install "PySide6-Essentials>=6.7,<6.11"
-<scratch-venv>\Scripts\python prototypes/v2-ui-ia/run_prototype.py --variant A
+<scratch-venv>\Scripts\python prototypes/v2-ui-ia/run_prototype.py --variant D
 ```
 
-- Left / Right arrow: previous / next direction (A, B, C, S)
+- Left / Right arrow: previous / next direction (D, E, F, then round 1 A, B, C, S)
 - Page Up / Page Down or the bar's dropdown: previous / next screen
 - Some in-screen navigation works (tree items in A, stage rail in B, rail in C)
-- `--capture <dir>` renders every screen to PNG without showing a window
+- `--capture <dir> [--only DEF]` renders screens to PNG without showing a window
 
 Tested with PySide6 6.10.3 on Windows 11 and Python 3.12.
