@@ -1,5 +1,23 @@
 # Development Log
 
+## V2 Product Scope Gate — PASS
+
+The repository owner decided the Product Scope Gate: Q1 persistent local
+projects in a per-user application-data directory (SQLite default direction,
+explicit delete/retention/export, no encryption claim); Q2 Moderation Training
+and Support Triage kept, folded, and demoted; Q3 French not required, with
+language detection and an unsupported-language warning required; Q4 audience
+is the repository owner and portfolio reviewers; Q5 representative-domain
+evaluation is a mandatory evidence gate before capability claims. Recorded in
+section 11 of `docs/V2_PRODUCT_DISCOVERY.md` without rewriting the discovery
+evidence above it.
+
+`PROJECT_STATUS.md`, `ROADMAP.md`, and the README banner now name V2 Desktop
+Architecture Exploration (preparing the Architecture Gate) as the current
+phase, stated as the post-merge truth; the Architecture Gate is recorded as
+not started. The lifecycle regression test was updated to match. No product
+code, dependency, version, prototype, or desktop work changed.
+
 ## V2 Product Discovery — cycle opened, discovery complete
 
 Reopened the project for a V2 cycle from the verified public V1 `0.10.0`

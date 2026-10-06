@@ -1,6 +1,7 @@
 # V2 Product Discovery
 
-Status: **Complete — awaiting the Product Scope human gate.** Evidence date:
+Status: **Complete. Product Scope Gate: PASS (2026-10-06, owner decisions in
+section 11).** Evidence date:
 **2026-10-06**. This is the durable record of the V2 Product Discovery phase.
 It makes no implementation, prototype, desktop-migration, or UI-redesign
 change. The V1 `0.10.0` baseline and its Public Portfolio Delivery history
@@ -329,3 +330,36 @@ investigations; D8 per owner decision.
 
 Nothing else is escalated. The proposed ordering and the unknowns in section 8
 are the discovery agent's judgment and may be overridden at the gate.
+
+## 11. Product Scope Gate decision
+
+**Status: PASS — 2026-10-06.** Sections 1 to 10 above are the discovery
+evidence as submitted to the gate and are not rewritten. The repository owner
+decided Q1 to Q5 as follows. This section is the authoritative disposition.
+
+| Question | Decision | Binding consequence for V2 |
+| --- | --- | --- |
+| Q1 Persistence | **YES** | V2 introduces persistent local projects. Production data lives in an OS-appropriate per-user application-data directory, never inside the repository. SQLite is the current default direction, not a final design commitment. Explicit delete, retention, and export semantics are required. Encryption is neither claimed nor required yet; no document or UI may imply it. |
+| Q2 Moderation Training and Support Triage | **KEEP + FOLD + DEMOTE** | Both remain as preserved secondary Decision Practice/Lab material, leave the main product centre, and receive no further V2 investment unless real-data value is later proven. |
+| Q3 Language | **NO French requirement** | V2 requires language detection and an unsupported-language warning. French stays conditional on a future licence-and-evaluation spike (direction D4); no bilingual claim is allowed meanwhile. |
+| Q4 Audience | **Repository owner and portfolio reviewers** | Applies until real user evidence exists. Speculative features (D5, D6, D7) stay evidence-gated. |
+| Q5 Evidence standard | **YES, mandatory** | A representative-domain evaluation is a mandatory V2 evidence gate before any model capability claim. An own-data evaluation UI (D3) is not precommitted as a separate large feature; it may emerge from persistent projects plus human review. |
+
+**Resulting V2 scope direction.** The thesis in section 10 stands. Committed
+direction: D1 (persistent projects, with Q1 constraints), D2 (review as the
+product centre), the language-detection warning from D4, and the Q5 evidence
+gate. Demoted: D8 and the existing Moderation and Triage workflows. Still
+evidence-gated, not committed: French (D4), themes (D5), transcripts (D6),
+local LLM provider (D7). Rejections in section 7 are unchanged. Desktop
+packaging and UI redesign remain approved V2 goals.
+
+**What this gate does not decide.** Storage schema, desktop framework, packaging
+approach, installer size strategy, migration of V1 in-memory workflows, and UI
+design are open and belong to the next phase. This gate authorises no
+implementation, prototype, or dependency change.
+
+**Next phase: V2 Desktop Architecture Exploration**, preparing the Architecture
+Gate. It must at minimum address: persistence design under Q1 (location, schema
+direction, delete/retention/export), desktop packaging feasibility against the
+measured footprint in section 8, how V1 services are reused, and how the Q5
+evidence gate is enforced.
