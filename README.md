@@ -399,9 +399,12 @@ meaning and must never be presented as real predictions. See
 
 ## Limitations
 
-- **Local, single-user, English-only.** No hosted demo, accounts, or
-  persistence; French/multilingual support is an explicitly deferred
-  candidate, not a current claim.
+- **Local, single-user, English-only.** The shipped V1 `0.10.0` runtime has no
+  hosted demo, accounts, or persistence (state is bounded, expiring process
+  memory). V2 persistent local projects are approved but not yet implemented;
+  see [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md). French or
+  multilingual support is not a current claim and remains conditional on a
+  future licence-and-evaluation spike.
 - **Estimate, not diagnosis.** Sentiment and emotion output are model
   estimates; they do not reveal a person's true feelings, intent, or
   psychological state, and are not a substitute for human judgment.

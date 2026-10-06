@@ -252,18 +252,23 @@ a formal tagged release remains a separate, independent decision for the
 repository owner to make later if ever desired. FCR-042 and FCR-043 remain
 `OPEN` non-blocking backlog, unchanged by this closure.
 
-## Deferred next-version backlog
+## V2 disposition of former V1-deferred items
 
-The following remain outside current-version hardening:
+These items were deferred out of V1 `0.10.0` hardening and stayed outside the
+V1 feature boundary. The V2 Product Scope Gate (PASS, 2026-10-06) dispositioned
+them; the authoritative record is section 11 of the
+[V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md) record.
 
-- transcript and long-form analysis;
-- French or multilingual capability;
-- platform connectors;
-- local persistence;
-- accounts, shared workspaces, or cloud services;
-- additional models, input domains, and top-level workflows;
-- other product expansions classified as deferred by the feature audit.
+| Former V1-deferred item | V2 disposition |
+| --- | --- |
+| Local persistence | **Promoted to committed V2 scope** as persistent local projects; design pending the Architecture Gate |
+| French or multilingual capability | **Conditional** on a future licence-and-evaluation spike; V2 itself requires only language detection and an unsupported-language warning |
+| Transcript and long-form analysis | **Evidence-gated**, not committed |
+| Local theme discovery and optional local LLM provider (raised in V2 discovery) | **Evidence-gated**, not committed |
+| Platform connectors | **Rejected for V2** |
+| Accounts, shared workspaces, or cloud services | **Rejected for V2** |
+| Other additional models, input domains, and top-level workflows | Not committed; considered only through the V2 gates |
 
-Deferred items are reviewed only after the current release-candidate decision
-or after an explicit Feature Freeze reopening. They must not be mixed into
-current-version defect or hardening work.
+The V1 `0.10.0` boundary is unchanged: persistence and the other items above
+are not part of the shipped V1 runtime, and none of this work may be mixed into
+V1 defect or hardening work.
