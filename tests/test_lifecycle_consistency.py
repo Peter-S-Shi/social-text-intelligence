@@ -25,6 +25,13 @@ STALE_CURRENT_PHRASES = (
     "Current lifecycle phase: Release Candidate",
     "| Current lifecycle phase | **Release Candidate**",
     "| Release readiness | **No** |",
+    "Current phase: Public Portfolio Delivery",
+    "Current lifecycle phase: Public Portfolio Delivery",
+    "| Current lifecycle phase | **Public Portfolio Delivery**",
+    "Current phase: V2 Product Discovery",
+    "Current lifecycle phase: V2 Product Discovery",
+    "| Current lifecycle phase | **V2 Product Discovery**",
+    "awaiting the Product Scope human gate",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -57,11 +64,18 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
     assert (
-        "| Current lifecycle phase | **Public Portfolio Delivery** — "
+        "| Current lifecycle phase | **V2 Desktop Architecture Exploration** — "
+        in status
+    )
+    assert (
+        "| V1 final lifecycle phase (historical, immutable) | "
+        "**Public Portfolio Delivery** — "
         "Release Candidate Gate is **PASS**; the repository owner's "
         "Version / Delivery Decision approved public portfolio delivery "
         "of `0.10.0` |" in status
     )
+    assert "| V2 Product Scope gate | **PASS — 2026-10-06.**" in status
+    assert "| V2 Architecture Gate | **Not started.**" in status
     assert (
         "| Manual Acceptance status | **PASS — 2026-08-14, 20/20 required "
         "items, 0 blocking defects** |" in status
@@ -73,7 +87,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert "**Current phase: Public Portfolio Delivery**" in roadmap
+    assert "**Current phase: V2 Desktop Architecture Exploration.**" in roadmap
+    assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
     assert "**Status: Complete.**" in roadmap
     assert "**Status: PASS.**" in roadmap
