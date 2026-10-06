@@ -10,8 +10,9 @@ own machine; text is not sent to an inference API.
 > Architecture Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md) and
 > [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md)).
-> The first application foundation milestone is implemented on a review branch;
-> see [Project Status](PROJECT_STATUS.md) for its exact state.
+> The first application foundation milestone is complete on `main`; S1–S4,
+> S6, and S7 are established. See [Project Status](PROJECT_STATUS.md) for the
+> next milestone boundary.
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
 > Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,

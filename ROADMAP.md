@@ -40,8 +40,9 @@ implementation, batch progress and cancellation, and re-pointing the frozen
 Flask surface at the shared use cases (seams S1–S4, S6, S7). SQLite persistence,
 the desktop shell, packaging, and UI redesign are approved V2 goals but outside
 this boundary and need their own scoping. The first Application Foundation
-milestone implements these seams on `milestone/v2-application-foundation` from
-`afda67c5`; review and merge remain pending. The package version stays `0.10.0`.
+milestone is complete on `main`; S1–S4, S6, and S7 are established. The next
+required action is to scope the next V2 milestone. The package version stays
+`0.10.0`.
 
 ## V1 final lifecycle phase (historical)
 
@@ -243,8 +244,8 @@ An RC decision freezes the candidate contents and verifies:
 
 An RC label does not automatically imply `1.0.0`, production readiness, public
 hosting, or public release. Version and delivery decisions require their own
-explicit gate — the next required action is an explicit Version / Delivery
-Decision by the repository owner. FCR-042 and FCR-043 remain `OPEN`
+explicit gate; at this historical RC stage, the next required action was the
+repository owner's Version / Delivery Decision. FCR-042 and FCR-043 remain `OPEN`
 non-blocking backlog, unchanged by this gate.
 
 ## Public Portfolio Delivery
