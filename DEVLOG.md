@@ -1,5 +1,29 @@
 # Development Log
 
+## V2 Product Discovery — cycle opened, discovery complete
+
+Reopened the project for a V2 cycle from the verified public V1 `0.10.0`
+baseline (`main` `5572b4b696edce646feb29795dad2a10f3be4a62`). Inspected the
+repository, lifecycle documents, architecture, tests (195 passed, 2 opt-in
+real-model tests skipped), and the real V1 product, including a five-sentence
+offline probe of the pinned models. Researched overlapping products at the
+capability level against primary vendor/project pages and recorded grade-A/B
+provenance, including three self-check corrections (dropped an unverified
+ATLAS.ti claim, a third-party Azure moderator retirement claim, and an
+off-topic LLM-sarcasm study). The durable record is
+[docs/V2_PRODUCT_DISCOVERY.md](docs/V2_PRODUCT_DISCOVERY.md); it ends with the
+Product Gate brief (thesis, prioritised directions, rejected/deferred items,
+unknowns, and owner decisions Q1–Q5).
+
+Governance change is minimal: `PROJECT_STATUS.md`, `ROADMAP.md`, and the
+README banner now name V2 Product Discovery as the current phase while
+keeping the V1 final phase as a labelled historical row/section; the
+lifecycle regression test was updated to match, following the earlier
+stale-phrase pattern. No product code, behavior, dependency, or version
+changed, and no prototype or implementation was started. Earlier records in
+this log, the Feature Complete Manual Audit, and the Charter were left
+untouched.
+
 ## Public Portfolio Delivery — Version / Delivery Decision resolved
 
 The repository owner made the previously pending Version / Delivery

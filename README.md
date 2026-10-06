@@ -6,8 +6,10 @@ emotion evidence, then carries that evidence through human review,
 moderation-decision practice, and support triage. Every model runs on your
 own machine; text is not sent to an inference API.
 
-> **Current lifecycle phase: Public Portfolio Delivery.** Feature milestones
-> 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,
+> **Current lifecycle phase: V2 Product Discovery** (see
+> [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)). The `0.10.0` V1
+> baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
+> Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,
 > Full Regression and Manual Acceptance is PASS, and the Release Candidate
 > Gate is PASS. The repository owner's Version / Delivery Decision approved
 > public portfolio delivery of `0.10.0`, and this repository is public. No
