@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -222,9 +223,7 @@ def prepare_csv_batch(
             message=f"The CSV file exceeds the {max_rows}-row limit.",
         )
 
-    supplied_ids = [
-        (row.get("record_id") or "").strip() for row in raw_rows
-    ]
+    supplied_ids = [(row.get("record_id") or "").strip() for row in raw_rows]
     duplicate_ids = {
         record_id
         for record_id, count in Counter(item for item in supplied_ids if item).items()
@@ -312,9 +311,33 @@ def prepare_csv_batch(
     )
 
 
-def analyze_batch(preview: BatchPreview, analyzer: CombinedAnalyzer) -> BatchResult:
+@dataclass(frozen=True, slots=True)
+class BatchProgress:
+    """Completed rows include rejected rows, so progress reaches the total."""
+
+    completed: int
+    total: int
+
+    @property
+    def fraction(self) -> float:
+        return self.completed / self.total if self.total else 1.0
+
+
+class BatchCancelled(Exception):
+    """Analysis stopped before committing any partial result."""
+
+
+def analyze_batch(
+    preview: BatchPreview,
+    analyzer: CombinedAnalyzer,
+    *,
+    progress: Callable[[BatchProgress], None] | None = None,
+    cancelled: Callable[[], bool] | None = None,
+) -> BatchResult:
     outcomes: list[BatchOutcome] = []
     for row in preview.rows:
+        if cancelled is not None and cancelled():
+            raise BatchCancelled()
         if row.record is None:
             outcomes.append(
                 BatchOutcome(
@@ -325,37 +348,39 @@ def analyze_batch(preview: BatchPreview, analyzer: CombinedAnalyzer) -> BatchRes
                     error_message=row.error_message,
                 )
             )
-            continue
-        try:
-            report = analyzer.analyze(row.record)
-        except SocialTextIntelligenceError as error:
-            if isinstance(error, (ValidationError, ProviderError)):
-                code = error.code
-                message = error.message
-            else:
-                code = "analysis_error"
-                message = str(error)
-            outcomes.append(
-                BatchOutcome(
-                    prepared=row,
-                    status="error",
-                    report=None,
-                    error_code=code,
-                    error_message=message,
-                )
-            )
-        except Exception:
-            outcomes.append(
-                BatchOutcome(
-                    prepared=row,
-                    status="error",
-                    report=None,
-                    error_code="analysis_failed",
-                    error_message="Analysis failed safely for this row.",
-                )
-            )
         else:
-            outcomes.append(BatchOutcome(row, "ok", report))
+            try:
+                report = analyzer.analyze(row.record)
+            except SocialTextIntelligenceError as error:
+                if isinstance(error, (ValidationError, ProviderError)):
+                    code = error.code
+                    message = error.message
+                else:
+                    code = "analysis_error"
+                    message = str(error)
+                outcomes.append(
+                    BatchOutcome(
+                        prepared=row,
+                        status="error",
+                        report=None,
+                        error_code=code,
+                        error_message=message,
+                    )
+                )
+            except Exception:
+                outcomes.append(
+                    BatchOutcome(
+                        prepared=row,
+                        status="error",
+                        report=None,
+                        error_code="analysis_failed",
+                        error_message="Analysis failed safely for this row.",
+                    )
+                )
+            else:
+                outcomes.append(BatchOutcome(row, "ok", report))
+        if progress is not None:
+            progress(BatchProgress(completed=len(outcomes), total=len(preview.rows)))
     successful = tuple(item.report for item in outcomes if item.report is not None)
     sentiment = Counter(report.sentiment.label for report in successful)
     dominant = Counter(report.emotion.dominant_emotion for report in successful)

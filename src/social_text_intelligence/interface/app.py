@@ -5,91 +5,52 @@ from __future__ import annotations
 import argparse
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 from urllib.parse import urlsplit
 
 from flask import Flask, Response, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
 from werkzeug.exceptions import RequestEntityTooLarge, SecurityError
 
+from ..application.projects import InMemoryProjectRepository
+from ..application.settings import AnalysisGateway, AppSettings, build_analysis_service
+from ..application.use_cases import (
+    INSIGHT_METRICS_BY_PERSPECTIVE,
+    ApplicationUseCases,
+)
 from ..contracts import (
     AnalysisReport,
     EmotionLabel,
-    NormalizedTextInput,
     SentimentLabel,
 )
 from ..contracts.errors import (
-    ProviderError,
     SocialTextIntelligenceError,
     ValidationError,
 )
-from ..providers import CardiffSentimentProvider, SamLoweEmotionProvider
 from ..providers.samlowe_emotion import DEFAULT_EMOTION_THRESHOLD
 from ..services import (
-    AnalysisService,
     ContextAssociation,
     ContextTag,
     ExampleMode,
     GroupingDimension,
     HumanReview,
-    InsightMetric,
     InsightPerspective,
     InsightSelection,
-    InsightState,
-    LazyAnalysisService,
     ModerationLimits,
     TriageLimits,
-    accept_both,
-    add_context_note,
-    analyze_batch,
-    available_group_values,
-    build_group_metrics,
-    create_review_state,
-    delete_context_note,
-    export_batch_csv,
-    export_insights_csv,
-    export_reviewed_csv,
-    filter_review_cases,
-    inspect_csv_upload,
     load_moderation_cases,
     load_moderation_policy,
     load_support_tickets,
     load_triage_guide,
-    parse_insight_filters,
-    prepare_csv_batch,
-    review_cases,
-    review_navigation,
-    select_representative_examples,
-    summarize_reviews,
-    update_review,
 )
 from ..services.batch import DEFAULT_MAX_BATCH_BYTES, DEFAULT_MAX_BATCH_ROWS
 from ..services.insights import METRIC_DEFINITIONS
-from .batch_state import BatchWorkspace, EphemeralBatchStore
+from .batch_state import BatchWorkspace
 from .moderation_routes import moderation
 from .moderation_state import EphemeralModerationStore
 from .triage_routes import triage
 from .triage_state import EphemeralTriageStore
 from .workspace_mutation import WorkspaceMutationConflict
-
-INSIGHT_METRICS_BY_PERSPECTIVE = {
-    InsightPerspective.AI: (
-        InsightMetric.AI_SENTIMENT,
-        InsightMetric.AI_DOMINANT_EMOTION,
-        InsightMetric.AI_EMOTION_ACTIVATION,
-    ),
-    InsightPerspective.HUMAN: (
-        InsightMetric.HUMAN_SENTIMENT,
-        InsightMetric.HUMAN_DOMINANT_EMOTION,
-        InsightMetric.HUMAN_EMOTION_INCLUSION,
-    ),
-    InsightPerspective.AGREEMENT: (
-        InsightMetric.SENTIMENT_DISAGREEMENT,
-        InsightMetric.DOMINANT_EMOTION_DISAGREEMENT,
-        InsightMetric.EMOTION_SET_DISAGREEMENT,
-        InsightMetric.REVIEW_COVERAGE,
-    ),
-}
 
 TRUSTED_LOCAL_HOSTS = ("127.0.0.1", "localhost")
 UNSAFE_HTTP_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
@@ -136,50 +97,8 @@ def _same_request_origin(value: str, *, allow_path: bool) -> bool:
     current = _effective_origin(request.host_url, allow_path=False)
     return candidate is not None and candidate == current
 
+
 DEFAULT_MAX_REQUEST_BYTES = 3 * 1024 * 1024
-
-
-class AnalysisGateway(Protocol):
-    @property
-    def initialized(self) -> bool: ...
-
-    def analyze(self, record: NormalizedTextInput) -> AnalysisReport: ...
-
-
-def _real_analysis_service(
-    *, cache_dir: Path, offline: bool, emotion_threshold: float
-) -> AnalysisService:
-    return AnalysisService(
-        sentiment_provider=CardiffSentimentProvider(
-            cache_dir=cache_dir,
-            offline=offline,
-        ),
-        emotion_provider=SamLoweEmotionProvider(
-            cache_dir=cache_dir,
-            offline=offline,
-            threshold=emotion_threshold,
-        ),
-    )
-
-
-def _safe_error(error: Exception) -> str:
-    if isinstance(error, ValidationError):
-        return error.message
-    if isinstance(error, ProviderError):
-        if error.code == "missing_model_dependencies":
-            return (
-                "Local model dependencies are not installed. "
-                "Install the model extras."
-            )
-        if error.code == "model_load_failed":
-            return (
-                "The approved model files could not be loaded. In offline mode, "
-                "confirm that both pinned revisions are already cached."
-            )
-        return error.message
-    if isinstance(error, SocialTextIntelligenceError):
-        return str(error)
-    return "Analysis failed safely. Review the local setup and try again."
 
 
 def create_app(
@@ -213,46 +132,35 @@ def create_app(
     if config is not None:
         app.config.update(config)
 
-    max_request_bytes = int(app.config["MAX_CONTENT_LENGTH"])
-    max_batch_bytes = int(app.config["MAX_BATCH_BYTES"])
-    if max_request_bytes < 1:
-        raise ValueError("MAX_CONTENT_LENGTH must be positive")
-    if max_request_bytes <= max_batch_bytes:
-        raise ValueError(
-            "MAX_CONTENT_LENGTH must be greater than MAX_BATCH_BYTES so "
-            "multipart encoding has separate request-level capacity."
-        )
+    settings = AppSettings(
+        cache_dir=Path(str(app.config["CACHE_DIR"])),
+        offline=bool(app.config["OFFLINE"]),
+        emotion_threshold=float(app.config["EMOTION_THRESHOLD"]),
+        max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+        max_request_bytes=int(app.config["MAX_CONTENT_LENGTH"]),
+        max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
+        max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
+        workspace_ttl_seconds=int(app.config["BATCH_WORKSPACE_TTL_SECONDS"]),
+        workspace_capacity=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
+    )
 
     if analysis_gateway is None:
-        cache_dir = Path(str(app.config["CACHE_DIR"]))
-        offline = bool(app.config["OFFLINE"])
-        threshold = float(app.config["EMOTION_THRESHOLD"])
-        analysis_gateway = LazyAnalysisService(
-            lambda: _real_analysis_service(
-                cache_dir=cache_dir,
-                offline=offline,
-                emotion_threshold=threshold,
-            )
-        )
+        analysis_gateway = build_analysis_service(settings)
     app.extensions["sti_analysis_gateway"] = analysis_gateway
-    batch_store = EphemeralBatchStore(
-        ttl_seconds=int(app.config["BATCH_WORKSPACE_TTL_SECONDS"]),
-        capacity=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
+    batch_store = InMemoryProjectRepository(
+        ttl_seconds=settings.workspace_ttl_seconds,
+        capacity=settings.workspace_capacity,
     )
     app.extensions["sti_batch_store"] = batch_store
+    use_cases = ApplicationUseCases(batch_store, analysis_gateway)
+    app.extensions["sti_use_cases"] = use_cases
     moderation_policy = load_moderation_policy()
     app.extensions["sti_moderation_policy"] = moderation_policy
-    app.extensions["sti_moderation_cases"] = load_moderation_cases(
-        moderation_policy
-    )
+    app.extensions["sti_moderation_cases"] = load_moderation_cases(moderation_policy)
     app.extensions["sti_moderation_limits"] = ModerationLimits(
-        max_prepared_cases=int(
-            app.config["MAX_MODERATION_PREPARED_CASES"]
-        ),
+        max_prepared_cases=int(app.config["MAX_MODERATION_PREPARED_CASES"]),
         max_session_cases=int(app.config["MAX_MODERATION_SESSION_CASES"]),
-        max_session_attempts=int(
-            app.config["MAX_MODERATION_SESSION_ATTEMPTS"]
-        ),
+        max_session_attempts=int(app.config["MAX_MODERATION_SESSION_ATTEMPTS"]),
     )
     app.extensions["sti_moderation_store"] = EphemeralModerationStore(
         ttl_seconds=int(app.config["MODERATION_WORKSPACE_TTL_SECONDS"]),
@@ -319,14 +227,14 @@ def create_app(
     @app.before_request
     def enforce_declared_request_body_limit() -> None:
         content_length = request.content_length
-        if content_length is not None and content_length > max_request_bytes:
+        if content_length is not None and content_length > settings.max_request_bytes:
             raise RequestEntityTooLarge()
 
     @app.errorhandler(RequestEntityTooLarge)
     def request_too_large(_error: RequestEntityTooLarge) -> Response:
         return Response(
             "Request too large. The submitted HTTP request exceeded the "
-            f"{max_request_bytes}-byte request-body limit. No submitted "
+            f"{settings.max_request_bytes}-byte request-body limit. No submitted "
             "content was processed or saved.",
             status=413,
             mimetype="text/plain",
@@ -349,15 +257,12 @@ def create_app(
         if request.method == "POST":
             text = request.form.get("text", "")
             try:
-                record = NormalizedTextInput.from_text(
-                    text,
-                    language="en",
-                    max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
+                report = use_cases.analyze_text(
+                    text, max_text_length=settings.max_text_length
                 )
-                report = analysis_gateway.analyze(record)
             # The interface boundary must never expose traceback text.
             except Exception as error:
-                error_message = _safe_error(error)
+                error_message = use_cases.safe_error(error)
 
         return render_template(
             "analyze.html",
@@ -391,25 +296,16 @@ def create_app(
                 max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
                 max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
                 max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
-                max_batch_workspaces=int(
-                    app.config["BATCH_WORKSPACE_CAPACITY"]
-                ),
+                max_batch_workspaces=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
             )
         try:
             content = upload.stream.read(int(app.config["MAX_BATCH_BYTES"]) + 1)
-            pending = inspect_csv_upload(
-                content, max_bytes=int(app.config["MAX_BATCH_BYTES"])
+            token = use_cases.upload_batch(
+                content,
+                max_bytes=settings.max_batch_bytes,
+                max_rows=settings.max_batch_rows,
+                max_text_length=settings.max_text_length,
             )
-            if "text" in pending.headers:
-                preview = prepare_csv_batch(
-                    pending,
-                    text_column="text",
-                    max_rows=int(app.config["MAX_BATCH_ROWS"]),
-                    max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
-                )
-                token = batch_store.create(BatchWorkspace(preview=preview))
-            else:
-                token = batch_store.create(BatchWorkspace(pending=pending))
         except RuntimeError as error:
             return (
                 render_template(
@@ -419,23 +315,19 @@ def create_app(
                     max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
                     max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
                     max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
-                    max_batch_workspaces=int(
-                        app.config["BATCH_WORKSPACE_CAPACITY"]
-                    ),
+                    max_batch_workspaces=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
                 ),
                 409,
             )
         except Exception as error:
             return render_template(
                 "batch.html",
-                error_message=_safe_error(error),
+                error_message=use_cases.safe_error(error),
                 offline=bool(app.config["OFFLINE"]),
                 max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
                 max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
                 max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
-                max_batch_workspaces=int(
-                    app.config["BATCH_WORKSPACE_CAPACITY"]
-                ),
+                max_batch_workspaces=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
             )
         return redirect(url_for("batch_workspace", token=token))
 
@@ -451,9 +343,7 @@ def create_app(
                     max_batch_bytes=int(app.config["MAX_BATCH_BYTES"]),
                     max_batch_rows=int(app.config["MAX_BATCH_ROWS"]),
                     max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
-                    max_batch_workspaces=int(
-                        app.config["BATCH_WORKSPACE_CAPACITY"]
-                    ),
+                    max_batch_workspaces=int(app.config["BATCH_WORKSPACE_CAPACITY"]),
                 ),
                 404,
             )
@@ -498,23 +388,12 @@ def create_app(
     @app.post("/batch/<token>/select")
     def batch_select_column(token: str) -> ResponseReturnValue:
         try:
-            selected = request.form.get("text_column", "")
-
-            def select_column(current: BatchWorkspace) -> BatchWorkspace:
-                if current.pending is None:
-                    raise WorkspaceMutationConflict(
-                        "This Batch setup changed in another request. Reload "
-                        "the current workspace before selecting a column."
-                    )
-                preview = prepare_csv_batch(
-                    current.pending,
-                    text_column=selected,
-                    max_rows=int(app.config["MAX_BATCH_ROWS"]),
-                    max_text_length=int(app.config["MAX_TEXT_LENGTH"]),
-                )
-                return BatchWorkspace(preview=preview)
-
-            updated = batch_store.mutate(token, select_column)
+            updated = use_cases.select_batch_column(
+                token,
+                request.form.get("text_column", ""),
+                max_rows=settings.max_batch_rows,
+                max_text_length=settings.max_text_length,
+            )
         except WorkspaceMutationConflict as error:
             return Response(str(error), status=409)
         except SocialTextIntelligenceError:
@@ -526,36 +405,19 @@ def create_app(
     @app.post("/batch/<token>/analyze")
     def batch_analyze(token: str) -> ResponseReturnValue:
         try:
-            lease = batch_store.begin_analysis(token)
+            committed = use_cases.analyze_workspace(token)
         except RuntimeError as error:
             return Response(str(error), status=409)
-        if lease is None or lease.workspace.preview is None:
-            if lease is not None:
-                batch_store.cancel_analysis(lease)
+        if committed is None:
             return redirect(url_for("batch_workspace", token=token))
-        committed = False
-        try:
-            result = analyze_batch(lease.workspace.preview, analysis_gateway)
-            committed = batch_store.complete_analysis(
-                lease,
-                BatchWorkspace(
-                    preview=lease.workspace.preview,
-                    result=result,
-                    reviews=create_review_state(result),
-                    insights=InsightState(),
-                ),
+        if not committed:
+            return Response(
+                "Batch analysis finished, but its result could not be saved "
+                "because the workspace state changed. No success was recorded; "
+                "return to Batch CSV and retry with a current workspace.",
+                status=409,
             )
-            if not committed:
-                return Response(
-                    "Batch analysis finished, but its result could not be saved "
-                    "because the workspace state changed. No success was recorded; "
-                    "return to Batch CSV and retry with a current workspace.",
-                    status=409,
-                )
-            return redirect(url_for("batch_workspace", token=token))
-        finally:
-            if not committed:
-                batch_store.cancel_analysis(lease)
+        return redirect(url_for("batch_workspace", token=token))
 
     def review_filters() -> tuple[str, str, str]:
         return (
@@ -569,9 +431,7 @@ def create_app(
     ) -> dict[str, object]:
         if submitted:
             return {
-                "sentiment_judgment": request.form.get(
-                    "sentiment_judgment", ""
-                ),
+                "sentiment_judgment": request.form.get("sentiment_judgment", ""),
                 "human_sentiment": request.form.get("human_sentiment", ""),
                 "emotion_judgment": request.form.get("emotion_judgment", ""),
                 "human_dominant_emotion": request.form.get(
@@ -618,55 +478,31 @@ def create_app(
         submitted: bool = False,
         status: int = 200,
     ) -> ResponseReturnValue:
-        result = workspace.result
-        state = workspace.reviews
-        if result is None or state is None:
-            return Response("Review workspace not found.", status=404)
-        all_cases = review_cases(result, state)
-        current = next(
-            (
-                case
-                for case in all_cases
-                if case.outcome.prepared.row_number == row_number
-            ),
-            None,
-        )
-        if current is None:
-            return Response("Review record not found.", status=404)
         review_filter, sentiment_filter, emotion_filter = review_filters()
-        filtered = filter_review_cases(
-            result,
-            state,
+        details = use_cases.review_details(
+            workspace,
+            row_number,
             review_filter=review_filter,
             sentiment_filter=sentiment_filter,
             emotion_filter=emotion_filter,
         )
-        navigation = review_navigation(
-            result,
-            state,
-            current_record_id=current.review.record_id,
-            filtered_cases=filtered,
-        )
-        position = next(
-            index
-            for index, case in enumerate(all_cases, start=1)
-            if case.review.record_id == current.review.record_id
-        )
+        if details is None:
+            return Response("Review record not found.", status=404)
         return (
             render_template(
                 "review.html",
                 token=token,
-                current=current,
-                position=position,
-                queue_total=len(all_cases),
-                filtered_count=len(filtered),
-                navigation=navigation,
-                summary=summarize_reviews(result, state),
+                current=details.current,
+                position=details.position,
+                queue_total=details.queue_total,
+                filtered_count=details.filtered_count,
+                navigation=details.navigation,
+                summary=details.summary,
                 review_filter=review_filter,
                 sentiment_filter=sentiment_filter,
                 emotion_filter=emotion_filter,
                 form_values=review_form_values(
-                    current.review, submitted=submitted
+                    details.current.review, submitted=submitted
                 ),
                 error_message=error_message,
                 max_review_note_length=2_000,
@@ -677,29 +513,22 @@ def create_app(
     @app.get("/batch/<token>/review")
     def review_index(token: str) -> ResponseReturnValue:
         workspace = batch_store.get(token)
-        if (
-            workspace is None
-            or workspace.result is None
-            or workspace.reviews is None
-        ):
+        if workspace is None or workspace.result is None or workspace.reviews is None:
             return Response("Review workspace not found.", status=404)
         review_filter, sentiment_filter, emotion_filter = review_filters()
-        cases = filter_review_cases(
-            workspace.result,
-            workspace.reviews,
+        row_number = use_cases.review_index(
+            token,
             review_filter=review_filter,
             sentiment_filter=sentiment_filter,
             emotion_filter=emotion_filter,
         )
-        if not cases:
-            cases = review_cases(workspace.result, workspace.reviews)
-        if not cases:
+        if row_number is None:
             return Response("No successful batch rows are available for review.", 404)
         return redirect(
             url_for(
                 "review_record",
                 token=token,
-                row_number=cases[0].outcome.prepared.row_number,
+                row_number=row_number,
                 review=review_filter,
                 sentiment=sentiment_filter,
                 emotion=emotion_filter,
@@ -716,70 +545,38 @@ def create_app(
     @app.post("/batch/<token>/review/<int:row_number>")
     def save_review(token: str, row_number: int) -> ResponseReturnValue:
         workspace = batch_store.get(token)
-        if (
-            workspace is None
-            or workspace.result is None
-            or workspace.reviews is None
-        ):
+        if workspace is None or workspace.result is None or workspace.reviews is None:
             return Response("This temporary review expired or was cleared.", 404)
-        current = next(
-            (
-                case
-                for case in review_cases(workspace.result, workspace.reviews)
-                if case.outcome.prepared.row_number == row_number
-            ),
-            None,
-        )
-        if current is None:
+        if (
+            use_cases.review_details(
+                workspace,
+                row_number,
+                review_filter="all",
+                sentiment_filter="all",
+                emotion_filter="all",
+            )
+            is None
+        ):
             return Response("Review record not found.", status=404)
         action = request.form.get("action", "save_next")
-        record_id = current.review.record_id
+        review_filter, sentiment_filter, emotion_filter = review_filters()
         try:
-            def mutate_review(current_workspace: BatchWorkspace) -> BatchWorkspace:
-                assert current_workspace.result is not None
-                assert current_workspace.reviews is not None
-                if action == "accept_both":
-                    updated_reviews = accept_both(
-                        current_workspace.result,
-                        current_workspace.reviews,
-                        record_id=record_id,
-                        note=request.form.get("review_note", ""),
-                    )
-                else:
-                    updated_reviews = update_review(
-                        current_workspace.result,
-                        current_workspace.reviews,
-                        record_id=record_id,
-                        sentiment_judgment=request.form.get(
-                            "sentiment_judgment"
-                        ),
-                        human_sentiment=request.form.get("human_sentiment"),
-                        emotion_judgment=request.form.get("emotion_judgment"),
-                        human_dominant_emotion=request.form.get(
-                            "human_dominant_emotion"
-                        ),
-                        human_secondary_emotions=request.form.getlist(
-                            "human_secondary_emotions"
-                        ),
-                        note=request.form.get("review_note", ""),
-                    )
-                return BatchWorkspace(
-                    pending=current_workspace.pending,
-                    preview=current_workspace.preview,
-                    result=current_workspace.result,
-                    reviews=updated_reviews,
-                    insights=current_workspace.insights,
-                )
-
-            replacement = batch_store.mutate(token, mutate_review)
+            target = use_cases.save_review(
+                token,
+                row_number,
+                action=action,
+                values=request.form,
+                secondary_emotions=request.form.getlist("human_secondary_emotions"),
+                review_filter=review_filter,
+                sentiment_filter=sentiment_filter,
+                emotion_filter=emotion_filter,
+            )
         except WorkspaceMutationConflict as error:
             return Response(str(error), status=409)
         except ValidationError as error:
             current_workspace = batch_store.get(token)
             if current_workspace is None:
-                return Response(
-                    "This temporary review expired or was cleared.", 404
-                )
+                return Response("This temporary review expired or was cleared.", 404)
             return render_review(
                 token,
                 current_workspace,
@@ -788,35 +585,13 @@ def create_app(
                 submitted=True,
                 status=400,
             )
-        if replacement is None:
+        if target is None:
             return Response("This temporary review expired or was cleared.", 404)
-        assert replacement.result is not None
-        assert replacement.reviews is not None
-        updated = replacement.reviews
-        review_filter, sentiment_filter, emotion_filter = review_filters()
-        filtered = filter_review_cases(
-            replacement.result,
-            updated,
-            review_filter=review_filter,
-            sentiment_filter=sentiment_filter,
-            emotion_filter=emotion_filter,
-        )
-        navigation = review_navigation(
-            replacement.result,
-            updated,
-            current_record_id=record_id,
-            filtered_cases=filtered,
-        )
-        target = (
-            navigation.next_unreviewed_row
-            if action == "next_unreviewed"
-            else navigation.next_row
-        )
         return redirect(
             url_for(
                 "review_record",
                 token=token,
-                row_number=target or row_number,
+                row_number=target,
                 review=review_filter,
                 sentiment=sentiment_filter,
                 emotion=emotion_filter,
@@ -826,92 +601,12 @@ def create_app(
     def requested_insight_selection(
         workspace: BatchWorkspace, *, comparison: bool
     ) -> tuple[InsightSelection, tuple[str, ...]]:
-        assert workspace.result is not None
-        saved = workspace.insights.selection if workspace.insights else None
-        default_grouping = saved.grouping if saved else GroupingDimension.TOPIC
-        grouping_value = request.values.get("grouping", default_grouping)
-        try:
-            grouping = GroupingDimension(grouping_value)
-        except ValueError as error:
-            raise ValidationError(
-                field="grouping",
-                code="unsupported_grouping",
-                message="Select a supported trusted metadata grouping.",
-            ) from error
-        group_values = available_group_values(workspace.result, grouping)
-        if not group_values:
-            raise ValidationError(
-                field="groups",
-                code="no_groups",
-                message="No successful rows are available for this grouping.",
-            )
-        groups = tuple(request.values.getlist("group"))
-        if not groups:
-            saved_groups = (
-                tuple(group for group in saved.groups if group in group_values)
-                if saved is not None and saved.grouping is grouping
-                else ()
-            )
-            if comparison and not 2 <= len(saved_groups) <= 4:
-                groups = group_values[:2]
-            else:
-                groups = saved_groups or group_values[:1]
-
-        default_perspective = (
-            InsightPerspective.AGREEMENT
-            if request.values.get("view") == "agreement"
-            else (saved.perspective if saved else InsightPerspective.AI)
-        )
-        perspective_value = request.values.get("perspective", default_perspective)
-        try:
-            perspective = InsightPerspective(perspective_value)
-        except ValueError as error:
-            raise ValidationError(
-                field="perspective",
-                code="invalid_perspective",
-                message="Select AI, human-reviewed, or agreement perspective.",
-            ) from error
-        default_metric = (
-            saved.metric
-            if saved is not None
-            and saved.metric in INSIGHT_METRICS_BY_PERSPECTIVE[perspective]
-            else INSIGHT_METRICS_BY_PERSPECTIVE[perspective][0]
-        )
-        try:
-            metric = InsightMetric(request.values.get("metric", default_metric))
-        except ValueError as error:
-            raise ValidationError(
-                field="metric",
-                code="invalid_metric",
-                message="Select a supported insight metric.",
-            ) from error
-        filters = parse_insight_filters(
-            sentiment=request.values.get(
-                "sentiment",
-                saved.filters.sentiment.value
-                if saved and saved.filters.sentiment
-                else "",
-            ),
-            emotion=request.values.get(
-                "emotion",
-                saved.filters.emotion.value if saved and saved.filters.emotion else "",
-            ),
-            date_from=request.values.get(
-                "date_from",
-                saved.filters.date_from.isoformat()
-                if saved and saved.filters.date_from
-                else "",
-            ),
-            date_to=request.values.get(
-                "date_to",
-                saved.filters.date_to.isoformat()
-                if saved and saved.filters.date_to
-                else "",
-            ),
-        )
-        return (
-            InsightSelection(grouping, groups, perspective, metric, filters),
-            group_values,
+        return use_cases.requested_insight_selection(
+            workspace,
+            request.values,
+            request.values.getlist("group"),
+            comparison=comparison,
+            default_agreement=request.values.get("view") == "agreement",
         )
 
     def render_insights(
@@ -921,12 +616,13 @@ def create_app(
         error_message: str | None = None,
         status: int = 200,
     ) -> ResponseReturnValue:
-        result = workspace.result
-        reviews = workspace.reviews
-        insight_state = workspace.insights
-        if result is None or reviews is None or insight_state is None:
+        if (
+            workspace.result is None
+            or workspace.reviews is None
+            or workspace.insights is None
+        ):
             return Response("Insight workspace not found.", status=404)
-        if not any(outcome.report is not None for outcome in result.outcomes):
+        if not any(outcome.report is not None for outcome in workspace.result.outcomes):
             return Response("No successful rows are available for insights.", 404)
         view = request.values.get("view", "explorer")
         if view not in {
@@ -938,147 +634,54 @@ def create_app(
             "export",
         }:
             view = "explorer"
-        comparison = view == "comparison"
         try:
-            selection, group_values = requested_insight_selection(
-                workspace, comparison=comparison
+            resolved = use_cases.resolve_insights(
+                token,
+                workspace,
+                request.values,
+                request.values.getlist("group"),
+                request.values.getlist("record_id"),
+                comparison=view == "comparison",
+                default_agreement=view == "agreement",
+                error_message=error_message,
             )
-        except ValidationError as error:
-            error_message = error_message or error.message
-            grouping = GroupingDimension.SOURCE_TYPE
-            group_values = available_group_values(result, grouping)
-            selection = InsightSelection(
-                grouping=grouping,
-                groups=group_values[:1],
-                perspective=InsightPerspective.AI,
-                metric=InsightMetric.AI_SENTIMENT,
+        except WorkspaceMutationConflict as error:
+            return Response(str(error), status=409)
+        if resolved is None:
+            return Response(
+                "This temporary insight workspace expired or was cleared.", 404
             )
-        try:
-            summaries = build_group_metrics(
-                result, reviews, selection, comparison=comparison
-            )
-        except ValidationError as error:
-            error_message = error_message or error.message
-            summaries = ()
-
-        updated_insight_state = InsightState(
-            notes=insight_state.notes, selection=selection
-        )
-        if updated_insight_state != insight_state:
-            try:
-                replacement = batch_store.mutate(
-                    token,
-                    lambda current: BatchWorkspace(
-                        pending=current.pending,
-                        preview=current.preview,
-                        result=current.result,
-                        reviews=current.reviews,
-                        insights=InsightState(
-                            notes=(
-                                current.insights.notes
-                                if current.insights is not None
-                                else ()
-                            ),
-                            selection=selection,
-                        ),
-                    ),
-                )
-            except WorkspaceMutationConflict as error:
-                return Response(str(error), status=409)
-            if replacement is None:
-                return Response(
-                    "This temporary insight workspace expired or was cleared.",
-                    404,
-                )
-            assert replacement.result is not None
-            assert replacement.reviews is not None
-            assert replacement.insights is not None
-            workspace = replacement
-            result = replacement.result
-            reviews = replacement.reviews
-            insight_state = replacement.insights
-
-        example_mode_value = request.values.get(
-            "example_mode", ExampleMode.LOWEST_AI_CONFIDENCE
-        )
-        emotion_label_value = request.values.get(
-            "example_emotion", EmotionLabel.ANGER
-        )
-        context_tag_value = request.values.get("example_tag", "")
-        try:
-            example_mode = ExampleMode(example_mode_value)
-            example_emotion = EmotionLabel(emotion_label_value)
-            example_tag = ContextTag(context_tag_value) if context_tag_value else None
-        except ValueError:
-            example_mode = ExampleMode.LOWEST_AI_CONFIDENCE
-            example_emotion = EmotionLabel.ANGER
-            example_tag = None
-            error_message = error_message or "Select a supported example rule."
-        requested_record_ids = request.values.getlist("record_id")
-        examples = select_representative_examples(
-            result,
-            reviews,
-            insight_state,
-            mode=example_mode,
-            emotion_label=example_emotion,
-            context_tag=example_tag,
-            record_ids=requested_record_ids,
-        )
-        selected_record_ids = (
-            frozenset(requested_record_ids)
-            if example_mode is ExampleMode.USER_SELECTED
-            else frozenset()
-        )
-        first_report = next(
-            outcome.report for outcome in result.outcomes if outcome.report is not None
-        )
-        association_values = {
-            "record": tuple(
-                outcome.prepared.identity
-                for outcome in result.outcomes
-                if outcome.report is not None
-            ),
-            "topic": available_group_values(result, GroupingDimension.TOPIC),
-            "community": available_group_values(
-                result, GroupingDimension.COMMUNITY
-            ),
-            "source_label": available_group_values(
-                result, GroupingDimension.SOURCE_LABEL
-            ),
-        }
         return (
             render_template(
                 "insights.html",
                 token=token,
                 view=view,
-                selection=selection,
-                group_values=group_values,
-                summaries=summaries,
-                metric_definition=METRIC_DEFINITIONS[selection.metric],
+                selection=resolved.selection,
+                group_values=resolved.group_values,
+                summaries=resolved.summaries,
+                metric_definition=METRIC_DEFINITIONS[resolved.selection.metric],
                 metrics_by_perspective=INSIGHT_METRICS_BY_PERSPECTIVE,
                 grouping_options=tuple(GroupingDimension),
                 perspectives=tuple(InsightPerspective),
                 context_associations=tuple(ContextAssociation),
                 context_tags=tuple(ContextTag),
-                association_values=association_values,
-                insight_state=insight_state,
-                examples=examples,
+                association_values=resolved.association_values,
+                insight_state=resolved.insight_state,
+                examples=resolved.examples,
                 example_modes=tuple(ExampleMode),
-                example_mode=example_mode,
-                example_emotion=example_emotion,
-                example_tag=example_tag,
-                selected_record_ids=selected_record_ids,
+                example_mode=resolved.example_mode,
+                example_emotion=resolved.example_emotion,
+                example_tag=resolved.example_tag,
+                selected_record_ids=resolved.selected_record_ids,
                 emotion_labels=tuple(EmotionLabel),
                 sentiment_labels=tuple(SentimentLabel),
-                first_report=first_report,
-                successful_outcomes=tuple(
-                    outcome for outcome in result.outcomes if outcome.report is not None
-                ),
-                error_message=error_message,
-                query_sentiment=selection.filters.sentiment or "",
-                query_emotion=selection.filters.emotion or "",
-                query_date_from=selection.filters.date_from or "",
-                query_date_to=selection.filters.date_to or "",
+                first_report=resolved.first_report,
+                successful_outcomes=resolved.successful_outcomes,
+                error_message=resolved.error_message,
+                query_sentiment=resolved.selection.filters.sentiment or "",
+                query_emotion=resolved.selection.filters.emotion or "",
+                query_date_from=resolved.selection.filters.date_from or "",
+                query_date_to=resolved.selection.filters.date_to or "",
             ),
             status,
         )
@@ -1105,30 +708,9 @@ def create_app(
                 "This temporary insight workspace expired or was cleared.", 404
             )
         try:
-            def mutate_note(current: BatchWorkspace) -> BatchWorkspace:
-                assert current.insights is not None
-                assert current.result is not None
-                updated_insights = add_context_note(
-                    current.insights,
-                    current.result,
-                    association=request.form.get("association", ""),
-                    association_value=request.form.get("association_value", ""),
-                    phrase=request.form.get("phrase", ""),
-                    explanation=request.form.get("explanation", ""),
-                    context_importance=request.form.get(
-                        "context_importance", ""
-                    ),
-                    tags=request.form.getlist("tags"),
-                )
-                return BatchWorkspace(
-                    pending=current.pending,
-                    preview=current.preview,
-                    result=current.result,
-                    reviews=current.reviews,
-                    insights=updated_insights,
-                )
-
-            replacement = batch_store.mutate(token, mutate_note)
+            replacement = use_cases.add_note(
+                token, request.form, request.form.getlist("tags")
+            )
         except WorkspaceMutationConflict as error:
             return Response(str(error), status=409)
         except ValidationError as error:
@@ -1158,20 +740,7 @@ def create_app(
                 "This temporary insight workspace expired or was cleared.", 404
             )
         try:
-            def mutate_note(current: BatchWorkspace) -> BatchWorkspace:
-                assert current.insights is not None
-                updated_insights = delete_context_note(
-                    current.insights, note_id=note_id
-                )
-                return BatchWorkspace(
-                    pending=current.pending,
-                    preview=current.preview,
-                    result=current.result,
-                    reviews=current.reviews,
-                    insights=updated_insights,
-                )
-
-            replacement = batch_store.mutate(token, mutate_note)
+            replacement = use_cases.remove_note(token, note_id)
         except WorkspaceMutationConflict as error:
             return Response(str(error), status=409)
         except ValidationError as error:
@@ -1207,18 +776,10 @@ def create_app(
             selection, _ = requested_insight_selection(
                 workspace, comparison=request.args.get("view") == "comparison"
             )
-            if request.args.get("view") == "comparison":
-                build_group_metrics(
-                    workspace.result,
-                    workspace.reviews,
-                    selection,
-                    comparison=True,
-                )
-            content = export_insights_csv(
-                workspace.result,
-                workspace.reviews,
-                workspace.insights,
+            content = use_cases.export_insights(
+                workspace,
                 selection,
+                comparison=request.args.get("view") == "comparison",
                 include_records=request.args.get("records") == "1",
                 include_native=request.args.get("native") == "1",
             )
@@ -1237,10 +798,7 @@ def create_app(
         if workspace is None or workspace.result is None:
             return Response("Batch result not found.", status=404)
         include_native = request.args.get("native") == "1"
-        content = export_batch_csv(
-            workspace.result,
-            include_native=include_native,
-        )
+        content = use_cases.export_batch(workspace, include_native=include_native)
         response = Response(content, mimetype="text/csv")
         response.headers["Content-Disposition"] = (
             "attachment; filename=sti-batch-results.csv"
@@ -1251,18 +809,10 @@ def create_app(
     @app.get("/batch/<token>/review/export.csv")
     def review_export(token: str) -> ResponseReturnValue:
         workspace = batch_store.get(token)
-        if (
-            workspace is None
-            or workspace.result is None
-            or workspace.reviews is None
-        ):
+        if workspace is None or workspace.result is None or workspace.reviews is None:
             return Response("Reviewed batch result not found.", status=404)
         include_native = request.args.get("native") == "1"
-        content = export_reviewed_csv(
-            workspace.result,
-            workspace.reviews,
-            include_native=include_native,
-        )
+        content = use_cases.export_reviews(workspace, include_native=include_native)
         response = Response(content, mimetype="text/csv")
         response.headers["Content-Disposition"] = (
             "attachment; filename=sti-reviewed-results.csv"

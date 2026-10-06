@@ -39,7 +39,9 @@ use cases, error mapping, a `ProjectRepository` port with an in-memory
 implementation, batch progress and cancellation, and re-pointing the frozen
 Flask surface at the shared use cases (seams S1–S4, S6, S7). SQLite persistence,
 the desktop shell, packaging, and UI redesign are approved V2 goals but outside
-this boundary and need their own scoping. No V2 implementation has started.
+this boundary and need their own scoping. The first Application Foundation
+milestone implements these seams on `milestone/v2-application-foundation` from
+`afda67c5`; review and merge remain pending. The package version stays `0.10.0`.
 
 ## V1 final lifecycle phase (historical)
 
