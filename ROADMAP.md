@@ -27,14 +27,19 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: V2 Desktop Architecture Exploration.** V2 reopens the project
-from the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is
-historical and unchanged. V2 Product Discovery is complete and the Product
-Scope Gate is PASS (2026-10-06); the owner decisions are recorded in
-[V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md). The current phase
-prepares the Architecture Gate, covering persistence design, desktop packaging
-feasibility, and V1 service reuse. Desktop packaging and UI redesign are
-approved V2 goals; no implementation has started.
+**Current phase: V2 Application Foundation.** V2 reopens the project from the
+verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical and
+unchanged. The Product Scope Gate (decisions in
+[V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)) and the Architecture Gate
+(decisions in
+[V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md))
+are both PASS (2026-10-06). The phase's implementation boundary is the
+framework-free application layer: settings and composition root, application-layer
+use cases, error mapping, a `ProjectRepository` port with an in-memory
+implementation, batch progress and cancellation, and re-pointing the frozen
+Flask surface at the shared use cases (seams S1–S4, S6, S7). SQLite persistence,
+the desktop shell, packaging, and UI redesign are approved V2 goals but outside
+this boundary and need their own scoping. No V2 implementation has started.
 
 ## V1 final lifecycle phase (historical)
 
@@ -261,7 +266,7 @@ them; the authoritative record is section 11 of the
 
 | Former V1-deferred item | V2 disposition |
 | --- | --- |
-| Local persistence | **Promoted to committed V2 scope** as persistent local projects; design pending the Architecture Gate |
+| Local persistence | **Promoted to committed V2 scope** as persistent local projects; storage direction decided at the Architecture Gate (one SQLite file per project, kept until manually deleted), implementation to be scoped later |
 | French or multilingual capability | **Conditional** on a future licence-and-evaluation spike; V2 itself requires only language detection and an unsupported-language warning |
 | Transcript and long-form analysis | **Evidence-gated**, not committed |
 | Local theme discovery and optional local LLM provider (raised in V2 discovery) | **Evidence-gated**, not committed |
