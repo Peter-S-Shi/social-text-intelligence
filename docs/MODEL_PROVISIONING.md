@@ -250,9 +250,19 @@ atomic behaviour).
   - If Verify reports `corrupt` before the service is built, analysis is
     blocked immediately.
   - Once built, the service keeps its loaded models for the rest of the
-    process. A Verify that reports `corrupt` after that takes effect for
-    analysis on the next start, because the recorded finding blocks the
-    readiness gate then. The UI should say so.
+    process. If an explicit Verify then confirms corruption (any model
+    `corrupt`), **all further analysis is blocked immediately for the
+    remainder of that process** (owner decision H2).
+  - Repairing or replacing the model files does not re-enable analysis in
+    the same process. The user must restart the app, so that readiness is
+    checked again and the verified models are loaded fresh.
+  - Nothing is unloaded or reloaded in-process: there is no provider
+    unload, rebuild, or hot-swap mechanism.
+  - This session block is a UI and session rule. The backend needs no
+    change: the recorded Verify finding already blocks the readiness gate at
+    the next start. The UI must route every analysis entry point through one
+    gate, set the block when such a Verify result arrives after the service
+    was built, never clear it in-process, and say that a restart is needed.
 - **When not ready:**
   - Direct analysis and Batch analysis fail with `models_not_ready` and
     change nothing.

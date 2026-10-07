@@ -1,5 +1,36 @@
 # Development Log
 
+## V2 Functional Development — M5.1 Model Provisioning UI/UX Design — complete
+
+M5.1 designed the desktop model-provisioning experience from the M5.0 contract
+without changing its semantics, and passed its Human Gate on 2026-10-07. It
+produced no production code. The evidence is the sidecar branch
+`prototype/m5-1-model-provisioning-uiux` at `d0abd7a`, pushed to `origin` and
+deliberately never merged: a design brief that maps each screen, state, action,
+and error to the contract, an interactive prototype whose state machine mirrors
+the M5.0 rules, and 29 deterministic state captures.
+
+The owner approved two binding decisions:
+
+- **H1:** the design is the M5.2 implementation baseline. M5.2 may polish
+  visuals but must not reinvent the interaction model.
+- **H2:** if explicit Verify confirms corruption after the analysis service has
+  already loaded, all further analysis is blocked for the rest of that process.
+  Repairing the files does not re-enable it; a restart re-checks readiness and
+  loads the verified models fresh. No in-process unload or reload is introduced.
+
+H2 is stricter than the M5.0 text, which let a loaded service keep working until
+the next start. The governance closeout amended
+[docs/MODEL_PROVISIONING.md](docs/MODEL_PROVISIONING.md) §9 to match. The backend
+is unchanged: its readiness gate already blocks at the next start through the
+durable Verify marker, and the in-session block is UI session state.
+
+**Next:** M5.2, the next development sub-milestone and the start of the
+continuous Loop Engineering phase. It establishes the minimal native PySide6
+desktop shell (approved at the Architecture Gate, with the LGPL compliance gate
+tracked from dependency introduction) and implements the approved experience
+over the M5.0 contracts.
+
 ## V2 Functional Development — M5.0 Model Provisioner Function Contract & Foundation — complete
 
 M5 opens V2 Functional Development. M5.0 has two outputs. The first is the
@@ -78,8 +109,8 @@ scope creep. Fixed with regression tests:
 - local suite: 342 passed and 4 optional tests skipped;
 - all 22 safety mutations are caught.
 
-**Next:** M5.1, Model Provisioning UI/UX Design, performed separately by the
-UI-design sidecar/session.
+**Next (at the time):** M5.1, Model Provisioning UI/UX Design, performed
+separately by the UI-design sidecar/session.
 
 ## V2 Persistent Project Foundation (M4) — complete
 
