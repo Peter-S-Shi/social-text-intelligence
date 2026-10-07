@@ -163,7 +163,7 @@ that port with project identity only: `create_project` and `list_projects`; `get
 is "open" and `delete` is removal from the application's data files.
 
 `infrastructure/` holds the adapters behind those ports. M4 adds the durable
-project store; the model provisioner is a later milestone.
+project store; M5.0 adds the model provisioner (below).
 
 - `app_data.py`: `AppDataLocations(root)` is injectable so tests use a temporary
   directory on any platform. `default_app_data_locations()` resolves the Windows
@@ -214,6 +214,29 @@ application never claims forensic erasure. Neither the store nor its errors log
 or echo project text; unreadable or tampered content is reported with a fixed,
 content-free message.
 
+### Model provisioning (M5.0)
+
+The product contract is [Model Provisioning Contract](MODEL_PROVISIONING.md).
+`application/model_provisioning.py` holds everything a desktop UI may depend on:
+the approved manifest (`APPROVED_MODELS`: both model ids, immutable revisions,
+SPDX licences, and every file's size and SHA-256), the typed readiness, progress,
+result and folder-finding values, the `ModelProvisioning` port, and
+`build_provisioned_analysis_service`, which builds the pinned providers against
+the managed folder in offline mode only after both models are `ready`.
+
+`infrastructure/model_store.py` implements the port as `LocalModelProvisioner`
+over `AppDataLocations.models_dir`, written in the Hugging Face cache layout so
+the unchanged providers load it with `local_files_only`. A file is placed in the
+pinned snapshot folder only by an atomic replace after its size and hash match;
+partial downloads and import copies live in `.sti-staging`, which the loaders
+never read. Status is a read-only size check; hashing happens in Download,
+Import, and Verify. Other revisions and user-chosen folders are never modified.
+`infrastructure/model_download.py` is the only network code: a stdlib HTTPS
+transport that resumes with `Range`, refuses non-HTTPS redirects, and maps every
+failure to a fixed code. Nothing in either module logs, and errors carry no
+paths, URLs, or server text. Batch analysis treats `ModelsNotReadyError` as a
+whole-run setup failure, so the lease is cancelled and nothing is committed.
+
 ## Intended layers
 
 Future milestones should preserve these boundaries:
@@ -235,6 +258,8 @@ optional adapters.
 ## Testing strategy
 
 Fast tests run without network access or model downloads by injecting a small
-runtime stub. The opt-in test under `tests/integration/` loads the immutable real
-model revisions only when `STI_RUN_MODEL_TESTS=1`. All fixtures are synthetic.
+runtime stub. The opt-in tests under `tests/integration/` load the immutable real
+model revisions only when `STI_RUN_MODEL_TESTS=1`, and contact the model
+repositories only when `STI_RUN_NETWORK_TESTS=1`. Provisioning tests use a real
+temporary filesystem, an in-memory transport, and a local in-process HTTP server. All fixtures are synthetic.
 Private user text must never become a test fixture.

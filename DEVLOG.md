@@ -1,5 +1,86 @@
 # Development Log
 
+## V2 Functional Development — M5.0 Model Provisioner Function Contract & Foundation — complete
+
+M5 opens V2 Functional Development. M5.0 has two outputs. The first is the
+durable product/function contract,
+[docs/MODEL_PROVISIONING.md](docs/MODEL_PROVISIONING.md), detailed enough for
+M5.1 to design the provisioning experience without inventing semantics. It
+covers:
+
+- both pinned models and their files;
+- five readiness states and what each allows;
+- first use and explicit download;
+- progress, cancellation, and the bounded pause/resume form (keep the partial;
+  resume with `Range`);
+- offline/pre-provisioned folders (inspect read-only, import with verification);
+- wrong-revision and incomplete material, fixed error codes with recovery,
+  analysis gating, and the complete list of UI actions.
+
+The second output is the smallest UI-neutral boundary that satisfies the
+contract:
+
+- typed state and the `ModelProvisioning` port in the application layer;
+- `LocalModelProvisioner` and a stdlib HTTPS transport in infrastructure;
+- an offline-only composition root for analysis.
+
+**Approved decisions kept:**
+
+- weights are not bundled;
+- analysis never downloads;
+- model ids, revisions, and licences are unchanged;
+- nothing substitutes or silently repairs a model.
+
+The real pinned files were hashed into the manifest from the existing local
+cache and confirmed against the original repositories over HTTPS.
+
+**Found during implementation:** Batch analysis records each row's provider
+error as a failed row, so a not-ready model would have committed an all-failed
+result. `ModelsNotReadyError` now propagates and the lease is cancelled.
+
+**Independent two-axis review.** The review found no standards violation or
+scope creep. Fixed with regression tests:
+
+- a body ending early was discarded as a checksum error instead of kept for
+  resume;
+- progress went backwards during verification;
+- hashing could not be cancelled;
+- an empty discard selection discarded everything;
+- import cleanup could mask the reported outcome;
+- a refused redirect response was left open;
+- contract wording overstated a few behaviours.
+
+**Validation:**
+
+- 333 passed and 4 optional tests skipped.
+- All four integration tests pass when enabled. These include a real import
+  and verification of both models and offline analysis from the managed
+  folder.
+- Ruff, MyPy and `compileall` are clean.
+- 15 safety mutations are each caught.
+
+**Final review: a contract blocker found and fixed.**
+
+- **The blocker:** a Verify `corrupt` finding for a same-size tampered file was
+  not retained. The next quick status reported `ready` again, and the
+  readiness gate could pass.
+- **The fix:** Verify now records an empty per-file marker that the hash-free
+  status reads, so the finding survives later status checks and restarts, and
+  analysis is blocked. A verified download or import clears the marker, as
+  does a matching Verify. Verify is now exclusive with Download and Import.
+- **The re-review** found that a read error (for example a Windows sharing
+  violation) would have been persisted as `corrupt`. Verify now reports
+  `storage_failed` instead and records nothing for that file.
+
+**Final implementation head `3f27297`:**
+
+- remote CI PASS on Python 3.11, 3.12 and 3.13;
+- local suite: 342 passed and 4 optional tests skipped;
+- all 22 safety mutations are caught.
+
+**Next:** M5.1, Model Provisioning UI/UX Design, performed separately by the
+UI-design sidecar/session.
+
 ## V2 Persistent Project Foundation (M4) — complete
 
 M4 adds the durable local-project layer behind the M3 `ProjectRepository`

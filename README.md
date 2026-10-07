@@ -9,14 +9,16 @@ contains Moderation Training and Support Triage workflows; they are retired
 from the V2 product surface but remain documented here as the unchanged V1
 baseline.
 
-> **Current lifecycle phase: V2 Persistent Project Foundation** (V2 Product
+> **Current lifecycle phase: V2 Functional Development** (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
 > [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md),
 > and [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md)). The application
 > foundation (M3) and persistent project foundation (M4) milestones are complete
-> on `main`; the next V2 milestone has not been scoped. See
-> [Project Status](PROJECT_STATUS.md).
+> on `main`. M5 is active: M5.0, the
+> [model provisioning contract](docs/MODEL_PROVISIONING.md) and its UI-neutral
+> foundation, is complete on `main`, and M5.1 (provisioning UI/UX design) is
+> next. See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
 > Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,

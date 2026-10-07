@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: V2 Persistent Project Foundation.** V2 reopens the project from
+**Current phase: V2 Functional Development (M5).** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -35,8 +35,11 @@ and unchanged. The Product Scope Gate (decisions in
 [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md)),
 and the UI/IA Gate (decisions in [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md),
 2026-10-07) are all PASS. The V2 Application Foundation milestone (M3) and the
-V2 Persistent Project Foundation milestone (M4) are complete on `main`; **the next
-V2 milestone has not been scoped.** The UI/IA Gate fixed the project-centred
+V2 Persistent Project Foundation milestone (M4) are complete on `main`. **M5 —
+V2 Functional Development is active: M5.0 (Model Provisioner Function Contract &
+Foundation) is complete on `main`, and M5.1 (Model Provisioning UI/UX Design) is
+the next sub-milestone, performed separately by the UI-design sidecar/session.**
+The UI/IA Gate fixed the project-centred
 IA and strict feature boundary, retired Moderation Training and Support Triage
 from the V2 product surface (V1 `0.10.0` and history preserve them), and
 approved V2-4 only as batch progress plus cancellation with no partial commit.
@@ -47,10 +50,15 @@ re-pointed at the shared use cases; seams S1–S4, S6, S7). M4 (durable local
 project repository) delivered one SQLite file per project behind that port, an
 injectable app-data resolver defaulting to Windows LocalAppData, lossless
 round-tripping, schema versioning, and WAL-aware deletion; no UI uses it yet.
-The model provisioner, language detection, the desktop shell, packaging, and UI
-implementation are approved V2 goals that each need their own milestone scoping.
-The next required action is to scope the next V2 milestone. The package version
-stays `0.10.0`.
+M5.0 fixed the model-provisioning product contract
+([Model Provisioning Contract](docs/MODEL_PROVISIONING.md)) and delivered its
+UI-neutral foundation: typed readiness, progress, and recovery; explicit,
+verified, resumable download of the two pinned models; verified import from an
+offline/pre-provisioned folder; and analysis that requires ready models and
+never downloads. M5.1 designs the desktop provisioning experience from that
+contract without changing its semantics. Language detection, the desktop shell,
+packaging, and UI implementation are later M5.x sub-milestones that each need
+their own scoping. The package version stays `0.10.0`.
 
 ## V1 final lifecycle phase (historical)
 

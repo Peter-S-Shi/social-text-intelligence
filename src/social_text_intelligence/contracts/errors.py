@@ -36,6 +36,54 @@ class ProjectStorageError(SocialTextIntelligenceError):
         self.message = message
 
 
+_PROVISIONING_MESSAGES = {
+    "network_unavailable": (
+        "The model source could not be reached. Check the connection and "
+        "download again; finished and partial files are kept."
+    ),
+    "download_rejected": (
+        "The model source returned an unexpected response. Try again later "
+        "or use a models folder."
+    ),
+    "checksum_mismatch": (
+        "A model file did not match its approved checksum and was discarded. "
+        "Download again or choose a different models folder."
+    ),
+    "storage_failed": (
+        "The models folder could not be read or written. Free disk space or "
+        "check permissions, then try again."
+    ),
+    "source_unreadable": "The chosen folder could not be read.",
+    "provisioning_in_progress": (
+        "Another model download or import is already running."
+    ),
+}
+
+
+class ModelProvisioningError(SocialTextIntelligenceError):
+    """Provisioning failed; the fixed message carries no path, URL, or reply."""
+
+    def __init__(self, code: str) -> None:
+        message = _PROVISIONING_MESSAGES[code]
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+
+class ModelsNotReadyError(SocialTextIntelligenceError):
+    """Analysis was requested while a required local model is not ready."""
+
+    def __init__(self, not_ready: tuple[str, ...]) -> None:
+        message = (
+            "The required local models are not ready. Download them or use a "
+            "models folder before analysing."
+        )
+        super().__init__(message)
+        self.code = "models_not_ready"
+        self.message = message
+        self.not_ready = not_ready
+
+
 class ModelInputTooLongError(ProviderError):
     """The pinned model cannot consume the complete encoded input."""
 
