@@ -118,19 +118,21 @@ class SqliteProjectRepository:
         finally:
             connection.close()
 
-    def _backups(self, project_id: str) -> tuple[Path, ...]:
-        pattern = f"{project_id}.pre-migration-v*.sqlite3.bak"
-        return tuple(sorted(self._locations.projects_dir.glob(pattern)))
+    def _artifacts(self, project_id: str) -> tuple[Path, ...]:
+        """Every managed file for a project id: database, sidecars, and backups.
+
+        Found by id, not through the main database, so a retry still discovers
+        residue after an earlier partial deletion removed the main file.
+        """
+
+        directory = self._locations.projects_dir
+        if not directory.is_dir():
+            return ()
+        return tuple(sorted(directory.glob(f"{project_id}.*")))
 
     def _remove_files(self, project_id: str, *, strict: bool = False) -> None:
-        path = self._path(project_id)
-        targets = [
-            *self._backups(project_id),
-            *(path.with_name(path.name + s) for s in support.SIDECAR_SUFFIXES),
-            path,
-        ]
         failed = False
-        for target in targets:
+        for target in self._artifacts(project_id):
             try:
                 target.unlink(missing_ok=True)
             except OSError:
@@ -139,8 +141,9 @@ class SqliteProjectRepository:
             raise ProjectStorageError(
                 code="delete_failed",
                 message=(
-                    "The project's data was cleared but its file could not be "
-                    "removed. Close other programs using it and delete it again."
+                    "The project's data was cleared but some of its files could "
+                    "not be removed. Close other programs using them and delete "
+                    "the project again."
                 ),
             )
 
@@ -194,11 +197,14 @@ class SqliteProjectRepository:
         directory = self._locations.projects_dir
         if not directory.is_dir():
             return ()
-        summaries = [
-            self._list_entry(path)
-            for path in sorted(directory.glob("*.sqlite3"))
-            if support.PROJECT_ID_PATTERN.fullmatch(path.stem)
-        ]
+        project_ids = sorted(
+            {
+                path.name[:32]
+                for path in directory.iterdir()
+                if support.MANAGED_FILE_PATTERN.fullmatch(path.name[:33])
+            }
+        )
+        summaries = [self._list_entry(project_id) for project_id in project_ids]
         epoch = datetime.min.replace(tzinfo=UTC)
         return tuple(
             sorted(
@@ -211,8 +217,7 @@ class SqliteProjectRepository:
             )
         )
 
-    def _list_entry(self, path: Path) -> ProjectSummary:
-        project_id = path.stem
+    def _list_entry(self, project_id: str) -> ProjectSummary:
         try:
             return self._read_summary(project_id)
         except ProjectStorageError as error:
@@ -374,10 +379,11 @@ class SqliteProjectRepository:
                     "This project is being analyzed and cannot be deleted "
                     "until the active analysis finishes."
                 )
-            path = self._path(project_id)
-            if not path.is_file():
+            artifacts = self._artifacts(project_id)
+            if not artifacts:
                 return False
-            for candidate in (path, *self._backups(project_id)):
-                support.purge_database(candidate)
+            for candidate in artifacts:
+                if candidate.suffix in {".sqlite3", ".bak"}:
+                    support.purge_database(candidate)
             self._remove_files(project_id, strict=True)
             return True

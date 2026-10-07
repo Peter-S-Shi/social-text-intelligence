@@ -437,6 +437,44 @@ def test_delete_cleans_content_a_crashed_writer_left_in_the_wal(
     assert not list((crashed / "projects").glob("*-shm"))
 
 
+def test_a_partial_delete_can_be_retried_until_every_managed_file_is_gone(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = new_repository(tmp_path)
+    created = repository.create_project(rich_workspace(), name=NAME_SENTINEL)
+    directory = tmp_path / "projects"
+    database = directory / f"{created.project_id}.sqlite3"
+    backup = directory / f"{created.project_id}.pre-migration-v1.sqlite3.bak"
+    shutil.copy(database, backup)  # a migration backup holds the project's data
+    stray_wal = directory / f"{created.project_id}.sqlite3-wal"
+    stray_wal.write_bytes(b"stray")
+    assert NAME_SENTINEL.encode() in backup.read_bytes()
+
+    real_unlink = Path.unlink
+
+    def refuse_backup(self: Path, missing_ok: bool = False) -> None:
+        if self.suffix == ".bak":
+            raise PermissionError("synthetic: backup in use")
+        real_unlink(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", refuse_backup)
+    with pytest.raises(ProjectStorageError) as raised:
+        repository.delete(created.project_id)
+    assert raised.value.code == "delete_failed"
+    # The main database could be removed, but the residue is not forgotten...
+    assert not database.exists() and backup.exists()
+    assert NAME_SENTINEL.encode() not in backup.read_bytes()  # content was purged
+    assert [(item.project_id, item.status) for item in repository.list_projects()] == [
+        (created.project_id, ProjectStatus.UNREADABLE)
+    ]
+
+    # ...so a retry finds it even though the main database is gone.
+    monkeypatch.undo()
+    assert repository.delete(created.project_id) is True
+    assert project_files(tmp_path) == []
+    assert repository.delete(created.project_id) is False
+
+
 def test_corrupted_project_can_still_be_deleted(tmp_path: Path) -> None:
     repository = new_repository(tmp_path)
     project_id = "c" * 32

@@ -17,7 +17,8 @@ from typing import ParamSpec, TypeVar
 from ..contracts.errors import ProjectStorageError
 
 PROJECT_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
-SIDECAR_SUFFIXES = ("-wal", "-shm", "-journal")
+# A managed file name starts with a project id followed by a dot.
+MANAGED_FILE_PATTERN = re.compile(r"[0-9a-f]{32}\.")
 _BUSY_TIMEOUT_SECONDS = 5.0
 
 _P = ParamSpec("_P")
