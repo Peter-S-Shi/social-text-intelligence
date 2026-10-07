@@ -129,6 +129,8 @@ def purge_database(path: Path) -> None:
     removed by the caller. This is application-level removal, not forensic erasure.
     """
 
+    if path.is_symlink():
+        return  # never overwrite a file outside the projects directory
     try:
         connection = connect(path)
     except sqlite3.Error:

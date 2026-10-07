@@ -502,6 +502,31 @@ def test_only_files_the_store_creates_count_as_project_residue(
     assert foreign_file.exists() and foreign_directory.is_dir()
 
 
+@pytest.mark.parametrize(
+    "suffix", [".sqlite3", ".pre-migration-v1.sqlite3.bak"], ids=["database", "backup"]
+)
+def test_delete_never_purges_through_a_symlink(tmp_path: Path, suffix: str) -> None:
+    outside = tmp_path / "outside.db"
+    make_foreign_database(outside)
+    project_id = "f" * 32
+    directory = tmp_path / "projects"
+    directory.mkdir()
+    link = directory / f"{project_id}{suffix}"
+    try:
+        link.symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available on this platform or account")
+
+    assert new_repository(tmp_path).delete(project_id) is True
+
+    assert not link.is_symlink()  # the link itself was removed
+    connection = sqlite3.connect(outside)
+    try:
+        assert connection.execute("SELECT COUNT(*) FROM t").fetchone()[0] == 1
+    finally:
+        connection.close()
+
+
 def test_corrupted_project_can_still_be_deleted(tmp_path: Path) -> None:
     repository = new_repository(tmp_path)
     project_id = "c" * 32
