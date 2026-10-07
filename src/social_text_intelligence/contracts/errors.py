@@ -50,8 +50,8 @@ _PROVISIONING_MESSAGES = {
         "Download again or choose a different models folder."
     ),
     "storage_failed": (
-        "The models folder could not be written. Free disk space or check "
-        "permissions, then try again."
+        "The models folder could not be read or written. Free disk space or "
+        "check permissions, then try again."
     ),
     "source_unreadable": "The chosen folder could not be read.",
     "provisioning_in_progress": (

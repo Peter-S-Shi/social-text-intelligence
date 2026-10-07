@@ -2,7 +2,9 @@
 
 Files enter the pinned snapshot folder only after their size and SHA-256 match
 the approved manifest; partial files live in a staging folder the model loaders
-never read. Reading status never writes. Nothing here logs.
+never read. An explicit Verify records a same-size hash mismatch as an empty
+marker in a verification folder the loaders never read either; the quick status
+reads those markers but never hashes and never writes. Nothing here logs.
 """
 
 from __future__ import annotations
@@ -166,7 +168,12 @@ class LocalModelProvisioner:
                 for item in spec.files:
                     target = self._target_path(spec, item)
                     if _file_size(target) == item.size:
-                        if _matches(target, item, progress):
+                        try:
+                            intact = _digest_matches(target, item, progress)
+                        except OSError:
+                            # Unreadable is not a finding: record nothing.
+                            raise ModelProvisioningError("storage_failed") from None
+                        if intact:
                             self._accept(spec, item)
                         else:
                             self._mark_corrupt(spec, item)
@@ -575,20 +582,31 @@ def _matches(
     progress: _Progress,
     cancelled: CancelCheck | None = None,
 ) -> bool:
-    digest = hashlib.sha256()
-    done = 0
+    """For download and import: an unreadable file is simply not kept."""
+
     try:
-        with path.open("rb") as handle:
-            for chunk in _read_chunks(handle):
-                digest.update(chunk)
-                done += len(chunk)
-                progress.report(
-                    ProvisioningPhase.VERIFYING, item, min(done, item.size)
-                )
-                if cancelled is not None and cancelled():
-                    raise _Cancelled()
+        return _digest_matches(path, item, progress, cancelled)
     except OSError:
         return False
+
+
+def _digest_matches(
+    path: Path,
+    item: ModelFile,
+    progress: _Progress,
+    cancelled: CancelCheck | None = None,
+) -> bool:
+    """Hash ``path`` against the manifest; read errors propagate as ``OSError``."""
+
+    digest = hashlib.sha256()
+    done = 0
+    with path.open("rb") as handle:
+        for chunk in _read_chunks(handle):
+            digest.update(chunk)
+            done += len(chunk)
+            progress.report(ProvisioningPhase.VERIFYING, item, min(done, item.size))
+            if cancelled is not None and cancelled():
+                raise _Cancelled()
     return done == item.size and digest.hexdigest() == item.sha256
 
 

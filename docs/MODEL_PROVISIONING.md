@@ -210,8 +210,12 @@ addresses or server text.
 - **Discarding partial downloads** raises `provisioning_in_progress` while an
   operation runs.
 - **Verify** returns the fresh status. It raises `provisioning_in_progress`
-  while a download or import runs, and `storage_failed` if it cannot record a
-  finding.
+  while a download or import runs. It raises `storage_failed` if it cannot read
+  an installed file, or cannot record or clear a finding. A file it cannot
+  read is reported as an error and never recorded as `corrupt`.
+- **Exclusivity:** Verify runs exclusively with Download and Import, because it
+  writes findings. A Download or Import started during a Verify fails with
+  `provisioning_in_progress`.
 - **Programming errors** raise `ValueError`. These are an unknown model key,
   or importing a model that the inspection did not report as `found`. A UI
   never offers either.
@@ -221,7 +225,7 @@ addresses or server text.
 | `network_unavailable` | No connection, DNS failure, timeout, connection dropped, or a body that ends before the manifest size | Partial kept: `incomplete` | Download again (resumes); or Use a models folder |
 | `download_rejected` | HTTP error, an unexpected response, a non-HTTPS redirect, or a longer body than the manifest size | Partial of that file discarded | Download again later; or Use a models folder |
 | `checksum_mismatch` | A downloaded or imported file does not match the pinned hash | That file discarded; earlier files kept | Download again; or a different models folder |
-| `storage_failed` | The models folder cannot be created or written (disk full, permissions, or on Windows a file that a running analysis has loaded) | Whatever was installed is kept | Free space, fix permissions, or restart the app, then retry |
+| `storage_failed` | The models folder cannot be created, written or read (disk full, permissions, or on Windows a file that a running analysis has loaded), including when a Verify finding cannot be recorded or cleared | Whatever was installed is kept; existing Verify findings are kept, and an unreadable file is never recorded as `corrupt` | Free space, fix permissions, or restart the app, then retry |
 | `source_unreadable` | The chosen folder does not exist or cannot be read | Unchanged | Choose another folder |
 | `provisioning_in_progress` | Another download, import or Verify is already running | Unchanged | Wait for it to finish |
 

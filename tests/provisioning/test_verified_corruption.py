@@ -23,7 +23,15 @@ from social_text_intelligence.contracts.errors import (
 )
 from social_text_intelligence.infrastructure.model_store import LocalModelProvisioner
 
-from .fakes import CONTENT, EMOTION, MANIFEST, SENTIMENT, FakeTransport, write_model
+from .fakes import (
+    CONTENT,
+    EMOTION,
+    MANIFEST,
+    SENTIMENT,
+    FakeTransport,
+    url_for,
+    write_model,
+)
 
 TAMPERED = bytes(len(CONTENT["sentiment"]["weights.bin"]))  # same size, wrong bytes
 
@@ -94,9 +102,7 @@ def test_an_explicit_download_repairs_only_the_corrupt_file_and_clears_it(
 
     assert result.outcome is ProvisioningOutcome.COMPLETED
     assert [url for url, _ in transport.requests] == [
-        "https://huggingface.co/synthetic-org/sentiment-model/resolve/"
-        + "a" * 40
-        + "/weights.bin"
+        url_for(SENTIMENT, "weights.bin")
     ]
     assert result.status.ready
     assert provisioner(root).status().ready  # also after a restart
@@ -125,9 +131,7 @@ def test_a_failed_repair_leaves_the_model_non_ready(tmp_path: Path) -> None:
     transport = FakeTransport.serving_manifest()
     provisioner(root, transport).verify()
     transport.reject.add(
-        "https://huggingface.co/synthetic-org/sentiment-model/resolve/"
-        + "a" * 40
-        + "/weights.bin"
+        url_for(SENTIMENT, "weights.bin")
     )
 
     result = provisioner(root, transport).download()
@@ -185,3 +189,27 @@ def test_a_download_that_re_verifies_a_restored_file_clears_it_without_fetching(
 
     assert result.status.ready
     assert transport.requests == []
+
+
+def test_a_file_verify_cannot_read_is_never_recorded_as_corrupt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "models"
+    snapshot = write_model(root, SENTIMENT)
+    write_model(root, EMOTION)
+    locked = snapshot / "weights.bin"
+    real_open = Path.open
+
+    def sharing_violation(self: Path, *args: object, **kwargs: object) -> object:
+        if self == locked:
+            raise PermissionError("synthetic sharing violation")
+        return real_open(self, *args, **kwargs)  # type: ignore[call-overload]
+
+    monkeypatch.setattr(Path, "open", sharing_violation)
+    with pytest.raises(ModelProvisioningError) as raised:
+        provisioner(root).verify()
+    monkeypatch.undo()
+
+    assert raised.value.code == "storage_failed"
+    assert provisioner(root).status().ready  # a read failure is not a finding
+    assert provisioner(root).verify().ready
