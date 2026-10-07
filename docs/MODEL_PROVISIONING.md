@@ -60,10 +60,16 @@ and emotion for every record).
   therefore load it unchanged, in offline mode.
 - **Staging:** partial and in-progress files live in `.sti-staging\` inside
   the same folder. They are never visible to the model loaders.
+- **Verify findings:** when an explicit Verify finds that an installed file has
+  the right size but the wrong hash, it writes an empty marker for that file
+  under `.sti-verification\`, which the loaders also never read. The quick
+  status reads these markers, so the finding survives later status checks and
+  restarts.
 - **Writers:** the application writes this folder only through an explicit
-  download or import, and every file is SHA-256 verified before it is put in
-  place. It never deletes or rewrites anything there except staging files it
-  created and installed files it is replacing on an explicit action.
+  download, import or Verify. Every model file is SHA-256 verified before it
+  is put in place; Verify writes or removes only its markers. Nothing there is
+  deleted or rewritten except staging files and markers the application
+  created, and installed files it is replacing on an explicit action.
 - **User-supplied folders** are only read, never modified.
 
 ## 4. Readiness states
@@ -75,7 +81,7 @@ Each model has exactly one readiness state:
 | `ready` | Every manifest file is installed with its exact size. Files were hash-verified when installed. | Allowed | Verify files, Open models folder |
 | `not_installed` | No file of the pinned revision and no partial download | Blocked | Download, Use a models folder |
 | `incomplete` | Some files are missing, and/or a partial download is waiting to be resumed. `resumable_bytes` reports the partial bytes held. | Blocked | Download (resumes), Discard partial download, Use a models folder |
-| `corrupt` | An installed file has the wrong size, or failed hash verification during an explicit Verify | Blocked | Download (replaces only the bad files), Use a models folder |
+| `corrupt` | An installed file has the wrong size, or an explicit Verify found its hash wrong. The Verify finding persists, across restarts, until a hash check accepts the file again | Blocked | Download (replaces only the bad files), Use a models folder, Verify again |
 | `wrong_revision` | Files exist only for a revision other than the pinned one | Blocked | Download (adds the pinned revision; the other revision is left alone and never used), Use a models folder |
 
 - **Overall readiness** is "ready" only when both models are `ready`.
@@ -84,14 +90,21 @@ Each model has exactly one readiness state:
 - **Problem files:** `problem_files` names the manifest files that are missing
   or wrong. It never names user content.
 - **Cost of a status check:**
-  - Status is a quick check of presence and exact size; it never hashes
-    gigabytes. It is safe on every launch.
+  - Status is a quick, read-only check of presence, exact size and recorded
+    Verify findings. It never hashes gigabytes, so it is safe on every launch.
   - Full SHA-256 verification runs after every download or import file, as
-    part of every Download before an installed file is kept, and when the user
-    asks for Verify.
-  - A same-size damaged file can therefore show as `ready` until it is
-    verified, or until model loading fails. That load failure is the existing
-    `model_load_failed` error. The UI should then offer Verify.
+    part of every Download or Import before an installed file is kept, and
+    when the user asks for Verify.
+  - A same-size damaged file can therefore show as `ready` only until it is
+    first verified. Before that, model loading may fail with the existing
+    `model_load_failed` error, and the UI should then offer Verify.
+- **What a Verify finding does:**
+  - Once Verify reports a file `corrupt`, every later status, in this process
+    or after a restart, reports the model `corrupt` and analysis is blocked.
+  - The finding is lifted only by a hash check that accepts the file: a
+    Download or Import that replaces it with a verified copy or re-verifies
+    it, or a later Verify that finds it matching. Restoring the file by hand
+    leaves the model `corrupt` until one of those runs.
 
 ## 5. First use
 
@@ -196,6 +209,9 @@ addresses or server text.
 - **Inspecting a folder** raises `source_unreadable`.
 - **Discarding partial downloads** raises `provisioning_in_progress` while an
   operation runs.
+- **Verify** returns the fresh status. It raises `provisioning_in_progress`
+  while a download or import runs, and `storage_failed` if it cannot record a
+  finding.
 - **Programming errors** raise `ValueError`. These are an unknown model key,
   or importing a model that the inspection did not report as `found`. A UI
   never offers either.
@@ -207,7 +223,7 @@ addresses or server text.
 | `checksum_mismatch` | A downloaded or imported file does not match the pinned hash | That file discarded; earlier files kept | Download again; or a different models folder |
 | `storage_failed` | The models folder cannot be created or written (disk full, permissions, or on Windows a file that a running analysis has loaded) | Whatever was installed is kept | Free space, fix permissions, or restart the app, then retry |
 | `source_unreadable` | The chosen folder does not exist or cannot be read | Unchanged | Choose another folder |
-| `provisioning_in_progress` | Another download or import is already running | Unchanged | Wait for it to finish |
+| `provisioning_in_progress` | Another download, import or Verify is already running | Unchanged | Wait for it to finish |
 
 When analysis is attempted while models are not ready, `ModelsNotReadyError`
 (code `models_not_ready`) names the non-ready model keys. Its message is:
@@ -226,9 +242,13 @@ atomic behaviour).
   both models to be `ready`. It then builds them against the managed folder
   with offline loading, so the loaders cannot reach the network.
 - **Once per process:** readiness is checked when the analysis service is
-  first built. A built service keeps its loaded models for the rest of the
-  process. A later Verify that reports `corrupt` therefore takes effect for
-  analysis on the next start, and the UI should say so.
+  first built, using the quick status (which includes Verify findings).
+  - If Verify reports `corrupt` before the service is built, analysis is
+    blocked immediately.
+  - Once built, the service keeps its loaded models for the rest of the
+    process. A Verify that reports `corrupt` after that takes effect for
+    analysis on the next start, because the recorded finding blocks the
+    readiness gate then. The UI should say so.
 - **When not ready:**
   - Direct analysis and Batch analysis fail with `models_not_ready` and
     change nothing.
@@ -254,7 +274,7 @@ The M5.1 design must offer these actions, and only these, for provisioning.
 | Discard partial download | `discard_partial_downloads(keys)` | Deletes staging files only |
 | Use a models folder: inspect | `inspect_folder(path)` | Read-only and fast; shows the per-model findings |
 | Use a models folder: import | `import_folder(path, keys, on_progress, cancelled)` | Copies and verifies |
-| Verify files | `verify(on_progress)` | Full hash check; can turn `ready` into `corrupt`. Not cancellable; about 1 GB of reading, so run it off the UI thread |
+| Verify files | `verify(on_progress)` | Full hash check. A `corrupt` result is recorded and persists until a hash check accepts the file. Not cancellable; about 1 GB of reading, so run it off the UI thread |
 | Open models folder | `models_root` | Shows where the files are; deleting them by hand is the user's choice |
 | Model details and provenance | `status()` fields | Model id, revision and licence (F1.4 / F4.8) |
 
@@ -279,7 +299,7 @@ The M5.1 design must offer these actions, and only these, for provisioning.
 
 | Seam | How it is tested |
 | --- | --- |
-| `ModelProvisioning` port, through `LocalModelProvisioner` | Real temporary filesystem plus an in-memory `DownloadTransport` fake serving synthetic manifest files. Covers every state, download, resume, cancel, failure, verify, discard, inspect and import |
+| `ModelProvisioning` port, through `LocalModelProvisioner` | Real temporary filesystem plus an in-memory `DownloadTransport` fake serving synthetic manifest files. Covers every state, download, resume, cancel, failure, verify, discard, inspect and import, and that a same-size corruption found by Verify persists across status checks and a fresh provisioner, blocks analysis, and is cleared only by a verified repair or a later matching Verify |
 | `UrllibDownloadTransport` | A local in-process HTTP server: ranges honoured and ignored, HTTP errors, refused redirects |
 | Approved manifest | Literal ids, revisions, licences and sizes from this document |
 | Analysis composition | `build_provisioned_analysis_service` refuses when not ready and uses offline settings when ready |

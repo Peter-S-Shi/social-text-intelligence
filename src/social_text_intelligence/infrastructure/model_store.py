@@ -42,6 +42,8 @@ from .model_download import (
 )
 
 STAGING_DIRECTORY_NAME = ".sti-staging"
+VERIFICATION_DIRECTORY_NAME = ".sti-verification"
+_CORRUPT_SUFFIX = ".corrupt"
 _PART_SUFFIX = ".part"
 _IMPORT_SUFFIX = ".import"
 _FINDING_PRIORITY = (
@@ -144,14 +146,34 @@ class LocalModelProvisioner:
         return ModelsStatus(tuple(self._status(spec) for spec in self._manifest))
 
     def verify(self, *, on_progress: ProgressCallback | None = None) -> ModelsStatus:
+        """Hash every installed file and record what it finds.
+
+        A same-size file whose hash fails gets a corruption marker that the
+        quick status reads, so the finding survives later status checks and
+        restarts; a file that matches has any earlier marker cleared.
+        """
+
         progress = _Progress(
             on_progress,
             sum(spec.total_bytes for spec in self._manifest),
             verifying_advances=True,
         )
-        return ModelsStatus(
-            tuple(self._status(spec, progress) for spec in self._manifest)
-        )
+        if not self._busy.acquire(blocking=False):
+            raise ModelProvisioningError("provisioning_in_progress")
+        try:
+            for spec in self._manifest:
+                progress.start_model(spec)
+                for item in spec.files:
+                    target = self._target_path(spec, item)
+                    if _file_size(target) == item.size:
+                        if _matches(target, item, progress):
+                            self._accept(spec, item)
+                        else:
+                            self._mark_corrupt(spec, item)
+                    progress.finish_file(item)
+        finally:
+            self._busy.release()
+        return self.status()
 
     def discard_partial_downloads(
         self, keys: tuple[str, ...] | None = None
@@ -273,6 +295,7 @@ class LocalModelProvisioner:
     ) -> None:
         target = self._target_path(spec, item)
         if _installed_and_matching(target, item, progress, cancelled):
+            self._accept(spec, item)
             return
         part = self._part_path(spec, item)
         start = _file_size(part) or 0
@@ -285,6 +308,7 @@ class LocalModelProvisioner:
             _remove(part)
             raise ModelProvisioningError("checksum_mismatch")
         _install(part, target)
+        self._accept(spec, item)
 
     def _fetch(
         self,
@@ -364,13 +388,37 @@ class LocalModelProvisioner:
     ) -> None:
         target = self._target_path(spec, item)
         if _installed_and_matching(target, item, progress, cancelled):
+            self._accept(spec, item)
             return
         staged = self._part_path(spec, item).with_suffix(_IMPORT_SUFFIX)
         try:
             _copy_verified(item, source_dir / item.name, staged, progress, cancelled)
             _install(staged, target)
+            self._accept(spec, item)
         finally:
             _discard_quietly(staged)  # never masks the outcome being reported
+
+    def _corrupt_marker(self, spec: ModelSpec, item: ModelFile) -> Path:
+        return (
+            self._root
+            / VERIFICATION_DIRECTORY_NAME
+            / spec.key
+            / spec.revision
+            / f"{item.name}{_CORRUPT_SUFFIX}"
+        )
+
+    def _mark_corrupt(self, spec: ModelSpec, item: ModelFile) -> None:
+        marker = self._corrupt_marker(spec, item)
+        try:
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.touch()
+        except OSError:
+            raise ModelProvisioningError("storage_failed") from None
+
+    def _accept(self, spec: ModelSpec, item: ModelFile) -> None:
+        """The installed file has just been hash-verified: clear any finding."""
+
+        _remove(self._corrupt_marker(spec, item))
 
     def _target_path(self, spec: ModelSpec, item: ModelFile) -> Path:
         return snapshots_dir(self._root, spec) / spec.revision / item.name
@@ -384,15 +432,13 @@ class LocalModelProvisioner:
             / f"{item.name}{_PART_SUFFIX}"
         )
 
-    def _status(
-        self, spec: ModelSpec, verify_with: _Progress | None = None
-    ) -> ModelStatus:
-        """Quick presence-and-size status; hashes too when ``verify_with`` is set."""
+    def _status(self, spec: ModelSpec) -> ModelStatus:
+        """Quick, read-only status: presence, exact size, and Verify findings."""
 
-        if verify_with is not None:
-            verify_with.start_model(spec)
         missing, wrong = _compare(
-            spec, snapshots_dir(self._root, spec) / spec.revision, verify_with
+            spec,
+            snapshots_dir(self._root, spec) / spec.revision,
+            flagged=lambda item: self._corrupt_marker(spec, item).is_file(),
         )
         problems = {*missing, *wrong}
         others = _other_revisions(snapshots_dir(self._root, spec), spec.revision)
@@ -438,23 +484,20 @@ def local_model_provisioner(locations: AppDataLocations) -> LocalModelProvisione
 
 
 def _compare(
-    spec: ModelSpec, directory: Path, verify_with: _Progress | None = None
+    spec: ModelSpec,
+    directory: Path,
+    flagged: Callable[[ModelFile], bool] | None = None,
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Return the (missing, wrong) manifest file names in ``directory``."""
 
     missing: list[str] = []
     wrong: list[str] = []
     for item in spec.files:
-        path = directory / item.name
-        size = _file_size(path)
+        size = _file_size(directory / item.name)
         if size is None:
             missing.append(item.name)
-        elif size != item.size or (
-            verify_with is not None and not _matches(path, item, verify_with)
-        ):
+        elif size != item.size or (flagged is not None and flagged(item)):
             wrong.append(item.name)
-        if verify_with is not None:
-            verify_with.finish_file(item)
     return tuple(missing), tuple(wrong)
 
 

@@ -248,11 +248,15 @@ class ModelProvisioning(Protocol):
     @property
     def models_root(self) -> Path: ...
 
-    def status(self) -> ModelsStatus: ...
+    def status(self) -> ModelsStatus:
+        """Quick and read-only: presence, exact size, and recorded Verify findings."""
+        ...
 
     def verify(
         self, *, on_progress: ProgressCallback | None = None
-    ) -> ModelsStatus: ...
+    ) -> ModelsStatus:
+        """Hash every installed file; a ``corrupt`` finding persists until repaired."""
+        ...
 
     def download(
         self,
