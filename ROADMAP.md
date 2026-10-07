@@ -37,8 +37,9 @@ and the UI/IA Gate (decisions in [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md),
 2026-10-07) are all PASS. The V2 Application Foundation milestone (M3) and the
 V2 Persistent Project Foundation milestone (M4) are complete on `main`. **M5 —
 V2 Functional Development is active: M5.0 (Model Provisioner Function Contract &
-Foundation) is complete on `main`, and M5.1 (Model Provisioning UI/UX Design) is
-the next sub-milestone, performed separately by the UI-design sidecar/session.**
+Foundation) and M5.1 (Model Provisioning UI/UX Design, Human Gate PASS) are
+complete, and M5.2 is the next development sub-milestone and starts the
+continuous Loop Engineering phase.**
 The UI/IA Gate fixed the project-centred
 IA and strict feature boundary, retired Moderation Training and Support Triage
 from the V2 product surface (V1 `0.10.0` and history preserve them), and
@@ -55,10 +56,16 @@ M5.0 fixed the model-provisioning product contract
 UI-neutral foundation: typed readiness, progress, and recovery; explicit,
 verified, resumable download of the two pinned models; verified import from an
 offline/pre-provisioned folder; and analysis that requires ready models and
-never downloads. M5.1 designs the desktop provisioning experience from that
-contract without changing its semantics. Language detection, the desktop shell,
-packaging, and UI implementation are later M5.x sub-milestones that each need
-their own scoping. The package version stays `0.10.0`.
+never downloads. M5.1 designed the desktop provisioning experience from that
+contract; the owner approved the design as the M5.2 implementation baseline (H1)
+and decided that a confirmed corruption mid-session blocks analysis for the rest
+of the session (H2), the one explicitly approved semantic amendment to the
+contract, recorded in this closeout. M5.2 establishes
+the minimal native PySide6 desktop shell (already approved by the Architecture
+Gate, with LGPL compliance tracked from dependency introduction and cleared
+before any distributed Qt build) and implements that experience over the M5.0
+contracts. Language detection and packaging are later M5.x sub-milestones that
+each need their own scoping. The package version stays `0.10.0`.
 
 ## V1 final lifecycle phase (historical)
 
