@@ -44,6 +44,11 @@ STALE_CURRENT_PHRASES = (
     "Define the boundary and acceptance checks of M4",
     "No SQLite persistence, model provisioner",
     "persistent local projects are approved but not yet implemented",
+    "Current phase: V2 Persistent Project Foundation",
+    "Current lifecycle phase: V2 Persistent Project Foundation",
+    "| Current lifecycle phase | **V2 Persistent Project Foundation**",
+    "the next V2 milestone has not been scoped",
+    "The next V2 milestone has not been scoped",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -75,13 +80,16 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature milestone status | Milestones 1–10 complete |" in status
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
-    assert (
-        "| Current lifecycle phase | **V2 Persistent Project Foundation** — "
-        in status
-    )
+    assert "| Current lifecycle phase | **V2 Functional Development** — " in status
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
     assert (
-        "complete on `main`. **The next V2 milestone has not been scoped.**" in status
+        "**M5.0 — Model Provisioner Function Contract & Foundation is complete on "
+        "`main`; M5.1 — Model Provisioning UI/UX Design is the next sub-milestone"
+        in status
+    )
+    assert (
+        "| M5.0 — Model Provisioner Function Contract & Foundation | **COMPLETE"
+        in status
     )
     assert (
         "| First V2 Persistent Project Foundation milestone (M4) | **COMPLETE"
@@ -107,7 +115,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert "**Current phase: V2 Persistent Project Foundation.**" in roadmap
+    assert "**Current phase: V2 Functional Development (M5).**" in roadmap
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
     assert "**Status: Complete.**" in roadmap

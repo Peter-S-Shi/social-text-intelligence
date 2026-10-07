@@ -33,6 +33,12 @@ that can expose text must be explicit, temporary, and documented.
 The web server binds to `127.0.0.1` by default. Normal mode may download pinned
 model files from their documented sources, but inference text is not sent to a
 remote model API. Offline mode requires both model revisions to be cached.
+
+V2 model provisioning ([contract](MODEL_PROVISIONING.md)) downloads only on an
+explicit user action, requests only the fixed pinned file URLs over HTTPS, sends
+no user text, never touches project data, and logs nothing. Its errors are fixed
+messages without paths, URLs, or server responses. V2 analysis composed through
+the provisioner never downloads.
 Model input is encoded locally without truncation. Text beyond either pinned
 model's complete encoded-input budget is rejected before inference; the app
 does not create or expose partial-text scores as if they described the whole
