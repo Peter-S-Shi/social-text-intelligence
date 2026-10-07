@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STI Model Provisioning Prototype</title>
+<!-- PROTOTYPE (M5.1 design gate) - throwaway interactive design evidence.
+     Synthetic state, simulated transfers, nothing touches the network or disk.
+     The state machine mirrors docs/MODEL_PROVISIONING.md (M5.0) on purpose so the
+     owner can inspect real contract behaviour. Not production code. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F0EB; --sheet:#FFFFFF; --ink:#131518; --ink2:#4B5057; --mute:#7C8188; --faint:#B5B8BC;
+  --line:#E0DCD3; --line2:#EDEAE4; --side:#F7F5F1;
+  --machine:#33404F; --machine-soft:#EEF0F3; --machine-line:#D6DBE2;
+  --you:#2C47E0; --you-soft:#ECEFFF; --you-line:#C9D1FB;
+  --diff:#C2401D; --diff-soft:#FCEBE5; --caution:#86590A; --caution-soft:#FBF1DC;
+  --ok:#1F6E82; --ok-soft:#E8F3F5;
+  --focus:#2C47E0;
+  --serif:'Instrument Serif',Georgia,serif; --ui:'Inter','Segoe UI',system-ui,sans-serif; --mono:'IBM Plex Mono',Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#DCD8D0;color:var(--ink);font:13px/1.45 var(--ui);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;align-items:center;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:6px}
+h1[tabindex="-1"]:focus,h2[tabindex="-1"]:focus{outline:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono{font-family:var(--mono);font-size:11.5px}
+.cap{font:500 10.5px/1.2 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.muted{color:var(--ink2)} .faint{color:var(--mute)}
+/* demo bar: outside the product */
+.demobar{width:100%;display:flex;align-items:center;gap:6px;padding:7px 14px;background:#1B1D20;color:#D9D6CF;font-size:12px;flex-wrap:wrap}
+.demobar b{color:#fff;font-weight:600;margin-right:6px}
+.demobar .step{background:#2A2D31;border:1px solid #3A3E44;color:#D9D6CF;border-radius:999px;padding:3px 10px;font-size:11.5px}
+.demobar .step:hover{background:#353A40}
+.demobar .step.on{background:#F2F0EB;color:#131518}
+.demobar select{background:#2A2D31;border:1px solid #3A3E44;color:#D9D6CF;border-radius:6px;padding:3px 6px;font-size:11.5px}
+.demobar .sp{flex:1}
+.demobar .note{color:#9A9DA2;font-size:11px}
+.demobar :focus-visible{outline-color:#9DB0FF}
+/* window */
+.stage{flex:1;display:grid;place-items:center;width:100%;padding:14px;min-height:0;position:relative}
+.win{width:min(1280px,100%);height:min(820px,100%);background:var(--paper);border-radius:10px;overflow:hidden;box-shadow:0 18px 50px -12px rgba(30,25,15,.35);border:1px solid #CFCAC0;display:grid;grid-template-rows:34px 1fr;position:relative}
+.tb{display:flex;align-items:center;gap:10px;padding-left:12px;background:#EBE8E2;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink2);user-select:none}
+.tb .logo{width:16px;height:16px;border-radius:4px;background:var(--ink);display:grid;place-items:center;color:#fff;font:600 9px var(--mono)}
+.tb .ctl{margin-left:auto;display:flex;height:100%}
+.tb .ctl span{width:46px;display:grid;place-items:center}
+.body{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:0}
+.body.solo{grid-template-columns:minmax(0,1fr)}
+.side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px;gap:2px;min-height:0;overflow:auto}
+.proj{padding:8px 10px 12px;border-bottom:1px solid var(--line);margin:0 -10px 6px}
+.proj .t{font:500 13px var(--ui)} .proj .s{font:11px var(--mono);color:var(--mute);margin-top:2px}
+.nav-h{margin:12px 8px 4px}
+.nav{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;color:var(--ink2);font-size:13px;background:none;border:0;text-align:left;width:100%}
+.nav:hover{background:#EFECE6}
+.nav i{font-style:normal;width:14px;text-align:center;color:var(--mute);font-size:12px}
+.nav.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line)} .nav.on i{color:var(--ink)}
+/* sidebar model status (contract s10: always visible) */
+.mstat{margin-top:auto;border:0;border-top:1px solid var(--line);background:none;text-align:left;padding:10px 8px 4px;display:flex;flex-direction:column;gap:5px;width:100%;border-radius:0}
+.mstat:hover .mstat-l{text-decoration:underline}
+.mstat-l{display:flex;align-items:center;gap:7px;font:500 12px var(--ui)}
+.mstat-s{font:11px var(--mono);color:var(--mute)}
+.ico{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;font:700 10px/1 var(--ui);flex:none}
+.ico.ok{background:var(--ok);color:#fff}
+.ico.warn{background:var(--caution);color:#fff;border-radius:3px;transform:rotate(45deg)} .ico.warn b{transform:rotate(-45deg)}
+.ico.err{background:var(--diff);color:#fff;border-radius:3px}
+.ico.busy{border:2px solid var(--you);color:var(--you);background:#fff}
+.ico.none{border:1.5px dashed var(--ink2);color:var(--ink2);background:#fff}
+.main{min-height:0;display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:12px;padding:14px 24px 12px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.bar h1,.bar h2{font:400 26px/1 var(--serif)}
+.sp{flex:1}
+.pane{padding:18px 24px;overflow:auto;flex:1;min-height:0}
+/* controls */
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 12px;border-radius:6px;border:1px solid #CFCAC0;background:#fff;font:500 12.5px var(--ui);white-space:nowrap}
+.btn:hover{border-color:#A9A397}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.pri:hover{background:#2A2E33}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)}
+.btn.ghost:hover{background:#ECE9E3}
+.btn.danger{color:var(--diff);border-color:#EDB9A8}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{min-height:26px;padding:0 9px;font-size:12px}
+.btn .sub{font:400 11px var(--mono);opacity:.8}
+.chip{display:inline-flex;align-items:center;gap:6px;font:500 11.5px var(--ui);padding:2px 9px 2px 3px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink2);white-space:nowrap}
+.chip.ok{color:#17586A;background:var(--ok-soft);border-color:#CBE4EA}
+.chip.err{color:var(--diff);background:var(--diff-soft);border-color:#F3CBBE}
+.chip.warn{color:var(--caution);background:var(--caution-soft);border-color:#EED9AE}
+.chip.busy{color:var(--you);background:var(--you-soft);border-color:var(--you-line)}
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:10px}
+.note-box{border-radius:8px;padding:10px 12px;font-size:12.5px;border:1px solid;display:flex;gap:10px;align-items:flex-start}
+.note-box .nb{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.note-box.warn{background:var(--caution-soft);border-color:#EED9AE} .note-box.warn h3{color:var(--caution)}
+.note-box.err{background:var(--diff-soft);border-color:#F3CBBE} .note-box.err h3{color:var(--diff)}
+.note-box.ok{background:var(--ok-soft);border-color:#CBE4EA} .note-box.ok h3{color:#17586A}
+.note-box.info{background:#fff;border-color:var(--line)}
+.note-box h3{font:600 12.5px var(--ui)}
+.note-box .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.hr{height:1px;background:var(--line2)}
+.row{display:flex;align-items:center;gap:10px}
+.wrap{flex-wrap:wrap}
+.grid{display:grid;gap:14px}
+.meter{height:8px;background:#E6E2DA;border-radius:4px;overflow:hidden;position:relative;display:flex}
+.meter>i{display:block;height:100%}
+.meter>i.part{background:repeating-linear-gradient(45deg,#8C9AE8 0 4px,#B8C2F2 4px 8px)}
+.footnote{font:10.5px var(--mono);color:var(--mute)}
+.serif{font-family:var(--serif)}
+.files{width:100%;border-collapse:collapse;font-size:12px}
+.files td{padding:4px 0;border-bottom:1px solid var(--line2)}
+.files td:last-child{text-align:right;font-family:var(--mono);font-size:11px;color:var(--ink2)}
+details>summary{cursor:pointer;font:500 12px var(--ui);color:var(--ink2);list-style:none;display:inline-flex;gap:6px;align-items:center}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:'▸';font-size:10px}
+details[open]>summary::before{content:'▾'}
+/* model card */
+.mcard{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.mcard .mid{font:400 22px/1.15 var(--serif);word-break:break-word}
+.state-line{font-size:12.5px;color:var(--ink2)}
+/* operation panel */
+.op{padding:16px 18px;display:flex;flex-direction:column;gap:9px;border-color:var(--you-line)}
+.op .big{font:400 30px/1 var(--serif)}
+.bars{display:grid;grid-template-columns:110px minmax(0,1fr) 150px;gap:6px 12px;align-items:center;font-size:12px}
+.bars .mono{text-align:right}
+/* overlays */
+.scrim{position:absolute;inset:34px 0 0 0;background:rgba(19,21,24,.30);display:grid;place-items:center;z-index:5;padding:20px}
+.subwin{background:var(--paper);border-radius:10px;border:1px solid #CFCAC0;box-shadow:0 24px 60px -12px rgba(0,0,0,.45);width:min(980px,100%);max-height:100%;display:grid;grid-template-rows:34px minmax(0,1fr);overflow:hidden}
+.subwin .tb{background:#EBE8E2}
+.subwin .tb button{margin-left:auto;width:46px;height:100%;border:0;background:none}
+.subwin .tb button:hover{background:#DDD9D1}
+.dlg{background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 20px 50px -10px rgba(0,0,0,.35);padding:20px 22px;width:560px;max-width:100%;max-height:100%;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.dlg h2{font:400 26px/1.15 var(--serif)}
+.pick{display:flex;flex-direction:column;gap:6px}
+.pick label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;background:#fff}
+.pick label:hover{border-color:#B9B4A9}
+.pick input{margin-top:3px;accent-color:var(--ink)}
+.pick .p{font:500 12px var(--mono)} .pick .d{font-size:11.5px;color:var(--ink2)}
+.find{display:grid;grid-template-columns:100px minmax(0,1fr);gap:4px 12px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line2)}
+.toast{position:absolute;right:18px;bottom:18px;background:var(--ink);color:#fff;border-radius:8px;padding:10px 14px;font-size:12.5px;z-index:9;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);max-width:440px}
+textarea.inp{width:100%;border:1px solid #CFCAC0;border-radius:8px;background:#fff;padding:10px 12px;font:13px/1.5 var(--ui);resize:vertical;min-height:120px}
+textarea.inp:focus-visible{outline:2px solid var(--focus)}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+table.t td{padding:9px 10px;border-bottom:1px solid var(--line2)}
+#err{position:fixed;left:8px;bottom:8px;background:#b00;color:#fff;padding:6px 10px;font:12px var(--mono);display:none;z-index:99}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.meter>i.part{background:#A9B5EE}}
+</style>
+</head>
+<body>
+<div class="demobar" id="demobar" role="region" aria-label="Prototype controls (not part of the product)"></div>
+<div class="stage"><div class="win" id="win"></div></div>
+<div id="live" class="sr" aria-live="polite"></div>
+<div id="alert" class="sr" role="alert"></div>
+<div id="err"></div>
+<script>
+window.onerror=function(m,s,l){const e=document.getElementById('err');e.style.display='block';e.textContent='JS error: '+m+' @'+l;};
+/* ======================= contract data (M5.0, docs/MODEL_PROVISIONING.md s2) ======================= */
+const MAN=[
+ {key:'sentiment',label:'Sentiment',id:'cardiffnlp/twitter-roberta-base-sentiment-latest',rev:'3216a57f2a0d9c45a2e6c20157c20c49fb4bf9c7',lic:'CC-BY-4.0',
+  weights:'pytorch_model.bin',files:[['config.json',929],['merges.txt',456318],['pytorch_model.bin',501045531],['special_tokens_map.json',239],['vocab.json',898822]]},
+ {key:'emotion',label:'Emotion',id:'SamLowe/roberta-base-go_emotions',rev:'d75048347613a25d77de8cf6412eaae9fa7b26be',lic:'MIT',
+  weights:'model.safetensors',files:[['config.json',1924],['merges.txt',456356],['model.safetensors',498697004],['special_tokens_map.json',280],['tokenizer.json',2108856],['tokenizer_config.json',380],['vocab.json',798293]]},
+];
+MAN.forEach(s=>s.total=s.files.reduce((a,f)=>a+f[1],0));
+const TOTAL=MAN.reduce((a,s)=>a+s.total,0); // 1,004,464,932
+const OTHER_REV='d616e2bdfcdb0ca89d9b6efc4909e1db063af290';
+const MSG={ // fixed messages, src/social_text_intelligence/contracts/errors.py
+ network_unavailable:'The model source could not be reached. Check the connection and download again; finished and partial files are kept.',
+ download_rejected:'The model source returned an unexpected response. Try again later or use a models folder.',
+ checksum_mismatch:'A model file did not match its approved checksum and was discarded. Download again or choose a different models folder.',
+ storage_failed:'The models folder could not be read or written. Free disk space or check permissions, then try again.',
+ source_unreadable:'The chosen folder could not be read.',
+ provisioning_in_progress:'Another model download or import is already running.',
+ models_not_ready:'The required local models are not ready. Download them or use a models folder before analysing.',
+};
+const MODELS_DIR='%LOCALAPPDATA%\\SocialTextIntelligence\\models';
+/* synthetic "folders the user might pick" (s7). bad = same-size damaged files */
+const FOLDERS=[
+ {id:'pack',path:'E:\\STI model pack',desc:'Two subfolders, one per model, all files present',m:{sentiment:{f:'found'},emotion:{f:'found'}}},
+ {id:'v1cache',path:'D:\\archive\\sti-v1\\model_cache',desc:'A V1 Hugging Face cache with both pinned revisions (and one older revision, which is ignored)',m:{sentiment:{f:'found'},emotion:{f:'found'}}},
+ {id:'usb',path:'F:\\usb-copy\\models',desc:'Looks complete; the emotion weights were damaged while copying (same size)',m:{sentiment:{f:'found'},emotion:{f:'found',bad:['model.safetensors']}}},
+ {id:'oldrev',path:'D:\\old-hf-cache',desc:'A Hugging Face cache holding only other revisions',m:{sentiment:{f:'wrong_revision'},emotion:{f:'wrong_revision'}}},
+ {id:'half',path:'D:\\half-copied',desc:'Sentiment weights present, other files missing',m:{sentiment:{f:'incomplete',p:['config.json','merges.txt','special_tokens_map.json','vocab.json']},emotion:{f:'not_found'}}},
+ {id:'resized',path:'D:\\downloads\\sentiment-files',desc:'The right file names with different sizes',m:{sentiment:{f:'mismatched',p:['pytorch_model.bin','vocab.json']},emotion:{f:'not_found'}}},
+ {id:'photos',path:'D:\\Photos\\2026',desc:'An unrelated folder',m:{sentiment:{f:'not_found'},emotion:{f:'not_found'}}},
+ {id:'nas',path:'\\\\nas\\models (offline share)',desc:'A network share that is not reachable',unreadable:true},
+];
+/* ======================= helpers ======================= */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MB=b=>(b/1048576).toFixed(1)+' MB';
+const GB=b=>(b/1073741824).toFixed(2)+' GB';
+const size=b=>b>=1073741824*0.9?GB(b):b>=1048576?MB(b):b>=1024?(b/1024).toFixed(1)+' KB':b+' bytes';
+const pct=(a,b)=>b?Math.floor(a/b*100):100;
+const short=r=>r.slice(0,7);
+const spec=k=>MAN.find(s=>s.key===k);
+/* ======================= simulated disk (survives "Restart app") ======================= */
+function emptyDisk(){const d={};MAN.forEach(s=>{d[s.key]={others:[],f:{}};s.files.forEach(([n])=>d[s.key].f[n]={inst:'none',flag:false,part:0});});return d;}
+function installAll(d,k){spec(k).files.forEach(([n])=>{d[k].f[n]={inst:'ok',flag:false,part:0};});}
+/* readiness exactly as LocalModelProvisioner._status */
+function status(k){
+ const s=spec(k),m=S.disk[k];const missing=[],wrong=[];let installed=0;
+ s.files.forEach(([n,sz])=>{const f=m.f[n];if(f.inst==='none')missing.push(n);else if(f.inst==='wrongsize'||f.flag)wrong.push(n);else installed+=sz;});
+ const probs=s.files.map(f=>f[0]).filter(n=>missing.includes(n)||wrong.includes(n));
+ const resumable=s.files.filter(([n])=>probs.includes(n)).reduce((a,[n])=>a+m.f[n].part,0);
+ let r;if(wrong.length)r='corrupt';else if(!missing.length)r='ready';else if(missing.length<s.files.length||resumable)r='incomplete';else if(m.others.length)r='wrong_revision';else r='not_installed';
+ const need=s.files.filter(([n])=>probs.includes(n)).reduce((a,[n,sz])=>a+sz,0);
+ return {key:k,r,installed,resumable,probs,need,others:m.others,wrong,missing};
+}
+const all=()=>MAN.map(s=>status(s.key));
+const allReady=()=>all().every(x=>x.r==='ready');
+const notReady=()=>all().filter(x=>x.r!=='ready');
+const STATE={
+ ready:{t:'Ready',cls:'ok',ico:'✓',icls:'ok'},
+ not_installed:{t:'Not installed',cls:'',ico:'',icls:'none'},
+ incomplete:{t:'Incomplete',cls:'warn',ico:'!',icls:'warn'},
+ corrupt:{t:'Damaged',cls:'err',ico:'✕',icls:'err'},
+ wrong_revision:{t:'Different version',cls:'warn',ico:'!',icls:'warn'},
+};
+function chip(st){const d=STATE[st.r];return `<span class="chip ${d.cls}"><span class="ico ${d.icls}" aria-hidden="true">${d.icls==='warn'?'<b>!</b>':d.ico}</span>${d.t}</span>`;}
+function stateSentence(st){
+ const s=spec(st.key);
+ switch(st.r){
+  case 'ready':return 'All files are installed and were checksum-verified when installed.';
+  case 'not_installed':return `Not downloaded yet. ${MB(s.total)} from huggingface.co.`;
+  case 'incomplete':return st.resumable?`Download was interrupted. ${MB(st.resumable)} is kept and resumes with Download; ${MB(Math.max(0,st.need-st.resumable))} left.`:`${st.probs.length} of ${s.files.length} files are missing; ${MB(st.need)} left to download.`;
+  case 'corrupt':return st.wrong.some(n=>S.disk[st.key].f[n].flag)?`Verify found ${st.wrong.length===1?'a file':'files'} that failed the checksum. This finding is remembered, also after restarting, until the file is replaced or verifies again.`:`${st.wrong.length===1?'A file has':'Files have'} the wrong size.`;
+  case 'wrong_revision':return `Only a different version (${st.others.map(short).join(', ')}) is on this computer. It is never used and is left alone. The approved version is ${short(s.rev)}.`;
+ }
+}
+/* ======================= session state ======================= */
+let S;
+function fresh(disk){return {disk:disk||emptyDisk(),win:'setup',page:'projects',models:false,op:null,result:null,fault:'none',serviceBuilt:false,dlg:null,toast:null,speed:1,direct:{text:'Absolutely loved the new update, the app finally feels fast again!',out:null,err:null},newp:{created:false},scenario:'first-run',retFocus:null};}
+S=fresh();
+/* ======================= operation engine (tick-based, mirrors s6/s7 and the Verify rules) ======================= */
+const RATE=9*1048576; // bytes per tick while downloading/copying
+let timer=null;
+function canStart(){return !S.op;}
+function startOp(kind,keys,source){
+ if(S.fault==='busy'){S.fault='none';S.result={kind,outcome:'failed',code:'provisioning_in_progress'};announce(MSG.provisioning_in_progress,true);render();return;}
+ if(!canStart())return;
+ const specs=MAN.filter(s=>keys.includes(s.key));
+ S.op={kind,keys,specs,si:0,fi:0,stage:'begin',fileDone:0,counted:0,modelBefore:0,overallBefore:0,total:specs.reduce((a,s)=>a+s.total,0),cancel:false,source:source||null,fault:S.fault,lastPct:-1,startStatus:null};
+ S.fault='none';S.result=null;S.newCorrupt=[];
+ announce(`${kind==='download'?'Download':kind==='import'?'Import':'Verify'} started.`);
+ run();render();
+}
+function run(){clearInterval(timer);timer=setInterval(()=>{for(let i=0;i<S.speed;i++){if(!S.op)break;tick();}if(!S.op)clearInterval(timer);liveProgress();renderTick();},90);}
+function renderTick(){const a=document.activeElement;if(S.op&&a&&a.tagName==='TEXTAREA'){const m=$('mstat');if(m){const tmp=document.createElement('div');tmp.innerHTML=sidebar();const n=tmp.querySelector('#mstat');m.replaceWith(n);}return;}render();}
+function curFile(){const op=S.op;const s=op.specs[op.si];if(!s)return null;const [n,sz]=s.files[op.fi];return {s,n,sz,f:S.disk[s.key].f[n]};}
+function nextFile(){const op=S.op;const c=curFile();op.modelBefore+=c.sz;op.counted=0;op.fileDone=0;op.stage='begin';op.fi++;if(op.fi>=c.s.files.length){op.overallBefore+=c.s.total;op.modelBefore=0;op.fi=0;op.si++;}}
+function finish(outcome,code){const op=S.op;S.op=null;clearInterval(timer);
+ S.result={kind:op.kind,outcome,code:code||null,keys:op.keys,newCorrupt:S.newCorrupt||[],source:op.source};
+ if(outcome==='completed'&&op.kind==='verify'&&S.newCorrupt.length){announce('Verify found a damaged file. Analysis is blocked until it is repaired.',true);}
+ else if(outcome==='failed')announce(`${opName(op.kind)} failed. ${MSG[code]}`,true);
+ else if(outcome==='cancelled')announce(`${opName(op.kind)} stopped.`);
+ else announce(`${opName(op.kind)} finished. ${allReady()?'Both models are ready.':''}`);
+ render();}
+const opName=k=>k==='download'?'Download':k==='import'?'Import':'Verify';
+function tick(){
+ const op=S.op;const c=curFile();if(!c)return finish('completed');
+ const {s,n,sz,f}=c;const isW=n===s.weights;
+ if(op.kind==='verify'){ // explicit Verify: not cancellable, all counts advance (s6)
+   if(op.stage==='begin'){if(f.inst==='none'||f.inst==='wrongsize'){nextFile();return;}op.stage='hash';op.fileDone=0;}
+   op.fileDone=Math.min(sz,op.fileDone+RATE*3);op.counted=op.fileDone;
+   if(op.fault==='unreadable'&&isW&&s.key==='emotion'&&op.fileDone>sz*.3){return finish('failed','storage_failed');}
+   if(op.fileDone>=sz){if(f.inst==='ok')f.flag=false;else if(f.inst==='bad'){if(!f.flag)S.newCorrupt.push(s.key);f.flag=true;}nextFile();}
+   return;
+ }
+ if(op.cancel&&op.stage==='begin')return cancelOp();
+ switch(op.stage){
+  case 'begin':
+   if(f.inst==='ok'||f.inst==='bad'){op.stage='hashKept';op.fileDone=0;return;}
+   return beginTransfer(c);
+  case 'hashKept': // re-verify a kept file: only the file count moves
+   if(op.cancel)return cancelOp();
+   op.fileDone=Math.min(sz,op.fileDone+RATE*3);
+   if(op.fileDone>=sz){if(f.inst==='ok'){f.flag=false;nextFile();}else{op.fileDone=0;beginTransfer(c);}}
+   return;
+  case 'fetch':
+   if(op.cancel)return cancelOp();
+   op.fileDone=Math.min(sz,op.fileDone+RATE);f.part=op.fileDone;op.counted=Math.max(op.counted,op.fileDone);
+   if(op.fault==='network'&&isW&&op.fileDone>=sz*.4){op.fault='none';return finish('failed','network_unavailable');}
+   if(op.fileDone>=sz){op.stage='hashNew';op.fileDone=0;}
+   return;
+  case 'hashNew':
+   if(op.cancel)return cancelOp();
+   op.fileDone=Math.min(sz,op.fileDone+RATE*3);
+   if(op.fileDone>=sz){
+    if(op.fault==='checksum'&&isW){f.part=0;return finish('failed','checksum_mismatch');}
+    if(op.fault==='storage'&&isW){return finish('failed','storage_failed');}
+    f.inst='ok';f.flag=false;f.part=0;nextFile();}
+   return;
+  case 'copy':
+   if(op.cancel){op.staged=0;return cancelOp();}
+   op.fileDone=Math.min(sz,op.fileDone+RATE);op.counted=Math.max(op.counted,op.fileDone);
+   if(op.fileDone>=sz){
+    const bad=(op.source.m[s.key].bad||[]).includes(n);
+    if(bad)return finish('failed','checksum_mismatch'); // staged copy removed; earlier files/models stay
+    if(op.fault==='storage'&&isW)return finish('failed','storage_failed');
+    f.inst='ok';f.flag=false;f.part=0;nextFile();}
+   return;
+ }
+}
+function beginTransfer(c){const op=S.op;const {s,n,f}=c;
+ if(op.kind==='download'){
+  if(op.fault==='reject'&&n===s.weights){f.part=0;return finish('failed','download_rejected');}
+  op.stage='fetch';op.fileDone=f.part;op.counted=Math.max(op.counted,f.part);
+ } else {op.stage='copy';op.fileDone=0;}
+}
+function cancelOp(){finish('cancelled');}
+function progressOf(op){const c=curFile();if(!c)return null;
+ const verifying=op.kind==='verify'||op.stage==='hashKept'||op.stage==='hashNew';
+ const phase=op.kind==='verify'?'verifying':verifying?'verifying':op.kind==='import'?'copying':'downloading';
+ const model=op.modelBefore+op.counted;
+ return {phase,key:c.s.key,file:c.n,fileDone:op.fileDone,fileTotal:c.sz,modelDone:model,modelTotal:c.s.total,done:op.overallBefore+model,total:op.total};}
+function liveProgress(){const op=S.op;if(!op)return;const p=progressOf(op);if(!p)return;const v=Math.floor(pct(p.done,p.total)/10)*10;if(v!==op.lastPct){op.lastPct=v;announce(`${opName(op.kind)} ${v} percent.`);}}
+function announce(t,assertive){const el=$(assertive?'alert':'live');el.textContent='';setTimeout(()=>{el.textContent=t;},30);}
+/* ======================= actions (contract s10, and only these) ======================= */
+function actDownload(keys){keys=keys||notReady().map(x=>x.key);startOp('download',keys);}
+function actStop(){if(S.op&&S.op.kind!=='verify'){S.op.cancel=true;}}
+function actVerify(){if(S.op)return;startOp('verify',MAN.map(s=>s.key));}
+function actDiscard(k){openDlg(()=>dlgDiscard(k));}
+function actOpenFolder(){toast(`Opens ${MODELS_DIR} in File Explorer. Deleting files there is your choice; the app never deletes them.`);}
+function actUseFolder(){S.folder={step:'pick',choice:null,inspection:null,error:null};openDlg(dlgFolder);}
+function actModels(){S.models=true;S.retFocus='mstat';render();focusFirst('#models-h');}
+function closeModels(){S.models=false;render();const b=$('mstat');if(b)b.focus();}
+/* ======================= analysis (blocked when not ready; s9) ======================= */
+function analyzeDirect(){
+ const nr=notReady();
+ if(nr.length&&!S.serviceBuilt)return; // button is disabled; kept for safety
+ const hidden=MAN.some(s=>Object.values(S.disk[s.key].f).some(f=>f.inst==='bad'));
+ if(hidden&&!S.serviceBuilt){S.direct.out=null;S.direct.err='model_load_failed';render();announce('The approved model files could not be loaded.',true);return;}
+ S.serviceBuilt=true;S.direct.err=null;S.direct.out={sent:'positive',conf:.94,emo:'joy',sec:'admiration'};render();announce('Analysis finished.');
+}
+/* ======================= rendering ======================= */
+function focusKey(el){if(!el||el===document.body)return null;return {id:el.id||null,tag:el.tagName,oc:el.getAttribute('onclick'),txt:(el.textContent||'').trim().slice(0,40),ss:el.selectionStart};}
+function restoreFocus(k){if(!k)return;let el=k.id?$(k.id):null;
+ if(!el)el=[...document.querySelectorAll(k.tag)].find(e=>e.getAttribute('onclick')===k.oc&&(e.textContent||'').trim().slice(0,40)===k.txt)||(k.oc?[...document.querySelectorAll(k.tag)].find(e=>e.getAttribute('onclick')===k.oc):null);
+ if(el&&!el.disabled){el.focus({preventScroll:true});if(k.ss!=null&&el.setSelectionRange)try{el.setSelectionRange(k.ss,k.ss)}catch(e){}}}
+function render(){
+ const fk=focusKey(document.activeElement);
+ $('demobar').innerHTML=demobar();
+ let inner,title;
+ if(S.win==='setup'){title='Social Text Intelligence — Set up models';inner=`<div class="body solo">${vSetup()}</div>`;}
+ else{title='Social Text Intelligence';const pg={projects:vProjects,direct:vDirect,newp:vNew}[S.page]();inner=`<div class="body">${sidebar()}<main class="main" aria-label="${S.page==='projects'?'Projects':S.page==='direct'?'Analyze one text':'New project'}">${pg}</main></div>`;}
+ let over='';
+ if(S.models&&S.win==='main')over+=`<div class="scrim" role="presentation">${vModels()}</div>`;
+ if(S.dlg)over+=`<div class="scrim" role="presentation" style="z-index:7" onclick="if(event.target===this)closeDlg()"><div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-h">${S.dlg()}</div></div>`;
+ const t=S.toast?`<div class="toast" role="status">${S.toast}</div>`:'';
+ $('win').innerHTML=`<div class="tb"><span class="logo" aria-hidden="true">S</span><span>${esc(title)}</span><div class="ctl" aria-hidden="true"><span>—</span><span>▢</span><span>✕</span></div></div>${inner}${over}${t}`;
+ restoreFocus(fk);
+}
+function toast(m){S.toast=m;render();clearTimeout(window.__t);window.__t=setTimeout(()=>{S.toast=null;render();},5200);}
+function openDlg(f){S.retFocus=document.activeElement&&document.activeElement.id;S.dlg=f;render();focusFirst('#dlg-h');}
+function closeDlg(){S.dlg=null;render();if(S.retFocus&&$(S.retFocus))$(S.retFocus).focus();}
+function focusFirst(sel){setTimeout(()=>{const el=document.querySelector(sel);if(el){el.setAttribute('tabindex','-1');el.focus();}},0);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(S.dlg)closeDlg();else if(S.models)closeModels();}});
+/* ---------- sidebar model status: always visible, never colour alone ---------- */
+function footStatus(){
+ if(S.op){const p=progressOf(S.op);const lbl=S.op.kind==='download'?'Downloading models':S.op.kind==='import'?'Importing models':'Verifying models';
+  return {ico:'<span class="ico busy" aria-hidden="true">↓</span>',l:lbl,s:p?`${pct(p.done,p.total)}% · ${MB(p.done)} of ${MB(p.total)}`:'',meter:p?pct(p.done,p.total):0,aria:`${lbl}, ${p?pct(p.done,p.total):0} percent. Open models.`};}
+ const nr=notReady();
+ if(!nr.length)return {ico:'<span class="ico ok" aria-hidden="true">✓</span>',l:'Models ready',s:'2 of 2 · local, offline',aria:'Models ready, 2 of 2. Open models.'};
+ const worst=nr.find(x=>x.r==='corrupt')||nr.find(x=>x.r==='incomplete')||nr.find(x=>x.r==='wrong_revision')||nr[0];
+ const d=STATE[worst.r];
+ const l=worst.r==='corrupt'?`${spec(worst.key).label} model damaged`:worst.r==='incomplete'?'Model download incomplete':worst.r==='wrong_revision'?'Different model version':'Models not installed';
+ return {ico:`<span class="ico ${d.icls}" aria-hidden="true">${d.icls==='warn'?'<b>!</b>':d.ico}</span>`,l,s:`${2-nr.length} of 2 ready · analysis unavailable`,aria:`${l}. ${2-nr.length} of 2 models ready. Analysis unavailable. Open models.`};
+}
+function sidebar(){
+ const nav=(p,ico,label)=>`<button class="nav ${S.page===p?'on':''}" ${S.page===p?'aria-current="page"':''} onclick="S.page='${p}';render()"><i aria-hidden="true">${ico}</i>${label}</button>`;
+ const f=footStatus();
+ return `<nav class="side" aria-label="Main">
+  <div class="proj"><div class="t">No project open</div><div class="s">open one from Projects</div></div>
+  <div class="cap nav-h">Start</div>${nav('projects','▤','Projects')}${nav('direct','◇','Analyze one text')}
+  <button class="mstat" id="mstat" onclick="actModels()" aria-label="${esc(f.aria)}">
+   <span class="cap" aria-hidden="true">Models</span>
+   <span class="mstat-l" aria-hidden="true">${f.ico}<span class="mstat-ll">${esc(f.l)}</span></span>
+   <span class="mstat-s" aria-hidden="true">${esc(f.s)}</span>
+   ${f.meter!==undefined?`<span class="meter" aria-hidden="true" style="height:5px"><i style="width:${f.meter}%;background:var(--you)"></i></span>`:''}
+  </button></nav>`;
+}
+/* ---------- shared pieces ---------- */
+function opPanel(compact){
+ const op=S.op;if(!op)return '';const p=progressOf(op);if(!p)return '';
+ const verb=op.kind==='download'?'Downloading':op.kind==='import'?'Importing':'Verifying';
+ const phaseTxt={downloading:'downloading',copying:'copying and checking',verifying:'checking checksum'}[p.phase];
+ const stop=op.kind==='verify'?`<span class="faint" style="font-size:12px">Verify reads about ${GB(TOTAL)} and can’t be stopped. You can keep working.</span>`:`<button class="btn" id="btn-stop" onclick="actStop()" ${op.cancel?'disabled':''}>${op.cancel?'Stopping…':'Stop'}</button><span class="faint" style="font-size:12px">${op.kind==='download'?'Stopping keeps finished files and the partial file; Download resumes later.':'Stopping removes this import’s partial copies; your folder is never changed.'}</span>`;
+ const bar=(lbl,a,b,id)=>`<span class="faint">${lbl}</span><span class="meter" role="progressbar" aria-label="${lbl} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct(a,b)}" aria-valuetext="${pct(a,b)} percent, ${MB(a)} of ${MB(b)}"><i style="width:${pct(a,b)}%;background:var(--you)"></i></span><span class="mono">${MB(a)} / ${MB(b)}</span>`;
+ return `<section class="card op" aria-labelledby="op-h">
+  <div class="row wrap"><span class="chip busy"><span class="ico busy" aria-hidden="true">↓</span>${verb}</span><h3 id="op-h" class="sr">${verb} models</h3><span class="big">${pct(p.done,p.total)}%</span><span class="mono faint">${MB(p.done)} of ${MB(p.total)}</span></div>
+  <div class="bars">
+   ${compact?'':bar('This file',p.fileDone,p.fileTotal)}
+   ${bar(spec(p.key).label+' model',p.modelDone,p.modelTotal)}
+   ${bar('All selected',p.done,p.total)}
+  </div>
+  <div class="mono faint">${spec(p.key).label} · ${esc(p.file)} · ${phaseTxt}</div>
+  <div class="row wrap">${stop}</div></section>`;
+}
+function resultPanel(){
+ const r=S.result;if(!r||S.op)return '';
+ const dl=notReady().length?`<button class="btn pri" onclick="actDownload()">${resumeLabel()}</button>`:'';
+ const folder=notReady().length?`<button class="btn" onclick="actUseFolder()">Use a models folder…</button>`:'';
+ if(r.outcome==='completed'){
+  if(r.kind==='verify'){
+   const bad=notReady().filter(x=>x.r==='corrupt');
+   if(bad.length){const need=bad.reduce((a,x)=>a+x.need,0),nf=bad.reduce((a,x)=>a+x.wrong.length,0);
+    return box('err','Verify found a damaged file',`${bad.map(x=>spec(x.key).label).join(' and ')}: <span class="mono">${bad.flatMap(x=>x.wrong).map(esc).join(', ')}</span> failed its approved checksum. This finding is remembered — also after you restart — and analysis stays unavailable until the file is replaced by Download or a models folder, or a later Verify finds it intact.${S.serviceBuilt?' <b>Analysis already loaded in this session keeps working until you restart</b>; from the next start it is unavailable until repaired.':''}`,
+     `<button class="btn pri" onclick="actDownload(${JSON.stringify(bad.map(x=>x.key)).replace(/"/g,"'")})">Download replacement · ${nf} file${nf>1?'s':''}, ${MB(need)}</button>${folder}<button class="btn" onclick="actVerify()">Verify again</button>`);}
+   return box('ok','All files verified','Every installed file matches its approved checksum.','');
+  }
+  return allReady()?box('ok',`${r.kind==='import'?'Import':'Download'} complete — both models are ready`,'Analysis is available. Your text is analysed only on this computer.',''):box('ok',`${r.kind==='import'?'Import':'Download'} complete`,`The selected model is ready. ${notReady().length} model still needs attention.`,dl+folder);
+ }
+ if(r.outcome==='cancelled'){const kept=all().reduce((a,x)=>a+x.resumable,0);
+  return box('info',`${r.kind==='import'?'Import':'Download'} stopped`,r.kind==='import'?'Nothing partial was kept. Models imported before you stopped stay installed; your folder was not changed.':`Finished files are kept${kept?` and ${MB(kept)} of a partial file is kept for resume`:''}. Download continues where it stopped.`,dl+(kept?`<button class="btn" onclick="actDiscard()">Discard partial download</button>`:'')+folder);}
+ const code=r.code;
+ const T={network_unavailable:['Connection lost',`<button class="btn pri" onclick="actDownload()">Download again · resumes</button>`+folder],
+  download_rejected:['The download was refused',`<button class="btn pri" onclick="actDownload()">Download again</button>`+folder],
+  checksum_mismatch:['A file failed its checksum and was discarded',r.kind==='import'?`<button class="btn pri" onclick="actUseFolder()">Choose a different folder…</button><button class="btn" onclick="actDownload()">Download instead</button>`:`<button class="btn pri" onclick="actDownload()">Download again</button>`+folder],
+  storage_failed:[r.kind==='verify'?'Verify could not read a model file':'The models folder could not be read or written',`<button class="btn pri" onclick="${r.kind==='verify'?'actVerify()':r.kind==='import'?'actUseFolder()':'actDownload()'}">Try again</button><button class="btn" onclick="actOpenFolder()">Open models folder</button>`],
+  provisioning_in_progress:['Another model operation is running',`<button class="btn" onclick="S.result=null;render()">OK</button>`]};
+ const extra={network_unavailable:'',download_rejected:'The partial file for that file was discarded.',checksum_mismatch:r.kind==='import'?'Models imported before it stay installed; later models were not attempted. Your folder was not changed.':'Files finished before it are kept.',storage_failed:r.kind==='verify'?'Nothing was recorded for the file that could not be read, and earlier findings are kept. Free space, fix permissions, or restart the app, then try again.':'Whatever was installed is kept. Free space, fix permissions, or restart the app, then try again.',provisioning_in_progress:'Wait for it to finish, then try again. Only one download, import or Verify runs at a time.'}[code];
+ return box(code==='provisioning_in_progress'?'warn':'err',T[code][0],`${esc(MSG[code])} <span class="faint">${extra}</span> <span class="mono faint">(${code})</span>`,T[code][1]);
+}
+function box(kind,h,body,acts){const ico={err:'<span class="ico err" aria-hidden="true">✕</span>',ok:'<span class="ico ok" aria-hidden="true">✓</span>',warn:'<span class="ico warn" aria-hidden="true"><b>!</b></span>',info:'<span class="ico none" aria-hidden="true">i</span>'}[kind];
+ return `<div class="note-box ${kind}" role="${kind==='err'?'alert':'status'}">${ico}<div class="nb"><h3>${h}</h3><div>${body}</div>${acts?`<div class="acts">${acts}</div>`:''}</div></div>`;}
+function resumeLabel(){const nr=notReady();const need=nr.reduce((a,x)=>a+x.need,0),res=nr.reduce((a,x)=>a+x.resumable,0);
+ if(!nr.length)return 'Download';
+ if(res)return `Download · resume, ${MB(need-res)} left`;
+ if(nr.every(x=>x.r==='corrupt')){const nf=nr.reduce((a,x)=>a+x.wrong.length,0);return `Download replacement · ${nf} file${nf>1?'s':''}, ${MB(need)}`;}
+ const who=nr.length===2?'both models':`${spec(nr[0].key).label.toLowerCase()} model`;
+ return `Download ${who} · ${need===TOTAL?GB(need):MB(need)}`;}
+function opRole(k){const op=S.op;if(!op||!op.keys.includes(k))return null;const cur=op.specs[op.si];if(!cur)return null;
+ const idx=op.specs.findIndex(x=>x.key===k);return idx<op.si?'done':idx===op.si?'active':'queued';}
+function modelCard(k,opts){
+ const st=status(k),s=spec(k),busy=!!S.op;const role=opRole(k);
+ const dis=busy?'disabled aria-disabled="true"':'';
+ const inst=pct(st.installed,s.total),part=pct(st.resumable,s.total);
+ let acts='';
+ if(st.r==='not_installed')acts=`<button class="btn" ${dis} onclick="actDownload(['${k}'])">Download this model · ${MB(s.total)}</button>`;
+ if(st.r==='incomplete')acts=`<button class="btn" ${dis} onclick="actDownload(['${k}'])">${st.resumable?'Download · resume':'Download missing files'} · ${MB(st.need-st.resumable)} left</button>${st.resumable?`<button class="btn ghost" ${dis} onclick="actDiscard('${k}')">Discard partial download</button>`:''}`;
+ if(st.r==='corrupt')acts=`<button class="btn" ${dis} onclick="actDownload(['${k}'])">Download replacement · ${st.wrong.length} file${st.wrong.length>1?'s':''}, ${MB(st.need)}</button>${st.wrong.some(n=>S.disk[k].f[n].flag)?`<button class="btn ghost" ${dis} onclick="actVerify()">Verify again</button>`:''}`;
+ if(st.r==='wrong_revision')acts=`<button class="btn" ${dis} onclick="actDownload(['${k}'])">Download approved version · ${MB(s.total)}</button>`;
+ return `<section class="card mcard" aria-labelledby="mc-${k}">
+  <div class="row"><span class="cap">${s.label} model</span><span class="sp"></span>${role==='active'||role==='queued'?`<span class="chip busy"><span class="ico busy" aria-hidden="true">${role==='queued'?'…':'↓'}</span>${role==='queued'?'Queued':S.op.kind==='download'?'Downloading':S.op.kind==='import'?'Importing':'Verifying'}</span>`:chip(st)}</div>
+  <h3 class="mid" id="mc-${k}">${esc(s.id.replace('/',' / '))}</h3>
+  <div class="mono faint">version ${short(s.rev)} · ${s.lic} · ${MB(s.total)}</div>
+  <div class="meter" role="img" aria-label="${pct(st.installed,s.total)} percent installed${st.resumable?`, ${MB(st.resumable)} partial kept`:''}"><i style="width:${inst}%;background:${st.r==='ready'?'var(--ink)':'var(--machine)'}"></i><i class="part" style="width:${part}%"></i></div>
+  <p class="state-line">${role==='active'?'In progress — see the progress above.':role==='queued'?'Waits for the model before it.':stateSentence(st)}</p>
+  ${!role&&st.probs.length&&st.r!=='not_installed'&&st.r!=='wrong_revision'?`<div class="mono" style="color:var(--ink2)">${st.r==='corrupt'?'Damaged':'Missing'}: ${st.probs.map(esc).join(', ')}</div>`:''}
+  ${st.others.length&&st.r==='ready'?`<div class="mono faint">Also found: version ${st.others.map(short).join(', ')} — never used, left alone.</div>`:''}
+  ${acts&&!busy?`<div class="row wrap">${acts}</div>`:''}
+  ${opts&&opts.details?detailsBlock(k):''}
+ </section>`;
+}
+function detailsBlock(k){const s=spec(k),m=S.disk[k];
+ return `<details ${S.detailsOpen?'open':''}><summary>Details and provenance</summary><div class="grid" style="gap:6px;margin-top:8px">
+  <div class="mono" style="word-break:break-all">${esc(s.id)}<br>version ${s.rev}</div>
+  <div style="font-size:12px" class="muted">Licence ${s.lic}. Source: huggingface.co, this exact version only, over HTTPS. Weights are downloaded from the original repository, not shipped with the app.</div>
+  <table class="files" aria-label="${s.label} model files"><tbody>${s.files.map(([n,sz])=>{const f=m.f[n];const st=f.inst==='none'?(f.part?'partial':'missing'):f.inst==='wrongsize'?'wrong size':f.flag?'failed checksum':'installed';return `<tr><td class="mono">${esc(n)}</td><td>${st} · ${size(sz)}</td></tr>`}).join('')}</tbody></table>
+ </div></details>`;}
+/* ---------- first-run / launch window (s5) ---------- */
+function vSetup(){
+ const nr=notReady(),busy=!!S.op;const ready=!nr.length;
+ const worst=nr.find(x=>x.r==='corrupt')||nr.find(x=>x.r==='incomplete')||nr.find(x=>x.r==='wrong_revision');
+ const head=ready?['Ready','Both models are installed and verified. Your text is analysed only on this computer.']
+  :busy?['Setting up','Two pinned models are needed once. After that, analysis never uses the network.']
+  :!worst?['Before the first analysis','Two pinned models are needed once. After that, analysis never uses the network.']
+  :worst.r==='corrupt'?['Models need attention','A model file failed verification. Analysis is unavailable until it is repaired.']
+  :worst.r==='incomplete'?['Models need attention',worst.resumable?'A model download was interrupted. It continues where it stopped.':'A model is missing some files. Setup isn’t finished yet.']
+  :['Models need attention','A different version of a model was found. Only the approved version is used.'];
+ const left=`<div style="padding:56px 52px;display:flex;flex-direction:column;gap:16px;min-height:0;overflow:auto">
+   <div class="cap">${head[0]}</div>
+   <h1 id="setup-h" style="font:400 44px/1.06 var(--serif)">${head[1]}</h1>
+   <p class="muted" style="font-size:14px;max-width:500px">The models are not bundled with the app. They come from huggingface.co at the exact versions shown, about ${GB(TOTAL)} in total, and every file is checked against its approved checksum before it is used. Nothing downloads unless you choose Download.</p>
+   <p class="muted" style="font-size:13px;max-width:500px">Offline? Use a folder that already holds the models — for example a copy from another computer.</p>
+   <div style="margin-top:auto" class="grid">
+    ${ready?'':`<p class="faint" style="font-size:12px;max-width:470px">${busy?'You can keep working while this runs. Progress stays visible in the sidebar.':'With Later you can open, review and export projects and create new ones. Analysis waits until both models are ready.'}</p>`}
+    <div class="row wrap">
+     ${ready?`<span class="sp"></span><button class="btn pri" id="btn-start" onclick="enterMain()">Start</button>`
+      :busy?`<span class="sp"></span><button class="btn pri" id="btn-later" onclick="enterMain()">Continue while this runs</button>`
+      :`<button class="btn ghost" id="btn-later" onclick="enterMain()">Later</button><span class="sp"></span>
+        <button class="btn" id="btn-folder" onclick="actUseFolder()">Use a models folder…</button>
+        <button class="btn pri" id="btn-dl" onclick="actDownload()">${resumeLabel()}</button>`}
+    </div></div></div>`;
+ const right=`<div style="background:#FBFAF7;border-left:1px solid var(--line);padding:40px 36px;display:flex;flex-direction:column;gap:14px;overflow:auto;min-height:0" aria-label="Model status">
+   ${opPanel(true)}${resultPanel()}
+   ${MAN.map(s=>modelCard(s.key)).join('')}
+   <div class="footnote">Saved to ${esc(MODELS_DIR)} · per user · the app only adds or replaces verified files there</div></div>`;
+ return `<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);height:100%;min-height:0">${left}${right}</div>`;
+}
+function enterMain(){S.win='main';S.page='projects';render();focusFirst('.bar h1');}
+/* ---------- Models window: the post-setup management entry point (s10) ---------- */
+function vModels(){
+ const nr=notReady(),busy=!!S.op,ready=!nr.length;
+ const dis=busy?'disabled':'';
+ const flaggedAfterLoad=S.serviceBuilt&&nr.some(x=>x.r==='corrupt');
+ return `<div class="subwin" role="dialog" aria-modal="true" aria-labelledby="models-h">
+  <div class="tb"><span class="logo" aria-hidden="true">S</span><span>Models</span><button onclick="closeModels()" aria-label="Close models window">✕</button></div>
+  <div style="overflow:auto;padding:22px 26px;display:flex;flex-direction:column;gap:14px">
+   <div class="row wrap"><h2 id="models-h" style="font:400 30px/1 var(--serif)">Models</h2>
+    <span class="chip ${ready?'ok':'warn'}"><span class="ico ${ready?'ok':'warn'}" aria-hidden="true">${ready?'✓':'<b>!</b>'}</span>${ready?'Analysis available':`Analysis unavailable · ${nr.length} of 2 not ready`}</span>
+    <span class="sp"></span>
+    ${ready?'':`<button class="btn pri" ${dis} onclick="actDownload()">${resumeLabel()}</button><button class="btn" ${dis} onclick="actUseFolder()">Use a models folder…</button>`}
+    ${all().some(x=>x.r==='ready'||x.r==='corrupt')?`<button class="btn" ${dis} onclick="actVerify()" title="Checks every installed file against its approved checksum">Verify files</button>`:''}
+    <button class="btn ghost" onclick="actOpenFolder()">Open models folder</button></div>
+   ${busy?`<p class="faint" style="font-size:12px">Other model actions are unavailable while this runs. Only one download, import or Verify runs at a time.</p>`:''}
+   ${opPanel(false)}${resultPanel()}
+   ${flaggedAfterLoad&&!S.result?box('warn','Restart to apply this finding to analysis','Analysis already loaded in this session keeps using the models it loaded at start. From the next start, analysis is unavailable until the damaged model is repaired.',''):''}
+   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">${MAN.map(s=>modelCard(s.key,{details:true})).join('')}</div>
+   <div class="footnote">Location: ${esc(MODELS_DIR)} · per user, not roaming · the app only adds or replaces verified files here · downloads use HTTPS and send none of your text · system proxy settings apply</div>
+  </div></div>`;
+}
+/* ---------- dialogs ---------- */
+function dlgDiscard(k){const keys=k?[k]:MAN.map(s=>s.key);const amt=keys.reduce((a,x)=>a+status(x).resumable,0);
+ return `<h2 id="dlg-h">Discard partial download?</h2><p class="muted">${MB(amt)} of partially downloaded data will be deleted. Files that finished downloading are kept. The next Download starts that file again from the beginning.</p>
+ <div class="row"><span class="sp"></span><button class="btn" onclick="closeDlg()">Keep it</button><button class="btn danger" onclick="doDiscard(${k?`['${k}']`:'null'})">Discard ${MB(amt)}</button></div>`;}
+function doDiscard(keys){if(S.op){S.dlg=null;S.result={kind:'download',outcome:'failed',code:'provisioning_in_progress'};render();return;}(keys||MAN.map(s=>s.key)).forEach(k=>Object.values(S.disk[k].f).forEach(f=>f.part=0));S.result=null;closeDlg();toast('Partial download discarded. Finished files were kept.');}
+function dlgFolder(){
+ const F=S.folder;
+ if(F.step==='pick')return `<h2 id="dlg-h">Use a models folder</h2>
+  <p class="muted" style="font-size:12.5px">Pick a folder that already holds the models: a Hugging Face cache (such as V1’s <span class="mono">model_cache</span>), a folder with one model’s files, or a folder with one subfolder per model. The folder is only read; files are copied in and checked.</p>
+  <fieldset class="pick" style="border:0"><legend class="cap" style="margin-bottom:6px">Synthetic folder picker (stands in for the Windows dialog)</legend>
+  ${FOLDERS.map(f=>`<label><input type="radio" name="fold" value="${f.id}" ${F.choice===f.id?'checked':''} onchange="S.folder.choice='${f.id}';render()"><span><span class="p">${esc(f.path)}</span><br><span class="d">${esc(f.desc)}</span></span></label>`).join('')}</fieldset>
+  <div class="row"><span class="sp"></span><button class="btn" onclick="closeDlg()">Cancel</button><button class="btn pri" id="btn-inspect" ${F.choice?'':'disabled'} onclick="inspect()">Check this folder</button></div>`;
+ const fol=FOLDERS.find(f=>f.id===F.choice);
+ if(F.error)return `<h2 id="dlg-h">Couldn’t read that folder</h2>${box('err','The folder could not be read',`${esc(MSG.source_unreadable)} <span class="mono faint">(source_unreadable)</span>`,'')}<div class="mono faint">${esc(fol.path)}</div>
+  <div class="row"><span class="sp"></span><button class="btn" onclick="closeDlg()">Close</button><button class="btn pri" onclick="S.folder.step='pick';S.folder.error=null;render()">Choose another folder…</button></div>`;
+ const ins=F.inspection;const supported=ins.some(x=>x.f!=='not_found');const imp=ins.filter(x=>x.f==='found').map(x=>x.key);
+ const FT={found:['ok','✓','Found','All files present with the right sizes. Each file is checksum-checked while it is copied.'],incomplete:['warn','!','Incomplete','Some files are missing'],mismatched:['err','✕','Doesn’t match','The file names are right but the sizes are not — damaged, or a different version'],wrong_revision:['warn','!','Different version','Only other versions are in this folder; they can’t be used'],not_found:['','','Not found','This model isn’t in the folder']};
+ return `<h2 id="dlg-h">${supported?'What’s in this folder':'No models found here'}</h2><div class="mono faint">${esc(fol.path)} · read-only check, nothing was copied</div>
+  <div role="list">${ins.map(x=>{const t=FT[x.f];return `<div class="find" role="listitem"><span class="cap">${spec(x.key).label}</span><div class="grid" style="gap:4px"><span><span class="chip ${t[0]}"><span class="ico ${t[0]==='ok'?'ok':t[0]==='err'?'err':t[0]==='warn'?'warn':'none'}" aria-hidden="true">${t[0]==='warn'?'<b>!</b>':t[1]}</span>${t[2]}</span></span><span style="font-size:12px" class="muted">${t[3]}${x.p&&x.p.length?`: <span class="mono">${x.p.map(esc).join(', ')}</span>`:''}${x.f==='found'&&status(x.key).r==='ready'?' Already installed here; importing re-checks it and changes nothing.':''}</span></div></div>`}).join('')}</div>
+  ${supported?'':box('info','This folder isn’t recognised','It holds neither model. Pick the folder that contains the model files or a Hugging Face cache.','')}
+  ${imp.length?`<p class="faint" style="font-size:12px">Import copies ${MB(imp.reduce((a,k)=>a+spec(k).total,0))} into the app’s models folder and checks every file. If a file fails its checksum, the import stops; models already imported stay.</p>`:''}
+  <div class="row"><button class="btn ghost" onclick="S.folder.step='pick';render()">Choose another folder…</button><span class="sp"></span><button class="btn" onclick="closeDlg()">Cancel</button>${imp.length?`<button class="btn pri" id="btn-import" onclick="doImport()">Import ${imp.length===2?'both models':spec(imp[0]).label.toLowerCase()+' model'}</button>`:''}</div>`;
+}
+function inspect(){const fol=FOLDERS.find(f=>f.id===S.folder.choice);S.folder.step='result';
+ if(fol.unreadable){S.folder.error='source_unreadable';announce(MSG.source_unreadable,true);}
+ else{S.folder.error=null;S.folder.inspection=MAN.map(s=>({key:s.key,f:fol.m[s.key].f,p:fol.m[s.key].p||[]}));}
+ render();focusFirst('#dlg-h');}
+function doImport(){const fol=FOLDERS.find(f=>f.id===S.folder.choice);const keys=S.folder.inspection.filter(x=>x.f==='found').map(x=>x.key);S.dlg=null;startOp('import',keys,fol);}
+/* ---------- main pages ---------- */
+function blockedPanel(where){const nr=notReady();
+ return `<div class="note-box warn" id="blocked" role="status"><span class="ico warn" aria-hidden="true"><b>!</b></span><div class="nb"><h3>Analysis is unavailable${where?' — '+where:''}</h3>
+  <div>${esc(MSG.models_not_ready)}</div>
+  <div class="mono" style="color:var(--ink2)">Not ready: ${nr.map(x=>`${spec(x.key).label} (${STATE[x.r].t.toLowerCase()})`).join(', ')}</div>
+  <div class="acts"><button class="btn" onclick="actModels()">Set up models…</button></div></div></div>`;}
+function vProjects(){const nr=notReady();
+ const P=[['Product launch replies','launch-replies-sept.csv',214,'18 Sep'],['Community forum sample','forum-sample-q3.csv',96,'02 Oct'],['Support survey free text','survey-open-answers.csv',388,'06 Oct']];
+ return `<div class="bar"><h1>Projects</h1><span class="sp"></span><button class="btn" onclick="S.page='direct';render()">Analyze one text</button><button class="btn pri" onclick="S.page='newp';S.newp={created:false};render()">New project from CSV…</button></div>
+ <div class="pane" style="display:flex;flex-direction:column;gap:14px">
+  ${nr.length&&!S.op?`<div class="note-box info"><span class="ico ${STATE[(nr.find(x=>x.r!=='not_installed')||nr[0]).r].icls}" aria-hidden="true">${(nr.find(x=>x.r!=='not_installed')||nr[0]).r==='corrupt'?'✕':'<b>!</b>'}</span><div class="nb"><h3>Analysis is unavailable until both models are ready</h3><div class="muted">You can open, review and export these projects, and create new ones from a CSV.</div><div class="acts"><button class="btn sm" onclick="actModels()">Set up models…</button></div></div></div>`:''}
+  <div class="card" style="overflow:hidden"><table class="t"><caption class="sr">Projects</caption><thead><tr><th>Project</th><th>Rows</th><th>Last opened</th><th></th></tr></thead><tbody>
+  ${P.map(p=>`<tr><td><div class="serif" style="font-size:20px">${p[0]}</div><div class="mono faint">${p[1]}</div></td><td class="mono">${p[2]}</td><td class="mono muted">${p[3]}</td><td style="text-align:right"><button class="btn sm" onclick="toast('Opening a project needs no models. (Project pages are outside this M5.1 prototype.)')">Open</button></td></tr>`).join('')}
+  </tbody></table></div>
+  <div class="footnote">Synthetic projects. Project screens are the approved Round 3 baseline and are not redesigned here.</div></div>`;}
+function vDirect(){const nr=notReady(),d=S.direct;const blocked=nr.length&&!S.serviceBuilt;
+ const flagged=S.serviceBuilt&&nr.some(x=>x.r==='corrupt');
+ return `<div class="bar"><h1>Analyze one text</h1><span class="sp"></span><span class="mono faint">not saved · analysed on this computer</span></div>
+ <div class="pane" style="display:flex;flex-direction:column;gap:14px;max-width:820px">
+  ${blocked?blockedPanel():''}
+  ${flagged?box('warn','A model failed verification after analysis started','This session keeps using the models loaded at start. From the next start, analysis is unavailable until the model is repaired.',`<button class="btn sm" onclick="actModels()">Open models…</button>`):''}
+  <label for="dtext" class="cap">Text</label>
+  <textarea id="dtext" class="inp" oninput="S.direct.text=this.value">${esc(d.text)}</textarea>
+  <div class="row"><span class="faint" style="font-size:12px">English · up to 20,000 characters</span><span class="sp"></span>
+   <button class="btn pri" id="btn-analyze" ${blocked?'disabled aria-describedby="blocked"':''} onclick="analyzeDirect()">Analyze</button></div>
+  ${d.err==='model_load_failed'?box('err','The model files could not be loaded','The approved model files could not be loaded. A file may be damaged even though its size is right. Verify checks every file against its approved checksum. <span class="mono faint">(model_load_failed)</span>',`<button class="btn pri" onclick="actModels();setTimeout(actVerify,50)">Verify files</button><button class="btn" onclick="actModels()">Open models…</button>`):''}
+  ${d.out?`<section class="card" style="padding:16px 18px" aria-label="Result"><div class="cap">Machine record · simulated</div><div class="row" style="gap:28px;margin-top:8px"><div><div class="faint">Sentiment</div><div class="serif" style="font-size:28px">${d.out.sent} <span class="mono faint">${d.out.conf}</span></div></div><div><div class="faint">Dominant emotion</div><div class="serif" style="font-size:28px">${d.out.emo}</div></div><div><div class="faint">Secondary</div><div class="serif" style="font-size:28px">${d.out.sec}</div></div></div><div class="footnote" style="margin-top:8px">sentiment@3216a57 · emotion@d750483 · prototype output, not a real model result</div></section>`:''}
+ </div>`;}
+function vNew(){const nr=notReady();const n=S.newp;
+ return `<div class="bar"><h1>New project</h1><span class="sp"></span><span class="mono faint">launch-replies-oct.csv</span></div>
+ <div class="pane" style="display:flex;flex-direction:column;gap:14px;max-width:860px">
+  <div class="card" style="padding:16px 18px" aria-label="Validation"><div class="cap">Validation</div><div class="row" style="gap:30px;margin-top:6px"><div><span class="serif" style="font-size:34px">217</span> <span class="faint">rows</span></div><div><span class="serif" style="font-size:34px">214</span> <span class="faint">valid</span></div><div><span class="serif" style="font-size:34px">3</span> <span class="faint">invalid · kept with reasons</span></div></div>
+   <div class="footnote" style="margin-top:6px">Importing and validating a CSV never needs the models.</div></div>
+  ${n.created?box('ok','Project created','“Launch replies (Oct)” is saved. Its 214 valid rows are waiting to be analysed.',''):''}
+  ${nr.length&&!S.serviceBuilt?blockedPanel('the project can still be created now and analysed later'):''}
+  <div class="row"><span class="sp"></span>
+   ${n.created?'':`<button class="btn" onclick="S.newp.created=true;render();announce('Project created.')">Create project without analysing</button>`}
+   <button class="btn pri" ${nr.length&&!S.serviceBuilt?'disabled aria-describedby="blocked"':''} onclick="toast('Analysis runs with row progress and Cancel (V2-4). Outside this prototype.')">Create and analyse 214 rows</button></div>
+ </div>`;}
+/* ======================= demo bar and scenarios (outside the product) ======================= */
+const SCEN=[
+ ['first-run','1 · First run'],['downloading','2 · Downloading'],['stopped','3 · Stopped → resume'],['later','4 · Later (blocked analysis)'],
+ ['offline','5 · Offline folder'],['silent','6 · Silent damage → Verify'],['corrupt','7 · Durable damage + restart'],['wrongrev','8 · Different version'],['ready','9 · Ready (steady state)'],
+];
+function demobar(){
+ return `<b>STI V2 · model provisioning (M5.1)</b>${SCEN.map(([k,l])=>`<button class="step ${S.scenario===k?'on':''}" onclick="scenario('${k}')">${l}</button>`).join('')}
+ <label class="note">Next operation fault <select onchange="S.fault=this.value;render()" aria-label="Fault for the next operation">${[['none','none'],['network','connection drops at 40% of weights'],['reject','server refuses the weights file'],['checksum','downloaded weights fail checksum'],['storage','disk full while installing weights'],['busy','another operation already running'],['unreadable','Verify cannot read a file']].map(([v,l])=>`<option value="${v}" ${S.fault===v?'selected':''}>${l}</option>`).join('')}</select></label>
+ <label class="note">Speed <select onchange="S.speed=+this.value" aria-label="Simulation speed"><option value="1" ${S.speed===1?'selected':''}>1×</option><option value="4" ${S.speed===4?'selected':''}>4×</option></select></label>
+ <button class="step" onclick="restartApp()" title="Close and reopen the app: the disk state is kept, the session is not">Restart app</button>
+ <span class="sp"></span><span class="note">Prototype · synthetic · nothing is downloaded or written</span>`;
+}
+function restartApp(){clearInterval(timer);const d=S.disk;const sp=S.speed;
+ if(S.op&&S.op.kind==='import'){/* an import's partial copy is cleaned up */}
+ S=fresh(d);S.speed=sp;S.scenario='restart';S.win=allReady()?'main':'setup';render();announce('App restarted.');focusFirst(S.win==='setup'?'#setup-h':'.bar h1');}
+function scenario(k,shot){clearInterval(timer);const sp=S.speed;S=fresh();S.speed=sp;S.scenario=k;const d=S.disk;
+ switch(k){
+  case 'first-run':break;
+  case 'downloading':startOp('download',['sentiment','emotion']);break;
+  case 'stopped':installAll(d,'sentiment');d.emotion.f['config.json'].inst='ok';d.emotion.f['merges.txt'].inst='ok';d.emotion.f['model.safetensors'].part=212*1048576;break;
+  case 'later':S.win='main';S.page='direct';break;
+  case 'offline':if(!shot)setTimeout(actUseFolder,0);break;
+  case 'silent':installAll(d,'sentiment');installAll(d,'emotion');d.emotion.f['model.safetensors'].inst='bad';S.win='main';S.page='direct';break;
+  case 'corrupt':installAll(d,'sentiment');installAll(d,'emotion');d.emotion.f['model.safetensors'].inst='bad';d.emotion.f['model.safetensors'].flag=true;S.win='setup';break;
+  case 'wrongrev':installAll(d,'emotion');d.sentiment.others=[OTHER_REV];break;
+  case 'ready':installAll(d,'sentiment');installAll(d,'emotion');d.sentiment.others=[OTHER_REV];S.win='main';S.page='projects';break;
+ }
+ render();if(!shot)focusFirst(S.win==='setup'?'#setup-h':'.bar h1');
+}
+/* ======================= deterministic screenshot states (?shot=...) ======================= */
+function runTo(frac){clearInterval(timer);let guard=0;while(S.op&&guard++<100000){const p=progressOf(S.op);if(p&&p.done/p.total>=frac)break;tick();}clearInterval(timer);}
+function runAll(){clearInterval(timer);let g=0;while(S.op&&g++<100000)tick();}
+const SHOTS={
+ 'first-run':()=>scenario('first-run',1),
+ 'downloading':()=>{scenario('first-run',1);startOp('download',['sentiment','emotion']);runTo(.43);},
+ 'stopped':()=>{scenario('first-run',1);startOp('download',['sentiment','emotion']);runTo(.71);S.op.cancel=true;tick();},
+ 'later-blocked':()=>{scenario('later',1);},
+ 'projects-not-ready':()=>{scenario('first-run',1);S.win='main';S.page='projects';},
+ 'new-project-blocked':()=>{scenario('first-run',1);S.win='main';S.page='newp';},
+ 'folder-pick':()=>{scenario('first-run',1);S.folder={step:'pick',choice:'v1cache'};S.dlg=dlgFolder;},
+ 'folder-inspect':()=>{scenario('first-run',1);S.folder={step:'pick',choice:'v1cache'};inspect();S.dlg=dlgFolder;},
+ 'folder-mixed':()=>{scenario('first-run',1);S.folder={step:'pick',choice:'half'};inspect();S.dlg=dlgFolder;},
+ 'folder-unreadable':()=>{scenario('first-run',1);S.folder={step:'pick',choice:'nas'};inspect();S.dlg=dlgFolder;},
+ 'importing':()=>{scenario('first-run',1);S.folder={step:'pick',choice:'pack'};inspect();doImport();runTo(.3);},
+ 'import-checksum':()=>{scenario('first-run',1);S.folder={step:'pick',choice:'usb'};inspect();doImport();runAll();},
+ 'download-network-failed':()=>{scenario('first-run',1);S.fault='network';startOp('download',['sentiment','emotion']);runAll();},
+ 'storage-failed':()=>{scenario('wrongrev',1);S.win='main';S.models=true;S.fault='storage';startOp('download',['sentiment']);runAll();},
+ 'busy':()=>{scenario('ready',1);S.models=true;S.fault='busy';startOp('verify',['sentiment','emotion']);},
+ 'load-failed':()=>{scenario('silent',1);analyzeDirect();},
+ 'verifying':()=>{scenario('silent',1);S.models=true;startOp('verify',['sentiment','emotion']);runTo(.62);},
+ 'verify-found':()=>{scenario('silent',1);S.serviceBuilt=false;S.models=true;startOp('verify',['sentiment','emotion']);runAll();},
+ 'corrupt-relaunch':()=>{scenario('corrupt',1);},
+ 'corrupt-blocked':()=>{scenario('corrupt',1);S.win='main';S.page='direct';},
+ 'wrong-revision':()=>{scenario('wrongrev',1);},
+ 'ready':()=>{scenario('ready',1);},
+ 'models-ready':()=>{scenario('ready',1);S.models=true;},
+ 'models-details':()=>{scenario('ready',1);S.models=true;S.detailsOpen=true;},
+ 'discard':()=>{scenario('stopped',1);S.dlg=()=>dlgDiscard('emotion');},
+};
+const qs=new URLSearchParams(location.search);
+if(qs.get('shot')&&SHOTS[qs.get('shot')]){SHOTS[qs.get('shot')]();clearInterval(timer);S.toast=null;render();}
+else{scenario('first-run');}
+</script>
+</body>
+</html>
