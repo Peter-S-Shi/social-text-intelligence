@@ -26,9 +26,32 @@ web-form layout.
   IBM Plex Mono for provenance. All three are OFL, so they can be bundled with
   the Qt build.
 
-**Deliverable.** An HTML product feature sample sheet:
-[sti-v2-r3-samples.html](sti-v2-r3-samples.html). Open it in any browser;
-`?only=06` shows a single screen. PNG renders are in [shots/](shots/).
+**Deliverable.** An interactive product demo,
+[sti-v2-r3-samples.html](sti-v2-r3-samples.html). It replaces the earlier
+static sample sheet, which is still in Git history. Open it in any browser and
+use the app as a user would:
+
+- **Navigation:** the sidebar and the demo bar (steps 1–9, Reset demo).
+- **Simulated flows:**
+  - the first-run model download (pause, cancel, use a folder);
+  - opening and deleting projects;
+  - single-text analysis on any text;
+  - CSV import with validation, live progress, pause and cancel;
+  - results filters;
+  - reviewing records, after which progress, agreement and insights
+    recompute;
+  - applying insight views over any of the 10 V1 metrics;
+  - adding and deleting context notes;
+  - representative-case rules;
+  - export dialogs;
+  - a full moderation training session;
+  - triage drafting and finalizing.
+- **Shortcut for screenshots:** `?go=review` (or another route) jumps straight
+  to a page with the models marked ready.
+- **Simulation boundary:** model output is a scripted stand-in, and nothing is
+  written to disk.
+
+Route screenshots are in [shots/](shots/).
 
 ## Screens and coverage
 

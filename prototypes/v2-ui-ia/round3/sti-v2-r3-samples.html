@@ -3,728 +3,758 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>STI V2 Round 3 Samples</title>
-<!-- PROTOTYPE - throwaway UI/IA sample sheet. Synthetic data only. Not production. -->
+<title>STI V2 Interactive Demo</title>
+<!-- PROTOTYPE - throwaway interactive product demo for the round 3 UI/IA gate.
+     Synthetic data, simulated model output, no persistence beyond this page. Not production. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --paper:#F2F0EB; --sheet:#FFFFFF; --ink:#131518; --ink2:#4B5057; --mute:#8A8F96; --faint:#B5B8BC;
   --line:#E0DCD3; --line2:#EDEAE4; --side:#F7F5F1;
   --machine:#33404F; --machine-soft:#EEF0F3; --machine-line:#D6DBE2;
   --you:#2C47E0; --you-soft:#ECEFFF; --you-line:#C9D1FB;
-  --diff:#DF522C; --diff-soft:#FCEBE5;
-  --caution:#97670F; --caution-soft:#FBF1DC;
-  --neg:#C9543C; --neu:#A39F95; --pos:#2A7F95;
+  --diff:#DF522C; --diff-soft:#FCEBE5; --caution:#97670F; --caution-soft:#FBF1DC;
+  --neg:#C9543C; --neu:#A39F95; --pos:#2A7F95; --practice:#5B34B8; --practice-soft:#F3ECFF;
   --serif:'Instrument Serif',Georgia,serif; --ui:'Inter','Segoe UI',system-ui,sans-serif; --mono:'IBM Plex Mono',Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#E6E3DC;color:var(--ink);font:13px/1.45 var(--ui);-webkit-font-smoothing:antialiased}
-.mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.01em}
-.serif{font-family:var(--serif);font-weight:400}
-.cap{font:500 10.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+html,body{height:100%}
+body{background:#DCD8D0;color:var(--ink);font:13px/1.45 var(--ui);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;align-items:center;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+.mono{font-family:var(--mono);font-size:11.5px}
+.cap{font:500 10.5px/1.2 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 .muted{color:var(--ink2)} .faint{color:var(--mute)}
-/* ---------- sheet chrome (not part of the product) ---------- */
-.cover{max-width:1280px;margin:0 auto;padding:56px 0 24px}
-.cover h1{font:400 64px/1.02 var(--serif);letter-spacing:-.01em}
-.cover p{max-width:820px;font-size:15px;color:var(--ink2);margin-top:14px}
-.legend{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:28px}
-.legend div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:14px}
-.legend b{display:block;font:500 12px var(--ui);margin-bottom:4px}
-.screen{max-width:1280px;margin:0 auto;padding:44px 0 8px}
-.shead{display:flex;align-items:baseline;gap:16px;margin-bottom:14px;flex-wrap:wrap}
-.shead .n{font:400 44px/1 var(--serif);color:var(--mute)}
-.shead h2{font:400 32px/1 var(--serif)}
-.shead .tags{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
-.tag{font:500 10.5px var(--mono);padding:3px 7px;border-radius:4px;background:#fff;border:1px solid var(--line);color:var(--ink2)}
-.tag.v2{background:#F3ECFF;border-color:#DCCBFF;color:#5B34B8}
-.tag.ref{background:transparent;border-style:dashed}
-.snote{font-size:13px;color:var(--ink2);margin:-6px 0 14px;max-width:1000px}
-/* ---------- window ---------- */
-.win{width:1280px;height:800px;background:var(--paper);border-radius:10px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.04),0 18px 50px -12px rgba(30,25,15,.28);border:1px solid #CFCAC0;display:grid;grid-template-rows:34px 1fr;position:relative}
-.tb{display:flex;align-items:center;gap:10px;padding:0 0 0 12px;background:#EBE8E2;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink2)}
+.s-negative{color:var(--neg)} .s-neutral{color:var(--neu)} .s-positive{color:var(--pos)}
+/* demo bar (outside the product) */
+.demobar{width:100%;display:flex;align-items:center;gap:8px;padding:8px 18px;background:#1B1D20;color:#D9D6CF;font-size:12px;flex-wrap:wrap}
+.demobar b{color:#fff;font-weight:600;margin-right:6px}
+.demobar .step{background:#2A2D31;border:1px solid #3A3E44;color:#D9D6CF;border-radius:999px;padding:3px 10px;font-size:11.5px}
+.demobar .step:hover{background:#353A40}
+.demobar .step.on{background:#F2F0EB;color:#131518}
+.demobar .sp{flex:1}
+.demobar .note{color:#9A9DA2;font-size:11px}
+/* window */
+.stage{flex:1;display:grid;place-items:center;width:100%;padding:14px;min-height:0}
+.win{width:min(1360px,100%);height:min(860px,100%);background:var(--paper);border-radius:10px;overflow:hidden;box-shadow:0 18px 50px -12px rgba(30,25,15,.35);border:1px solid #CFCAC0;display:grid;grid-template-rows:34px 1fr;position:relative}
+.tb{display:flex;align-items:center;gap:10px;padding-left:12px;background:#EBE8E2;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink2);user-select:none}
 .tb .logo{width:16px;height:16px;border-radius:4px;background:var(--ink);display:grid;place-items:center;color:#fff;font:600 9px var(--mono)}
 .tb .ctl{margin-left:auto;display:flex;height:100%}
-.tb .ctl span{width:46px;display:grid;place-items:center;font-size:12px;color:var(--ink2)}
-.body{display:grid;grid-template-columns:236px 1fr;min-height:0}
-.body.solo{grid-template-columns:1fr}
-/* sidebar (R1) */
-.side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px;gap:2px;min-height:0}
-.proj{padding:10px 10px 12px;border-bottom:1px solid var(--line);margin:0 -10px 8px}
-.proj .t{font:500 13px var(--ui)}
-.proj .s{font:11px var(--mono);color:var(--mute);margin-top:2px}
+.tb .ctl span{width:46px;display:grid;place-items:center}
+.body{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:0}
+.body.solo{grid-template-columns:minmax(0,1fr)}
+.side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px;gap:2px;min-height:0;overflow:auto}
+.proj{padding:8px 10px 12px;border-bottom:1px solid var(--line);margin:0 -10px 6px}
+.proj .t{font:500 13px var(--ui)} .proj .s{font:11px var(--mono);color:var(--mute);margin-top:2px}
 .nav-h{margin:12px 8px 4px}
-.nav{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;color:var(--ink2);font-size:13px}
+.nav{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;color:var(--ink2);font-size:13px;background:none;border:0;text-align:left;width:100%}
+.nav:hover{background:#EFECE6}
 .nav i{font-style:normal;width:14px;text-align:center;color:var(--mute);font-size:12px}
 .nav .c{margin-left:auto;font:11px var(--mono);color:var(--mute)}
-.nav.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line)}
-.nav.on i{color:var(--ink)}
-.pend{font:500 9.5px var(--mono);letter-spacing:.06em;color:#5B34B8;background:#F3ECFF;border-radius:3px;padding:1px 5px;margin-left:auto}
+.nav.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line)} .nav.on i{color:var(--ink)}
+.pend{font:500 9.5px var(--mono);letter-spacing:.06em;color:var(--practice);background:var(--practice-soft);border-radius:3px;padding:1px 5px;margin-left:auto}
 .side .foot{margin-top:auto;padding:10px 8px 2px;border-top:1px solid var(--line);font:11px var(--mono);color:var(--mute)}
-.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2A7F95;margin-right:6px;vertical-align:1px}
-.main{min-height:0;overflow:hidden;display:flex;flex-direction:column}
-.bar{display:flex;align-items:center;gap:12px;padding:14px 24px 12px;border-bottom:1px solid var(--line2)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.main{min-height:0;display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:12px;padding:14px 24px 12px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
 .bar h3{font:400 26px/1 var(--serif)}
-.bar .sp{flex:1}
-.pane{padding:18px 24px;overflow:hidden;flex:1;min-height:0}
+.sp{flex:1}
+.pane{padding:18px 24px;overflow:auto;flex:1;min-height:0}
 .pane>*,.grid>*{min-width:0}
+.banner{background:var(--practice-soft);color:var(--practice);font:500 11.5px var(--ui);padding:7px 24px;border-bottom:1px solid #E2D6FA}
 /* controls */
-.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:6px;border:1px solid #D5D1C8;background:#fff;font:500 12.5px var(--ui);color:var(--ink);white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:6px;border:1px solid #D5D1C8;background:#fff;font:500 12.5px var(--ui);white-space:nowrap}
+.btn:hover{border-color:#B9B4A9}
 .btn.pri{background:var(--ink);border-color:var(--ink);color:#fff}
 .btn.you{background:var(--you);border-color:var(--you);color:#fff}
 .btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)}
+.btn.ghost:hover{background:#ECE9E3}
 .btn.danger{color:var(--diff);border-color:#F0C3B6}
-.btn kbd,.k{font:500 10px var(--mono);color:inherit;opacity:.7;border:1px solid currentColor;border-radius:3px;padding:0 4px}
-.seg{display:inline-flex;background:#E9E6E0;border-radius:7px;padding:2px;gap:2px}
-.seg span{padding:4px 10px;border-radius:5px;font-size:12px;color:var(--ink2);white-space:nowrap}
-.seg span b{font:500 11px var(--mono);margin-left:6px;color:var(--mute)}
-.seg span.on{background:#fff;color:var(--ink);box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{height:24px;padding:0 8px;font-size:11.5px}
+.seg{display:inline-flex;background:#E9E6E0;border-radius:7px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{padding:4px 10px;border-radius:5px;font-size:12px;color:var(--ink2);background:none;border:0;white-space:nowrap}
+.seg button b{font:500 11px var(--mono);margin-left:6px;color:var(--mute)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.seg.you button.on{color:var(--you)}
 .field{display:flex;flex-direction:column;gap:4px}
-.field label{font:500 11px var(--ui);color:var(--ink2)}
-.inp{height:30px;border:1px solid #D5D1C8;border-radius:6px;background:#fff;padding:0 10px;display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink)}
-.inp.ph{color:var(--mute)}
-.inp .caret{color:var(--mute);font-size:10px}
-.area{border:1px solid #D5D1C8;border-radius:6px;background:#fff;padding:10px 12px;font-size:14px;line-height:1.5}
+.field>label{font:500 11px var(--ui);color:var(--ink2)}
+.inp,select.inp{height:30px;border:1px solid #D5D1C8;border-radius:6px;background:#fff;padding:0 9px;font-size:12.5px;width:100%}
+textarea.inp{height:auto;padding:8px 10px;resize:vertical;line-height:1.45}
+.inp:focus{outline:2px solid var(--you-line);border-color:var(--you)}
 .chip{display:inline-flex;align-items:center;gap:5px;font:500 11px var(--ui);padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink2);white-space:nowrap}
+button.chip:hover{border-color:#B9B4A9}
 .chip.ok{color:#22606F;background:#E8F3F5;border-color:#CBE4EA}
 .chip.err{color:var(--diff);background:var(--diff-soft);border-color:#F3CBBE}
 .chip.warn{color:var(--caution);background:var(--caution-soft);border-color:#EED9AE}
 .chip.you{color:var(--you);background:var(--you-soft);border-color:var(--you-line)}
 .chip.mac{color:var(--machine);background:var(--machine-soft);border-color:var(--machine-line)}
+.chip.prac{color:var(--practice);background:var(--practice-soft);border-color:#E2D6FA}
 .card{background:var(--sheet);border:1px solid var(--line);border-radius:10px}
+.note-box{border-radius:8px;padding:9px 12px;font-size:12px;border:1px solid}
+.note-box.warn{background:var(--caution-soft);border-color:#EED9AE} .note-box.warn b{color:var(--caution)}
+.note-box.err{background:var(--diff-soft);border-color:#F3CBBE} .note-box.err b{color:var(--diff)}
+.note-box.info{background:#fff;border-color:var(--line)}
 .hr{height:1px;background:var(--line2)}
 .row{display:flex;align-items:center;gap:10px}
+.wrap{flex-wrap:wrap}
 .grid{display:grid;gap:14px}
-.big{font:400 52px/1 var(--serif);letter-spacing:-.01em}
-.huge{font:400 88px/.9 var(--serif);letter-spacing:-.02em}
-/* bars */
+.big{font:400 50px/1 var(--serif);letter-spacing:-.01em}
+.huge{font:400 84px/.9 var(--serif);letter-spacing:-.02em}
 .meter{height:6px;background:#ECE9E3;border-radius:3px;overflow:hidden}
 .meter>i{display:block;height:100%}
-.segm{display:flex;gap:2px}
-.segm i{height:10px;flex:1;border-radius:1px;background:#E6E2DA}
-table.t{width:100%;border-collapse:collapse;font-size:12.5px}
-table.t th{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
-table.t td{padding:8px 10px;border-bottom:1px solid var(--line2);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}
-table.t tr.sel td{background:#F6F4EF}
+.segm{display:flex;gap:2px} .segm i{height:10px;flex:1;border-radius:1px;background:#E6E2DA}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+table.t th{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+table.t td{padding:8px 10px;border-bottom:1px solid var(--line2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+table.t tr.click{cursor:pointer} table.t tr.click:hover td{background:#FAF9F6}
+table.t tr.sel td{background:#F3F1EC}
 .ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.s-neg{color:var(--neg)} .s-neu{color:var(--neu)} .s-pos{color:var(--pos)}
-.overlay{position:absolute;inset:34px 0 0 0;background:rgba(19,21,24,.28);display:grid;place-items:center}
-.pop{background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 20px 50px -10px rgba(0,0,0,.35)}
-/* native label grid (R5) */
+.quote{font:400 30px/1.2 var(--serif)}
 .elem{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.elem b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.elem div{border-radius:5px;padding:6px 6px 5px;min-height:46px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid rgba(0,0,0,.04)}
-.elem b{font:500 10.5px var(--ui)}
-.elem span{font:10px var(--mono);opacity:.8}
+.elem div{border-radius:5px;padding:6px 6px 5px;min-height:44px;display:flex;flex-direction:column;justify-content:space-between}
+.elem b{font:500 10.5px var(--ui);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.elem span{font:10px var(--mono);opacity:.85}
 .footnote{font:10.5px var(--mono);color:var(--mute)}
-@media (max-width:1320px){.screen,.cover{padding-left:16px;padding-right:16px}}
-body.only{background:#E6E3DC}
-body.only .cover,body.only .screen:not(.show){display:none}
-body.only .screen{padding:20px 20px 24px;max-width:none}
+/* overlays */
+.scrim{position:absolute;inset:34px 0 0 0;background:rgba(19,21,24,.30);display:grid;place-items:center;z-index:5}
+.dlg{background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 20px 50px -10px rgba(0,0,0,.35);padding:20px 22px;width:460px;max-width:calc(100% - 40px)}
+.dlg h4{font:400 24px/1.15 var(--serif);margin-bottom:8px}
+.toast{position:absolute;right:18px;bottom:18px;background:var(--ink);color:#fff;border-radius:8px;padding:10px 14px;font-size:12.5px;z-index:6;box-shadow:0 10px 30px -8px rgba(0,0,0,.4);max-width:420px}
+.empty{display:grid;place-items:center;height:100%;text-align:center;color:var(--ink2)}
+.qitem{padding:9px 12px;border-bottom:1px solid var(--line2);background:none;border-left:0;border-right:0;border-top:0;text-align:left;width:100%;display:block}
+.qitem:hover{background:#FAF9F6}
+.qitem.on{background:#F3F1EC;box-shadow:inset 3px 0 0 var(--you)}
+.step-n{font:400 30px/1 var(--serif);color:var(--mute);width:44px}
+#err{position:fixed;left:8px;bottom:8px;background:#b00;color:#fff;padding:6px 10px;font:12px var(--mono);display:none;z-index:99}
 </style>
 </head>
 <body>
-
-<header class="cover">
-  <div class="cap">Social Text Intelligence · V2 UI/IA exploration · round 3 · prototype, synthetic data</div>
-  <h1>Product feature samples:<br>a quiet desktop workbench for text evidence</h1>
-  <p>Eleven Windows desktop screens that cover every V1 feature area and the four gate-approved V2 additions, and nothing else. Each screen lists the feature IDs it implements (<span class="mono">F…</span> = V1, <span class="mono">V2-…</span> = gate-approved) and the references it borrows from (<span class="mono">R…</span>). The full lists are in FEATURE_BOUNDARY.md and REFERENCES.md.</p>
-  <div class="legend">
-    <div><b>Machine record</b><span class="muted">Graphite, read-only, kept exactly as produced. <span class="chip mac">AI</span></span></div>
-    <div><b>Your judgment</b><span class="muted">Ultramarine, stored separately, never overwrites the AI. <span class="chip you">You</span></span></div>
-    <div><b>Disagreement / failure</b><span class="muted">Vermilion only where you differ or a row failed. <span class="chip err">failed</span></span></div>
-    <div><b>Type</b><span class="muted">Instrument Serif for figures and quotes, Inter for the interface, IBM Plex Mono for provenance. All OFL, so they can be bundled in the Qt build.</span></div>
-  </div>
-</header>
-
-<!-- ======================= 01 FIRST RUN ======================= -->
-<section class="screen" id="s01">
-  <div class="shead"><span class="n">01</span><h2>First run · models</h2>
-    <div class="tags"><span class="tag v2">V2-2</span><span class="tag">F1.4</span><span class="tag ref">R6</span><span class="tag ref">R10</span></div></div>
-  <p class="snote">The only network request the app ever makes, and only if you choose it. The pinned revisions are identical to V1's provenance.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Social Text Intelligence — setup<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body solo"><div style="display:grid;grid-template-columns:1.05fr 1fr;height:100%">
-      <div style="padding:64px 56px;display:flex;flex-direction:column;gap:18px">
-        <div class="cap">Before the first analysis</div>
-        <div style="font:400 50px/1.04 var(--serif)">Two pinned models are needed once. After that, your text never leaves this computer.</div>
-        <p class="muted" style="font-size:14px;max-width:520px">The models are not bundled with the installer. They are fetched from huggingface.co at the exact revisions below and checked after download. A partially downloaded model is never used.</p>
-        <div style="margin-top:auto" class="row"><span class="btn ghost">Licences…</span><span style="flex:1"></span><span class="btn">Later</span><span class="btn pri">Continue in background</span></div>
-      </div>
-      <div style="background:#fff;border-left:1px solid var(--line);padding:56px 44px;display:flex;flex-direction:column;gap:22px">
-        <div>
-          <div class="row"><span class="cap">Sentiment</span><span style="flex:1"></span><span class="chip ok">ready · verified</span></div>
-          <div style="font:400 24px/1.2 var(--serif);margin-top:8px">cardiffnlp / twitter-roberta-base-sentiment-latest</div>
-          <div class="mono faint" style="margin-top:4px">rev 3216a57 · CC-BY-4.0 · 499 MB</div>
-          <div class="meter" style="margin-top:10px"><i style="width:100%;background:var(--ink)"></i></div>
-        </div>
-        <div>
-          <div class="row"><span class="cap">Emotion</span><span style="flex:1"></span><span class="mono" style="color:var(--you)">191 of 499 MB · about 50 s</span></div>
-          <div style="font:400 24px/1.2 var(--serif);margin-top:8px">SamLowe / roberta-base-go_emotions</div>
-          <div class="mono faint" style="margin-top:4px">rev d750483 · MIT · 499 MB</div>
-          <div class="meter" style="margin-top:10px"><i style="width:38%;background:var(--you)"></i></div>
-          <div class="row" style="margin-top:10px"><span class="btn">Pause</span><span class="btn">Cancel</span></div>
-        </div>
-        <div class="hr"></div>
-        <div class="grid" style="gap:10px">
-          <div class="cap">Other ways in</div>
-          <div class="row"><span class="btn">Use a folder I already have…</span><span class="faint" style="font-size:12px">Offline machines. Only the exact pinned revisions are accepted.</span></div>
-          <div class="card" style="padding:10px 12px;background:var(--diff-soft);border-color:#F3CBBE;font-size:12px"><b style="color:var(--diff)">If the download breaks:</b> it resumes from where it stopped. You can still create projects and import a CSV; analysis waits until both models are ready.</div>
-        </div>
-      </div>
-    </div></div>
-  </div>
-</section>
-
-<!-- ======================= 02 PROJECTS ======================= -->
-<section class="screen" id="s02">
-  <div class="shead"><span class="n">02</span><h2>Projects</h2>
-    <div class="tags"><span class="tag v2">V2-1</span><span class="tag">F1</span><span class="tag">F3.5</span><span class="tag ref">R4</span><span class="tag ref">R11</span></div></div>
-  <p class="snote">A project is exactly one V1 batch workspace: one CSV and everything derived from it, saved until you delete it. "Analyze one text" stays outside projects, as in V1.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Social Text Intelligence<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body solo"><div style="padding:36px 56px;display:flex;flex-direction:column;gap:20px;height:100%">
-      <div class="row"><div style="font:400 44px/1 var(--serif)">Projects</div><span style="flex:1"></span>
-        <span class="btn">Analyze one text</span><span class="btn pri">New project from CSV…</span></div>
-      <div class="row"><span class="seg"><span class="on">All<b>4</b></span><span>In review<b>2</b></span><span>Fully reviewed<b>2</b></span></span><span style="flex:1"></span><span class="inp ph" style="width:260px">Filter by name</span></div>
-      <div class="card" style="overflow:hidden">
-        <table class="t">
-          <thead><tr><th style="width:34%">Project</th><th style="width:9%">Rows</th><th style="width:28%">Human review</th><th style="width:12%">Last opened</th><th style="width:17%"></th></tr></thead>
-          <tbody>
-            <tr class="sel"><td><div style="font:400 20px var(--serif)">Checkout feedback — autumn sample</div><div class="mono faint">checkout_autumn.csv · 2 failed rows</div></td><td class="mono">409</td>
-              <td><div class="segm" style="max-width:220px">
-                <i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--you)"></i><i></i><i></i><i></i></div><div class="mono faint" style="margin-top:5px">268 / 409 · 41 corrected · 9 uncertain</div></td>
-              <td class="mono muted">today 09:12</td><td style="text-align:right"><span class="btn pri">Open</span> <span class="btn ghost">⋯</span></td></tr>
-            <tr><td><div style="font:400 20px var(--serif)">Community forum — onboarding thread</div><div class="mono faint">forum_onboarding.csv</div></td><td class="mono">214</td>
-              <td><div class="segm" style="max-width:220px"><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--you)"></i></div><div class="mono faint" style="margin-top:5px">214 / 214 · review queue complete</div></td>
-              <td class="mono muted">3 Oct</td><td style="text-align:right"><span class="btn">Open</span> <span class="btn ghost">⋯</span></td></tr>
-            <tr><td><div style="font:400 20px var(--serif)">Support inbox pilot</div><div class="mono faint">support_pilot.csv</div></td><td class="mono">188</td>
-              <td><div class="segm" style="max-width:220px"><i style="background:var(--ink)"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="mono faint" style="margin-top:5px">22 / 188 reviewed</div></td>
-              <td class="mono muted">28 Sep</td><td style="text-align:right;position:relative"><span class="btn">Open</span> <span class="btn ghost" style="background:#EDEAE4">⋯</span></td></tr>
-            <tr><td><div style="font:400 20px var(--serif)">Domain evaluation set</div><div class="mono faint">domain_eval_120.csv</div></td><td class="mono">120</td>
-              <td><div class="segm" style="max-width:220px"><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i></div><div class="mono faint" style="margin-top:5px">120 / 120 · review queue complete</div></td>
-              <td class="mono muted">21 Sep</td><td style="text-align:right"><span class="btn">Open</span> <span class="btn ghost">⋯</span></td></tr>
-          </tbody></table>
-      </div>
-      <div class="footnote" style="margin-top:auto">Projects are stored in %LOCALAPPDATA%\SocialTextIntelligence\projects · one file per project · kept until you delete it</div>
-    </div></div>
-    <div class="pop" style="position:absolute;right:70px;top:430px;width:380px;padding:18px 20px">
-      <div style="font:400 22px var(--serif)">Delete “Support inbox pilot”?</div>
-      <p class="muted" style="font-size:12.5px;margin-top:8px">188 rows, the AI record and 22 human reviews will be removed from this application's data files. Exports you saved, backups and copies made by Windows are not affected. This is not a secure erase.</p>
-      <div class="row" style="margin-top:14px"><span class="btn">Export reviewed CSV first…</span><span style="flex:1"></span><span class="btn">Cancel</span><span class="btn danger">Delete</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- ======================= 03 ANALYZE ONE TEXT ======================= -->
-<section class="screen" id="s03">
-  <div class="shead"><span class="n">03</span><h2>Analyze one text</h2>
-    <div class="tags"><span class="tag">F1</span><span class="tag">F1.1</span><span class="tag">F1.2</span><span class="tag">F1.3</span><span class="tag">F1.4</span><span class="tag">F1.5</span><span class="tag v2">V2-3</span><span class="tag ref">R10</span><span class="tag ref">R5</span></div></div>
-  <p class="snote">The result reads like a specimen sheet. The threshold-fallback explanation and all 28 model-native scores are V1 behaviour. The language notice is the only V2 addition. Nothing here is saved.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Social Text Intelligence — Analyze one text<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body">
-      <aside class="side">
-        <div class="proj"><div class="t">No project</div><div class="s">single-text analysis is not saved</div></div>
-        <div class="nav on"><i>◇</i>Analyze one text</div>
-        <div class="nav"><i>▤</i>Projects</div>
-        <div class="foot"><span class="dot"></span>2 pinned models ready · offline</div>
-      </aside>
-      <div class="main">
-        <div class="bar"><h3>Analyze one text</h3><span class="sp"></span><span class="chip">English only</span><span class="chip">20,000-character limit</span><span class="chip">no truncation</span></div>
-        <div class="pane" style="display:grid;grid-template-columns:400px 1fr;gap:22px">
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div class="area" style="height:150px">The new update finally fixed the login bug, but the app still crashes whenever I try to export a large file.</div>
-            <div class="row"><span class="mono faint">104 characters · within model limits</span><span style="flex:1"></span><span class="btn pri">Analyze locally</span></div>
-            <div class="hr" style="margin:6px 0"></div>
-            <div class="cap">Other states of this screen</div>
-            <div class="card" style="padding:10px 12px;background:var(--caution-soft);border-color:#EED9AE;font-size:12px"><b style="color:var(--caution)">Looks like French.</b> These models are English-only, so the result would be unreliable. You can still analyze; the notice stays on the result.<span class="tag v2" style="margin-left:6px">V2-3</span></div>
-            <div class="card" style="padding:10px 12px;background:var(--diff-soft);border-color:#F3CBBE;font-size:12px"><b style="color:var(--diff)">Not analyzed.</b> This text uses 731 model tokens; the limit is 512. It was rejected, not truncated.</div>
-            <div class="card" style="padding:10px 12px;font-size:12px"><b>Models not available.</b> Local model dependencies are not installed or not downloaded yet. <u>Open model setup</u>.</div>
-          </div>
-          <div class="card" style="padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:18px 26px;align-content:start">
-            <div>
-              <div class="row"><span class="chip mac">AI</span><span class="cap">Sentiment</span></div>
-              <div class="big s-neg" style="margin-top:8px">negative</div>
-              <div class="mono faint" style="margin-top:4px">confidence 0.687</div>
-              <div style="margin-top:12px;display:grid;gap:7px">
-                <div class="row"><span style="width:62px" class="muted">negative</span><div class="meter" style="flex:1"><i style="width:68.7%;background:var(--neg)"></i></div><span class="mono" style="width:40px;text-align:right">0.687</span></div>
-                <div class="row"><span style="width:62px" class="muted">neutral</span><div class="meter" style="flex:1"><i style="width:29.3%;background:var(--neu)"></i></div><span class="mono" style="width:40px;text-align:right">0.293</span></div>
-                <div class="row"><span style="width:62px" class="muted">positive</span><div class="meter" style="flex:1"><i style="width:2%;background:var(--pos)"></i></div><span class="mono" style="width:40px;text-align:right">0.020</span></div>
-              </div>
-            </div>
-            <div>
-              <div class="row"><span class="chip mac">AI</span><span class="cap">Dominant emotion</span></div>
-              <div class="big" style="margin-top:8px">neutral</div>
-              <div class="mono faint" style="margin-top:4px">threshold ≥ 0.50 · secondary: none</div>
-              <div class="card" style="margin-top:12px;padding:9px 11px;background:var(--caution-soft);border-color:#EED9AE;font-size:12px"><b style="color:var(--caution)">Threshold fallback.</b> No non-neutral compact emotion reached 0.50. “Neutral” here is a fallback state, not a claim that the neutral score is highest.</div>
-            </div>
-            <div style="grid-column:1/-1">
-              <div class="row"><span class="cap">Nine compact emotion scores</span></div>
-              <div style="position:relative;display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-top:8px;align-items:end;height:112px"><div style="position:absolute;left:0;right:0;bottom:101px;border-top:1px dashed var(--caution)"></div><span class="mono" style="position:absolute;right:0;bottom:104px;color:var(--caution);font-size:10.5px">0.50 threshold · none reached</span>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:9px;background:var(--machine)"></div><span class="mono faint">joy</span></div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:2px;background:var(--machine)"></div><span class="mono faint">amuse.</span></div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:39px;background:var(--machine)"></div><span class="mono faint">admir.</span></div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:1px;background:var(--machine)"></div><span class="mono faint">grat.</span></div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:10px;background:var(--machine)"></div><span class="mono faint">anger</span></div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:12px;background:var(--machine)"></div><span class="mono faint">sadness</span></div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:1px;background:var(--machine)"></div><span class="mono faint">fear</span></div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:1px;background:var(--machine)"></div><span class="mono faint">disgust</span></div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:53px;background:var(--neu)"></div><span class="mono faint">neutral</span></div>
-              </div>
-            </div>
-            <div style="grid-column:1/-1">
-              <div class="row"><span class="cap">All 28 model-native scores</span><span class="faint" style="font-size:11.5px">shade = score; outline = maps to a compact emotion</span></div>
-              <div class="elem" style="margin-top:8px" id="elem"></div>
-            </div>
-            <div style="grid-column:1/-1" class="footnote">cardiffnlp/twitter-roberta-base-sentiment-latest@3216a57 · SamLowe/roberta-base-go_emotions@d750483 · analyzed locally · not saved</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ======================= 04 IMPORT ======================= -->
-<section class="screen" id="s04">
-  <div class="shead"><span class="n">04</span><h2>New project · import &amp; validate</h2>
-    <div class="tags"><span class="tag">F2</span><span class="tag">F2.1</span><span class="tag">F2.2</span><span class="tag">F2.3</span><span class="tag v2">V2-1</span><span class="tag v2">V2-3</span><span class="tag v2">V2-4</span><span class="tag ref">R9</span><span class="tag ref">R2</span></div></div>
-  <p class="snote">File in, structured rows out. The V1 limits and the recognised metadata columns are shown as they are. Language notices come from a language check (V2-3), not from the models. Progress and cancel (V2-4) keep the finished rows.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Social Text Intelligence — New project<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body solo"><div style="display:grid;grid-template-columns:420px 1fr;height:100%">
-      <div style="background:#fff;border-right:1px solid var(--line);padding:30px 30px;display:flex;flex-direction:column;gap:16px">
-        <div class="cap">Step 1 of 2 · read the file</div>
-        <div style="font:400 30px/1.1 var(--serif)">checkout_autumn.csv</div>
-        <div class="mono faint">412 rows · 184 KB · UTF-8 · limits 2 MB / 500 rows</div>
-        <div class="field"><label>Project name</label><div class="inp">Checkout feedback — autumn sample</div></div>
-        <div class="field"><label>Text column</label><div class="inp">message_body <span class="caret">▾</span></div></div>
-        <div class="field"><label>Recognised metadata columns</label>
-          <div class="row" style="flex-wrap:wrap;gap:6px">
-            <span class="chip you">record_id</span><span class="chip you">source_type</span><span class="chip you">source_label</span><span class="chip you">topic</span><span class="chip you">timestamp</span><span class="chip">language — not in file</span><span class="chip">community — not in file</span><span class="chip">parent_record_id — not in file</span><span class="chip">notes — not in file</span>
-          </div>
-          <span class="faint" style="font-size:11.5px">Groups in Insights come only from these columns. Nothing is inferred.</span>
-        </div>
-        <div class="hr"></div>
-        <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px">
-          <div><div class="big">411</div><div class="mono faint">valid</div></div>
-          <div><div class="big" style="color:var(--diff)">1</div><div class="mono faint">invalid</div></div>
-          <div><div class="big" style="color:var(--caution)">3</div><div class="mono faint">possibly not English</div></div>
-        </div>
-        <div style="margin-top:auto" class="row"><span class="btn">Back</span><span style="flex:1"></span><span class="btn pri">Create project &amp; analyze 411 rows</span></div>
-      </div>
-      <div style="padding:26px 28px;display:flex;flex-direction:column;gap:14px;min-height:0">
-        <div class="row"><span class="cap">Preview &amp; validation</span><span style="flex:1"></span><span class="seg"><span class="on">All<b>412</b></span><span>Invalid<b>1</b></span><span>Language notice<b>3</b></span></span></div>
-        <div class="card" style="overflow:hidden">
-          <table class="t">
-            <thead><tr><th style="width:6%">Row</th><th style="width:11%">record_id</th><th style="width:47%">message_body</th><th style="width:12%">source_type</th><th style="width:24%">Check</th></tr></thead>
-            <tbody>
-              <tr><td class="mono">2</td><td class="mono">c-1001</td><td class="ell">The new update finally fixed the login bug, but the app still crashes whenever I try…</td><td>app_store</td><td><span class="chip ok">ready</span></td></tr>
-              <tr><td class="mono">3</td><td class="mono">c-1002</td><td class="ell">Brilliant, another price rise right after you removed offline mode. Truly great work.</td><td>app_store</td><td><span class="chip ok">ready</span></td></tr>
-              <tr><td class="mono">4</td><td class="mono">c-1003</td><td class="ell">Sync has been stuck on ‘pending’ since yesterday and I have a client meeting in an hour.</td><td>support</td><td><span class="chip ok">ready</span></td></tr>
-              <tr><td class="mono">5</td><td class="mono">c-1004</td><td class="ell" style="color:var(--mute)">(empty)</td><td>support</td><td><span class="chip err">empty_text</span></td></tr>
-              <tr><td class="mono">6</td><td class="mono">c-1005</td><td class="ell">Merci, la nouvelle version est beaucoup plus rapide.</td><td>forum</td><td><span class="chip warn">ready · looks like French</span></td></tr>
-              <tr><td class="mono">7</td><td class="mono">c-1006</td><td class="ell">Happy to pay for this. It replaced three other tools for our team.</td><td>forum</td><td><span class="chip ok">ready</span></td></tr>
-              <tr><td class="mono">8</td><td class="mono">c-1007</td><td class="ell">I was charged twice this month. Please refund the duplicate payment.</td><td>support</td><td><span class="chip ok">ready</span></td></tr>
-              <tr><td class="mono">9</td><td class="mono">c-1008</td><td class="ell">Couldn’t find where to change the language. Gave up after ten minutes.</td><td>app_store</td><td><span class="chip ok">ready</span></td></tr>
-            </tbody></table>
-        </div>
-        <div class="faint" style="font-size:11.5px">Rows longer than either model’s token limit fail explicitly during analysis and stay in the project with their reason. Other rows continue.</div>
-        <div class="card" style="margin-top:auto;padding:16px 18px">
-          <div class="row"><span class="cap">Step 2 of 2 · analyzing on this computer</span><span style="flex:1"></span><span class="mono">187 of 411 · 2 failed · about 1 min</span></div>
-          <div class="segm" style="margin:12px 0 10px" id="prog"></div>
-          <div class="row"><span class="faint" style="font-size:12px">Each row is saved as soon as it is analyzed. Cancel keeps the 187 finished rows; the remaining rows stay queued and can be resumed.</span><span style="flex:1"></span><span class="btn">Pause</span><span class="btn danger">Cancel…</span></div>
-        </div>
-      </div>
-    </div></div>
-  </div>
-</section>
-
-<!-- ======================= shared sidebar template is repeated per window (static mock) ======================= -->
-
-<!-- ======================= 05 RESULTS ======================= -->
-<section class="screen" id="s05">
-  <div class="shead"><span class="n">05</span><h2>Results</h2>
-    <div class="tags"><span class="tag">F2.4</span><span class="tag">F2.5</span><span class="tag">F2.6</span><span class="tag ref">R13</span><span class="tag ref">R2</span><span class="tag ref">R1</span></div></div>
-  <p class="snote">V1's aggregates become one big figure each with a small chart. The results table keeps V1's status, sentiment and dominant-emotion filters, and failed rows stay visible with their reason.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body">
-      <aside class="side" data-on="results"></aside>
-      <div class="main">
-        <div class="bar"><h3>Results</h3><span class="mono faint">409 analyzed · 2 failed · 1 invalid at import</span><span class="sp"></span><span class="btn">Export results CSV…</span></div>
-        <div class="pane" style="display:flex;flex-direction:column;gap:16px">
-          <div class="grid" style="grid-template-columns:1.05fr 2fr 1.1fr .65fr">
-            <div class="card" style="padding:16px 18px">
-              <div class="cap">AI sentiment · rows</div>
-              <div class="row" style="margin-top:10px;align-items:flex-end;gap:16px"><div><div class="big s-neg">171</div><div class="mono faint">negative</div></div><div><div class="big s-neu">72</div><div class="mono faint">neutral</div></div><div><div class="big s-pos">166</div><div class="mono faint">positive</div></div></div>
-              <div style="display:flex;height:6px;margin-top:12px;border-radius:3px;overflow:hidden"><i style="width:41.8%;background:var(--neg)"></i><i style="width:17.6%;background:var(--neu)"></i><i style="width:40.6%;background:var(--pos)"></i></div>
-            </div>
-            <div class="card" style="padding:16px 18px">
-              <div class="cap">AI dominant emotion · rows</div>
-              <div id="emodist" style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;align-items:end;height:92px;margin-top:10px"></div>
-              <div class="faint" style="font-size:11px;margin-top:6px">neutral includes 61 threshold fallbacks</div>
-            </div>
-            <div class="card" style="padding:16px 18px">
-              <div class="cap">Compact activation rate</div>
-              <div style="display:grid;gap:6px;margin-top:10px">
-                <div class="row"><span style="width:76px" class="muted">anger</span><div class="meter" style="flex:1"><i style="width:16%;background:var(--machine)"></i></div><span class="mono" style="width:32px;text-align:right">16%</span></div>
-                <div class="row"><span style="width:76px" class="muted">joy</span><div class="meter" style="flex:1"><i style="width:15%;background:var(--machine)"></i></div><span class="mono" style="width:32px;text-align:right">15%</span></div>
-                <div class="row"><span style="width:76px" class="muted">admiration</span><div class="meter" style="flex:1"><i style="width:13%;background:var(--machine)"></i></div><span class="mono" style="width:32px;text-align:right">13%</span></div>
-                <div class="row"><span style="width:76px" class="muted">sadness</span><div class="meter" style="flex:1"><i style="width:10%;background:var(--machine)"></i></div><span class="mono" style="width:32px;text-align:right">10%</span></div>
-              </div>
-              <div class="faint" style="font-size:11px;margin-top:6px">independent rates; need not sum to 100%</div>
-            </div>
-            <div class="card" style="padding:16px 18px">
-              <div class="cap">Failed</div>
-              <div class="big" style="color:var(--diff);margin-top:10px">2</div>
-              <div class="mono faint">input_too_long ×2<br>kept, not truncated</div>
-            </div>
-          </div>
-          <div class="row"><span class="seg"><span class="on">All<b>411</b></span><span>Analyzed<b>409</b></span><span>Failed<b>2</b></span></span>
-            <div class="inp" style="width:170px">Sentiment: any <span class="caret">▾</span></div><div class="inp" style="width:200px">Dominant emotion: any <span class="caret">▾</span></div><span style="flex:1"></span><span class="mono faint">411 rows shown</span></div>
-          <div class="card" style="overflow:hidden">
-            <table class="t">
-              <thead><tr><th style="width:5%">Row</th><th style="width:9%">record_id</th><th style="width:9%">Status</th><th style="width:39%">Text</th><th style="width:10%">Sentiment</th><th style="width:13%">Dominant</th><th style="width:15%">Secondary / error</th></tr></thead>
-              <tbody>
-                <tr><td class="mono">2</td><td class="mono">c-1001</td><td><span class="chip ok">analyzed</span></td><td class="ell">The new update finally fixed the login bug, but the app still crashes whenever…</td><td class="s-neg">negative</td><td>neutral <span class="chip warn">fallback</span></td><td class="faint">none</td></tr>
-                <tr class="sel"><td class="mono">3</td><td class="mono">c-1002</td><td><span class="chip ok">analyzed</span></td><td class="ell">Brilliant, another price rise right after you removed offline mode. Truly great work.</td><td class="s-pos">positive</td><td>admiration</td><td class="faint">none</td></tr>
-                <tr><td class="mono">4</td><td class="mono">c-1003</td><td><span class="chip ok">analyzed</span></td><td class="ell">Sync has been stuck on ‘pending’ since yesterday and I have a client meeting…</td><td class="s-neg">negative</td><td>fear</td><td>annoyance→anger</td></tr>
-                <tr><td class="mono">6</td><td class="mono">c-1005</td><td><span class="chip ok">analyzed</span> <span class="chip warn">fr?</span></td><td class="ell">Merci, la nouvelle version est beaucoup plus rapide.</td><td class="s-neu">neutral</td><td>neutral</td><td class="faint">none</td></tr>
-                <tr><td class="mono">7</td><td class="mono">c-1006</td><td><span class="chip ok">analyzed</span></td><td class="ell">Happy to pay for this. It replaced three other tools for our team.</td><td class="s-pos">positive</td><td>joy</td><td>admiration</td></tr>
-                <tr><td class="mono">8</td><td class="mono">c-1007</td><td><span class="chip ok">analyzed</span></td><td class="ell">I was charged twice this month. Please refund the duplicate payment.</td><td class="s-neg">negative</td><td>neutral <span class="chip warn">fallback</span></td><td class="faint">none</td></tr>
-                <tr><td class="mono">41</td><td class="mono">c-1040</td><td><span class="chip err">failed</span></td><td class="ell faint">(long message, 2,904 characters)</td><td class="faint">—</td><td class="faint">—</td><td style="color:var(--diff)">input_too_long: 731 &gt; 512</td></tr>
-              </tbody></table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ======================= 06 REVIEW ======================= -->
-<section class="screen" id="s06">
-  <div class="shead"><span class="n">06</span><h2>Review</h2>
-    <div class="tags"><span class="tag">F3</span><span class="tag">F3.1</span><span class="tag">F3.2</span><span class="tag">F3.3</span><span class="tag">F3.4</span><span class="tag">F3.5</span><span class="tag">F1.3</span><span class="tag ref">R6</span><span class="tag ref">R4</span><span class="tag ref">R14</span><span class="tag ref">R12</span></div></div>
-  <p class="snote">The AI record and your judgment sit side by side as two equal cards, like a blind taste test. The AI card is read-only. Accept / Correct / Uncertain per dimension, labels, note, Save &amp; Next and Next Unreviewed are V1 exactly.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body">
-      <aside class="side" data-on="review"></aside>
-      <div class="main">
-        <div class="bar"><h3>Review</h3><span class="seg"><span>All<b>409</b></span><span class="on">Unreviewed<b>141</b></span><span>Reviewed<b>268</b></span><span>Corrected<b>41</b></span><span>Uncertain<b>9</b></span></span><span class="sp"></span>
-          <div style="width:230px"><div class="segm" id="revprog"></div><div class="mono faint" style="margin-top:4px">268 / 409 reviewed · 141 to go</div></div></div>
-        <div class="pane" style="display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px">
-          <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
-            <div style="padding:10px 12px" class="row"><span class="cap">Queue · unreviewed</span><span style="flex:1"></span><span class="mono faint">1 / 141</span></div>
-            <div class="hr"></div>
-            <div id="queue"></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
-            <div class="row"><span class="mono faint">row 3 · c-1002 · source_type app_store · topic pricing</span><span style="flex:1"></span><span class="btn ghost">‹ Previous</span><span class="btn ghost">Next unreviewed ›</span></div>
-            <div style="font:400 30px/1.18 var(--serif);max-width:860px">“Brilliant, another price rise right after you removed offline mode. Truly great work.”</div>
-            <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px;flex:1;min-height:0">
-              <div class="card" style="padding:18px 20px;background:var(--machine-soft);border-color:var(--machine-line);display:flex;flex-direction:column;gap:12px">
-                <div class="row"><span class="chip mac">AI record</span><span class="faint" style="font-size:11.5px">read-only · kept as produced</span></div>
-                <div class="row" style="align-items:flex-end;gap:18px;flex-wrap:wrap">
-                  <div><div class="cap">Sentiment</div><div class="big s-pos" style="font-size:38px">positive</div><div class="mono faint">confidence 0.571</div></div>
-                  <div><div class="cap">Dominant emotion</div><div class="big" style="font-size:38px">admiration</div><div class="mono faint">0.52 ≥ 0.50 · secondary: none</div></div>
-                </div>
-                <div style="display:grid;gap:6px">
-                  <div class="row"><span style="width:62px" class="muted">negative</span><div class="meter" style="flex:1;background:#E0E4EA"><i style="width:31.2%;background:var(--neg)"></i></div><span class="mono" style="width:40px;text-align:right">0.312</span></div>
-                  <div class="row"><span style="width:62px" class="muted">neutral</span><div class="meter" style="flex:1;background:#E0E4EA"><i style="width:11.7%;background:var(--neu)"></i></div><span class="mono" style="width:40px;text-align:right">0.117</span></div>
-                  <div class="row"><span style="width:62px" class="muted">positive</span><div class="meter" style="flex:1;background:#E0E4EA"><i style="width:57.1%;background:var(--pos)"></i></div><span class="mono" style="width:40px;text-align:right">0.571</span></div>
-                </div>
-                <div class="muted" style="font-size:12px;margin-top:auto">▸ Inspect all 28 model-native emotion scores</div>
-                <div class="footnote">sentiment@3216a57 · emotion@d750483</div>
-              </div>
-              <div class="card" style="padding:18px 20px;background:var(--you-soft);border-color:var(--you-line);display:flex;flex-direction:column;gap:12px">
-                <div class="row"><span class="chip you">Your judgment</span><span class="faint" style="font-size:11.5px">saved separately · never changes the AI record</span></div>
-                <div>
-                  <div class="cap">Sentiment</div>
-                  <div class="row" style="margin-top:6px"><span class="seg"><span>Accept AI</span><span class="on" style="color:var(--you)">Correct</span><span>Uncertain</span></span></div><div class="inp" style="margin-top:6px;border-color:var(--you-line)">Human sentiment: negative <span class="caret">▾</span></div>
-                </div>
-                <div>
-                  <div class="cap">Emotion</div>
-                  <div class="row" style="margin-top:6px"><span class="seg"><span>Accept AI</span><span class="on" style="color:var(--you)">Correct</span><span>Uncertain</span></span></div><div class="inp" style="margin-top:6px;border-color:var(--you-line)">Human emotion: anger <span class="caret">▾</span></div>
-                  <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px"><span class="faint" style="font-size:11.5px">Secondary</span><span class="chip you">disgust ✕</span><span class="chip">+ add</span></div>
-                </div>
-                <div class="field"><label>Optional review note</label><div class="area" style="font-size:12.5px;height:58px;color:var(--ink2)">Praise words used sarcastically; complaint about price and removed feature.</div></div>
-                <div class="faint" style="font-size:11.5px;margin-top:auto">Uncertain records no human label and is left out of agreement.</div><div class="row"><span class="btn ghost">Next unreviewed</span><span style="flex:1"></span><span class="btn you">Save &amp; next <kbd>Enter</kbd></span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ======================= 07 AGREEMENT ======================= -->
-<section class="screen" id="s07">
-  <div class="shead"><span class="n">07</span><h2>Agreement, not accuracy</h2>
-    <div class="tags"><span class="tag">F3.6</span><span class="tag">F3.7</span><span class="tag">F3.8</span><span class="tag">F3.9</span><span class="tag ref">R7</span></div></div>
-  <p class="snote">V1's review summary set as a short report: three agreement figures over definitive reviews, sentiment confusion, V1's four confidence bands (shown once there are 5 or more definitive reviews), and the explicit reviewed export.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body">
-      <aside class="side" data-on="agreement"></aside>
-      <div class="main">
-        <div class="bar"><h3>Agreement</h3><span class="mono faint">268 of 409 reviewed · uncertain dimensions excluded from every denominator</span><span class="sp"></span><span class="btn pri">Export reviewed CSV…</span></div>
-        <div class="pane" style="display:grid;grid-template-columns:1.25fr 1fr;gap:28px">
-          <div style="display:flex;flex-direction:column;gap:20px">
-            <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:22px">
-              <div><div class="huge">79<span style="font-size:44px">%</span></div><div class="hr" style="margin:10px 0 8px"></div><div style="font-weight:500">Sentiment agreement</div><div class="mono faint">205 of 259 definitive</div></div>
-              <div><div class="huge">63<span style="font-size:44px">%</span></div><div class="hr" style="margin:10px 0 8px"></div><div style="font-weight:500">Dominant emotion</div><div class="mono faint">158 of 251 definitive</div></div>
-              <div><div class="huge">48<span style="font-size:44px">%</span></div><div class="hr" style="margin:10px 0 8px"></div><div style="font-weight:500">Exact emotion set</div><div class="mono faint">121 of 251 definitive</div></div>
-            </div>
-            <div class="card" style="padding:16px 18px">
-              <div class="row"><span class="cap">Confidence and disagreement · sentiment</span><span style="flex:1"></span><span class="seg"><span class="on">Sentiment</span><span>Dominant emotion</span></span></div>
-              <div id="bands" style="display:grid;gap:10px;margin-top:14px"></div>
-              <div class="faint" style="font-size:11.5px;margin-top:10px">Disagreements / definitive reviews per AI confidence band. Shown after at least 5 definitive reviews.</div>
-            </div>
-            <div class="card" style="padding:14px 18px">
-              <div class="cap">Corrections · human sentiment after correcting</div>
-              <div class="row" style="margin-top:10px;gap:22px"><span><span class="mono s-neg" style="font-size:18px">30</span> <span class="muted">to negative</span></span><span><span class="mono s-neu" style="font-size:18px">16</span> <span class="muted">to neutral</span></span><span><span class="mono s-pos" style="font-size:18px">8</span> <span class="muted">to positive</span></span></div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:18px">
-            <div class="card" style="padding:16px 18px">
-              <div class="cap">Sentiment confusion · AI rows × human columns</div>
-              <div id="cm" style="display:grid;grid-template-columns:90px repeat(3,1fr);gap:4px;margin-top:12px"></div>
-            </div>
-            <div class="card" style="padding:16px 18px">
-              <div class="cap">Explicit reviewed export</div>
-              <p class="muted" style="font-size:12.5px;margin-top:8px">Every row, the immutable AI outputs, separate human fields, provenance, errors and agreement values. Nothing is written until you choose a file.</p>
-              <div style="display:grid;gap:6px;margin-top:10px;font-size:12.5px"><span>☑ Include failed rows with their reason</span><span>☐ Include 28 model-native emotion scores</span></div>
-              <div class="row" style="margin-top:12px"><span style="flex:1"></span><span class="btn pri">Export reviewed CSV…</span></div>
-            </div>
-            <div class="footnote">Agreement describes this project’s text and this reviewer only. It is not model accuracy.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ======================= 08 INSIGHTS COMPARE ======================= -->
-<section class="screen" id="s08">
-  <div class="shead"><span class="n">08</span><h2>Insights · compare groups</h2>
-    <div class="tags"><span class="tag">F4.1</span><span class="tag">F4.2</span><span class="tag">F4.3</span><span class="tag">F4.4</span><span class="tag">F4.7</span><span class="tag">F4.8</span><span class="tag ref">R8</span><span class="tag ref">R7</span></div></div>
-  <p class="snote">V1's dense settings form is split into three numbered steps. The answer shows its denominator, failed rows per group, and V1's sample-size level next to every figure.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body">
-      <aside class="side" data-on="compare"></aside>
-      <div class="main">
-        <div class="bar"><h3>Insights</h3><span class="seg"><span class="on">Compare groups</span><span>Notes &amp; cases</span></span><span class="sp"></span><span class="btn">Export insights CSV…</span></div>
-        <div class="pane" style="display:grid;grid-template-columns:330px 1fr;gap:26px">
-          <div style="display:flex;flex-direction:column">
-            <div style="border-top:1px solid var(--ink);padding:12px 0 14px"><div class="row"><span style="font:400 30px/1 var(--serif);color:var(--mute);width:44px">01</span><div style="flex:1"><div style="font-weight:500">Group by</div><div class="faint" style="font-size:11.5px">only columns from your file</div></div></div>
-              <div class="inp" style="margin-top:10px">source_type <span class="caret">▾</span></div>
-              <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px"><span class="chip you">app_store ✓</span><span class="chip you">support ✓</span><span class="chip you">forum ✓</span><span class="chip">compare 2–4</span></div></div>
-            <div style="border-top:1px solid var(--line);padding:12px 0 14px"><div class="row"><span style="font:400 30px/1 var(--serif);color:var(--mute);width:44px">02</span><div style="flex:1"><div style="font-weight:500">Perspective &amp; metric</div></div></div>
-              <div class="row" style="margin-top:10px"><span class="seg"><span>AI</span><span>Human</span><span class="on">Agreement</span></span></div>
-              <div class="inp" style="margin-top:8px">Sentiment disagreement <span class="caret">▾</span></div></div>
-            <div style="border-top:1px solid var(--line);padding:12px 0 14px"><div class="row"><span style="font:400 30px/1 var(--serif);color:var(--mute);width:44px">03</span><div style="flex:1"><div style="font-weight:500">Filters</div></div></div>
-              <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><div class="inp">AI sentiment: all <span class="caret">▾</span></div><div class="inp">AI emotion: all <span class="caret">▾</span></div><div class="inp ph">From date</div><div class="inp ph">To date</div></div></div>
-            <div style="border-top:1px solid var(--line);padding-top:12px" class="row"><span style="flex:1"></span><span class="btn pri">Apply view</span></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:16px">
-            <div><div class="cap">Metric and denominator</div><p class="muted" style="font-size:12.5px;margin-top:4px">AI–human sentiment disagreement among definitive whole-record sentiment reviews only. Agreement is descriptive, not model accuracy.</p></div>
-            <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px">
-              <div class="card" style="padding:16px 18px"><div class="row"><span style="font-weight:500">app_store</span><span style="flex:1"></span><span class="chip ok">descriptive</span></div><div class="huge" style="margin-top:12px">18<span style="font-size:40px">%</span></div><div class="meter" style="margin-top:10px"><i style="width:18%;background:var(--diff)"></i></div><div class="mono faint" style="margin-top:8px">27 / 148 eligible · 231 group rows</div><div class="mono faint">1 failed row assigned · 78 unreviewed · 5 uncertain</div></div>
-              <div class="card" style="padding:16px 18px"><div class="row"><span style="font-weight:500">support</span><span style="flex:1"></span><span class="chip ok">descriptive</span></div><div class="huge" style="margin-top:12px">28<span style="font-size:40px">%</span></div><div class="meter" style="margin-top:10px"><i style="width:28%;background:var(--diff)"></i></div><div class="mono faint" style="margin-top:8px">23 / 83 eligible · 128 group rows</div><div class="mono faint">1 failed row assigned · 41 unreviewed · 4 uncertain</div></div>
-              <div class="card" style="padding:16px 18px"><div class="row"><span style="font-weight:500">forum</span><span style="flex:1"></span><span class="chip ok">descriptive</span></div><div class="huge" style="margin-top:12px">14<span style="font-size:40px">%</span></div><div class="meter" style="margin-top:10px"><i style="width:14%;background:var(--diff)"></i></div><div class="mono faint" style="margin-top:8px">4 / 28 eligible · 50 group rows</div><div class="mono faint">0 failed · 22 unreviewed · 0 uncertain</div></div>
-            </div>
-            <div class="card" style="padding:12px 16px;background:var(--caution-soft);border-color:#EED9AE;font-size:12.5px"><b style="color:var(--caution)">Same view, grouped by topic:</b> “pricing / forum” has 4 eligible reviews, so it is marked <b>insufficient</b> and comparative emphasis is suppressed. Groups below 10 are marked <b>small</b>.</div>
-            <div class="muted" style="font-size:12px;border-left:2px solid var(--line);padding-left:12px">Descriptive, not causal. These values describe only this dataset. Groups are user-provided fields, not inferred identities. AI labels estimate expression in text; they do not establish feelings, psychology, culture, personality, risk or community traits.</div>
-            <div class="footnote" style="margin-top:auto">Model and review provenance · sentiment@3216a57 · emotion@d750483 · compact activation uses each row’s recorded threshold (≥ 0.50)</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ======================= 09 NOTES & CASES ======================= -->
-<section class="screen" id="s09">
-  <div class="shead"><span class="n">09</span><h2>Insights · context notes &amp; representative cases</h2>
-    <div class="tags"><span class="tag">F4.5</span><span class="tag">F4.6</span><span class="tag">F4.7</span><span class="tag ref">R10</span><span class="tag ref">R4</span></div></div>
-  <p class="snote">Notes are human annotation and never reclassify a record. Cases are picked by V1's deterministic selection rules and labelled as a navigation aid, not as representative of people.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body">
-      <aside class="side" data-on="notes"></aside>
-      <div class="main">
-        <div class="bar"><h3>Insights</h3><span class="seg"><span>Compare groups</span><span class="on">Notes &amp; cases</span></span><span class="sp"></span><span class="btn">Export insights CSV…</span></div>
-        <div class="pane" style="display:grid;grid-template-columns:400px 1fr;gap:24px">
-          <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">
-            <div class="row"><span class="cap">Add phrase and context note</span><span style="flex:1"></span><span class="chip">manual annotation only</span></div>
-            <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><div class="field"><label>Association</label><div class="inp">record <span class="caret">▾</span></div></div><div class="field"><label>Value</label><div class="inp">c-1002 <span class="caret">▾</span></div></div></div>
-            <div class="field"><label>Phrase or expression</label><div class="inp">“Truly great work.”</div></div>
-            <div class="field"><label>Your explanation</label><div class="area" style="font-size:12.5px;padding:7px 10px">Praise phrase used to mock a price change.</div></div>
-            <div class="field"><label>Why context matters</label><div class="area" style="font-size:12.5px;padding:7px 10px;color:var(--ink2)">Read alone, the phrase is positive.</div></div>
-            <div class="field"><label>Tags</label><div class="row" style="flex-wrap:wrap;gap:5px"><span class="chip you">sarcasm_possible</span><span class="chip">mixed_stance</span><span class="chip">missing_context</span><span class="chip">idiom_or_slang</span><span class="chip">quotation</span><span class="chip">in_group_expression</span><span class="chip">annotation_uncertain</span><span class="chip">language_issue</span><span class="chip">other</span></div></div>
-            <div class="row"><span style="flex:1"></span><span class="btn you">Add note</span></div>
-            <div class="hr"></div>
-            <div class="cap">Current notes · 3</div>
-            <div style="font-size:12.5px"><b>topic · pricing</b> <span class="muted">— “offline mode” complaints often open with thanks.</span> <span class="mono faint">mixed_stance</span> <span class="btn ghost" style="height:22px">Delete</span></div>
-            <div style="font-size:12.5px"><b>record · c-1019</b> <span class="muted">— “sick update” is praise.</span> <span class="mono faint">idiom_or_slang</span> <span class="btn ghost" style="height:22px">Delete</span></div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
-            <div class="row" style="flex-wrap:wrap"><span class="cap">Representative cases · rule-selected</span><span style="flex:1"></span>
-              <div class="inp" style="width:200px">AI–human disagreement <span class="caret">▾</span></div><div class="inp" style="width:150px">Tag: any <span class="caret">▾</span></div><span class="btn">Select cases</span></div>
-            <div class="seg" style="align-self:flex-start;flex-wrap:wrap"><span>Highest AI score</span><span>Lowest AI confidence</span><span class="on">AI–human disagreement</span><span>Human corrected</span><span>Uncertain</span><span>With notes</span><span>User-selected</span></div>
-            <div class="card" style="padding:16px 18px">
-              <div style="font:400 22px/1.3 var(--serif)">“Brilliant, another price rise right after you removed offline mode. Truly great work.”</div>
-              <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><span class="chip mac">AI positive 57% · admiration 52%</span><span class="chip you">Human negative · anger</span><span class="chip">1 note · sarcasm_possible</span><span class="mono faint">c-1002</span></div>
-            </div>
-            <div class="card" style="padding:16px 18px">
-              <div style="font:400 22px/1.3 var(--serif)">“I was charged twice this month. Please refund the duplicate p…”</div>
-              <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><span class="chip mac">AI negative 72% · neutral (fallback)</span><span class="chip you">Human negative · anger</span><span class="mono faint">c-1007</span><span class="btn ghost" style="height:22px">Reveal full local text</span></div>
-            </div>
-            <div class="card" style="padding:16px 18px">
-              <div style="font:400 22px/1.3 var(--serif)">“so bad it’s good honestly, the crash animation is art at this point”</div>
-              <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><span class="chip mac">AI negative 83% · amusement 62%</span><span class="chip you">Human positive · amusement</span><span class="mono faint">c-1033</span></div>
-            </div>
-            <div class="footnote" style="margin-top:auto">Navigation aid only. Low confidence, disagreement, uncertainty and tags help locate records; they do not diagnose sarcasm, intent, culture or a person.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ======================= 10 MODERATION ======================= -->
-<section class="screen" id="s10">
-  <div class="shead"><span class="n">10</span><h2>Decision Practice · Moderation Training</h2>
-    <div class="tags"><span class="tag">F5</span><span class="tag">F5.1</span><span class="tag">F5.3</span><span class="tag">F5.4</span><span class="tag">F5.5</span><span class="tag">F5.6</span><span class="tag v2">pending P1/P2</span><span class="tag ref">R12</span></div></div>
-  <p class="snote">Shown as option P1: demoted under Decision Practice and visibly separate from projects. All fields are V1's. If the owner chooses P2 (retire), this screen and the next are removed.</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Decision Practice — Moderation Training<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body">
-      <aside class="side" data-on="mod"></aside>
-      <div class="main">
-        <div style="background:#F3ECFF;color:#5B34B8;font:500 11.5px var(--ui);padding:7px 24px;border-bottom:1px solid #E2D6FA">Training aid · versioned synthetic policy v1 · synthetic cases · the mock recommendation is a labelled fixture, not a model or expert</div>
-        <div class="bar"><h3>Session · case 3 of 8</h3><span class="seg"><span>1 Prepare</span><span class="on">2 Train</span><span>3 Review</span></span><span class="sp"></span><span class="btn ghost">Cancel session</span></div>
-        <div class="pane" style="display:grid;grid-template-columns:1fr 420px;gap:22px">
-          <div style="display:flex;flex-direction:column;gap:14px">
-            <div class="row" style="gap:6px"><span class="chip">category: threat_violence</span><span class="chip">difficulty: medium</span><span class="chip">ambiguity: moderate</span><span class="chip warn">sensitive-content notice</span></div>
-            <div style="font:400 30px/1.25 var(--serif)">“If you post that build again I will make sure everyone knows where you work.”</div>
-            <div class="muted" style="font-size:12.5px">Context: reply in a public modding forum thread.</div>
-            <div class="card" style="padding:14px 16px;background:var(--machine-soft);border-color:var(--machine-line)">
-              <div class="row"><span class="chip mac">Contextual signals</span><span class="faint" style="font-size:11.5px">not moderation verdicts</span></div>
-              <div class="mono" style="margin-top:8px">Sentiment negative 0.81 @3216a57 · Emotion anger 0.44 (below 0.50, fallback neutral) @d750483</div>
-            </div>
-            <div class="card" style="padding:14px 16px">
-              <div class="row"><span class="cap">Synthetic mock recommendation</span><span style="flex:1"></span><span class="chip">fixture</span></div>
-              <div class="mono" style="margin-top:6px">remove · privacy_personal_information · high · escalate</div>
-            </div>
-            <div class="card" style="padding:12px 16px;font-size:12.5px;margin-top:auto"><b>After the session:</b> frozen feedback and the comparison with the reference are revealed. Results show raw denominators only, with no composite score. Export is privacy-default; source context is opt-in.</div>
-          </div>
-          <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:9px">
-            <div class="cap">Your first decision · immutable once submitted</div>
-            <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
-              <div class="field"><label>Disposition</label><div class="inp">remove <span class="caret">▾</span></div></div>
-              <div class="field"><label>Severity</label><div class="inp">high <span class="caret">▾</span></div></div>
-            </div>
-            <div class="field"><label>Primary violation</label><div class="inp">privacy_personal_information <span class="caret">▾</span></div></div>
-            <div class="field"><label>Secondary violations</label><div class="row" style="gap:5px;flex-wrap:wrap"><span class="chip you">harassment_abuse ✕</span><span class="chip">+ add</span></div></div>
-            <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
-              <div class="field"><label>Escalation</label><span class="seg"><span>No</span><span class="on">Yes</span></span></div>
-              <div class="field"><label>Escalation reason</label><div class="inp">credible threat <span class="caret">▾</span></div></div>
-            </div>
-            <div class="field"><label>Unclear / needs review reasons</label><div class="inp ph">Not applicable</div></div>
-            <div class="field"><label>Reasoning</label><div class="area" style="font-size:12.5px;padding:7px 10px;height:52px">Threat to expose workplace = doxxing intent.</div></div>
-            <div class="field"><label>Reviewer note</label><div class="area" style="font-size:12.5px;padding:7px 10px;height:40px;color:var(--mute)">required</div></div>
-            <div class="row" style="margin-top:auto"><span class="faint" style="font-size:11px">Guidance warnings never change or block your judgment.</span><span style="flex:1"></span><span class="btn pri">Submit first decision</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ======================= 11 TRIAGE ======================= -->
-<section class="screen" id="s11">
-  <div class="shead"><span class="n">11</span><h2>Decision Practice · Support Triage</h2>
-    <div class="tags"><span class="tag">F6</span><span class="tag">F6.1</span><span class="tag">F6.3</span><span class="tag">F6.4</span><span class="tag">F6.5</span><span class="tag v2">pending P1/P2</span><span class="tag ref">R2</span><span class="tag ref">R12</span></div></div>
-  <p class="snote">The V1 triage workspace and ticket decision as two panes. Supporting context is collapsed by default, and the mock suggestion stays hidden until the first finalize (independent mode).</p>
-  <div class="win"><div class="tb"><span class="logo">S</span>Decision Practice — Support Triage<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
-    <div class="body">
-      <aside class="side" data-on="tri"></aside>
-      <div class="main">
-        <div style="background:#F3ECFF;color:#5B34B8;font:500 11.5px var(--ui);padding:7px 24px;border-bottom:1px solid #E2D6FA">Not a CRM or routing system · recommended queues and actions are decisions for review, not operations that occurred · mode: Independent</div>
-        <div class="bar"><h3>Triage workspace</h3><span class="seg"><span>1 Source &amp; guide</span><span class="on">2 Workspace</span><span>3 Summary &amp; export</span></span><span class="sp"></span><span class="mono faint">14 tickets · 6 finalized · 2 draft</span></div>
-        <div class="pane" style="display:grid;grid-template-columns:1fr 430px;gap:20px">
-          <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
-            <div class="row" style="flex-wrap:wrap;gap:6px"><div class="inp" style="width:120px">Status: all <span class="caret">▾</span></div><div class="inp" style="width:130px">Urgency: all <span class="caret">▾</span></div><div class="inp" style="width:130px">Queue: all <span class="caret">▾</span></div><div class="inp" style="width:140px">Escalation: all <span class="caret">▾</span></div><span class="btn ghost">More filters (10)</span><div class="inp" style="width:170px">Sort: urgency <span class="caret">▾</span></div></div>
-            <div class="card" style="overflow:hidden">
-              <table class="t">
-                <thead><tr><th style="width:11%">ID</th><th style="width:15%">Source</th><th style="width:18%">Status</th><th style="width:12%">Urgency</th><th style="width:30%">Recommended queue</th><th style="width:14%">Warn.</th></tr></thead>
-                <tbody>
-                  <tr class="sel"><td class="mono">T-007</td><td>synthetic</td><td><span class="chip">draft</span></td><td>high</td><td class="ell">billing_operations</td><td class="faint">—</td></tr>
-                  <tr><td class="mono">T-003</td><td>synthetic</td><td><span class="chip you">finalized</span></td><td>critical</td><td class="ell">fraud_and_risk_review</td><td><span class="chip warn">1</span></td></tr>
-                  <tr><td class="mono">T-011</td><td>workspace</td><td><span class="chip you">finalized</span></td><td>normal</td><td class="ell">technical_support</td><td class="faint">—</td></tr>
-                  <tr><td class="mono">T-002</td><td>synthetic</td><td><span class="chip">untriaged</span></td><td class="faint">—</td><td class="faint">—</td><td class="faint">—</td></tr>
-                  <tr><td class="mono">T-009</td><td>synthetic</td><td><span class="chip">untriaged</span></td><td class="faint">—</td><td class="faint">—</td><td class="faint">—</td></tr>
-                  <tr><td class="mono">T-005</td><td>synthetic</td><td><span class="chip you">finalized</span></td><td>low</td><td class="ell">product_feedback</td><td class="faint">—</td></tr>
-                </tbody></table>
-            </div>
-            <div class="card" style="padding:12px 16px;font-size:12.5px;margin-top:auto"><b>Summary &amp; export (step 3):</b> coverage, finalized distributions, human–mock comparison (first and final) and follow-up reasons. Privacy-aware CSV; each private category must be selected explicitly.</div>
-          </div>
-          <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:8px">
-            <div class="row"><span class="mono">T-007</span><span class="faint" style="font-size:11.5px">frozen guide v1</span><span style="flex:1"></span><span class="chip">mock hidden until first finalize</span></div>
-            <div style="font:400 20px/1.3 var(--serif)">“You charged my card twice for the annual plan and the cancel button does nothing.”</div>
-            <div class="muted" style="font-size:12px">▸ Supporting context (sentiment, emotion, review, notes, metadata). Never decides triage.</div>
-            <div class="grid" style="grid-template-columns:1fr 1fr;gap:7px">
-              <div class="field"><label>Primary intent</label><div class="inp">dispute_charge_or_payment <span class="caret">▾</span></div></div>
-              <div class="field"><label>Secondary intents (≤2)</label><div class="inp">request_cancellation <span class="caret">▾</span></div></div>
-              <div class="field"><label>Issue category</label><div class="inp">billing_and_payment <span class="caret">▾</span></div></div>
-              <div class="field"><label>Urgency</label><div class="inp">high <span class="caret">▾</span></div></div>
-              <div class="field"><label>Recommended queue</label><div class="inp">billing_operations <span class="caret">▾</span></div></div>
-              <div class="field"><label>Escalation</label><span class="seg"><span class="on">No</span><span>Yes</span></span></div>
-              <div class="field" style="grid-column:1/-1"><label>Primary next action</label><div class="inp">review_transaction_or_billing_record <span class="caret">▾</span></div></div>
-              <div class="field" style="grid-column:1/-1"><label>Secondary actions (≤2)</label><div class="inp">process_cancellation_or_refund_review <span class="caret">▾</span></div></div>
-            </div>
-            <div class="field"><label>Human notes</label><div class="area" style="font-size:12.5px;padding:6px 10px;height:40px;color:var(--mute)">optional</div></div>
-            <div class="row" style="margin-top:auto"><span class="btn">Save draft</span><span style="flex:1"></span><span class="btn pri">Finalize</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div style="height:60px"></div>
-
+<div class="demobar" id="demobar"></div>
+<div class="stage"><div class="win" id="win"></div></div>
+<div id="err"></div>
 <script>
-// Sidebar is the same in every project window; build it once from data.
-const NAV=[["h","Project"],["import","↧","Import & validation",""],["results","▦","Results","409"],["review","✓","Review","141"],["agreement","≈","Agreement",""],["compare","◫","Insights · compare",""],["notes","✎","Insights · notes & cases","3"],["h","Tools"],["direct","◇","Analyze one text",""],["h","Decision Practice"],["mod","⚖","Moderation training","P"],["tri","☰","Support triage","P"]];
-document.querySelectorAll('aside.side[data-on]').forEach(a=>{
-  const on=a.dataset.on;
-  let h='<div class="proj"><div class="t">Checkout feedback — autumn sample</div><div class="s">409 rows · saved 09:41</div></div>';
-  for(const n of NAV){ if(n[0]==='h'){h+=`<div class="cap nav-h">${n[1]}</div>`;continue;}
-    const c=n[3]==='P'?'<span class="pend">PENDING</span>':(n[3]?`<span class="c">${n[3]}</span>`:'');
-    h+=`<div class="nav${n[0]===on?' on':''}"><i>${n[1]}</i>${n[2]}${c}</div>`;}
-  h+='<div class="foot"><span class="dot"></span>2 pinned models ready · offline</div>';
-  a.innerHTML=h;});
-// 28 native scores (illustrative values consistent with screen 03)
-const NATIVE=[["neutral",.322,1],["admiration",.236,1],["approval",.118,0],["disappointment",.094,0],["annoyance",.081,0],["sadness",.071,1],["anger",.063,1],["joy",.052,1],["realization",.041,0],["disapproval",.038,0],["optimism",.022,0],["confusion",.019,0],["relief",.012,0],["caring",.009,0],["curiosity",.008,0],["fear",.006,1],["amusement",.005,1],["excitement",.005,0],["surprise",.004,0],["disgust",.003,1],["gratitude",.002,1],["nervousness",.002,0],["love",.002,0],["remorse",.001,0],["pride",.001,0],["desire",.001,0],["embarrassment",.001,0],["grief",.001,0]];
-document.getElementById('elem').innerHTML=NATIVE.map(([n,v,c])=>{const a=Math.min(1,v/0.33);const bg=`rgba(51,64,79,${0.06+0.8*a})`;const fg=a>0.45?'#fff':'#131518';return `<div style="background:${bg};color:${fg};${c?'outline:1.5px solid #33404F;outline-offset:-1.5px':''}"><b>${n}</b><span>${v.toFixed(3)}</span></div>`}).join('');
-// import progress
-document.getElementById('prog').innerHTML=Array.from({length:60},(_,i)=>`<i style="height:14px;background:${i<27?(i===9||i===21?'var(--diff)':'var(--ink)'):'#E6E2DA'}"></i>`).join('');
-// review progress
-document.getElementById('revprog').innerHTML=Array.from({length:30},(_,i)=>`<i style="background:${i<17?'var(--ink)':(i<20?'var(--you)':'#E6E2DA')}"></i>`).join('');
-// emotion distribution
-const ED=[["neutral",118],["anger",64],["joy",58],["admir.",52],["sadness",39],["grat.",31],["fear",21],["disgust",14],["amuse.",12]];
-document.getElementById('emodist').innerHTML=ED.map(([n,v])=>`<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span class="mono" style="font-size:10px">${v}</span><div style="width:100%;height:${Math.round(v/118*58)}px;background:${n==='neutral'?'var(--neu)':'var(--machine)'}"></div><span class="mono faint" style="font-size:9px;max-width:100%;overflow:hidden;text-overflow:ellipsis">${n}</span></div>`).join('');
-// queue
-const Q=[["c-1002","Brilliant, another price rise right after you removed…",1],["c-1009","Export to CSV works fine now.",0],["c-1012","Sync is fine. Support was not.",0],["c-1014","Not sure the new layout is for me, but it’s growing on me.",0],["c-1019","sick update, honestly the best one yet",0],["c-1021","Fine.",0],["c-1024","Why does the export button move every release?",0],["c-1026","Thanks for nothing, I guess.",0],["c-1030","The dark mode is lovely; the battery drain is not.",0]];
-document.getElementById('queue').innerHTML=Q.map(([id,t,on])=>`<div style="padding:9px 12px;border-bottom:1px solid var(--line2);${on?'background:#F6F4EF;box-shadow:inset 3px 0 0 var(--you)':''}"><div class="mono faint">${id}</div><div class="ell" style="font-size:12.5px;${on?'color:#131518':'color:#4B5057'}">${t}</div></div>`).join('');
-// confidence bands (V1 bands)
-const B=[["0.00–0.49",9,21],["0.50–0.74",24,71],["0.75–0.89",13,82],["0.90–1.00",8,85]];
-document.getElementById('bands').innerHTML=B.map(([l,d,n])=>`<div class="row"><span class="mono" style="width:86px">${l}</span><div style="flex:1;height:18px;background:#ECE9E3;border-radius:3px;position:relative;overflow:hidden"><i style="position:absolute;left:0;top:0;bottom:0;width:${(d/n*100).toFixed(1)}%;background:var(--diff)"></i></div><span class="mono" style="width:120px;text-align:right">${d} / ${n} · ${(d/n*100).toFixed(0)}%</span></div>`).join('');
-// confusion matrix
-const CM=[[96,7,2],[9,31,6],[21,9,78]],L=["negative","neutral","positive"];
-let cm='<div></div>'+L.map(l=>`<div class="mono faint" style="text-align:center;font-size:10.5px">you ${l}</div>`).join('');
-CM.forEach((r,i)=>{cm+=`<div class="mono faint" style="font-size:10.5px;align-self:center">AI ${L[i]}</div>`;r.forEach((v,j)=>{const d=i===j;const a=d?0.15+0.75*v/96:0.12+0.8*v/21;cm+=`<div style="height:54px;display:grid;place-items:center;border-radius:4px;font:400 24px var(--serif);background:${d?`rgba(19,21,24,${a.toFixed(2)})`:`rgba(223,82,44,${a.toFixed(2)})`};color:${d&&a>.5?'#fff':'#131518'}">${v}</div>`})});
-document.getElementById('cm').innerHTML=cm;
-// ?only=NN renders a single screen (used for PNG capture)
-const only=new URLSearchParams(location.search).get('only');
-if(only){document.body.classList.add('only');const s=document.getElementById('s'+only);if(s)s.classList.add('show');}
+window.onerror=(m,s,l)=>{const e=document.getElementById('err');e.style.display='block';e.textContent='JS error: '+m+' @'+l;};
+/* =====================================================================
+   DATA — synthetic texts; AI outputs are preset (no models in the demo)
+   [text, source_type, topic, month, aiSentiment, conf, topEmotion, topScore, secondary, review]
+   review: null | 'A' accept both | 'U' uncertain both | ['C', sent, emo, sec?] correct both
+           | ['S', sent] correct sentiment only | ['E', emo] correct emotion only
+   ===================================================================== */
+const EMO=['joy','amusement','admiration','gratitude','anger','sadness','fear','disgust','neutral'];
+const SENTS=['negative','neutral','positive'];
+const POOL=[
+["The new update finally fixed the login bug, but the app still crashes whenever I try to export a large file.","app_store","export","2026-09","negative",.687,"admiration",.236,[],['E','anger']],
+["Brilliant, another price rise right after you removed offline mode. Truly great work.","app_store","pricing","2026-09","positive",.571,"admiration",.52,[],['C','negative','anger',['disgust']]],
+["Sync has been stuck on 'pending' since yesterday and I have a client meeting in an hour.","support","sync","2026-09","negative",.88,"fear",.33,[],['E','fear']],
+["The tutorial was clear and the sample project helped a lot. Thanks to whoever wrote it.","forum","onboarding","2026-08","positive",.93,"gratitude",.91,['admiration'],'A'],
+["I was charged twice this month. Please refund the duplicate payment.","support","billing","2026-09","negative",.72,"anger",.41,[],['E','anger']],
+["Export to CSV works fine now.","app_store","export","2026-09","positive",.49,"admiration",.55,[],'U'],
+["Merci, la nouvelle version est beaucoup plus rapide.","forum","performance","2026-09","neutral",.50,"neutral",.61,[],null,'fr'],
+["so bad it's good honestly, the crash animation is art at this point","support","export","2026-08","negative",.83,"amusement",.62,[],['C','positive','amusement']],
+["Couldn't find where to change the language. Gave up after ten minutes.","app_store","onboarding","2026-08","negative",.79,"sadness",.44,[],'A'],
+["Fine.","support","sync","2026-09","neutral",.66,"neutral",.71,[],'A'],
+["Happy to pay for this. It replaced three other tools for our team.","forum","pricing","2026-08","positive",.95,"joy",.58,['admiration'],'A'],
+["Dark mode is lovely; the battery drain is not.","app_store","performance","2026-09","negative",.52,"admiration",.48,[],['E','sadness']],
+["Support answered in four minutes and actually solved it. Impressed.","support","support","2026-08","positive",.94,"admiration",.81,[],'A'],
+["Why does the export button move every single release?","app_store","export","2026-09","negative",.81,"anger",.57,[],'A'],
+["Thanks for nothing, I guess.","support","support","2026-09","negative",.64,"gratitude",.47,[],['E','anger']],
+["The new onboarding checklist is exactly what I needed.","forum","onboarding","2026-08","positive",.90,"joy",.66,[],'A'],
+["Lost two hours of notes after the sync conflict. Again.","support","sync","2026-09","negative",.91,"sadness",.62,['anger'],'A'],
+["Not sure the new layout is for me, but it's growing on me.","forum","design","2026-09","positive",.55,"neutral",.52,[],['S','neutral']],
+["sick update, honestly the best one yet","app_store","design","2026-09","negative",.58,"admiration",.49,[],['C','positive','admiration']],
+["The pricing page is confusing. Is the team plan per seat or flat?","forum","pricing","2026-08","neutral",.61,"neutral",.64,[],'A'],
+["Please add an option to keep exports in the original order.","forum","export","2026-08","neutral",.70,"neutral",.73,[],'A'],
+["I am honestly scared to update after what happened last time.","app_store","performance","2026-09","negative",.77,"fear",.71,[],'A'],
+["Great, the app logged me out mid-sentence. Love that for me.","app_store","sync","2026-09","positive",.62,"joy",.44,[],['C','negative','anger']],
+["Refund came through quickly, thank you.","support","billing","2026-09","positive",.91,"gratitude",.89,[],'A'],
+["The charts in the weekly report are gorgeous.","forum","design","2026-08","positive",.96,"admiration",.84,['joy'],'A'],
+["Searching old notes is painfully slow on Windows.","app_store","performance","2026-09","negative",.84,"sadness",.39,[],'A'],
+["Your status page said all good while nothing worked.","support","support","2026-09","negative",.86,"anger",.52,[],'A'],
+["Would love a keyboard shortcut for the archive action.","forum","design","2026-08","neutral",.58,"neutral",.6,[],'A'],
+["That's disgusting, someone's private notes showed up in my search results.","support","privacy","2026-09","negative",.93,"disgust",.68,['anger'],'A'],
+["ok","app_store","other","2026-09","neutral",.71,"neutral",.77,[],'A'],
+["The migration tool did everything it promised. Rare these days.","forum","onboarding","2026-08","positive",.80,"admiration",.61,[],null],
+["Every time I open the app it asks me to log in again.","app_store","sync","2026-09","negative",.82,"anger",.46,[],null],
+["Love the new templates, the meeting one is perfect.","app_store","design","2026-09","positive",.95,"joy",.77,['admiration'],null],
+["I'm not angry, just disappointed the export still truncates long rows.","support","export","2026-09","negative",.74,"sadness",.53,[],null],
+["Worth every cent of the student discount.","forum","pricing","2026-08","positive",.88,"gratitude",.42,[],null],
+["The app froze while I was presenting to a client.","support","performance","2026-09","negative",.90,"fear",.38,[],null],
+["Cancelling. Too many surprises on the invoice.","support","billing","2026-09","negative",.86,"anger",.49,[],null],
+["New icons look sharp.","app_store","design","2026-09","positive",.89,"admiration",.71,[],null],
+["How do I move a notebook between workspaces?","forum","onboarding","2026-08","neutral",.79,"neutral",.81,[],null],
+["lol the release notes just say 'improvements'","app_store","other","2026-09","neutral",.47,"amusement",.58,[],null],
+["Customer service fixed the double charge and added a credit. Fair.","support","billing","2026-09","positive",.82,"gratitude",.63,[],null],
+["The offline mode removal is a dealbreaker for field work.","app_store","pricing","2026-09","negative",.88,"sadness",.41,[],null],
+["Honestly kind of terrifying how fast it indexes everything.","forum","privacy","2026-08","positive",.51,"fear",.45,[],null],
+["The sync finally works across my phone and laptop. Took long enough.","app_store","sync","2026-09","positive",.60,"joy",.42,[],null],
+["","support","other","2026-09",null],
+["[2,904-character message pasted from an email thread]","support","billing","2026-09","FAIL"],
+["Exports are fine but the file names are a mess.","forum","export","2026-08","negative",.56,"neutral",.55,[],null],
+["Five stars, the widget alone saves me ten minutes a day.","app_store","design","2026-09","positive",.97,"joy",.62,['gratitude'],null],
+];
+const IMPORT_POOL=[
+["Billing page shows the wrong currency after the update.","support","billing","2026-10","negative",.79,"anger",.37,[]],
+["Great job on the new search, it's instant now.","app_store","performance","2026-10","positive",.94,"admiration",.76,['joy']],
+["Can I export only the reviewed rows?","forum","export","2026-10","neutral",.82,"neutral",.8,[]],
+["The reminder feature woke me at 3am. Twice.","app_store","other","2026-10","negative",.85,"anger",.51,[]],
+["Gracias por la ayuda, todo funciona.","forum","support","2026-10","neutral",.48,"gratitude",.52,[],'es'],
+["Not impressed, it's the same app with a new logo.","app_store","design","2026-10","negative",.81,"disgust",.31,[]],
+["Agent was patient and walked me through the restore. Thank you!","support","support","2026-10","positive",.95,"gratitude",.92,[]],
+["I can't tell if the backup ran or not.","support","sync","2026-10","negative",.66,"fear",.29,[]],
+["","support","other","2026-10",null],
+["Seriously the best note app on Windows right now.","app_store","design","2026-10","positive",.96,"admiration",.83,[]],
+["My team keeps getting duplicate notifications.","support","sync","2026-10","negative",.77,"anger",.33,[]],
+["Loving the calendar integration, small but mighty.","forum","design","2026-10","positive",.92,"joy",.71,[]],
+["[3,410-character log pasted into the feedback form]","support","sync","2026-10","FAIL"],
+["Why is the student plan hidden?","forum","pricing","2026-10","negative",.55,"neutral",.57,[]],
+];
+const NATIVE_OF={joy:['joy','excitement','optimism','love','pride','relief'],amusement:['amusement'],admiration:['admiration','approval'],gratitude:['gratitude'],anger:['anger','annoyance','disapproval'],sadness:['sadness','disappointment','grief','remorse'],fear:['fear','nervousness'],disgust:['disgust','embarrassment'],neutral:['neutral','caring','confusion','curiosity','desire','realization','surprise']};
+let seed=7;function rnd(){seed=(seed*16807)%2147483647;return (seed-1)/2147483646;}
+function mkAI(sent,conf,top,topScore,sec){
+  const order={negative:['negative','neutral','positive'],positive:['positive','neutral','negative'],neutral:['neutral','positive','negative']}[sent];
+  const rest=1-conf;const sc={};sc[order[0]]=conf;sc[order[1]]=+(rest*.78).toFixed(3);sc[order[2]]=+(rest*.22).toFixed(3);
+  const emo={};EMO.forEach(e=>emo[e]=+(0.005+rnd()*0.06).toFixed(3));
+  emo[top]=topScore;(sec||[]).forEach(s=>emo[s]=+(0.5+rnd()*0.08).toFixed(3));
+  if(top!=='neutral')emo.neutral=+Math.max(emo.neutral,topScore<.5?Math.min(.45,1-topScore-.2):.08).toFixed(3);
+  let dom,fallback=false;
+  if(top==='neutral'){dom='neutral';}
+  else if(topScore>=.5){dom=top;}else{dom='neutral';fallback=true;}
+  const secondary=(sec||[]).filter(s=>s!==dom);
+  const native={};Object.entries(NATIVE_OF).forEach(([c,ns])=>ns.forEach((n,i)=>native[n]=+(i===0?emo[c]:emo[c]*(0.15+rnd()*0.35)/(i+1)).toFixed(3)));
+  return {sent,conf,scores:sc,emo,dom,domScore:dom==='neutral'?emo.neutral:emo[dom],fallback,secondary,native};
+}
+function mkRecords(pool,prefix){
+  return pool.map((p,i)=>{
+    const r={row:i+2,id:prefix+'-'+(1001+i),text:p[0],src:p[1],topic:p[2],month:p[3],lang:p[10]||(p[9]&&typeof p[9]==='string'&&p[9].length===2?p[9]:null),status:'analyzed',ai:null,review:null,err:null};
+    if(p[4]===null){r.status='invalid';r.err='empty_text';return r;}
+    if(p[4]==='FAIL'){r.status='failed';r.err='input_too_long: 731 > 512 model tokens; not truncated';return r;}
+    if(p.length>9 && typeof p[9]==='string' && p[9].length===2){r.lang=p[9];}
+    r.ai=mkAI(p[4],p[5],p[6],p[7],p[8]);
+    const rv=p[9];
+    if(rv && !(typeof rv==='string'&&rv.length===2)){
+      const a=r.ai;let v={sJ:'accept',sH:a.sent,eJ:'accept',eH:a.dom,eSec:[...a.secondary],note:''};
+      if(rv==='U')v={sJ:'uncertain',sH:null,eJ:'uncertain',eH:null,eSec:[],note:''};
+      else if(Array.isArray(rv)){
+        if(rv[0]==='C'){v.sJ='correct';v.sH=rv[1];v.eJ='correct';v.eH=rv[2];v.eSec=rv[3]||[];}
+        if(rv[0]==='S'){v.sJ='correct';v.sH=rv[1];}
+        if(rv[0]==='E'){v.eJ='correct';v.eH=rv[1];v.eSec=[];}
+      }
+      r.review=v;
+    }
+    return r;});
+}
+function freshState(){
+  seed=7;
+  const checkout=mkRecords(POOL,'c');
+  seed=11;
+  const forum=mkRecords(POOL.filter(p=>p[1]==='forum'),'f').map(r=>{if(r.ai&&!r.review)r.review={sJ:'accept',sH:r.ai.sent,eJ:'accept',eH:r.ai.dom,eSec:[...r.ai.secondary],note:''};return r;});
+  seed=13;
+  const pilot=mkRecords(POOL.filter(p=>p[1]==='support').map(p=>{const q=[...p];q[9]=null;return q;}),'s');
+  pilot.slice(0,3).forEach(r=>{if(r.ai)r.review={sJ:'accept',sH:r.ai.sent,eJ:'accept',eH:r.ai.dom,eSec:[],note:''};});
+  return {
+    route:'setup', pid:0, dlg:null, toast:null,
+    models:{sent:1,emo:.38,state:'downloading'},
+    projects:[
+      {name:'Checkout feedback — autumn sample',file:'checkout_autumn.csv',opened:'today 09:12',records:checkout,notes:[{assoc:'topic',val:'pricing',phrase:'offline mode',expl:'Complaints about offline mode often open with thanks.',why:'Read alone, the opening is positive.',tags:['mixed_stance']},{assoc:'record',val:'c-1019',phrase:'sick update',expl:'“sick” is praise here.',why:'Slang reverses the literal reading.',tags:['idiom_or_slang']}],cols:['record_id','source_type','topic','timestamp']},
+      {name:'Community forum — onboarding thread',file:'forum_onboarding.csv',opened:'3 Oct',records:forum,notes:[],cols:['record_id','source_type','topic','timestamp']},
+      {name:'Support inbox pilot',file:'support_pilot.csv',opened:'28 Sep',records:pilot,notes:[],cols:['record_id','source_type','topic','timestamp']},
+    ],
+    projFilter:'all',
+    direct:{text:'The new update finally fixed the login bug, but the app still crashes whenever I try to export a large file.',res:null,native:false},
+    imp:null,
+    res:{status:'all',sent:'',emo:''},
+    rev:{filter:'unreviewed',id:null,native:false,draft:null},
+    agr:{dim:'sentiment'},
+    ins:{tab:'compare',group:'source_type',groups:['app_store','support','forum'],persp:'agreement',metric:'sentiment_disagreement',fs:'',fe:'',from:'',to:'',applied:null},
+    notes:{assoc:'record',val:'',phrase:'',expl:'',why:'',tags:[]},
+    cases:{rule:'disagree',emo:'anger',tag:'',revealed:{},picked:[]},
+    mod:MOD_INIT(), tri:TRI_INIT(),
+  };
+}
+/* ---------------- Decision Practice synthetic material ---------------- */
+const MOD_CASES=[
+  {id:'M-03',cat:'threat_violence',diff:'medium',amb:'moderate',sens:true,text:'If you post that build again I will make sure everyone knows where you work.',ctx:'Reply in a public modding forum thread.',sig:'Sentiment negative 0.81 · Emotion anger 0.44 (below 0.50, fallback neutral)',mock:['remove','privacy_personal_information','high',true],ref:['remove','privacy_personal_information','high',true]},
+  {id:'M-07',cat:'spam_manipulation',diff:'easy',amb:'low',sens:false,text:'Get 500 followers in 1 hour!!! DM me the code FASTGROW, limited slots.',ctx:'Comment under a cooking video.',sig:'Sentiment positive 0.77 · Emotion joy 0.52',mock:['remove','spam_manipulation','low',false],ref:['remove','spam_manipulation','low',false]},
+  {id:'M-11',cat:'harassment_abuse',diff:'hard',amb:'high',sens:false,text:'lol you are the worst player on this server and you know it 😂',ctx:'Banter between two regulars who often joke together.',sig:'Sentiment negative 0.71 · Emotion amusement 0.58',mock:['warn','harassment_abuse','low',false],ref:['unclear_needs_review','harassment_abuse','low',false]},
+];
+function MOD_INIT(){return {step:'prepare',filterCat:'',picked:['M-03','M-07','M-11'],idx:0,dec:{},sub:{},done:false};}
+const TICKETS=[
+  {id:'T-002',src:'synthetic',text:'I never got the verification email and now I am locked out of my account.',mock:{intent:'recover_account_access',cat:'account_and_access',urg:'high',queue:'account_and_access',esc:false,act:'verify_identity_or_account_ownership'}},
+  {id:'T-003',src:'synthetic',text:'Someone used my card on your site for three purchases I did not make.',mock:{intent:'report_fraud_or_security_concern',cat:'fraud_or_security_concern',urg:'critical',queue:'fraud_and_risk_review',esc:true,act:'escalate_to_specialist'}},
+  {id:'T-005',src:'synthetic',text:'It would be nice if the dashboard remembered my last filter.',mock:{intent:'request_feature',cat:'feedback_or_feature_request',urg:'low',queue:'product_feedback',esc:false,act:'no_immediate_action'}},
+  {id:'T-007',src:'synthetic',text:'You charged my card twice for the annual plan and the cancel button does nothing.',mock:{intent:'dispute_charge_or_payment',cat:'billing_and_payment',urg:'high',queue:'billing_operations',esc:false,act:'review_transaction_or_billing_record'}},
+  {id:'T-009',src:'synthetic',text:'Where can I see the status of my order from last week?',mock:{intent:'request_status_update',cat:'order_delivery_or_status',urg:'normal',queue:'order_and_delivery_support',esc:false,act:'provide_policy_or_eligibility_information'}},
+  {id:'T-011',src:'workspace',text:'Sync has been stuck on pending since yesterday and I have a client meeting in an hour.',mock:null},
+];
+function TRI_INIT(){return {step:'workspace',fStatus:'',fUrg:'',sel:'T-007',dec:{'T-003':{intent:'report_fraud_or_security_concern',cat:'fraud_or_security_concern',urg:'critical',queue:'fraud_and_risk_review',esc:true,act:'escalate_to_specialist',notes:'',status:'finalized'},'T-005':{intent:'request_feature',cat:'feedback_or_feature_request',urg:'low',queue:'product_feedback',esc:false,act:'no_immediate_action',notes:'',status:'finalized'}}};}
+const OPT={
+ intent:['request_information','request_status_update','report_technical_problem','report_product_or_service_problem','request_refund','request_cancellation','dispute_charge_or_payment','recover_account_access','change_account_details','report_fraud_or_security_concern','report_safety_or_abuse_concern','submit_complaint','provide_feedback','request_feature','other_or_unclear'],
+ cat:['account_and_access','billing_and_payment','refund_and_cancellation','technical_problem','product_or_service_issue','order_delivery_or_status','policy_or_eligibility_question','safety_or_abuse_concern','fraud_or_security_concern','feedback_or_feature_request','other_or_unclear'],
+ urg:['low','normal','high','critical','unclear'],
+ queue:['general_support','account_and_access','billing_operations','refunds_and_cancellations','technical_support','order_and_delivery_support','trust_and_safety','fraud_and_risk_review','product_feedback','specialist_or_manual_review'],
+ act:['request_more_information','verify_identity_or_account_ownership','collect_logs_or_technical_details','review_transaction_or_billing_record','provide_policy_or_eligibility_information','process_cancellation_or_refund_review','escalate_to_specialist','monitor_or_follow_up','no_immediate_action','other'],
+ disp:['allow','warn','remove','unclear_needs_review'],
+ viol:['no_violation','harassment_abuse','hate_protected_class_attack','threat_violence','self_harm','sexual_explicit_content','spam_manipulation','privacy_personal_information','illegal_dangerous_activity'],
+ sev:['none','low','medium','high','critical'],
+ tags:['sarcasm_possible','quotation_or_reported_speech','missing_context','mixed_stance','in_group_expression','idiom_or_slang','annotation_uncertain','translation_or_language_issue','other'],
+};
+let S=freshState();
+/* ---------------- helpers ---------------- */
+const $=s=>document.querySelector(s);
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const P=()=>S.projects[S.pid];
+const ready=()=>S.models.state==='ready';
+const ok=r=>r.status==='analyzed';
+const reviewed=r=>!!r.review;
+function counts(p){const rs=p.records;const a=rs.filter(ok);const rv=a.filter(reviewed);
+  return {rows:rs.length,invalid:rs.filter(r=>r.status==='invalid').length,failed:rs.filter(r=>r.status==='failed').length,queued:rs.filter(r=>r.status==='queued').length,analyzed:a.length,reviewed:rv.length,
+  corrected:rv.filter(r=>r.review.sJ==='correct'||r.review.eJ==='correct').length,uncertain:rv.filter(r=>r.review.sJ==='uncertain'||r.review.eJ==='uncertain').length,unreviewed:a.length-rv.length};}
+function opts(list,cur,blank){return (blank!==undefined?`<option value="">${blank}</option>`:'')+list.map(o=>`<option value="${esc(o)}" ${o===cur?'selected':''}>${esc(o)}</option>`).join('');}
+function toast(t){S.toast=t;render();clearTimeout(window.__tt);window.__tt=setTimeout(()=>{S.toast=null;render();},3200);}
+function go(r){S.route=r;S.dlg=null;render();const m=document.querySelector('.pane');if(m)m.scrollTop=0;}
+function meters3(scores,bg){return SENTS.map(s=>`<div class="row"><span style="width:62px" class="muted">${s}</span><div class="meter" style="flex:1;${bg?'background:'+bg:''}"><i style="width:${(scores[s]*100).toFixed(1)}%;background:var(--${s==='negative'?'neg':s==='neutral'?'neu':'pos'})"></i></div><span class="mono" style="width:42px;text-align:right">${scores[s].toFixed(3)}</span></div>`).join('');}
+function nativeGrid(native){const arr=Object.entries(native).sort((a,b)=>b[1]-a[1]);const mx=Math.max(...arr.map(a=>a[1]),.01);const compact=new Set(EMO);
+  return `<div class="elem">${arr.map(([n,v])=>{const a=Math.min(1,v/mx);return `<div style="background:rgba(51,64,79,${(0.06+0.8*a).toFixed(2)});color:${a>.45?'#fff':'#131518'};${compact.has(n)?'outline:1.5px solid #33404F;outline-offset:-1.5px':''}"><b>${n}</b><span>${v.toFixed(3)}</span></div>`}).join('')}</div>`;}
+/* ---------------- simulated single-text analysis (no models in this demo) ---------------- */
+function simulate(text){
+  const t=text.toLowerCase();
+  const fr=/\b(merci|bonjour|très|beaucoup|nouvelle|version est|gracias|por favor|todo)\b/.test(t);
+  const neg=(t.match(/crash|bug|broken|worst|slow|charged|refund|stuck|lost|hate|angry|terrible|never|again|disappoint|confus|scared|freez|annoy|slow|mess|wrong|cancel/g)||[]).length;
+  const pos=(t.match(/love|great|thanks|thank|happy|brilliant|perfect|fixed|impress|gorgeous|fast|best|nice|helpful|lovely|works/g)||[]).length;
+  let sent,conf;
+  if(neg>pos){sent='negative';conf=Math.min(.95,.55+.12*(neg-pos)+.03*neg);}else if(pos>neg){sent='positive';conf=Math.min(.96,.55+.12*(pos-neg)+.03*pos);}else{sent='neutral';conf=.52;}
+  let top='neutral',ts=.62;
+  if(/charged|refund|angry|annoy|every single|again/.test(t)){top='anger';ts=.46+.08*neg;}
+  else if(/scared|afraid|worried|terrif/.test(t)){top='fear';ts=.58;}
+  else if(/thank/.test(t)){top='gratitude';ts=.7;}
+  else if(/love|happy|perfect/.test(t)){top='joy';ts=.64;}
+  else if(/brilliant|impress|gorgeous|great|fixed/.test(t)){top='admiration';ts=.28+.12*pos;}
+  else if(/lol|haha|funny/.test(t)){top='amusement';ts=.6;}
+  else if(/lost|sad|disappoint|gave up/.test(t)){top='sadness';ts=.47;}
+  seed=text.length*31+7;
+  const ai=mkAI(sent,+conf.toFixed(3),top,+Math.min(.92,ts).toFixed(3),[]);
+  const tokens=Math.ceil(text.trim().split(/\s+/).length*1.35)+2;
+  return {ai,fr,tokens};
+}
+/* ---------------- frame ---------------- */
+function demobar(){
+  const steps=[['setup','1 · First run'],['projects','2 · Projects'],['direct','3 · Analyze one text'],['import','4 · New project'],['results','5 · Results'],['review','6 · Review'],['agreement','7 · Agreement'],['insights','8 · Insights'],['mod','9 · Decision Practice']];
+  const cur=S.route==='notes'?'insights':S.route==='tri'?'mod':S.route;
+  return `<b>STI V2 · interactive demo</b>${steps.map(([r,l])=>`<button class="step ${cur===r?'on':''}" onclick="jump('${r}')">${l}</button>`).join('')}<span class="sp"></span><span class="note">Prototype · synthetic data · model output is simulated · nothing is written to disk</span><button class="step" onclick="resetDemo()">Reset demo</button>`;
+}
+function jump(r){if(r==='insights'){S.ins.tab='compare';r='compare';}if(r!=='setup'&&r!=='projects'&&r!=='direct'&&r!=='import'&&r!=='mod'&&r!=='tri'){S.pid=0;}if(r==='mod'){S.route='mod';render();return;}if(r==='import'){startImport();return;}go(r);}
+function resetDemo(){clearInterval(window.__dl);clearInterval(window.__imp);S=freshState();startDownload();render();}
+function sidebar(){
+  const inProj=!['projects','direct','setup','import'].includes(S.route)||(S.route==='import'&&S.imp&&S.imp.created);
+  const c=counts(P());
+  const nav=(r,ico,label,cnt,extra)=>`<button class="nav ${S.route===r?'on':''}" onclick="go('${r}')"><i>${ico}</i>${label}${extra||(cnt!==undefined&&cnt!==''?`<span class="c">${cnt}</span>`:'')}</button>`;
+  const m=S.models;const foot=m.state==='ready'?`<span class="dot" style="background:var(--pos)"></span>2 pinned models ready · offline`:`<span class="dot" style="background:var(--you)"></span>emotion model ${Math.round(m.emo*100)}% ${m.state==='paused'?'· paused':''}<div class="meter" style="margin-top:6px"><i style="width:${m.emo*100}%;background:var(--you)"></i></div>`;
+  let h='';
+  if(inProj){h+=`<div class="proj"><div class="t">${esc(P().name)}</div><div class="s">${c.rows} rows · saved</div></div>`;
+    h+=`<div class="cap nav-h">Project</div>`+nav('import','↧','Import & validation','')+nav('results','▦','Results',c.analyzed)+nav('review','✓','Review',c.unreviewed)+nav('agreement','≈','Agreement','')+nav('compare','◫','Insights · compare','')+nav('notes','✎','Insights · notes & cases',P().notes.length||'');
+  } else h+=`<div class="proj"><div class="t">No project open</div><div class="s">open one from Projects</div></div>`;
+  h+=`<div class="cap nav-h">Start</div>`+nav('projects','▤','Projects',S.projects.length)+nav('direct','◇','Analyze one text','');
+  h+=`<div class="cap nav-h">Decision Practice</div>`+nav('mod','⚖','Moderation training','','<span class="pend">PENDING</span>')+nav('tri','☰','Support triage','','<span class="pend">PENDING</span>');
+  h+=`<div class="foot">${foot}</div>`;
+  return `<aside class="side">${h}</aside>`;
+}
+function titleFor(){const r=S.route;if(['projects','direct','setup'].includes(r))return 'Social Text Intelligence';if(r==='mod')return 'Decision Practice — Moderation Training';if(r==='tri')return 'Decision Practice — Support Triage';if(r==='import'&&S.imp&&!S.imp.created)return 'New project';return P().name;}
+function render(){
+  document.getElementById('demobar').innerHTML=demobar();
+  const r=S.route;let inner;
+  if(r==='setup')inner=`<div class="body solo">${vSetup()}</div>`;
+  else if(r==='import'&&S.imp&&!S.imp.created)inner=`<div class="body solo">${vImport()}</div>`;
+  else{const v={projects:vProjects,direct:vDirect,results:vResults,review:vReview,agreement:vAgreement,compare:vCompare,notes:vNotes,mod:vMod,tri:vTri,import:vImportDone}[r]();inner=`<div class="body">${sidebar()}<div class="main">${v}</div></div>`;}
+  let over='';
+  if(S.dlg)over=`<div class="scrim" onclick="if(event.target===this){S.dlg=null;render()}"><div class="dlg">${S.dlg()}</div></div>`;
+  const t=S.toast?`<div class="toast">${S.toast}</div>`:'';
+  document.getElementById('win').innerHTML=`<div class="tb"><span class="logo">S</span>${esc(titleFor())}<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>${inner}${over}${t}`;
+}
+/* ---------------- 1 setup ---------------- */
+function startDownload(){clearInterval(window.__dl);window.__dl=setInterval(()=>{const m=S.models;if(m.state!=='downloading')return;m.emo=Math.min(1,m.emo+.025);if(m.emo>=1){m.state='ready';clearInterval(window.__dl);toast('Emotion model verified against pinned revision d750483. Analysis is ready.');}else if(!S.dlg&&!isTyping())render();},450);}
+function isTyping(){const a=document.activeElement;return a&&(a.tagName==='TEXTAREA'||a.tagName==='INPUT'||a.tagName==='SELECT');}
+function vSetup(){const m=S.models;const st=m.state==='ready'?'ready · verified':m.state==='paused'?`paused at ${Math.round(m.emo*499)} of 499 MB`:m.state==='cancelled'?'cancelled · partial file discarded':`${Math.round(m.emo*499)} of 499 MB`;
+ return `<div style="display:grid;grid-template-columns:1.05fr 1fr;height:100%">
+  <div style="padding:64px 56px;display:flex;flex-direction:column;gap:18px">
+   <div class="cap">Before the first analysis</div>
+   <div style="font:400 48px/1.04 var(--serif)">Two pinned models are needed once. After that, your text never leaves this computer.</div>
+   <p class="muted" style="font-size:14px;max-width:520px">The models are not bundled with the installer. They are fetched from huggingface.co at the exact revisions shown and verified after download. A partially downloaded model is never used.</p>
+   <div style="margin-top:auto" class="row"><button class="btn ghost" onclick="dlgLicences()">Licences…</button><span class="sp"></span><button class="btn" onclick="go('projects')">Later</button><button class="btn pri" onclick="go('projects')">${ready()?'Start':'Continue in background'}</button></div>
+  </div>
+  <div style="background:#fff;border-left:1px solid var(--line);padding:56px 44px;display:flex;flex-direction:column;gap:22px;overflow:auto">
+   <div><div class="row"><span class="cap">Sentiment</span><span class="sp"></span><span class="chip ok">ready · verified</span></div>
+    <div style="font:400 24px/1.2 var(--serif);margin-top:8px">cardiffnlp / twitter-roberta-base-sentiment-latest</div><div class="mono faint">rev 3216a57 · CC-BY-4.0 · 499 MB</div>
+    <div class="meter" style="margin-top:10px"><i style="width:100%;background:var(--ink)"></i></div></div>
+   <div><div class="row"><span class="cap">Emotion</span><span class="sp"></span>${m.state==='ready'?'<span class="chip ok">ready · verified</span>':`<span class="mono" style="color:var(--you)">${st}</span>`}</div>
+    <div style="font:400 24px/1.2 var(--serif);margin-top:8px">SamLowe / roberta-base-go_emotions</div><div class="mono faint">rev d750483 · MIT · 499 MB</div>
+    <div class="meter" style="margin-top:10px"><i style="width:${m.emo*100}%;background:${m.state==='ready'?'var(--ink)':'var(--you)'}"></i></div>
+    ${m.state==='ready'?'':`<div class="row" style="margin-top:10px">${m.state==='downloading'?`<button class="btn" onclick="S.models.state='paused';render()">Pause</button>`:`<button class="btn" onclick="resumeDl()">${m.state==='cancelled'?'Download again':'Resume'}</button>`}${m.state!=='cancelled'?`<button class="btn" onclick="S.models.state='cancelled';S.models.emo=0;render()">Cancel</button>`:''}</div>`}</div>
+   <div class="hr"></div>
+   <div class="grid" style="gap:10px"><div class="cap">Other ways in</div>
+    <div class="row"><button class="btn" onclick="dlgFolder()" ${ready()?'disabled':''}>Use a folder I already have…</button><span class="faint" style="font-size:12px">Offline machines. Only the exact pinned revisions are accepted.</span></div>
+    ${ready()?'':`<div class="note-box err"><b>If the download breaks:</b> it resumes from where it stopped. You can still create projects and import a CSV; analysis waits until both models are ready.</div>`}</div>
+  </div></div>`;}
+function resumeDl(){if(S.models.state==='cancelled')S.models.emo=0;S.models.state='downloading';startDownload();render();}
+function dlgLicences(){S.dlg=()=>`<h4>Licences</h4><p class="muted" style="font-size:12.5px">Application: MIT. cardiffnlp/twitter-roberta-base-sentiment-latest: CC-BY-4.0. SamLowe/roberta-base-go_emotions: MIT. Model weights are downloaded, not redistributed with the app.</p><div class="row" style="margin-top:14px"><span class="sp"></span><button class="btn pri" onclick="S.dlg=null;render()">Close</button></div>`;render();}
+function dlgFolder(){S.dlg=()=>`<h4>Use a model folder</h4><div class="field"><label>Folder</label><input class="inp" value="D:\\offline\\sti-models"></div><div class="note-box info" style="margin-top:10px"><b>Found:</b> sentiment @3216a57 ✓ · emotion @d750483 ✓ — both match the pinned revisions.</div><div class="row" style="margin-top:14px"><span class="sp"></span><button class="btn" onclick="S.dlg=null;render()">Cancel</button><button class="btn pri" onclick="S.models.state='ready';S.models.emo=1;S.dlg=null;toast('Models loaded from folder and verified.')">Use these models</button></div>`;render();}
+/* ---------------- 2 projects ---------------- */
+function vProjects(){
+ const list=S.projects.map((p,i)=>({p,i,c:counts(p)})).filter(x=>S.projFilter==='all'||(S.projFilter==='done'?x.c.unreviewed===0:x.c.unreviewed>0));
+ const nDone=S.projects.filter(p=>counts(p).unreviewed===0).length;
+ return `<div class="bar"><h3>Projects</h3><span class="sp"></span><button class="btn" onclick="go('direct')">Analyze one text</button><button class="btn pri" onclick="startImport()">New project from CSV…</button></div>
+ <div class="pane" style="display:flex;flex-direction:column;gap:16px">
+  <div class="row"><div class="seg">${[['all','All',S.projects.length],['review','In review',S.projects.length-nDone],['done','Fully reviewed',nDone]].map(([k,l,n])=>`<button class="${S.projFilter===k?'on':''}" onclick="S.projFilter='${k}';render()">${l}<b>${n}</b></button>`).join('')}</div></div>
+  <div class="card" style="overflow:hidden"><table class="t"><thead><tr><th style="width:38%">Project</th><th style="width:9%">Rows</th><th style="width:29%">Human review</th><th style="width:11%">Last opened</th><th style="width:13%"></th></tr></thead><tbody>
+  ${list.map(({p,i,c})=>{const segs=10,f=Math.round(c.reviewed/Math.max(1,c.analyzed)*segs);return `<tr><td><div style="font:400 20px var(--serif)" class="ell">${esc(p.name)}</div><div class="mono faint ell">${esc(p.file)}${c.failed?` · ${c.failed} failed row${c.failed>1?'s':''}`:''}${c.queued?` · ${c.queued} queued`:''}</div></td><td class="mono">${c.rows}</td>
+  <td><div class="segm" style="max-width:220px">${Array.from({length:segs},(_,k)=>`<i style="background:${k<f?'var(--ink)':''}"></i>`).join('')}</div><div class="mono faint" style="margin-top:5px">${c.unreviewed===0?`${c.reviewed} / ${c.analyzed} · review queue complete`:`${c.reviewed} / ${c.analyzed} reviewed · ${c.corrected} corrected`}</div></td>
+  <td class="mono muted">${esc(p.opened)}</td><td style="text-align:right"><button class="btn ${i===S.pid?'pri':''}" onclick="openProject(${i})">Open</button> <button class="btn ghost" onclick="dlgDelete(${i})" title="Delete project">✕</button></td></tr>`}).join('')||`<tr><td colspan="5" class="faint" style="text-align:center;padding:30px">No projects match this filter.</td></tr>`}
+  </tbody></table></div>
+  <div class="footnote" style="margin-top:auto">Projects are stored in %LOCALAPPDATA%\\SocialTextIntelligence\\projects · one file per project · kept until you delete it</div>
+ </div>`;}
+function openProject(i){S.pid=i;S.projects[i].opened='just now';S.rev.id=null;S.ins.applied=null;go('results');}
+function dlgDelete(i){const p=S.projects[i],c=counts(p);S.dlg=()=>`<h4>Delete “${esc(p.name)}”?</h4><p class="muted" style="font-size:12.5px">${c.rows} rows, the AI record and ${c.reviewed} human reviews will be removed from this application's data files. Exports you saved, backups and copies made by Windows are not affected. This is not a secure erase.</p><div class="row wrap" style="margin-top:14px"><button class="btn" onclick="S.pid=${i};S.dlg=null;dlgExport('reviewed')">Export reviewed CSV first…</button><span class="sp"></span><button class="btn" onclick="S.dlg=null;render()">Cancel</button><button class="btn danger" onclick="doDelete(${i})">Delete</button></div>`;render();}
+function doDelete(i){const n=S.projects[i].name;S.projects.splice(i,1);if(S.pid>=S.projects.length)S.pid=0;S.dlg=null;if(!S.projects.length){S.projects.push(...freshState().projects.slice(0,1));}toast(`“${esc(n)}” was removed from this application's data files.`);}
+/* ---------------- 3 direct ---------------- */
+function vDirect(){const d=S.direct,res=d.res;const n=d.text.length;
+ const examples=['Brilliant, another price rise right after you removed offline mode. Truly great work.','Thanks, the refund arrived in two days.','Merci, la nouvelle version est beaucoup plus rapide.','I am scared to update after what happened last time.'];
+ let out;
+ if(!res)out=`<div class="empty"><div><div style="font:400 30px var(--serif)">Nothing analyzed yet</div><p class="muted" style="margin-top:6px">Type or paste one English text, then choose Analyze locally.</p></div></div>`;
+ else if(res.rejected)out=`<div class="note-box err" style="font-size:13px"><b>Not analyzed.</b> ${res.rejected}</div>`;
+ else{const a=res.ai;out=`${res.fr?`<div class="note-box warn" style="grid-column:1/-1"><b>This text looks like it is not in English.</b> These models are English-only, so treat the result as unreliable.</div>`:''}
+  <div><div class="row"><span class="chip mac">AI</span><span class="cap">Sentiment</span></div><div class="big s-${a.sent}" style="margin-top:8px">${a.sent}</div><div class="mono faint" style="margin-top:4px">confidence ${a.conf.toFixed(3)}</div><div style="margin-top:12px;display:grid;gap:7px">${meters3(a.scores)}</div></div>
+  <div><div class="row"><span class="chip mac">AI</span><span class="cap">Dominant emotion</span></div><div class="big" style="margin-top:8px">${a.dom}</div><div class="mono faint" style="margin-top:4px">threshold ≥ 0.50 · secondary: ${a.secondary.join(', ')||'none'}</div>
+   ${a.fallback?`<div class="note-box warn" style="margin-top:12px"><b>Threshold fallback.</b> No non-neutral compact emotion reached 0.50. “Neutral” here is a fallback state, not a claim that the neutral score is highest.</div>`:''}</div>
+  <div style="grid-column:1/-1"><div class="cap">Nine compact emotion scores</div><div style="position:relative;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;margin-top:8px;align-items:end;height:118px"><div style="position:absolute;left:0;right:0;bottom:${18+50}px;border-top:1px dashed var(--caution)"></div><span class="mono" style="position:absolute;right:0;bottom:${18+52}px;color:var(--caution);font-size:10.5px">0.50 threshold</span>${EMO.map(e=>`<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span class="mono" style="font-size:9.5px">${a.emo[e].toFixed(2)}</span><div style="width:100%;height:${Math.max(1,a.emo[e]*100)}px;background:${e==='neutral'?'var(--neu)':'var(--machine)'}"></div><span class="mono faint" style="font-size:9.5px">${e.slice(0,7)}</span></div>`).join('')}</div></div>
+  <div style="grid-column:1/-1"><button class="btn ghost" style="padding-left:0" onclick="S.direct.native=!S.direct.native;render()">${d.native?'▾':'▸'} Inspect all 28 model-native emotion scores</button>${d.native?nativeGrid(a.native):''}</div>
+  <div style="grid-column:1/-1" class="footnote">cardiffnlp/twitter-roberta-base-sentiment-latest@3216a57 · SamLowe/roberta-base-go_emotions@d750483 · analyzed locally · not saved</div>`;}
+ return `<div class="bar"><h3>Analyze one text</h3><span class="sp"></span><span class="chip">English only</span><span class="chip">20,000-character limit</span><span class="chip">no truncation</span><span class="chip">not saved</span></div>
+ <div class="pane" style="display:grid;grid-template-columns:380px minmax(0,1fr);gap:22px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:12px">
+   <textarea class="inp" id="dtext" rows="7" style="font-size:14px" oninput="S.direct.text=this.value;document.getElementById('dcount').textContent=this.value.length+' characters'">${esc(d.text)}</textarea>
+   <div class="row"><span class="mono faint" id="dcount">${n} characters</span><span class="sp"></span><button class="btn pri" onclick="runDirect()" ${ready()?'':'disabled'}>Analyze locally</button></div>
+   ${ready()?'':`<div class="note-box info"><b>Models not ready.</b> The emotion model is still downloading (${Math.round(S.models.emo*100)}%). <a href="#" onclick="go('setup');return false">Open model setup</a></div>`}
+   <div class="cap" style="margin-top:6px">Try an example</div>
+   ${examples.map(x=>`<button class="chip" style="white-space:normal;text-align:left;border-radius:8px;padding:6px 10px" onclick="S.direct.text=this.textContent;S.direct.res=null;render()">${esc(x)}</button>`).join('')}
+  </div>
+  <div class="card" style="padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:18px 26px;align-content:start;min-height:420px">${out}</div>
+ </div>`;}
+function runDirect(){const t=S.direct.text;if(!t.trim()){S.direct.res={rejected:'The text is empty.'};render();return;}
+ if(t.length>20000){S.direct.res={rejected:`This text has ${t.length} characters; the application safety limit is 20,000.`};render();return;}
+ const r=simulate(t);if(r.tokens>512){S.direct.res={rejected:`This text uses ${r.tokens} model tokens; the limit is 512. It was rejected, not truncated.`};render();return;}
+ S.direct.res=r;S.direct.native=false;render();}
+/* ---------------- 4 import ---------------- */
+function startImport(){S.imp={step:'pick',file:null,name:'',textCol:'message_body',created:false,progress:0,state:'idle'};S.route='import';S.dlg=null;render();}
+function vImport(){const im=S.imp;
+ if(im.step==='pick')return `<div class="empty"><div style="max-width:560px"><div class="cap">New project</div><div style="font:400 40px/1.1 var(--serif);margin:10px 0">Start from one CSV file</div><p class="muted">A project holds exactly one CSV and everything derived from it. Limits: 2 MB, 500 rows, 20,000 characters per text.</p>
+  <div class="card" style="text-align:left;margin-top:22px;overflow:hidden"><div style="padding:10px 14px" class="cap">Choose a file · Documents\\feedback</div>
+  ${[['support_inbox_october.csv','14 rows · 3 KB'],['all_reviews_2026.csv','2,140 rows · 1.1 MB'],['photo_of_whiteboard.png','image']].map(([f,m])=>`<button class="qitem row" onclick="pickFile('${f}')"><span>📄</span><span>${f}</span><span class="sp"></span><span class="mono faint">${m}</span></button>`).join('')}
+  </div><div class="row" style="margin-top:16px"><button class="btn" onclick="go('projects')">Cancel</button></div>${im.err?`<div class="note-box err" style="margin-top:12px;text-align:left"><b>Cannot use this file.</b> ${im.err}</div>`:''}</div></div>`;
+ const rows=im.rows;const inv=rows.filter(r=>r.status==='invalid').length;const lang=rows.filter(r=>r.lang).length;const valid=rows.length-inv;
+ const running=im.state==='running'||im.state==='paused';
+ return `<div style="display:grid;grid-template-columns:420px minmax(0,1fr);height:100%">
+  <div style="background:#fff;border-right:1px solid var(--line);padding:28px 30px;display:flex;flex-direction:column;gap:14px;overflow:auto">
+   <div class="cap">Step 1 of 2 · read the file</div><div style="font:400 30px/1.1 var(--serif)">${esc(im.file)}</div><div class="mono faint">${rows.length} rows · UTF-8 · limits 2 MB / 500 rows</div>
+   <div class="field"><label>Project name</label><input class="inp" value="${esc(im.name)}" oninput="S.imp.name=this.value" ${running?'disabled':''}></div>
+   <div class="field"><label>Text column</label><select class="inp" onchange="S.imp.textCol=this.value;render()" ${running?'disabled':''}>${opts(['message_body','subject'],im.textCol)}</select></div>
+   ${im.textCol==='subject'?`<div class="note-box warn"><b>“subject” is mostly empty</b> in this file (11 of 14 rows); those rows would be invalid.</div>`:''}
+   <div class="field"><label>Recognised metadata columns</label><div class="row wrap" style="gap:6px">${['record_id','source_type','topic','timestamp'].map(c=>`<span class="chip you">${c}</span>`).join('')}${['source_label','language','community','parent_record_id','notes'].map(c=>`<span class="chip">${c} — not in file</span>`).join('')}</div><span class="faint" style="font-size:11.5px">Groups in Insights come only from these columns. Nothing is inferred.</span></div>
+   <div class="hr"></div>
+   <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px"><div><div class="big">${im.textCol==='subject'?3:valid}</div><div class="mono faint">valid</div></div><div><div class="big" style="color:var(--diff)">${im.textCol==='subject'?11:inv}</div><div class="mono faint">invalid</div></div><div><div class="big" style="color:var(--caution)">${lang}</div><div class="mono faint">possibly not English</div></div></div>
+   <div style="margin-top:auto" class="row"><button class="btn" onclick="startImport()" ${running?'disabled':''}>Back</button><span class="sp"></span><button class="btn pri" onclick="runImport()" ${running||!ready()||im.textCol==='subject'?'disabled':''}>Create project & analyze ${valid} rows</button></div>
+   ${ready()?'':`<div class="note-box info"><b>Models not ready.</b> You can create the project now and analyze when the download finishes. <button class="btn sm" onclick="createProject(false)">Create without analyzing</button></div>`}
+  </div>
+  <div style="padding:24px 28px;display:flex;flex-direction:column;gap:14px;min-height:0">
+   <div class="row"><span class="cap">Preview & validation</span><span class="sp"></span><div class="seg">${[['all','All',rows.length],['invalid','Invalid',inv],['lang','Language notice',lang]].map(([k,l,n])=>`<button class="${(im.pf||'all')===k?'on':''}" onclick="S.imp.pf='${k}';render()">${l}<b>${n}</b></button>`).join('')}</div></div>
+   <div class="card" style="overflow:auto;flex:1;min-height:0"><table class="t"><thead><tr><th style="width:7%">Row</th><th style="width:12%">record_id</th><th style="width:48%">message_body</th><th style="width:12%">source_type</th><th style="width:21%">Check</th></tr></thead><tbody>
+   ${rows.filter(r=>!im.pf||im.pf==='all'||(im.pf==='invalid'&&r.status==='invalid')||(im.pf==='lang'&&r.lang)).map(r=>`<tr><td class="mono">${r.row}</td><td class="mono">${r.id}</td><td class="ell ${r.text?'':'faint'}">${esc(r.text||'(empty)')}</td><td>${r.src}</td><td>${r.status==='invalid'?'<span class="chip err">empty_text</span>':r.lang?`<span class="chip warn">ready · looks like ${r.lang==='es'?'Spanish':'French'}</span>`:'<span class="chip ok">ready</span>'}</td></tr>`).join('')}
+   </tbody></table></div>
+   <div class="faint" style="font-size:11.5px">Rows longer than either model’s token limit fail explicitly during analysis and stay in the project with their reason. Other rows continue.</div>
+   ${running||im.state==='cancelled'?`<div class="card" style="padding:16px 18px"><div class="row"><span class="cap">Step 2 of 2 · analyzing on this computer</span><span class="sp"></span><span class="mono">${im.done} of ${valid} · ${im.failed} failed${im.state==='paused'?' · paused':''}</span></div>
+   <div class="segm" style="margin:12px 0 10px">${Array.from({length:valid},(_,k)=>`<i style="height:14px;background:${k<im.done?(im.failedAt.includes(k)?'var(--diff)':'var(--ink)'):'#E6E2DA'}"></i>`).join('')}</div>
+   <div class="row"><span class="faint" style="font-size:12px">Each row is saved as soon as it is analyzed. Cancel keeps the finished rows; the rest stay queued and can be resumed.</span><span class="sp"></span>${im.state==='paused'?`<button class="btn" onclick="S.imp.state='running';render()">Resume</button>`:`<button class="btn" onclick="S.imp.state='paused';render()">Pause</button>`}<button class="btn danger" onclick="dlgCancelImport()">Cancel…</button></div></div>`:''}
+  </div></div>`;}
+function pickFile(f){if(f.endsWith('.png')){S.imp.err='Only CSV files can be imported.';render();return;}if(f.startsWith('all_')){S.imp.err='This file has 2,140 rows; the limit is 500 rows per project. Split it and import a part.';render();return;}
+ seed=21;const rows=mkRecords(IMPORT_POOL,'o');rows.forEach(r=>{if(r.status==='analyzed'||r.status==='failed'){r._ai=r.ai;r._st=r.status;r.ai=null;r.status='queued';}});
+ Object.assign(S.imp,{step:'map',file:f,name:'Support inbox — October',rows,err:null,done:0,failed:0,failedAt:[]});render();}
+function runImport(){const im=S.imp;im.state='running';createProject(true);}
+function createProject(analyze){const im=S.imp;const p={name:im.name||im.file,file:im.file,opened:'just now',records:im.rows,notes:[],cols:['record_id','source_type','topic','timestamp']};
+ S.projects.unshift(p);S.pid=0;im.pref=p;if(!analyze){im.created=true;toast('Project created. Rows stay queued until the models are ready.');go('results');return;}
+ const queue=im.rows.filter(r=>r.status==='queued');clearInterval(window.__imp);
+ window.__imp=setInterval(()=>{if(im.state==='paused')return;if(im.state!=='running'){clearInterval(window.__imp);return;}
+   const r=queue[im.done];if(!r){clearInterval(window.__imp);im.state='done';im.created=true;toast(`Analysis finished: ${im.done-im.failed} analyzed, ${im.failed} failed (kept with reason).`);go('results');return;}
+   r.status=r._st;r.ai=r._ai;if(r.status==='failed'){im.failed++;im.failedAt.push(im.done);}im.done++;if(!S.dlg)render();},420);
+ render();}
+function dlgCancelImport(){const im=S.imp;const was=im.state;im.state='paused';S.dlg=()=>`<h4>Cancel analysis?</h4><p class="muted" style="font-size:12.5px">${im.done} rows are already analyzed and saved. Cancelling stops the remaining rows; they stay queued in the project and you can resume later. Nothing is half-written.</p><div class="row" style="margin-top:14px"><span class="sp"></span><button class="btn" onclick="S.imp.state='${was}';S.dlg=null;render()">Keep running</button><button class="btn danger" onclick="S.imp.state='cancelled';S.imp.created=true;S.dlg=null;toast('Analysis cancelled. Finished rows kept; the rest are queued.');go('results')">Cancel analysis</button></div>`;render();}
+function vImportDone(){const p=P(),c=counts(p);
+ return `<div class="bar"><h3>Import & validation</h3><span class="mono faint">${esc(p.file)} · text column message_body · ${c.rows} rows</span><span class="sp"></span></div>
+ <div class="pane" style="display:flex;flex-direction:column;gap:14px">
+  <div class="grid" style="grid-template-columns:repeat(4,1fr)">${[[c.rows-c.invalid,'valid at import',''],[c.invalid,'invalid at import','var(--diff)'],[c.failed,'failed during analysis','var(--diff)'],[p.records.filter(r=>r.lang).length,'possibly not English','var(--caution)']].map(([n,l,col])=>`<div class="card" style="padding:14px 16px"><div class="big" style="color:${col||'var(--ink)'}">${n}</div><div class="mono faint">${l}</div></div>`).join('')}</div>
+  <div class="row wrap" style="gap:6px"><span class="cap">Metadata columns used</span>${p.cols.map(x=>`<span class="chip you">${x}</span>`).join('')}<span class="faint" style="font-size:11.5px">A project holds exactly this one file. To analyze another CSV, create a new project.</span></div>
+  <div class="card" style="overflow:hidden"><table class="t"><thead><tr><th style="width:6%">Row</th><th style="width:10%">record_id</th><th style="width:50%">Text</th><th style="width:12%">source_type</th><th style="width:22%">Check</th></tr></thead><tbody>
+  ${p.records.map(r=>`<tr><td class="mono">${r.row}</td><td class="mono">${r.id}</td><td class="ell ${r.text?'':'faint'}">${esc(r.text||'(empty)')}</td><td>${r.src}</td><td>${r.status==='invalid'?'<span class="chip err">empty_text</span>':r.status==='failed'?'<span class="chip err">input_too_long</span>':r.status==='queued'?'<span class="chip">queued</span>':r.lang?'<span class="chip warn">analyzed · language notice</span>':'<span class="chip ok">analyzed</span>'}</td></tr>`).join('')}
+  </tbody></table></div></div>`;}
+/* ---------------- 5 results ---------------- */
+function vResults(){const p=P(),c=counts(p),f=S.res;const a=p.records.filter(ok);
+ const sd={negative:0,neutral:0,positive:0};a.forEach(r=>sd[r.ai.sent]++);
+ const ed={};EMO.forEach(e=>ed[e]=0);let fb=0;a.forEach(r=>{ed[r.ai.dom]++;if(r.ai.fallback)fb++;});const emax=Math.max(1,...Object.values(ed));
+ const act={};EMO.filter(e=>e!=='neutral').forEach(e=>act[e]=a.filter(r=>r.ai.emo[e]>=.5).length);
+ const actTop=Object.entries(act).sort((x,y)=>y[1]-x[1]).slice(0,4);
+ const rows=p.records.filter(r=>r.status!=='invalid').filter(r=>(f.status==='all'||r.status===f.status)&&(!f.sent||(r.ai&&r.ai.sent===f.sent))&&(!f.emo||(r.ai&&r.ai.dom===f.emo)));
+ const queuedNote=c.queued?`<div class="note-box info"><b>${c.queued} rows are queued</b> and not analyzed yet. ${ready()?`<button class="btn sm" onclick="resumeQueued()">Resume analysis</button>`:'Analysis starts when the models are ready.'}</div>`:'';
+ return `<div class="bar"><h3>Results</h3><span class="mono faint">${c.analyzed} analyzed · ${c.failed} failed · ${c.invalid} invalid at import${c.queued?` · ${c.queued} queued`:''}</span><span class="sp"></span><button class="btn" onclick="dlgExport('results')">Export results CSV…</button></div>
+ <div class="pane" style="display:flex;flex-direction:column;gap:16px">${queuedNote}
+  <div class="grid" style="grid-template-columns:1.05fr 2fr 1.1fr .65fr">
+   <div class="card" style="padding:16px 18px"><div class="cap">AI sentiment · rows</div><div class="row" style="margin-top:10px;align-items:flex-end;gap:16px">${SENTS.map(s=>`<div><div class="big s-${s}">${sd[s]}</div><div class="mono faint">${s}</div></div>`).join('')}</div>
+    <div style="display:flex;height:6px;margin-top:12px;border-radius:3px;overflow:hidden">${SENTS.map(s=>`<i style="width:${pct(sd[s],c.analyzed)}%;background:var(--${s==='negative'?'neg':s==='neutral'?'neu':'pos'})"></i>`).join('')}</div></div>
+   <div class="card" style="padding:16px 18px"><div class="cap">AI dominant emotion · rows</div><div style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;align-items:end;height:96px;margin-top:10px">${EMO.map(e=>`<button style="background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px" title="Filter by ${e}" onclick="S.res.emo=S.res.emo==='${e}'?'':'${e}';render()"><span class="mono" style="font-size:10px">${ed[e]}</span><div style="width:100%;height:${Math.round(ed[e]/emax*58)}px;background:${f.emo===e?'var(--you)':e==='neutral'?'var(--neu)':'var(--machine)'}"></div><span class="mono faint" style="font-size:9px">${e.slice(0,7)}</span></button>`).join('')}</div><div class="faint" style="font-size:11px;margin-top:6px">neutral includes ${fb} threshold fallbacks · click a bar to filter</div></div>
+   <div class="card" style="padding:16px 18px"><div class="cap">Compact activation rate</div><div style="display:grid;gap:6px;margin-top:10px">${actTop.map(([e,n])=>`<div class="row"><span style="width:76px" class="muted">${e}</span><div class="meter" style="flex:1"><i style="width:${pct(n,c.analyzed)}%;background:var(--machine)"></i></div><span class="mono" style="width:34px;text-align:right">${pct(n,c.analyzed)}%</span></div>`).join('')}</div><div class="faint" style="font-size:11px;margin-top:6px">independent rates; need not sum to 100%</div></div>
+   <div class="card" style="padding:16px 18px"><div class="cap">Failed</div><div class="big" style="color:var(--diff);margin-top:10px">${c.failed}</div><div class="mono faint">kept with reason, not truncated</div></div>
+  </div>
+  <div class="row wrap"><div class="seg">${[['all','All'],['analyzed','Analyzed'],['failed','Failed']].map(([k,l])=>`<button class="${f.status===k?'on':''}" onclick="S.res.status='${k}';render()">${l}<b>${k==='all'?c.rows-c.invalid:k==='analyzed'?c.analyzed:c.failed}</b></button>`).join('')}</div>
+   <select class="inp" style="width:170px" onchange="S.res.sent=this.value;render()">${opts(SENTS,f.sent,'Sentiment: any')}</select><select class="inp" style="width:200px" onchange="S.res.emo=this.value;render()">${opts(EMO,f.emo,'Dominant emotion: any')}</select><span class="sp"></span><span class="mono faint">${rows.length} rows shown</span></div>
+  <div class="card" style="overflow:hidden"><table class="t"><thead><tr><th style="width:5%">Row</th><th style="width:8%">record_id</th><th style="width:14%">Status</th><th style="width:34%">Text</th><th style="width:10%">Sentiment</th><th style="width:14%">Dominant</th><th style="width:15%">Secondary / error</th></tr></thead><tbody>
+   ${rows.map(r=>`<tr class="click" onclick="${r.ai?`openReview('${r.id}')`:''}"><td class="mono">${r.row}</td><td class="mono">${r.id}</td><td>${r.status==='failed'?'<span class="chip err">failed</span>':r.status==='queued'?'<span class="chip">queued</span>':'<span class="chip ok">analyzed</span>'}${r.lang?' <span class="chip warn">'+r.lang+'?</span>':''}</td><td class="ell ${r.status==='failed'?'faint':''}">${esc(r.text)}</td><td class="${r.ai?'s-'+r.ai.sent:'faint'}">${r.ai?r.ai.sent:'—'}</td><td>${r.ai?r.ai.dom+(r.ai.fallback?' <span class="chip warn">fallback</span>':''):'—'}</td><td class="${r.err?'':'faint'}" style="${r.err?'color:var(--diff)':''}">${r.err?esc(r.err):r.ai?(r.ai.secondary.join(', ')||'none'):'—'}</td></tr>`).join('')}
+  </tbody></table></div>
+ </div>`;}
+function resumeQueued(){const p=P();p.records.filter(r=>r.status==='queued').forEach(r=>{r.status=r._st||'analyzed';r.ai=r._ai;});toast('Queued rows analyzed.');}
+function openReview(id){S.rev.filter='all';S.rev.id=id;S.rev.draft=null;go('review');}
+/* ---------------- 6 review ---------------- */
+function revList(){const p=P();const a=p.records.filter(ok);const f=S.rev.filter;return a.filter(r=>f==='all'||(f==='unreviewed'&&!r.review)||(f==='reviewed'&&r.review)||(f==='corrected'&&r.review&&(r.review.sJ==='correct'||r.review.eJ==='correct'))||(f==='uncertain'&&r.review&&(r.review.sJ==='uncertain'||r.review.eJ==='uncertain')));}
+function curRec(){const L=revList();let r=L.find(x=>x.id===S.rev.id);if(!r){r=L[0];S.rev.id=r?r.id:null;S.rev.draft=null;}return r;}
+function draft(r){if(S.rev.draft&&S.rev.draft.id===r.id)return S.rev.draft;const v=r.review;S.rev.draft=v?{id:r.id,...JSON.parse(JSON.stringify(v))}:{id:r.id,sJ:null,sH:null,eJ:null,eH:null,eSec:[],note:''};return S.rev.draft;}
+function vReview(){const p=P(),c=counts(p);const L=revList();const r=curRec();
+ const prog=`<div style="width:230px"><div class="segm">${Array.from({length:30},(_,k)=>`<i style="background:${k<Math.round(c.reviewed/Math.max(1,c.analyzed)*30)?'var(--ink)':''}"></i>`).join('')}</div><div class="mono faint" style="margin-top:4px">${c.reviewed} / ${c.analyzed} reviewed · ${c.unreviewed} to go</div></div>`;
+ const segs=[['all','All',c.analyzed],['unreviewed','Unreviewed',c.unreviewed],['reviewed','Reviewed',c.reviewed],['corrected','Corrected',c.corrected],['uncertain','Uncertain',c.uncertain]];
+ const head=`<div class="bar"><h3>Review</h3><div class="seg">${segs.map(([k,l,n])=>`<button class="${S.rev.filter===k?'on':''}" onclick="S.rev.filter='${k}';S.rev.id=null;S.rev.draft=null;render()">${l}<b>${n}</b></button>`).join('')}</div><span class="sp"></span>${prog}</div>`;
+ if(!r){const done=S.rev.filter==='unreviewed'&&c.analyzed>0;return head+`<div class="pane"><div class="empty"><div><div style="font:400 34px var(--serif)">${done?'Review queue complete.':'No records in this view.'}</div><p class="muted" style="margin-top:6px">${done?`All ${c.analyzed} reviewable records have a saved human decision. You can still revisit decisions or export the reviewed CSV.`:'Choose another filter.'}</p>${done?`<div class="row" style="justify-content:center;margin-top:14px"><button class="btn" onclick="S.rev.filter='all';render()">Revisit decisions</button><button class="btn pri" onclick="go('agreement')">See agreement</button></div>`:''}</div></div></div>`;}
+ const d=draft(r),a=r.ai;const pos=L.indexOf(r)+1;
+ const jSeg=(dim)=>{const k=dim==='s'?'sJ':'eJ';return `<div class="seg you">${[['accept','Accept AI'],['correct','Correct'],['uncertain','Uncertain']].map(([v,l])=>`<button class="${d[k]===v?'on':''}" onclick="setJ('${dim}','${v}')">${l}</button>`).join('')}</div>`;};
+ const canSave=d.sJ&&d.eJ&&(d.sJ!=='correct'||d.sH)&&(d.eJ!=='correct'||d.eH);
+ return head+`<div class="pane" style="display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px;overflow:hidden">
+  <div class="card" style="overflow:auto;display:flex;flex-direction:column"><div style="padding:10px 12px" class="row"><span class="cap">Queue · ${S.rev.filter}</span><span class="sp"></span><span class="mono faint">${pos} / ${L.length}</span></div><div class="hr"></div>
+   ${L.map(x=>`<button class="qitem ${x.id===r.id?'on':''}" onclick="S.rev.id='${x.id}';S.rev.draft=null;S.rev.native=false;render()"><div class="row"><span class="mono faint">${x.id}</span><span class="sp"></span>${x.review?(x.review.sJ==='correct'||x.review.eJ==='correct'?'<span class="chip you" style="font-size:9.5px;padding:0 6px">corrected</span>':x.review.sJ==='uncertain'||x.review.eJ==='uncertain'?'<span class="chip" style="font-size:9.5px;padding:0 6px">uncertain</span>':'<span class="chip" style="font-size:9.5px;padding:0 6px">reviewed</span>'):''}</div><div class="ell" style="font-size:12.5px;color:${x.id===r.id?'#131518':'#4B5057'}">${esc(x.text)}</div></button>`).join('')}</div>
+  <div style="display:flex;flex-direction:column;gap:12px;min-height:0;overflow:auto;padding-right:4px">
+   <div class="row"><span class="mono faint">row ${r.row} · ${r.id} · source_type ${r.src} · topic ${r.topic}</span><span class="sp"></span><button class="btn ghost" onclick="stepRev(-1)">‹ Previous</button><button class="btn ghost" onclick="nextUnreviewed()">Next unreviewed ›</button></div>
+   <div class="quote">“${esc(r.text)}”</div>
+   ${r.lang?`<div class="note-box warn"><b>Possibly not English.</b> The models are English-only; their output for this record is unreliable.</div>`:''}
+   <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px">
+    <div class="card" style="padding:18px 20px;background:var(--machine-soft);border-color:var(--machine-line);display:flex;flex-direction:column;gap:12px">
+     <div class="row"><span class="chip mac">AI record</span><span class="faint" style="font-size:11.5px">read-only · kept as produced</span></div>
+     <div><div class="cap">Sentiment</div><div class="big s-${a.sent}" style="font-size:38px">${a.sent}</div><div class="mono faint">confidence ${a.conf.toFixed(3)}</div></div>
+     <div><div class="cap">Dominant emotion</div><div class="big" style="font-size:38px">${a.dom}</div><div class="mono faint">${a.fallback?'threshold fallback · no compact emotion ≥ 0.50':a.domScore.toFixed(2)+' ≥ 0.50'} · secondary: ${a.secondary.join(', ')||'none'}</div></div>
+     <div style="display:grid;gap:6px">${meters3(a.scores,'#E0E4EA')}</div>
+     <button class="btn ghost" style="padding-left:0;align-self:flex-start" onclick="S.rev.native=!S.rev.native;render()">${S.rev.native?'▾':'▸'} Inspect all 28 model-native emotion scores</button>${S.rev.native?nativeGrid(a.native):''}
+     <div class="footnote">sentiment@3216a57 · emotion@d750483</div>
+    </div>
+    <div class="card" style="padding:18px 20px;background:var(--you-soft);border-color:var(--you-line);display:flex;flex-direction:column;gap:12px">
+     <div class="row"><span class="chip you">Your judgment</span><span class="faint" style="font-size:11.5px">saved separately · never changes the AI record</span></div>
+     <div><div class="cap">Sentiment</div><div style="margin-top:6px">${jSeg('s')}</div>${d.sJ==='correct'?`<select class="inp" style="margin-top:6px" onchange="S.rev.draft.sH=this.value;render()">${opts(SENTS,d.sH,'Choose human sentiment')}</select>`:''}</div>
+     <div><div class="cap">Emotion</div><div style="margin-top:6px">${jSeg('e')}</div>${d.eJ==='correct'?`<select class="inp" style="margin-top:6px" onchange="S.rev.draft.eH=this.value;render()">${opts(EMO,d.eH,'Choose human dominant emotion')}</select>
+      <div class="row wrap" style="margin-top:8px;gap:5px"><span class="faint" style="font-size:11.5px">Secondary</span>${EMO.filter(e=>e!=='neutral'&&e!==d.eH).map(e=>`<button class="chip ${d.eSec.includes(e)?'you':''}" onclick="togSec('${e}')">${e}</button>`).join('')}</div>`:''}</div>
+     <div class="field"><label>Optional review note</label><textarea class="inp" rows="3" oninput="S.rev.draft.note=this.value" placeholder="Why you disagreed, if you did">${esc(d.note)}</textarea></div>
+     <div class="faint" style="font-size:11.5px">Accept copies the AI label. Uncertain records no human label and is left out of agreement.</div>
+     <div class="row" style="margin-top:auto"><span class="sp"></span><button class="btn you" onclick="saveNext()" ${canSave?'':'disabled'}>Save & next</button></div>
+    </div>
+   </div>
+  </div></div>`;}
+function setJ(dim,v){const d=S.rev.draft;const r=curRec();if(dim==='s'){d.sJ=v;d.sH=v==='accept'?r.ai.sent:null;}else{d.eJ=v;d.eH=v==='accept'?r.ai.dom:v==='uncertain'?null:null;d.eSec=v==='accept'?[...r.ai.secondary]:[];}render();}
+function togSec(e){const s=S.rev.draft.eSec;const i=s.indexOf(e);if(i>=0)s.splice(i,1);else s.push(e);render();}
+function saveNext(){const r=curRec();const d=S.rev.draft;r.review={sJ:d.sJ,sH:d.sJ==='uncertain'?null:d.sH,eJ:d.eJ,eH:d.eJ==='uncertain'?null:d.eH,eSec:d.eJ==='uncertain'?[]:d.eSec,note:d.note};
+ const L=revList();const i=L.indexOf(r);const nx=S.rev.filter==='unreviewed'?L.find(x=>!x.review):(L[i+1]||null);S.rev.id=nx?nx.id:null;S.rev.draft=null;S.rev.native=false;
+ toast(`Saved ${r.id}. The AI record is unchanged.`);}
+function stepRev(d){const L=revList();const r=curRec();const i=L.indexOf(r)+d;if(L[i]){S.rev.id=L[i].id;S.rev.draft=null;render();}}
+function nextUnreviewed(){const a=P().records.filter(ok);const r=curRec();const i=a.indexOf(r);const nx=a.slice(i+1).find(x=>!x.review)||a.find(x=>!x.review);if(nx){if(S.rev.filter!=='all'&&S.rev.filter!=='unreviewed')S.rev.filter='all';S.rev.id=nx.id;S.rev.draft=null;render();}else toast('No unreviewed records left.');}
+/* ---------------- 7 agreement ---------------- */
+function agreeStats(p){const rv=p.records.filter(r=>ok(r)&&r.review);
+ const sDef=rv.filter(r=>r.review.sJ!=='uncertain');const sAg=sDef.filter(r=>r.review.sH===r.ai.sent);
+ const eDef=rv.filter(r=>r.review.eJ!=='uncertain');const eAg=eDef.filter(r=>r.review.eH===r.ai.dom);
+ const setEq=r=>{const A=new Set([r.ai.dom,...r.ai.secondary]),B=new Set([r.review.eH,...r.review.eSec]);return A.size===B.size&&[...A].every(x=>B.has(x));};
+ const exAg=eDef.filter(setEq);
+ const cm=SENTS.map(a=>SENTS.map(h=>sDef.filter(r=>r.ai.sent===a&&r.review.sH===h).length));
+ const bands=[["0.00–0.49",0,.5],["0.50–0.74",.5,.75],["0.75–0.89",.75,.9],["0.90–1.00",.9,1.01]];
+ const band=(def,conf,dis)=>def.length<5?null:bands.map(([l,lo,hi])=>{const inb=def.filter(r=>conf(r)>=lo&&conf(r)<hi);return [l,inb.filter(dis).length,inb.length];}).filter(b=>b[2]>0);
+ const corr={};SENTS.forEach(s=>corr[s]=sDef.filter(r=>r.review.sH!==r.ai.sent&&r.review.sH===s).length);
+ return {rv,sDef,sAg,eDef,eAg,exAg,cm,corr,bS:band(sDef,r=>r.ai.conf,r=>r.review.sH!==r.ai.sent),bE:band(eDef,r=>r.ai.domScore,r=>r.review.eH!==r.ai.dom)};}
+function vAgreement(){const p=P(),c=counts(p),g=agreeStats(p);const b=S.agr.dim==='sentiment'?g.bS:g.bE;
+ const fig=(n,d,l)=>`<div><div class="huge">${d?pct(n,d):'—'}<span style="font-size:42px">${d?'%':''}</span></div><div class="hr" style="margin:10px 0 8px"></div><div style="font-weight:500">${l}</div><div class="mono faint">${n} of ${d} definitive</div></div>`;
+ const mx=Math.max(1,...g.cm.flat());
+ return `<div class="bar"><h3>Agreement</h3><span class="mono faint">${c.reviewed} of ${c.analyzed} reviewed · uncertain dimensions excluded from every denominator</span><span class="sp"></span><button class="btn pri" onclick="dlgExport('reviewed')">Export reviewed CSV…</button></div>
+ <div class="pane" style="display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:20px">
+   <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:22px">${fig(g.sAg.length,g.sDef.length,'Sentiment agreement')}${fig(g.eAg.length,g.eDef.length,'Dominant emotion')}${fig(g.exAg.length,g.eDef.length,'Exact emotion set')}</div>
+   <div class="card" style="padding:16px 18px"><div class="row"><span class="cap">Confidence and disagreement</span><span class="sp"></span><div class="seg">${[['sentiment','Sentiment'],['emotion','Dominant emotion']].map(([k,l])=>`<button class="${S.agr.dim===k?'on':''}" onclick="S.agr.dim='${k}';render()">${l}</button>`).join('')}</div></div>
+    ${b?`<div style="display:grid;gap:10px;margin-top:14px">${b.map(([l,d,n])=>`<div class="row"><span class="mono" style="width:86px">${l}</span><div style="flex:1;height:18px;background:#ECE9E3;border-radius:3px;position:relative;overflow:hidden"><i style="position:absolute;left:0;top:0;bottom:0;width:${pct(d,n)}%;background:var(--diff)"></i></div><span class="mono" style="width:120px;text-align:right">${d} / ${n} · ${pct(d,n)}%</span></div>`).join('')}</div>`:`<p class="muted" style="margin-top:12px">Available after at least five definitive reviews for this dimension.</p>`}
+    <div class="faint" style="font-size:11.5px;margin-top:10px">Disagreements / definitive reviews per AI confidence band.</div></div>
+   <div class="card" style="padding:14px 18px"><div class="cap">Sentiment corrections · human label after correcting</div><div class="row" style="margin-top:10px;gap:22px">${SENTS.map(s=>`<span><span class="mono s-${s}" style="font-size:18px">${g.corr[s]}</span> <span class="muted">to ${s}</span></span>`).join('')}</div></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:18px">
+   <div class="card" style="padding:16px 18px"><div class="cap">Sentiment confusion · AI rows × human columns</div><div style="display:grid;grid-template-columns:90px repeat(3,1fr);gap:4px;margin-top:12px"><div></div>${SENTS.map(s=>`<div class="mono faint" style="text-align:center;font-size:10.5px">you ${s}</div>`).join('')}
+    ${g.cm.map((row,i)=>`<div class="mono faint" style="font-size:10.5px;align-self:center">AI ${SENTS[i]}</div>`+row.map((v,j)=>{const dg=i===j;const al=dg?.12+.78*v/mx:(v?.18+.6*v/mx:.04);return `<div style="height:54px;display:grid;place-items:center;border-radius:4px;font:400 24px var(--serif);background:${dg?`rgba(19,21,24,${al.toFixed(2)})`:`rgba(223,82,44,${al.toFixed(2)})`};color:${dg&&al>.5?'#fff':'#131518'}">${v}</div>`}).join('')).join('')}</div></div>
+   <div class="card" style="padding:16px 18px"><div class="cap">Explicit reviewed export</div><p class="muted" style="font-size:12.5px;margin-top:8px">Every row, the immutable AI outputs, separate human fields, provenance, errors and agreement values. Nothing is written until you choose a file.</p><div class="row" style="margin-top:12px"><span class="sp"></span><button class="btn pri" onclick="dlgExport('reviewed')">Export reviewed CSV…</button></div></div>
+   <div class="footnote">Agreement describes this project’s text and this reviewer only. It is not model accuracy.</div>
+  </div></div>`;}
+/* ---------------- exports (simulated save dialog) ---------------- */
+function dlgExport(kind){const p=P();const base=p.file.replace('.csv','');const spec={results:['Export results CSV',`${base}_results.csv`,['Include failed rows with their reason']],reviewed:['Export reviewed CSV',`${base}_reviewed.csv`,['Include failed rows with their reason','Include 28 model-native emotion scores']],insights:['Export insights CSV',`${base}_insights.csv`,['Include supporting record-level text and metadata','Include model-native emotion scores with supporting records']],mod:['Export training results CSV','moderation_session.csv',['Include user-derived source text','Include NLP signals','Include context notes','Include trusted metadata']],tri:['Export triage CSV','support_triage.csv',['Include workspace source text or excerpt','Include sentiment and emotion signals','Include human review','Include context notes','Include trusted metadata']]}[kind];
+ S.dlg=()=>`<h4>${spec[0]}</h4><div class="field"><label>Save as</label><input class="inp" value="Documents\\STI exports\\${spec[1]}"></div><div style="display:grid;gap:6px;margin-top:12px;font-size:12.5px">${spec[2].map((o,i)=>`<label class="row" style="gap:8px"><input type="checkbox" ${i===0&&(kind==='results'||kind==='reviewed')?'checked':''}> ${o}</label>`).join('')}</div>${kind==='mod'||kind==='tri'||kind==='insights'?`<div class="note-box warn" style="margin-top:10px">Private text and metadata are excluded unless you select them. Store exports as private local data.</div>`:''}<div class="row" style="margin-top:16px"><span class="sp"></span><button class="btn" onclick="S.dlg=null;render()">Cancel</button><button class="btn pri" onclick="S.dlg=null;toast('Saved ${spec[1]} (simulated — the demo writes nothing).')">Save</button></div>`;render();}
+/* ---------------- 8 insights compare ---------------- */
+const METRICS={ai:[['ai_sentiment','AI sentiment'],['ai_dominant_emotion','AI dominant emotion'],['ai_emotion_activation','AI emotion activation']],human:[['human_sentiment','Human sentiment'],['human_dominant_emotion','Human dominant emotion'],['human_emotion_inclusion','Human emotion inclusion']],agreement:[['sentiment_disagreement','Sentiment disagreement'],['dominant_emotion_disagreement','Dominant-emotion disagreement'],['emotion_set_disagreement','Emotion-set disagreement'],['review_coverage','Review coverage']]};
+const DEFS={ai_sentiment:'One AI sentiment label per successful row; denominator is successful rows.',ai_dominant_emotion:'One compact AI dominant emotion per successful row; denominator is successful rows.',ai_emotion_activation:'A compact non-neutral emotion is active when its score is ≥ the row threshold. Rates are independent and need not sum to 100%.',human_sentiment:'Definitive whole-record human sentiment reviews only.',human_dominant_emotion:'One human dominant label per definitive emotion review.',human_emotion_inclusion:'Each compact human label counted once per definitive reviewed record across dominant and secondary labels.',sentiment_disagreement:'AI–human sentiment disagreement among definitive sentiment reviews only. Agreement is descriptive, not model accuracy.',dominant_emotion_disagreement:'AI–human dominant-emotion disagreement among definitive emotion reviews only.',emotion_set_disagreement:'AI–human exact compact emotion-set disagreement among definitive emotion reviews only.',review_coverage:'Reviewable successful rows, reviewed rows, uncertain and unreviewed rows.'};
+const keyOf=(r,g)=>g==='source_type'?r.src:g==='topic'?r.topic:r.month;
+function groupValues(g){return [...new Set(P().records.filter(r=>r.status!=='invalid').map(r=>keyOf(r,g)))].sort();}
+function vCompare(){const I=S.ins;const p=P();const all=groupValues(I.group);if(!I.groups.length||I.groups.some(x=>!all.includes(x)))I.groups=all.slice(0,Math.min(3,all.length));
+ const A=I.applied;
+ const step=(n,t,sub,body)=>`<div style="border-top:1px solid ${n==='01'?'var(--ink)':'var(--line)'};padding:12px 0 14px"><div class="row"><span class="step-n">${n}</span><div style="flex:1"><div style="font-weight:500">${t}</div>${sub?`<div class="faint" style="font-size:11.5px">${sub}</div>`:''}</div></div>${body}</div>`;
+ const months=[...new Set(p.records.map(r=>r.month))].sort();
+ const left=`${step('01','Group by','only columns from your file',`<select class="inp" style="margin-top:10px" onchange="S.ins.group=this.value;S.ins.groups=[];render()">${opts(['source_type','topic','timestamp_month'],I.group)}</select><div class="row wrap" style="margin-top:8px;gap:6px">${all.map(v=>`<button class="chip ${I.groups.includes(v)?'you':''}" onclick="togGroup('${v}')">${v}${I.groups.includes(v)?' ✓':''}</button>`).join('')}</div><div class="faint" style="font-size:11px;margin-top:6px">${I.groups.length} selected · compare up to 4</div>`)}
+  ${step('02','Perspective & metric','',`<div class="seg" style="margin-top:10px">${[['ai','AI'],['human','Human'],['agreement','Agreement']].map(([k,l])=>`<button class="${I.persp===k?'on':''}" onclick="S.ins.persp='${k}';S.ins.metric=METRICS['${k}'][0][0];render()">${l}</button>`).join('')}</div><select class="inp" style="margin-top:8px" onchange="S.ins.metric=this.value;render()">${METRICS[I.persp].map(([k,l])=>`<option value="${k}" ${I.metric===k?'selected':''}>${l}</option>`).join('')}</select>`)}
+  ${step('03','Filters','',`<div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><select class="inp" onchange="S.ins.fs=this.value">${opts(SENTS,I.fs,'AI sentiment: all')}</select><select class="inp" onchange="S.ins.fe=this.value">${opts(EMO,I.fe,'AI emotion: all')}</select><select class="inp" onchange="S.ins.from=this.value">${opts(months,I.from,'From month')}</select><select class="inp" onchange="S.ins.to=this.value">${opts(months,I.to,'To month')}</select></div>`)}
+  <div style="border-top:1px solid var(--line);padding-top:12px" class="row"><span class="sp"></span><button class="btn pri" onclick="applyView()" ${I.groups.length?'':'disabled'}>Apply view</button></div>`;
+ let right;
+ if(!A)right=`<div class="empty"><div><div style="font:400 28px var(--serif)">Choose a view and apply it</div><p class="muted" style="margin-top:6px">Nothing is computed until you apply. Every figure will show its denominator.</p></div></div>`;
+ else right=renderView(A);
+ return `<div class="bar"><h3>Insights</h3><div class="seg"><button class="on">Compare groups</button><button onclick="go('notes')">Notes & cases</button></div><span class="sp"></span><button class="btn" onclick="dlgExport('insights')" ${A?'':'disabled'}>Export insights CSV…</button></div>
+ <div class="pane" style="display:grid;grid-template-columns:320px minmax(0,1fr);gap:26px"><div>${left}</div><div style="display:flex;flex-direction:column;gap:16px">${right}</div></div>`;}
+function togGroup(v){const g=S.ins.groups;const i=g.indexOf(v);if(i>=0)g.splice(i,1);else if(g.length<4)g.push(v);else{toast('Compare up to 4 groups at a time.');return;}render();}
+function applyView(){S.ins.applied=JSON.parse(JSON.stringify({group:S.ins.group,groups:S.ins.groups,persp:S.ins.persp,metric:S.ins.metric,fs:S.ins.fs,fe:S.ins.fe,from:S.ins.from,to:S.ins.to}));render();}
+function level(n){return n<5?['insufficient','err']:n<10?['small','warn']:['descriptive','ok'];}
+function renderView(A){const p=P();const label=Object.values(METRICS).flat().find(m=>m[0]===A.metric)[1];
+ const inF=r=>(!A.fs||r.ai.sent===A.fs)&&(!A.fe||r.ai.dom===A.fe)&&(!A.from||r.month>=A.from)&&(!A.to||r.month<=A.to);
+ const cards=A.groups.map(gv=>{const rowsAll=p.records.filter(r=>r.status!=='invalid'&&keyOf(r,A.group)===gv);const failed=rowsAll.filter(r=>r.status==='failed').length;const succ=rowsAll.filter(r=>ok(r)&&inF(r));
+  let elig,body;const m=A.metric;
+  const dist=(items,keys,col)=>{const n=items.length;return `<div style="display:grid;gap:6px;margin-top:12px">${keys.map(k=>{const v=items.filter(x=>x===k).length;return `<div class="row"><span style="width:78px" class="muted ell">${k}</span><div class="meter" style="flex:1"><i style="width:${pct(v,n)}%;background:${col(k)}"></i></div><span class="mono" style="width:66px;text-align:right">${v} · ${pct(v,n)}%</span></div>`}).join('')}</div>`;};
+  const sc=k=>`var(--${k==='negative'?'neg':k==='neutral'?'neu':'pos'})`;
+  if(m==='ai_sentiment'){elig=succ.length;body=dist(succ.map(r=>r.ai.sent),SENTS,sc);}
+  else if(m==='ai_dominant_emotion'){elig=succ.length;const ks=[...new Set(succ.map(r=>r.ai.dom))];body=dist(succ.map(r=>r.ai.dom),ks,()=> 'var(--machine)');}
+  else if(m==='ai_emotion_activation'){elig=succ.length;body=`<div style="display:grid;gap:6px;margin-top:12px">${EMO.filter(e=>e!=='neutral').map(e=>{const v=succ.filter(r=>r.ai.emo[e]>=.5).length;return v?`<div class="row"><span style="width:78px" class="muted">${e}</span><div class="meter" style="flex:1"><i style="width:${pct(v,elig)}%;background:var(--machine)"></i></div><span class="mono" style="width:66px;text-align:right">${v} · ${pct(v,elig)}%</span></div>`:''}).join('')||'<span class="faint">no active emotions</span>'}</div>`;}
+  else if(m==='human_sentiment'){const d=succ.filter(r=>r.review&&r.review.sJ!=='uncertain');elig=d.length;body=dist(d.map(r=>r.review.sH),SENTS,sc);}
+  else if(m==='human_dominant_emotion'){const d=succ.filter(r=>r.review&&r.review.eJ!=='uncertain');elig=d.length;body=dist(d.map(r=>r.review.eH),[...new Set(d.map(r=>r.review.eH))],()=> 'var(--you)');}
+  else if(m==='human_emotion_inclusion'){const d=succ.filter(r=>r.review&&r.review.eJ!=='uncertain');elig=d.length;body=`<div style="display:grid;gap:6px;margin-top:12px">${EMO.map(e=>{const v=d.filter(r=>r.review.eH===e||r.review.eSec.includes(e)).length;return v?`<div class="row"><span style="width:78px" class="muted">${e}</span><div class="meter" style="flex:1"><i style="width:${pct(v,elig)}%;background:var(--you)"></i></div><span class="mono" style="width:66px;text-align:right">${v} · ${pct(v,elig)}%</span></div>`:''}).join('')}</div>`;}
+  else if(m==='review_coverage'){elig=succ.length;const rv=succ.filter(r=>r.review).length,un=succ.filter(r=>r.review&&(r.review.sJ==='uncertain'||r.review.eJ==='uncertain')).length;body=`<div class="huge" style="margin-top:12px">${pct(rv,elig)}<span style="font-size:38px">%</span></div><div class="mono faint" style="margin-top:6px">${rv} reviewed · ${un} uncertain · ${elig-rv} unreviewed of ${elig}</div>`;}
+  else{const dim=m==='sentiment_disagreement'?'s':'e';const d=succ.filter(r=>r.review&&(dim==='s'?r.review.sJ:r.review.eJ)!=='uncertain');elig=d.length;
+   const dis=d.filter(r=>m==='sentiment_disagreement'?r.review.sH!==r.ai.sent:m==='dominant_emotion_disagreement'?r.review.eH!==r.ai.dom:(()=>{const X=new Set([r.ai.dom,...r.ai.secondary]),Y=new Set([r.review.eH,...r.review.eSec]);return !(X.size===Y.size&&[...X].every(x=>Y.has(x)));})()).length;
+   const lv=level(elig);body=`<div class="huge" style="margin-top:12px;${lv[0]==='insufficient'?'color:var(--faint)':''}">${elig?pct(dis,elig):'—'}<span style="font-size:38px">${elig?'%':''}</span></div><div class="meter" style="margin-top:10px"><i style="width:${pct(dis,elig)}%;background:${lv[0]==='insufficient'?'var(--faint)':'var(--diff)'}"></i></div><div class="mono faint" style="margin-top:8px">${dis} / ${elig} eligible</div>`;}
+  const lv=level(elig);const unrev=succ.filter(r=>!r.review).length;
+  return `<div class="card" style="padding:16px 18px"><div class="row"><span style="font-weight:500" class="ell">${gv}</span><span class="sp"></span><span class="chip ${lv[1]}">${lv[0]}</span></div>${body}<div class="mono faint" style="margin-top:8px">${elig} eligible · ${rowsAll.length} group rows · ${failed} failed · ${unrev} unreviewed</div>${lv[0]==='insufficient'?'<div class="faint" style="font-size:11px;margin-top:4px">Comparative emphasis suppressed.</div>':''}</div>`;}).join('');
+ return `<div><div class="cap">Metric and denominator · ${label}</div><p class="muted" style="font-size:12.5px;margin-top:4px">${DEFS[A.metric]}</p><div class="mono faint" style="margin-top:4px">Grouping: ${A.group} · filters: sentiment ${A.fs||'all'}, emotion ${A.fe||'all'}, months ${A.from||'…'}–${A.to||'…'}</div></div>
+  <div class="grid" style="grid-template-columns:repeat(${Math.min(A.groups.length,3)},minmax(0,1fr));gap:14px">${cards}</div>
+  <div class="muted" style="font-size:12px;border-left:2px solid var(--line);padding-left:12px">Descriptive, not causal. These values describe only this dataset. Groups are user-provided fields, not inferred identities. AI labels estimate expression in text; they do not establish feelings, psychology, culture, personality, risk or community traits. Insufficient below 5 eligible, small below 10.</div>
+  <div class="footnote">Model and review provenance · sentiment@3216a57 · emotion@d750483 · compact activation uses each row’s recorded threshold (≥ 0.50)</div>`;}
+/* ---------------- 9 notes & cases ---------------- */
+function vNotes(){const p=P(),N=S.notes,C=S.cases;const a=p.records.filter(ok);
+ const valOpts=N.assoc==='record'?a.map(r=>r.id):N.assoc==='topic'?[...new Set(a.map(r=>r.topic))]:N.assoc==='source_label'?['(no source_label column in this file)']:N.assoc==='community'?['(no community column in this file)']:['current comparison view'];
+ let cases=[];
+ if(C.rule==='highest')cases=[...a].sort((x,y)=>y.ai.emo[C.emo]-x.ai.emo[C.emo]);
+ else if(C.rule==='lowest')cases=[...a].sort((x,y)=>x.ai.conf-y.ai.conf);
+ else if(C.rule==='disagree')cases=a.filter(r=>r.review&&((r.review.sJ!=='uncertain'&&r.review.sH!==r.ai.sent)||(r.review.eJ!=='uncertain'&&r.review.eH!==r.ai.dom)));
+ else if(C.rule==='corrected')cases=a.filter(r=>r.review&&(r.review.sJ==='correct'||r.review.eJ==='correct'));
+ else if(C.rule==='uncertain')cases=a.filter(r=>r.review&&(r.review.sJ==='uncertain'||r.review.eJ==='uncertain'));
+ else if(C.rule==='notes')cases=a.filter(r=>p.notes.some(n=>(n.assoc==='record'&&n.val===r.id)||(n.assoc==='topic'&&n.val===r.topic))&&(!C.tag||p.notes.some(n=>n.tags.includes(C.tag)&&((n.assoc==='record'&&n.val===r.id)||(n.assoc==='topic'&&n.val===r.topic)))));
+ else if(C.rule==='user')cases=a.filter(r=>C.picked.includes(r.id));
+ cases=cases.slice(0,5);
+ const rules=[['highest','Highest AI score'],['lowest','Lowest AI confidence'],['disagree','AI–human disagreement'],['corrected','Human corrected'],['uncertain','Uncertain'],['notes','With context notes'],['user','User-selected']];
+ return `<div class="bar"><h3>Insights</h3><div class="seg"><button onclick="go('compare')">Compare groups</button><button class="on">Notes & cases</button></div><span class="sp"></span><button class="btn" onclick="dlgExport('insights')">Export insights CSV…</button></div>
+ <div class="pane" style="display:grid;grid-template-columns:380px minmax(0,1fr);gap:24px;align-items:start">
+  <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+   <div class="row"><span class="cap">Add phrase and context note</span><span class="sp"></span><span class="chip">manual annotation only</span></div>
+   <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><div class="field"><label>Association</label><select class="inp" onchange="S.notes.assoc=this.value;S.notes.val='';render()">${opts(['record','topic','community','source_label','comparison'],N.assoc)}</select></div><div class="field"><label>Value</label><select class="inp" onchange="S.notes.val=this.value">${opts(valOpts,N.val,'Choose…')}</select></div></div>
+   <div class="field"><label>Phrase or expression</label><input class="inp" value="${esc(N.phrase)}" oninput="S.notes.phrase=this.value" placeholder="e.g. “Truly great work.”"></div>
+   <div class="field"><label>Your explanation</label><textarea class="inp" rows="2" oninput="S.notes.expl=this.value">${esc(N.expl)}</textarea></div>
+   <div class="field"><label>Why context matters</label><textarea class="inp" rows="2" oninput="S.notes.why=this.value">${esc(N.why)}</textarea></div>
+   <div class="field"><label>Optional context tags</label><div class="row wrap" style="gap:5px">${OPT.tags.map(t=>`<button class="chip ${N.tags.includes(t)?'you':''}" onclick="togTag('${t}')">${t}</button>`).join('')}</div></div>
+   <div class="row"><span class="faint" style="font-size:11px">Notes never reclassify a record.</span><span class="sp"></span><button class="btn you" onclick="addNote()">Add note</button></div>
+   <div class="hr"></div><div class="cap">Current context notes · ${p.notes.length}</div>
+   ${p.notes.map((n,i)=>`<div style="font-size:12.5px"><b>${n.assoc} · ${esc(n.val)}</b> <span class="muted">— “${esc(n.phrase)}”: ${esc(n.expl)}</span> ${n.tags.map(t=>`<span class="mono faint">${t}</span>`).join(' ')} <button class="btn ghost sm" onclick="P().notes.splice(${i},1);toast('Note deleted.')">Delete</button></div>`).join('')||'<span class="faint">No context notes have been added.</span>'}
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px">
+   <div class="row wrap"><span class="cap">Representative cases · rule-selected</span><span class="sp"></span>${C.rule==='highest'?`<select class="inp" style="width:180px" onchange="S.cases.emo=this.value;render()">${opts(EMO,C.emo)}</select>`:''}${C.rule==='notes'?`<select class="inp" style="width:200px" onchange="S.cases.tag=this.value;render()">${opts(OPT.tags,C.tag,'Any tag')}</select>`:''}</div>
+   <div class="seg" style="align-self:flex-start">${rules.map(([k,l])=>`<button class="${C.rule===k?'on':''}" onclick="S.cases.rule='${k}';render()">${l}</button>`).join('')}</div>
+   ${C.rule==='user'?`<div class="card" style="padding:10px 14px;max-height:150px;overflow:auto">${a.map(r=>`<label class="row" style="gap:8px;font-size:12px;padding:2px 0"><input type="checkbox" ${C.picked.includes(r.id)?'checked':''} onchange="togPick('${r.id}')"><span class="mono faint">${r.id}</span><span class="ell">${esc(r.text)}</span></label>`).join('')}</div>`:''}
+   ${cases.map(r=>{const full=C.revealed[r.id];const t=full||r.text.length<70?r.text:r.text.slice(0,66)+'…';return `<div class="card" style="padding:16px 18px"><div style="font:400 21px/1.3 var(--serif)">“${esc(t)}”</div><div class="row wrap" style="margin-top:10px;gap:8px"><span class="chip mac">AI ${r.ai.sent} ${Math.round(r.ai.conf*100)}% · ${r.ai.dom}${r.ai.fallback?' (fallback)':' '+Math.round(r.ai.domScore*100)+'%'}</span>${r.review?`<span class="chip you">Human ${r.review.sH||'uncertain'} · ${r.review.eH||'uncertain'}</span>`:'<span class="chip">not reviewed</span>'}<span class="mono faint">${r.id}</span>${!full&&r.text.length>=70?`<button class="btn ghost sm" onclick="S.cases.revealed['${r.id}']=1;render()">Reveal full local text</button>`:''}</div></div>`}).join('')||'<div class="faint" style="padding:20px 0">No records meet this rule.</div>'}
+   <div class="footnote">Cases are selected by the displayed deterministic rule and are not representative of every person, record or community. Navigation aid only.</div>
+  </div></div>`;}
+function togTag(t){const g=S.notes.tags;const i=g.indexOf(t);if(i>=0)g.splice(i,1);else g.push(t);render();}
+function togPick(id){const g=S.cases.picked;const i=g.indexOf(id);if(i>=0)g.splice(i,1);else g.push(id);render();}
+function addNote(){const N=S.notes;if(!N.val||N.val.startsWith('(')){toast('Choose an association value first.');return;}if(!N.phrase.trim()||!N.expl.trim()){toast('Phrase and explanation are required.');return;}P().notes.push({assoc:N.assoc,val:N.val,phrase:N.phrase,expl:N.expl,why:N.why,tags:[...N.tags]});S.notes={assoc:N.assoc,val:'',phrase:'',expl:'',why:'',tags:[]};toast('Note added. It is stored apart from AI predictions and review labels.');}
+/* ---------------- 10 moderation ---------------- */
+function vMod(){const M=S.mod;const tabs=`<div class="seg">${[['prepare','1 Prepare'],['train','2 Train'],['review','3 Review']].map(([k,l])=>`<button class="${M.step===k?'on':''}" onclick="${k==='prepare'||M.started?`S.mod.step='${k}';render()`:''}">${l}</button>`).join('')}</div>`;
+ const banner=`<div class="banner">Training aid · versioned synthetic policy v1 · synthetic cases · the mock recommendation is a labelled fixture, not a model or expert · nothing here touches project data</div>`;
+ if(M.step==='prepare'){const lib=MOD_CASES.filter(c=>!M.filterCat||c.cat===M.filterCat);
+  return banner+`<div class="bar"><h3>Moderation training</h3>${tabs}<span class="sp"></span></div><div class="pane" style="display:flex;flex-direction:column;gap:14px">
+   <div class="row wrap"><span class="cap">Built-in synthetic case library</span><span class="sp"></span><select class="inp" style="width:230px" onchange="S.mod.filterCat=this.value;render()">${opts(OPT.viol.filter(v=>v!=='no_violation'),M.filterCat,'Category: all')}</select><select class="inp" style="width:150px">${opts(['easy','medium','hard'],'','Difficulty: all')}</select><select class="inp" style="width:150px">${opts(['low','moderate','high'],'','Ambiguity: all')}</select></div>
+   <div class="card" style="overflow:hidden"><table class="t"><thead><tr><th style="width:6%"></th><th style="width:9%">Case</th><th style="width:47%">Text</th><th style="width:16%">Category</th><th style="width:10%">Difficulty</th><th style="width:12%">Notice</th></tr></thead><tbody>${lib.map(c=>`<tr><td><input type="checkbox" ${M.picked.includes(c.id)?'checked':''} onchange="togMod('${c.id}')"></td><td class="mono">${c.id}</td><td class="ell">${esc(c.text)}</td><td>${c.cat}</td><td>${c.diff}</td><td>${c.sens?'<span class="chip warn">sensitive</span>':''}</td></tr>`).join('')}</tbody></table></div>
+   <div class="note-box info">You can also prepare a case from a successfully analyzed record in an open project (immutable snapshot; any reference you add is labelled self-authored).</div>
+   <div class="row"><span class="faint">${M.picked.length} cases selected · leave none selected for a balanced sample</span><span class="sp"></span><button class="btn pri" onclick="startMod()">Start a training session</button></div></div>`;}
+ if(M.step==='train'){const ids=M.order;const c=MOD_CASES.find(x=>x.id===ids[M.idx]);const d=M.dec[c.id]||(M.dec[c.id]={disp:'',viol:'',sev:'',esc:false,escR:'',sec:[],reason:'',note:''});const sub=M.sub[c.id];
+  const f=(k,list,lab)=>`<div class="field"><label>${lab}</label><select class="inp" ${sub?'disabled':''} onchange="S.mod.dec['${c.id}'].${k}=this.value;render()">${opts(list,d[k],'Select')}</select></div>`;
+  const okSub=d.disp&&d.viol&&d.sev&&d.reason.trim()&&d.note.trim();
+  return banner+`<div class="bar"><h3>Session · case ${M.idx+1} of ${ids.length}</h3>${tabs}<span class="sp"></span><button class="btn ghost" onclick="S.mod=MOD_INIT();render()">Cancel session</button></div>
+  <div class="pane" style="display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:22px;align-items:start">
+   <div style="display:flex;flex-direction:column;gap:14px"><div class="row wrap" style="gap:6px"><span class="chip">category: ${c.cat}</span><span class="chip">difficulty: ${c.diff}</span><span class="chip">ambiguity: ${c.amb}</span>${c.sens?'<span class="chip warn">sensitive-content notice</span>':''}</div>
+    <div class="quote">“${esc(c.text)}”</div><div class="muted" style="font-size:12.5px">Context: ${esc(c.ctx)}</div>
+    <div class="card" style="padding:14px 16px;background:var(--machine-soft);border-color:var(--machine-line)"><div class="row"><span class="chip mac">Contextual signals</span><span class="faint" style="font-size:11.5px">not moderation verdicts</span></div><div class="mono" style="margin-top:8px">${c.sig}</div></div>
+    <div class="card" style="padding:14px 16px"><div class="row"><span class="cap">Synthetic mock recommendation</span><span class="sp"></span><span class="chip">fixture</span></div><div class="mono" style="margin-top:6px">${c.mock[0]} · ${c.mock[1]} · ${c.mock[2]} · ${c.mock[3]?'escalate':'no escalation'}</div></div>
+    ${sub?`<div class="note-box info"><b>Submitted and frozen.</b> Feedback and the comparison with the reference are revealed at the end of the session.${sub.warn?` <br><b style="color:var(--caution)">Guidance (non-blocking):</b> ${sub.warn} Your judgment was kept unchanged.`:''}</div>`:''}
+   </div>
+   <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:9px"><div class="cap">Your first decision · immutable once submitted</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">${f('disp',OPT.disp,'Disposition')}${f('sev',OPT.sev,'Severity')}</div>${f('viol',OPT.viol,'Primary violation')}
+    <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><div class="field"><label>Escalation</label><div class="seg">${[['false','No'],['true','Yes']].map(([v,l])=>`<button class="${String(d.esc)===v?'on':''}" ${sub?'disabled':''} onclick="S.mod.dec['${c.id}'].esc=${v};render()">${l}</button>`).join('')}</div></div>${d.esc?f('escR',['credible_threat','imminent_harm','minor_safety','legal_or_policy_question','other'],'Escalation reason'):'<div></div>'}</div>
+    <div class="field"><label>Reasoning</label><textarea class="inp" rows="2" ${sub?'disabled':''} oninput="S.mod.dec['${c.id}'].reason=this.value">${esc(d.reason)}</textarea></div>
+    <div class="field"><label>Reviewer note</label><textarea class="inp" rows="2" ${sub?'disabled':''} oninput="S.mod.dec['${c.id}'].note=this.value" placeholder="required">${esc(d.note)}</textarea></div>
+    <div class="row" style="margin-top:6px">${sub?`<span class="sp"></span><button class="btn pri" onclick="nextMod()">${M.idx+1<ids.length?'Continue to next case':'Finish session'}</button>`:`<span class="faint" style="font-size:11px">Reasoning and reviewer note are required.</span><span class="sp"></span><button class="btn pri" onclick="submitMod('${c.id}')">Submit first decision</button>`}</div>
+   </div></div>`;}
+ const ids=M.order;const subs=ids.map(id=>[MOD_CASES.find(c=>c.id===id),M.dec[id]]);
+ const refDisp=subs.filter(([c,d])=>d.disp===c.ref[0]).length,refViol=subs.filter(([c,d])=>d.viol===c.ref[1]).length,mockAg=subs.filter(([c,d])=>d.disp===c.mock[0]).length;
+ return banner+`<div class="bar"><h3>Session review</h3>${tabs}<span class="sp"></span><button class="btn" onclick="dlgExport('mod')">Export privacy-default CSV…</button></div>
+  <div class="pane" style="display:flex;flex-direction:column;gap:16px"><div class="cap">Raw denominators, not a composite score</div>
+   <div class="grid" style="grid-template-columns:repeat(3,1fr)">${[[refDisp,'disposition matches reference'],[refViol,'primary violation matches reference'],[mockAg,'trainee–mock agreement (not accuracy)']].map(([n,l])=>`<div class="card" style="padding:16px 18px"><div class="big">${n}<span style="font-size:28px;color:var(--mute)"> / ${ids.length}</span></div><div class="muted" style="margin-top:6px">${l}</div></div>`).join('')}</div>
+   <div class="card" style="overflow:hidden"><table class="t"><thead><tr><th style="width:9%">Case</th><th style="width:30%">Your first decision</th><th style="width:30%">Reference (synthetic)</th><th style="width:31%">Comparison</th></tr></thead><tbody>${subs.map(([c,d])=>`<tr><td class="mono">${c.id}</td><td>${d.disp} · ${d.viol} · ${d.sev}</td><td>${c.ref[0]} · ${c.ref[1]} · ${c.ref[2]}</td><td>${d.disp===c.ref[0]&&d.viol===c.ref[1]?'<span class="chip ok">aligned</span>':'<span class="chip warn">differs — open case for feedback</span>'}</td></tr>`).join('')}</tbody></table></div>
+   <div class="footnote">Small samples are descriptive training evidence only. No certification score or model-accuracy claim is calculated. Restart creates a new attempt and never overwrites this one.</div>
+   <div class="row"><span class="sp"></span><button class="btn" onclick="S.mod=MOD_INIT();render()">Restart as a new attempt</button></div></div>`;}
+function togMod(id){const g=S.mod.picked;const i=g.indexOf(id);if(i>=0)g.splice(i,1);else g.push(id);render();}
+function startMod(){const M=S.mod;M.order=M.picked.length?[...M.picked]:MOD_CASES.map(c=>c.id);M.idx=0;M.step='train';M.started=true;render();}
+function submitMod(id){const d=S.mod.dec[id];if(!(d.disp&&d.viol&&d.sev&&d.reason.trim()&&d.note.trim())){toast('Disposition, violation, severity, reasoning and reviewer note are required.');return;}
+ let warn='';if(d.disp==='allow'&&d.viol!=='no_violation')warn='“allow” with a violation selected is unusual under policy v1.';if(d.sev==='critical'&&!d.esc)warn='Critical severity is usually escalated under policy v1.';
+ S.mod.sub[id]={warn};render();}
+function nextMod(){const M=S.mod;if(M.idx+1<M.order.length){M.idx++;}else{M.step='review';}render();}
+/* ---------------- 11 triage ---------------- */
+function vTri(){const T=S.tri;const banner=`<div class="banner">Not a CRM or routing system · recommended queues and actions are decisions for review, not operations that occurred · mode: Independent (mock hidden until first finalize)</div>`;
+ const status=id=>T.dec[id]?T.dec[id].status:'untriaged';
+ const tabs=`<div class="seg">${[['guide','1 Source & guide'],['workspace','2 Workspace'],['summary','3 Summary & export']].map(([k,l])=>`<button class="${T.step===k?'on':''}" onclick="S.tri.step='${k}';render()">${l}</button>`).join('')}</div>`;
+ const fin=TICKETS.filter(t=>status(t.id)==='finalized');
+ if(T.step==='guide')return banner+`<div class="bar"><h3>Source & routing guide</h3>${tabs}</div><div class="pane"><div class="grid" style="grid-template-columns:1fr 1fr;gap:18px"><div class="card" style="padding:16px 18px"><div class="cap">Built-in synthetic tickets</div><p class="muted" style="margin-top:8px">${TICKETS.filter(t=>t.src==='synthetic').length} added to this workspace. Each has a frozen routing-guide version and, where available, a deterministic mock suggestion.</p></div><div class="card" style="padding:16px 18px"><div class="cap">Prepare a workspace-derived ticket</div><p class="muted" style="margin-top:8px">Choose a parsed record from the open project. Nothing is copied until you prepare an explicit snapshot. T-011 was prepared this way and has no mock.</p></div></div></div>`;
+ if(T.step==='summary'){const dist=k=>{const m={};fin.forEach(t=>{const v=T.dec[t.id][k];m[v]=(m[v]||0)+1;});return Object.entries(m).map(([v,n])=>`<span class="chip">${v} · ${n}</span>`).join(' ')||'<span class="faint">none</span>';};
+  const withMock=fin.filter(t=>t.mock);const ag=f=>withMock.filter(t=>String(T.dec[t.id][f])===String(t.mock[f])).length;
+  return banner+`<div class="bar"><h3>Summary & export</h3>${tabs}<span class="sp"></span><button class="btn" onclick="dlgExport('tri')">Export auditable CSV…</button></div><div class="pane" style="display:flex;flex-direction:column;gap:14px">
+   <div class="grid" style="grid-template-columns:repeat(4,1fr)">${[[TICKETS.length,'eligible'],[fin.length,'finalized'],[TICKETS.filter(t=>status(t.id)==='draft').length,'draft'],[TICKETS.filter(t=>status(t.id)==='untriaged').length,'untriaged']].map(([n,l])=>`<div class="card" style="padding:14px 16px"><div class="big">${n}</div><div class="muted">${l}</div></div>`).join('')}</div>
+   <div class="card" style="padding:16px 18px;display:grid;gap:8px"><div class="cap">Finalized distributions · sample ${fin.length}</div><div><b>Primary intent</b> ${dist('intent')}</div><div><b>Issue category</b> ${dist('cat')}</div><div><b>Urgency</b> ${dist('urg')}</div><div><b>Recommended queue</b> ${dist('queue')}</div></div>
+   <div class="card" style="padding:16px 18px"><div class="cap">Human–mock comparison · descriptive, not accuracy</div><div class="row wrap" style="margin-top:8px;gap:16px">${[['intent','intent'],['cat','category'],['urg','urgency'],['queue','queue'],['esc','escalation']].map(([k,l])=>`<span><span class="mono">${ag(k)} / ${withMock.length}</span> <span class="muted">${l}</span></span>`).join('')}</div><div class="faint" style="font-size:11.5px;margin-top:6px">Mock-unavailable tickets are excluded from these denominators.</div></div></div>`;}
+ const L=TICKETS.filter(t=>(!T.fStatus||status(t.id)===T.fStatus)&&(!T.fUrg||(T.dec[t.id]&&T.dec[t.id].urg===T.fUrg)));
+ const t=TICKETS.find(x=>x.id===T.sel);const d=T.dec[t.id]||{intent:'',cat:'',urg:'',queue:'',esc:false,act:'',notes:'',status:'untriaged'};const fz=d.status==='finalized';
+ const f=(k,list,lab,full)=>`<div class="field" ${full?'style="grid-column:1/-1"':''}><label>${lab}</label><select class="inp" ${fz?'disabled':''} onchange="triSet('${k}',this.value)">${opts(list,d[k],'Select')}</select></div>`;
+ const cmp=fz&&t.mock?`<div class="card" style="padding:12px 14px;background:var(--machine-soft);border-color:var(--machine-line);font-size:12px"><div class="row"><span class="chip mac">Deterministic mock · revealed after finalize</span></div><div class="mono" style="margin-top:6px">${t.mock.intent} · ${t.mock.cat} · ${t.mock.urg} · ${t.mock.queue}</div><div style="margin-top:6px">${['intent','cat','urg','queue'].map(k=>d[k]===t.mock[k]?`<span class="chip ok">${k} same</span>`:`<span class="chip warn">${k} differs</span>`).join(' ')}</div></div>`:fz&&!t.mock?`<div class="note-box info">No mock exists for this ticket. Nothing has been fabricated or inferred.</div>`:'';
+ return banner+`<div class="bar"><h3>Triage workspace</h3>${tabs}<span class="sp"></span><span class="mono faint">${TICKETS.length} tickets · ${fin.length} finalized · ${TICKETS.filter(x=>status(x.id)==='draft').length} draft</span></div>
+ <div class="pane" style="display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:20px;align-items:start">
+  <div style="display:flex;flex-direction:column;gap:10px"><div class="row wrap" style="gap:6px"><select class="inp" style="width:150px" onchange="S.tri.fStatus=this.value;render()">${opts(['untriaged','draft','finalized'],T.fStatus,'Status: all')}</select><select class="inp" style="width:150px" onchange="S.tri.fUrg=this.value;render()">${opts(OPT.urg,T.fUrg,'Urgency: all')}</select><span class="faint" style="font-size:11.5px">+ source, label, topic, community, intent, category, queue, escalation, mock, disagreement, warning, text search · sort</span></div>
+   <div class="card" style="overflow:hidden"><table class="t"><thead><tr><th style="width:11%">ID</th><th style="width:15%">Source</th><th style="width:16%">Status</th><th style="width:13%">Urgency</th><th style="width:45%">Text</th></tr></thead><tbody>${L.map(x=>`<tr class="click ${x.id===T.sel?'sel':''}" onclick="S.tri.sel='${x.id}';render()"><td class="mono">${x.id}</td><td>${x.src}</td><td><span class="chip ${status(x.id)==='finalized'?'you':''}">${status(x.id)}</span></td><td>${T.dec[x.id]&&T.dec[x.id].urg||'—'}</td><td class="ell">${esc(x.text)}</td></tr>`).join('')||'<tr><td colspan="5" class="faint" style="text-align:center;padding:20px">No tickets match.</td></tr>'}</tbody></table></div></div>
+  <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:8px"><div class="row"><span class="mono">${t.id}</span><span class="faint" style="font-size:11.5px">frozen guide v1</span><span class="sp"></span><span class="chip">${d.status}</span></div>
+   <div style="font:400 20px/1.3 var(--serif)">“${esc(t.text)}”</div><div class="muted" style="font-size:12px">▸ Supporting context (sentiment, emotion, review, notes, metadata) — collapsed. Never decides triage.</div>
+   <div class="grid" style="grid-template-columns:1fr 1fr;gap:7px">${f('intent',OPT.intent,'Primary intent')}${f('cat',OPT.cat,'Issue category')}${f('urg',OPT.urg,'Urgency')}${f('queue',OPT.queue,'Recommended queue')}<div class="field"><label>Escalation</label><div class="seg">${[['false','No'],['true','Yes']].map(([v,l])=>`<button class="${String(d.esc)===v?'on':''}" ${fz?'disabled':''} onclick="triSet('esc',${v})">${l}</button>`).join('')}</div></div><div></div>${f('act',OPT.act,'Primary next action',true)}</div>
+   <div class="field"><label>Human notes</label><textarea class="inp" rows="2" ${fz?'disabled':''} oninput="triSet('notes',this.value,true)">${esc(d.notes)}</textarea></div>
+   ${cmp}
+   <div class="row" style="margin-top:4px">${fz?`<span class="faint" style="font-size:11.5px">Finalized. Revise explicitly to change it.</span><span class="sp"></span><button class="btn" onclick="S.tri.dec['${t.id}'].status='draft';toast('Revision started; the first decision stays frozen in the record.')">Revise explicitly</button>`:`<button class="btn" onclick="triSave('draft')">Save draft</button><span class="sp"></span><button class="btn pri" onclick="triSave('finalized')">Finalize</button>`}</div>
+  </div></div>`;}
+function triSet(k,v,quiet){const T=S.tri;const d=T.dec[T.sel]||(T.dec[T.sel]={intent:'',cat:'',urg:'',queue:'',esc:false,act:'',notes:'',status:'untriaged'});d[k]=v;if(!quiet)render();}
+function triSave(st){const T=S.tri;const d=T.dec[T.sel]||(T.dec[T.sel]={intent:'',cat:'',urg:'',queue:'',esc:false,act:'',notes:'',status:'untriaged'});if(st==='finalized'&&!(d.intent&&d.cat&&d.urg&&d.queue&&d.act)){toast('Intent, category, urgency, queue and next action are required to finalize.');return;}d.status=st;toast(st==='draft'?'Draft saved.':'Finalized. The mock suggestion is now revealed for comparison.');}
+/* ---------------- boot ---------------- */
+const q=new URLSearchParams(location.search);
+if(q.get('go')){S.models.state='ready';S.models.emo=1;const g=q.get('go');if(g==='import'){startImport();pickFile('support_inbox_october.csv');}else{S.route=g;}
+ if(g==='direct')runDirect(); if(g==='compare')applyView(); if(g==='mod'&&q.get('step')==='train')startMod();}
+else startDownload();
+render();
 </script>
 </body>
 </html>
