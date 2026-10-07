@@ -59,6 +59,25 @@ scope creep. Fixed with regression tests:
 - Ruff, MyPy and `compileall` are clean.
 - 15 safety mutations are each caught.
 
+**Final review: a contract blocker found and fixed.**
+
+- **The blocker:** a Verify `corrupt` finding for a same-size tampered file was
+  not retained. The next quick status reported `ready` again, and the
+  readiness gate could pass.
+- **The fix:** Verify now records an empty per-file marker that the hash-free
+  status reads, so the finding survives later status checks and restarts, and
+  analysis is blocked. A verified download or import clears the marker, as
+  does a matching Verify. Verify is now exclusive with Download and Import.
+- **The re-review** found that a read error (for example a Windows sharing
+  violation) would have been persisted as `corrupt`. Verify now reports
+  `storage_failed` instead and records nothing for that file.
+
+**Final implementation head `3f27297`:**
+
+- remote CI PASS on Python 3.11, 3.12 and 3.13;
+- local suite: 342 passed and 4 optional tests skipped;
+- all 22 safety mutations are caught.
+
 **Next:** M5.1, Model Provisioning UI/UX Design, performed separately by the
 UI-design sidecar/session.
 
