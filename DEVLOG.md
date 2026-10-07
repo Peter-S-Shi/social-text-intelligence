@@ -31,6 +31,14 @@ listing side effects; WAL checkpointing after writes; and `rename_project` plus
 stage and row-count listing fields were removed as beyond the approved boundary.
 One process slip is worth recording: a repository-wide `ruff format` reformatted
 46 pre-existing files and was reverted immediately; only new files are formatted.
+A final independent review then blocked the merge on a deletion defect: `delete()`
+keyed off the main database file, so after a partial deletion that removed the
+main file but not a migration backup, a retry reported nothing to delete and
+left data behind. Managed files (database, sidecars, migration backups) are now
+discovered by project id, only for the exact names the store creates, and
+listing shows residue-only ids so they can be deleted. Re-review also caught
+that purging followed a symlink to a file outside the projects directory; it now
+skips symlinks. Final-head CI passed on Python 3.11/3.12/3.13.
 Deferred: a single-instance lock file, project rename and derived listing
 summaries, and wiring any UI to the repository. Docs updated:
 [Architecture](docs/ARCHITECTURE.md), `PROJECT_STATUS.md`, `ROADMAP.md`, and the
