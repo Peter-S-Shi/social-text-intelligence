@@ -142,7 +142,7 @@ def test_download_installs_both_pinned_models_and_reports_progress(
     assert done == sorted(done)
     assert downloading[-1].overall_bytes_done == overall_total
     last_weights = [e for e in downloading if e.file_name == "weights.bin"][-1]
-    assert last_weights.file_bytes_done == last_weights.file_bytes_total == 10_240
+    assert last_weights.file_bytes_done == last_weights.file_bytes_total == 2_621_440
     assert last_weights.model_bytes_total == SENTIMENT.total_bytes
     assert not any((root / ".sti-staging").rglob("*.part"))
 
@@ -387,3 +387,92 @@ def test_discarding_partial_downloads_removes_only_staged_files(
     assert sentiment.resumable_bytes == 0
     assert sentiment.readiness is Readiness.INCOMPLETE  # config.json stays
     assert (snapshot_dir(root, SENTIMENT) / "config.json").is_file()
+
+
+def test_a_body_that_ends_early_without_an_error_is_kept_for_resume(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "models"
+    transport = FakeTransport.serving_manifest()
+    weights_url = url_for(SENTIMENT, "weights.bin")
+    transport.end_early_after_bytes[weights_url] = 6_000
+
+    failed = make_provisioner(root, transport).download(("sentiment",))
+
+    assert failed.error_code == "network_unavailable"
+    assert failed.status.model("sentiment").resumable_bytes == 6_000
+    transport.end_early_after_bytes.clear()
+    resumed = make_provisioner(root, transport).download(("sentiment",))
+    assert resumed.status.model("sentiment").ready
+
+
+def test_progress_never_moves_backwards_through_verification(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "models"
+    write_model(root, EMOTION, only=("config.json",))
+    events: list[ProvisioningProgress] = []
+
+    make_provisioner(root).download(on_progress=events.append)
+
+    overall = [e.overall_bytes_done for e in events]
+    assert overall == sorted(overall)
+    for key in ("sentiment", "emotion"):
+        model_done = [e.model_bytes_done for e in events if e.model_key == key]
+        assert model_done == sorted(model_done)
+    assert {e.phase for e in events} == {
+        ProvisioningPhase.VERIFYING,
+        ProvisioningPhase.DOWNLOADING,
+    }
+
+
+def test_cancelling_while_installed_files_are_being_verified_stops_promptly(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "models"
+    write_model(root, SENTIMENT)  # an explicit download re-verifies kept files
+    transport = FakeTransport.serving_manifest()
+    seen: list[ProvisioningProgress] = []
+
+    def verifying_weights() -> bool:
+        return any(
+            e.phase is ProvisioningPhase.VERIFYING and e.file_name == "weights.bin"
+            for e in seen
+        )
+
+    result = make_provisioner(root, transport).download(
+        ("sentiment",), on_progress=seen.append, cancelled=verifying_weights
+    )
+
+    assert result.outcome is ProvisioningOutcome.CANCELLED
+    assert transport.requests == []
+    weights_size = len(CONTENT["sentiment"]["weights.bin"])
+    assert max(
+        e.file_bytes_done for e in seen if e.file_name == "weights.bin"
+    ) < weights_size  # stopped inside the file, not after hashing all of it
+
+
+def test_cancelling_between_files_sends_no_further_request(tmp_path: Path) -> None:
+    root = tmp_path / "models"
+    transport = FakeTransport.serving_manifest()
+    installed_config = snapshot_dir(root, SENTIMENT) / "config.json"
+
+    result = make_provisioner(root, transport).download(
+        ("sentiment",), cancelled=installed_config.is_file
+    )
+
+    assert result.outcome is ProvisioningOutcome.CANCELLED
+    assert transport.requests == [(url_for(SENTIMENT, "config.json"), 0)]
+    assert result.status.model("sentiment").problem_files == ("weights.bin",)
+
+
+def test_discarding_with_an_empty_selection_discards_nothing(tmp_path: Path) -> None:
+    root = tmp_path / "models"
+    transport = FakeTransport.serving_manifest()
+    transport.fail_after_bytes[url_for(SENTIMENT, "weights.bin")] = 2_048
+    provisioner = make_provisioner(root, transport)
+    provisioner.download(("sentiment",))
+
+    status = provisioner.discard_partial_downloads(())
+
+    assert status.model("sentiment").resumable_bytes == 2_048

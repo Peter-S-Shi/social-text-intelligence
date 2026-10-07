@@ -19,7 +19,7 @@ from social_text_intelligence.infrastructure.model_download import (
 
 SENTIMENT_BYTES = {
     "config.json": b'{"synthetic": "sentiment"}',
-    "weights.bin": bytes(range(256)) * 40,
+    "weights.bin": bytes(range(256)) * 10_240,  # larger than one hash chunk
 }
 EMOTION_BYTES = {
     "config.json": b'{"synthetic": "emotion"}',
@@ -90,6 +90,7 @@ class FakeTransport:
     chunk_size: int = 1024
     fail_after_bytes: dict[str, int] = field(default_factory=dict)
     reject: set[str] = field(default_factory=set)
+    end_early_after_bytes: dict[str, int] = field(default_factory=dict)
     requests: list[tuple[str, int]] = field(default_factory=list)
     on_chunk: Callable[[str], None] | None = None
 
@@ -111,6 +112,9 @@ class FakeTransport:
         body = data[start:] if resumed else data
         offset = start if resumed else 0
         limit = self.fail_after_bytes.get(url)
+        early_end = self.end_early_after_bytes.get(url)
+        if early_end is not None:
+            body = body[: max(0, early_end - offset)]
 
         def chunks() -> Iterator[bytes]:
             sent = 0

@@ -73,14 +73,14 @@ class ModelProvisioningError(SocialTextIntelligenceError):
 class ModelsNotReadyError(SocialTextIntelligenceError):
     """Analysis was requested while a required local model is not ready."""
 
-    code = "models_not_ready"
-
     def __init__(self, not_ready: tuple[str, ...]) -> None:
-        self.message = (
+        message = (
             "The required local models are not ready. Download them or use a "
             "models folder before analysing."
         )
-        super().__init__(self.message)
+        super().__init__(message)
+        self.code = "models_not_ready"
+        self.message = message
         self.not_ready = not_ready
 
 

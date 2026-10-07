@@ -7,6 +7,7 @@ never read. Reading status never writes. Nothing here logs.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
 import threading
@@ -63,13 +64,26 @@ class _Cancelled(Exception):
 
 
 class _Progress:
-    """Turns byte counts into ``ProvisioningProgress`` events for one operation."""
+    """Turns byte counts into ``ProvisioningProgress`` events for one operation.
 
-    def __init__(self, callback: ProgressCallback | None, total: int) -> None:
+    Model and overall counts never move backwards. During a download or import,
+    verifying a kept or just-fetched file re-reads bytes that are either about
+    to be replaced or already counted, so only the file count moves then.
+    """
+
+    def __init__(
+        self,
+        callback: ProgressCallback | None,
+        total: int,
+        *,
+        verifying_advances: bool = False,
+    ) -> None:
         self._callback = callback
         self._total = total
+        self._verifying_advances = verifying_advances
         self._done_before_model = 0
         self._model_done_before_file = 0
+        self._file_done = 0
         self._spec: ModelSpec | None = None
 
     def start_model(self, spec: ModelSpec) -> None:
@@ -77,14 +91,18 @@ class _Progress:
             self._done_before_model += self._spec.total_bytes
         self._spec = spec
         self._model_done_before_file = 0
+        self._file_done = 0
 
     def finish_file(self, item: ModelFile) -> None:
         self._model_done_before_file += item.size
+        self._file_done = 0
 
     def report(self, phase: ProvisioningPhase, item: ModelFile, done: int) -> None:
         if self._callback is None or self._spec is None:
             return
-        model_done = self._model_done_before_file + done
+        if phase is not ProvisioningPhase.VERIFYING or self._verifying_advances:
+            self._file_done = max(self._file_done, done)
+        model_done = self._model_done_before_file + self._file_done
         self._callback(
             ProvisioningProgress(
                 phase=phase,
@@ -98,6 +116,9 @@ class _Progress:
                 overall_bytes_total=self._total,
             )
         )
+
+
+_FileStep = Callable[[ModelSpec, ModelFile, _Progress, CancelCheck], None]
 
 
 class LocalModelProvisioner:
@@ -124,7 +145,9 @@ class LocalModelProvisioner:
 
     def verify(self, *, on_progress: ProgressCallback | None = None) -> ModelsStatus:
         progress = _Progress(
-            on_progress, sum(spec.total_bytes for spec in self._manifest)
+            on_progress,
+            sum(spec.total_bytes for spec in self._manifest),
+            verifying_advances=True,
         )
         return ModelsStatus(
             tuple(self._status(spec, progress) for spec in self._manifest)
@@ -133,10 +156,13 @@ class LocalModelProvisioner:
     def discard_partial_downloads(
         self, keys: tuple[str, ...] | None = None
     ) -> ModelsStatus:
+        if keys is None:
+            keys = tuple(spec.key for spec in self._manifest)
+        specs = self._select(keys)
         if not self._busy.acquire(blocking=False):
             raise ModelProvisioningError("provisioning_in_progress")
         try:
-            for spec in self._select(keys or tuple(s.key for s in self._manifest)):
+            for spec in specs:
                 for item in spec.files:
                     _remove(self._part_path(spec, item))
         finally:
@@ -152,18 +178,9 @@ class LocalModelProvisioner:
     ) -> ProvisioningResult:
         if keys is None:
             keys = self.status().not_ready_keys
-        specs = self._select(keys)
-        progress = _Progress(on_progress, sum(spec.total_bytes for spec in specs))
-        is_cancelled = cancelled or (lambda: False)
-
-        def run() -> None:
-            for spec in specs:
-                progress.start_model(spec)
-                for item in spec.files:
-                    self._download_file(spec, item, progress, is_cancelled)
-                    progress.finish_file(item)
-
-        return self._operation(run)
+        return self._operation(
+            self._select(keys), on_progress, cancelled, self._download_file
+        )
 
     def inspect_folder(self, folder: Path) -> FolderInspection:
         located = self._locate(folder)
@@ -190,20 +207,117 @@ class LocalModelProvisioner:
             keys = tuple(importable)
         if set(keys) - set(importable):
             raise ValueError("Only models found in the folder can be imported.")
-        specs = self._select(keys)
+
+        def import_file(
+            spec: ModelSpec, item: ModelFile, progress: _Progress, cancel: CancelCheck
+        ) -> None:
+            self._import_file(spec, item, importable[spec.key], progress, cancel)
+
+        return self._operation(self._select(keys), on_progress, cancelled, import_file)
+
+    def _operation(
+        self,
+        specs: tuple[ModelSpec, ...],
+        on_progress: ProgressCallback | None,
+        cancelled: CancelCheck | None,
+        provision_file: _FileStep,
+    ) -> ProvisioningResult:
+        """Run one exclusive download or import, model by model, file by file."""
+
+        if not self._busy.acquire(blocking=False):
+            return self._result(
+                ProvisioningOutcome.FAILED,
+                ModelProvisioningError("provisioning_in_progress"),
+            )
         progress = _Progress(on_progress, sum(spec.total_bytes for spec in specs))
         is_cancelled = cancelled or (lambda: False)
-
-        def run() -> None:
+        try:
             for spec in specs:
                 progress.start_model(spec)
                 for item in spec.files:
-                    self._import_file(
-                        spec, item, importable[spec.key], progress, is_cancelled
-                    )
+                    if is_cancelled():
+                        raise _Cancelled()
+                    provision_file(spec, item, progress, is_cancelled)
                     progress.finish_file(item)
+        except _Cancelled:
+            return self._result(ProvisioningOutcome.CANCELLED)
+        except ModelProvisioningError as error:
+            return self._result(ProvisioningOutcome.FAILED, error)
+        finally:
+            self._busy.release()
+        return self._result(ProvisioningOutcome.COMPLETED)
 
-        return self._operation(run)
+    def _result(
+        self,
+        outcome: ProvisioningOutcome,
+        error: ModelProvisioningError | None = None,
+    ) -> ProvisioningResult:
+        return ProvisioningResult(
+            outcome=outcome,
+            status=self.status(),
+            error_code=None if error is None else error.code,
+            error_message=None if error is None else error.message,
+        )
+
+    def _select(self, keys: tuple[str, ...]) -> tuple[ModelSpec, ...]:
+        if set(keys) - {spec.key for spec in self._manifest}:
+            raise ValueError("Unknown model key.")
+        return tuple(spec for spec in self._manifest if spec.key in keys)
+
+    def _download_file(
+        self,
+        spec: ModelSpec,
+        item: ModelFile,
+        progress: _Progress,
+        cancelled: CancelCheck,
+    ) -> None:
+        target = self._target_path(spec, item)
+        if _installed_and_matching(target, item, progress, cancelled):
+            return
+        part = self._part_path(spec, item)
+        start = _file_size(part) or 0
+        if start > item.size:
+            _remove(part)
+            start = 0
+        if start < item.size:
+            self._fetch(spec, item, part, start, progress, cancelled)
+        if not _matches(part, item, progress, cancelled):
+            _remove(part)
+            raise ModelProvisioningError("checksum_mismatch")
+        _install(part, target)
+
+    def _fetch(
+        self,
+        spec: ModelSpec,
+        item: ModelFile,
+        part: Path,
+        start: int,
+        progress: _Progress,
+        cancelled: CancelCheck,
+    ) -> None:
+        url = pinned_file_url(spec.model_id, spec.revision, item.name)
+        try:
+            part.parent.mkdir(parents=True, exist_ok=True)
+            with self._transport.open(url, start=start) as stream:
+                written = start if stream.resumed else 0
+                with part.open("ab" if stream.resumed else "wb") as handle:
+                    for chunk in stream.chunks:
+                        if written + len(chunk) > item.size:
+                            raise TransportError("download_rejected")
+                        handle.write(chunk)
+                        written += len(chunk)
+                        progress.report(ProvisioningPhase.DOWNLOADING, item, written)
+                        if cancelled():
+                            raise _Cancelled()
+                if written < item.size:
+                    # A body that ends early is an interrupted transfer: keep it.
+                    raise TransportError("network_unavailable")
+        except TransportError as error:
+            if error.code != "network_unavailable":
+                _remove(part)
+            raise ModelProvisioningError(error.code) from None
+        except OSError:
+            raise ModelProvisioningError("storage_failed") from None
 
     def _locate(
         self, folder: Path
@@ -248,154 +362,18 @@ class LocalModelProvisioner:
         progress: _Progress,
         cancelled: CancelCheck,
     ) -> None:
-        if cancelled():
-            raise _Cancelled()
-        target = snapshots_dir(self._root, spec) / spec.revision / item.name
-        if _file_size(target) == item.size and _matches(
-            target, item, progress, ProvisioningPhase.VERIFYING
-        ):
+        target = self._target_path(spec, item)
+        if _installed_and_matching(target, item, progress, cancelled):
             return
         staged = self._part_path(spec, item).with_suffix(_IMPORT_SUFFIX)
         try:
-            self._copy_verified(
-                item, source_dir / item.name, staged, progress, cancelled
-            )
+            _copy_verified(item, source_dir / item.name, staged, progress, cancelled)
             _install(staged, target)
         finally:
-            _remove(staged)
+            _discard_quietly(staged)  # never masks the outcome being reported
 
-    def _copy_verified(
-        self,
-        item: ModelFile,
-        source: Path,
-        staged: Path,
-        progress: _Progress,
-        cancelled: CancelCheck,
-    ) -> None:
-        digest = hashlib.sha256()
-        copied = 0
-        try:
-            staged.parent.mkdir(parents=True, exist_ok=True)
-            output = staged.open("wb")
-        except OSError:
-            raise ModelProvisioningError("storage_failed") from None
-        with output:
-            try:
-                handle = source.open("rb")
-            except OSError:
-                raise ModelProvisioningError("source_unreadable") from None
-            with handle:
-                while True:
-                    try:
-                        chunk = handle.read(_HASH_CHUNK)
-                    except OSError:
-                        raise ModelProvisioningError("source_unreadable") from None
-                    if not chunk:
-                        break
-                    copied += len(chunk)
-                    if copied > item.size:
-                        raise ModelProvisioningError("checksum_mismatch")
-                    digest.update(chunk)
-                    try:
-                        output.write(chunk)
-                    except OSError:
-                        raise ModelProvisioningError("storage_failed") from None
-                    progress.report(ProvisioningPhase.COPYING, item, copied)
-                    if cancelled():
-                        raise _Cancelled()
-        if copied != item.size or digest.hexdigest() != item.sha256:
-            raise ModelProvisioningError("checksum_mismatch")
-
-    def _operation(self, run: Callable[[], None]) -> ProvisioningResult:
-        if not self._busy.acquire(blocking=False):
-            return self._result(
-                ProvisioningOutcome.FAILED,
-                ModelProvisioningError("provisioning_in_progress"),
-            )
-        try:
-            run()
-        except _Cancelled:
-            return self._result(ProvisioningOutcome.CANCELLED)
-        except ModelProvisioningError as error:
-            return self._result(ProvisioningOutcome.FAILED, error)
-        finally:
-            self._busy.release()
-        return self._result(ProvisioningOutcome.COMPLETED)
-
-    def _result(
-        self,
-        outcome: ProvisioningOutcome,
-        error: ModelProvisioningError | None = None,
-    ) -> ProvisioningResult:
-        return ProvisioningResult(
-            outcome=outcome,
-            status=self.status(),
-            error_code=None if error is None else error.code,
-            error_message=None if error is None else error.message,
-        )
-
-    def _select(self, keys: tuple[str, ...]) -> tuple[ModelSpec, ...]:
-        known = {spec.key for spec in self._manifest}
-        unknown = set(keys) - known
-        if unknown:
-            raise ValueError("Unknown model key.")
-        return tuple(spec for spec in self._manifest if spec.key in keys)
-
-    def _download_file(
-        self,
-        spec: ModelSpec,
-        item: ModelFile,
-        progress: _Progress,
-        cancelled: CancelCheck,
-    ) -> None:
-        if cancelled():
-            raise _Cancelled()
-        target = snapshots_dir(self._root, spec) / spec.revision / item.name
-        if _file_size(target) == item.size and _matches(
-            target, item, progress, ProvisioningPhase.VERIFYING
-        ):
-            return
-        part = self._part_path(spec, item)
-        start = _file_size(part) or 0
-        if start > item.size:
-            _remove(part)
-            start = 0
-        if start < item.size:
-            self._fetch(spec, item, part, start, progress, cancelled)
-        if not _matches(part, item, progress, ProvisioningPhase.VERIFYING):
-            _remove(part)
-            raise ModelProvisioningError("checksum_mismatch")
-        _install(part, target)
-
-    def _fetch(
-        self,
-        spec: ModelSpec,
-        item: ModelFile,
-        part: Path,
-        start: int,
-        progress: _Progress,
-        cancelled: CancelCheck,
-    ) -> None:
-        url = pinned_file_url(spec.model_id, spec.revision, item.name)
-        try:
-            part.parent.mkdir(parents=True, exist_ok=True)
-            with self._transport.open(url, start=start) as stream:
-                written = start if stream.resumed else 0
-                with part.open("ab" if stream.resumed else "wb") as handle:
-                    for chunk in stream.chunks:
-                        if written + len(chunk) > item.size:
-                            raise TransportError("download_rejected")
-                        handle.write(chunk)
-                        written += len(chunk)
-                        progress.report(ProvisioningPhase.DOWNLOADING, item, written)
-                        if cancelled():
-                            raise _Cancelled()
-        except TransportError as error:
-            if error.code != "network_unavailable":
-                _remove(part)
-            raise ModelProvisioningError(error.code) from None
-        except OSError:
-            raise ModelProvisioningError("storage_failed") from None
+    def _target_path(self, spec: ModelSpec, item: ModelFile) -> Path:
+        return snapshots_dir(self._root, spec) / spec.revision / item.name
 
     def _part_path(self, spec: ModelSpec, item: ModelFile) -> Path:
         return (
@@ -411,33 +389,17 @@ class LocalModelProvisioner:
     ) -> ModelStatus:
         """Quick presence-and-size status; hashes too when ``verify_with`` is set."""
 
-        snapshot = snapshots_dir(self._root, spec) / spec.revision
-        missing: list[str] = []
-        wrong: list[str] = []
-        installed = 0
         if verify_with is not None:
             verify_with.start_model(spec)
-        for item in spec.files:
-            path = snapshot / item.name
-            size = _file_size(path)
-            if size is None:
-                missing.append(item.name)
-            elif size != item.size or (
-                verify_with is not None
-                and not _matches(
-                    path, item, verify_with, ProvisioningPhase.VERIFYING
-                )
-            ):
-                wrong.append(item.name)
-            else:
-                installed += item.size
-            if verify_with is not None:
-                verify_with.finish_file(item)
+        missing, wrong = _compare(
+            spec, snapshots_dir(self._root, spec) / spec.revision, verify_with
+        )
+        problems = {*missing, *wrong}
         others = _other_revisions(snapshots_dir(self._root, spec), spec.revision)
         resumable = sum(
             _file_size(self._part_path(spec, item)) or 0
             for item in spec.files
-            if item.name in missing or item.name in wrong
+            if item.name in problems
         )
         if wrong:
             readiness = Readiness.CORRUPT
@@ -456,10 +418,12 @@ class LocalModelProvisioner:
             license=spec.license,
             readiness=readiness,
             total_bytes=spec.total_bytes,
-            installed_bytes=installed,
+            installed_bytes=sum(
+                item.size for item in spec.files if item.name not in problems
+            ),
             resumable_bytes=resumable,
             problem_files=tuple(
-                item.name for item in spec.files if item.name in {*missing, *wrong}
+                item.name for item in spec.files if item.name in problems
             ),
             other_revisions=others,
         )
@@ -473,15 +437,29 @@ def local_model_provisioner(locations: AppDataLocations) -> LocalModelProvisione
     )
 
 
-def _candidate_finding(spec: ModelSpec, candidate: Path) -> FolderModelFinding:
+def _compare(
+    spec: ModelSpec, directory: Path, verify_with: _Progress | None = None
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Return the (missing, wrong) manifest file names in ``directory``."""
+
     missing: list[str] = []
     wrong: list[str] = []
     for item in spec.files:
-        size = _file_size(candidate / item.name)
+        path = directory / item.name
+        size = _file_size(path)
         if size is None:
             missing.append(item.name)
-        elif size != item.size:
+        elif size != item.size or (
+            verify_with is not None and not _matches(path, item, verify_with)
+        ):
             wrong.append(item.name)
+        if verify_with is not None:
+            verify_with.finish_file(item)
+    return tuple(missing), tuple(wrong)
+
+
+def _candidate_finding(spec: ModelSpec, candidate: Path) -> FolderModelFinding:
+    missing, wrong = _compare(spec, candidate)
     if wrong:
         finding = FolderFinding.MISMATCHED
     elif not missing:
@@ -490,14 +468,69 @@ def _candidate_finding(spec: ModelSpec, candidate: Path) -> FolderModelFinding:
         finding = FolderFinding.INCOMPLETE
     else:
         finding = FolderFinding.NOT_FOUND
-    problems = tuple(
-        item.name for item in spec.files if item.name in {*missing, *wrong}
+    problems = {*missing, *wrong}
+    return FolderModelFinding(
+        spec.key,
+        finding,
+        tuple(item.name for item in spec.files if item.name in problems),
     )
-    return FolderModelFinding(spec.key, finding, problems)
+
+
+def _copy_verified(
+    item: ModelFile,
+    source: Path,
+    staged: Path,
+    progress: _Progress,
+    cancelled: CancelCheck,
+) -> None:
+    digest = hashlib.sha256()
+    copied = 0
+    try:
+        staged.parent.mkdir(parents=True, exist_ok=True)
+        output = staged.open("wb")
+    except OSError:
+        raise ModelProvisioningError("storage_failed") from None
+    with output:
+        try:
+            handle = source.open("rb")
+        except OSError:
+            raise ModelProvisioningError("source_unreadable") from None
+        with handle:
+            while True:
+                try:
+                    chunk = handle.read(_HASH_CHUNK)
+                except OSError:
+                    raise ModelProvisioningError("source_unreadable") from None
+                if not chunk:
+                    break
+                copied += len(chunk)
+                if copied > item.size:
+                    raise ModelProvisioningError("checksum_mismatch")
+                digest.update(chunk)
+                try:
+                    output.write(chunk)
+                except OSError:
+                    raise ModelProvisioningError("storage_failed") from None
+                progress.report(ProvisioningPhase.COPYING, item, copied)
+                if cancelled():
+                    raise _Cancelled()
+    if copied != item.size or digest.hexdigest() != item.sha256:
+        raise ModelProvisioningError("checksum_mismatch")
+
+
+def _installed_and_matching(
+    target: Path, item: ModelFile, progress: _Progress, cancelled: CancelCheck
+) -> bool:
+    return _file_size(target) == item.size and _matches(
+        target, item, progress, cancelled
+    )
 
 
 def _matches(
-    path: Path, item: ModelFile, progress: _Progress, phase: ProvisioningPhase
+    path: Path,
+    item: ModelFile,
+    progress: _Progress,
+    cancelled: CancelCheck | None = None,
 ) -> bool:
     digest = hashlib.sha256()
     done = 0
@@ -506,7 +539,11 @@ def _matches(
             for chunk in _read_chunks(handle):
                 digest.update(chunk)
                 done += len(chunk)
-                progress.report(phase, item, min(done, item.size))
+                progress.report(
+                    ProvisioningPhase.VERIFYING, item, min(done, item.size)
+                )
+                if cancelled is not None and cancelled():
+                    raise _Cancelled()
     except OSError:
         return False
     return done == item.size and digest.hexdigest() == item.sha256
@@ -530,6 +567,11 @@ def _remove(path: Path) -> None:
         path.unlink(missing_ok=True)
     except OSError:
         raise ModelProvisioningError("storage_failed") from None
+
+
+def _discard_quietly(path: Path) -> None:
+    with contextlib.suppress(OSError):
+        path.unlink(missing_ok=True)
 
 
 def _file_size(path: Path) -> int | None:

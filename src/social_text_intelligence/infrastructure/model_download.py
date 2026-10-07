@@ -57,6 +57,7 @@ class _RedirectPolicy(urllib.request.HTTPRedirectHandler):
         newurl: str,
     ) -> urllib.request.Request | None:
         if self._require_https and urlsplit(newurl).scheme != "https":
+            fp.close()
             raise TransportError("download_rejected")
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
