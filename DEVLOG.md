@@ -1,5 +1,56 @@
 # Development Log
 
+## V2 Persistent Project Foundation (M4) — complete
+
+M4 adds the durable local-project layer behind the M3 `ProjectRepository`
+boundary, with no UI, model provisioner, language detection, or packaging.
+`SqliteProjectRepository` keeps one SQLite file per project under an injectable
+app-data root (production default: Windows per-user LocalAppData; other platforms
+are unclaimed). `PersistentProjectRepository` adds only `create_project` and
+`list_projects`; `get` is open and `delete` is removal from the application's
+data files. A project can be closed, the process restarted, and the imported
+input, immutable AI records with exact provider provenance, human judgments,
+insight state, context notes, and failures reopen without loss: values are
+rebuilt through the original constructors, and floats and timestamps round-trip
+exactly.
+
+Design choices worth keeping: leases stay process-local so a crashed analysis
+never wedges a project, and a per-project revision makes a stale lease fail
+rather than overwrite another process's change; analysis commits in one
+transaction so cancellation commits nothing partial; `secure_delete=ON` plus a
+content purge, WAL checkpoint, and sidecar and migration-backup removal precede
+unlinking, and the wording stays "removed from the application's data files",
+never forensic erasure; schema identity uses `application_id` and `user_version`
+with forward-only migrations that re-check the version under the write lock and
+back up first; listing never migrates or writes.
+
+The independent review's real findings were fixed before merge: `raise ... from
+None` still left the original exception (which can hold user text) on
+`__context__`, so errors are now raised outside the handler; migration ordering;
+listing side effects; WAL checkpointing after writes; and `rename_project` plus
+stage and row-count listing fields were removed as beyond the approved boundary.
+One process slip is worth recording: a repository-wide `ruff format` reformatted
+46 pre-existing files and was reverted immediately; only new files are formatted.
+A final independent review then blocked the merge on a deletion defect: `delete()`
+keyed off the main database file, so after a partial deletion that removed the
+main file but not a migration backup, a retry reported nothing to delete and
+left data behind. Managed files (database, sidecars, migration backups) are now
+discovered by project id, only for the exact names the store creates, and
+listing shows residue-only ids so they can be deleted. Re-review also caught
+that purging followed a symlink to a file outside the projects directory; it now
+skips symlinks. A further review closed the same trust boundary on open:
+a managed-name symlink (database, SQLite sidecar, or backup) is never opened as a project (it is listed as unreadable
+and delete removes only the link), and a symlinked migration-backup path makes a
+migration fail instead of writing outside the projects directory. Implementation
+commit `77d57be` passed CI on Python 3.11/3.12/3.13 first; after the
+symlink-boundary fixes, final implementation commit `b91694d` also passed CI on
+Python 3.11/3.12/3.13. The later governance-only head is a `[skip ci]` commit and
+has no CI run of its own.
+Deferred: a single-instance lock file, project rename and derived listing
+summaries, and wiring any UI to the repository. Docs updated:
+[Architecture](docs/ARCHITECTURE.md), `PROJECT_STATUS.md`, `ROADMAP.md`, and the
+README banner; the lifecycle test's phase assertions follow.
+
 ## V2 UI/IA Gate — PASS
 
 The repository owner closed the UI/IA Gate. Round 3 of the throwaway UI/IA

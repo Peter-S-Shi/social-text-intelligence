@@ -34,20 +34,22 @@ and unchanged. The Product Scope Gate (decisions in
 (decisions in
 [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md)),
 and the UI/IA Gate (decisions in [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md),
-2026-10-07) are all PASS. The V2 Application Foundation milestone (M3) is
-complete on `main`; **M4 — V2 Persistent Project Foundation is the next
-mainline milestone and has not started.** The UI/IA Gate fixed the project-centred
+2026-10-07) are all PASS. The V2 Application Foundation milestone (M3) and the
+V2 Persistent Project Foundation milestone (M4) are complete on `main`; **the next
+V2 milestone has not been scoped.** The UI/IA Gate fixed the project-centred
 IA and strict feature boundary, retired Moderation Training and Support Triage
 from the V2 product surface (V1 `0.10.0` and history preserve them), and
 approved V2-4 only as batch progress plus cancellation with no partial commit.
-The Application Foundation milestone's implementation boundary was the
-framework-free application layer: settings and composition root, application-layer
-use cases, error mapping, a `ProjectRepository` port with an in-memory
-implementation, batch progress and cancellation, and re-pointing the frozen
-Flask surface at the shared use cases (seams S1–S4, S6, S7), and it is complete.
-SQLite persistence, the desktop shell, packaging, and UI implementation are
-approved V2 goals that need their own milestone scoping. The next required
-action is to define M4's boundary and acceptance checks. The package version
+M3 delivered the framework-free application layer (settings and composition
+root, use cases, error mapping, a `ProjectRepository` port with an in-memory
+implementation, batch progress and cancellation, and the frozen Flask surface
+re-pointed at the shared use cases; seams S1–S4, S6, S7). M4 (durable local
+project repository) delivered one SQLite file per project behind that port, an
+injectable app-data resolver defaulting to Windows LocalAppData, lossless
+round-tripping, schema versioning, and WAL-aware deletion; no UI uses it yet.
+The model provisioner, language detection, the desktop shell, packaging, and UI
+implementation are approved V2 goals that each need their own milestone scoping.
+The next required action is to scope the next V2 milestone. The package version
 stays `0.10.0`.
 
 ## V1 final lifecycle phase (historical)
@@ -275,7 +277,7 @@ them; the authoritative record is section 11 of the
 
 | Former V1-deferred item | V2 disposition |
 | --- | --- |
-| Local persistence | **Promoted to committed V2 scope** as persistent local projects; storage direction decided at the Architecture Gate (one SQLite file per project, kept until manually deleted); implementation is the next mainline milestone, M4 — V2 Persistent Project Foundation |
+| Local persistence | **Promoted to committed V2 scope** as persistent local projects; storage direction decided at the Architecture Gate (one SQLite file per project, kept until manually deleted); implemented at the repository layer by M4 — V2 Persistent Project Foundation (complete on `main`); desktop exposure belongs to later milestones |
 | French or multilingual capability | **Conditional** on a future licence-and-evaluation spike; V2 itself requires only language detection and an unsupported-language warning |
 | Transcript and long-form analysis | **Evidence-gated**, not committed |
 | Local theme discovery and optional local LLM provider (raised in V2 discovery) | **Evidence-gated**, not committed |

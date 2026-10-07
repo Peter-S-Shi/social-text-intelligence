@@ -6,6 +6,8 @@ import secrets
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
+from enum import StrEnum
 from threading import Lock
 from typing import Protocol
 
@@ -51,6 +53,38 @@ class ProjectRepository(Protocol):
     ) -> bool: ...
     def cancel_analysis(self, lease: BatchAnalysisLease) -> bool: ...
     def delete(self, token: str) -> bool: ...
+
+
+class ProjectStatus(StrEnum):
+    """Whether a project file can be opened by this version of the application."""
+
+    OK = "ok"
+    UNSUPPORTED_VERSION = "unsupported_version"
+    UNREADABLE = "unreadable"
+
+
+@dataclass(frozen=True, slots=True)
+class ProjectSummary:
+    """Listing entry; the project id doubles as the repository token."""
+
+    project_id: str
+    status: ProjectStatus
+    name: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class PersistentProjectRepository(ProjectRepository, Protocol):
+    """Durable projects: identity and listing on top of the base port.
+
+    ``get`` opens a project and ``delete`` removes it from the application's data
+    files; neither promises forensic erasure.
+    """
+
+    def create_project(
+        self, workspace: BatchWorkspace, *, name: str
+    ) -> ProjectSummary: ...
+    def list_projects(self) -> tuple[ProjectSummary, ...]: ...
 
 
 class InMemoryProjectRepository:
@@ -195,6 +229,9 @@ __all__ = [
     "BatchWorkspace",
     "EphemeralBatchStore",
     "InMemoryProjectRepository",
+    "PersistentProjectRepository",
     "ProjectRepository",
+    "ProjectStatus",
+    "ProjectSummary",
     "WorkspaceMutationConflict",
 ]

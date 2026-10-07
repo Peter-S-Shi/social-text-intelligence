@@ -27,6 +27,15 @@ class ProviderError(SocialTextIntelligenceError):
         self.message = message
 
 
+class ProjectStorageError(SocialTextIntelligenceError):
+    """Durable project storage failed; the message never echoes project content."""
+
+    def __init__(self, *, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+
 class ModelInputTooLongError(ProviderError):
     """The pinned model cannot consume the complete encoded input."""
 

@@ -39,6 +39,11 @@ STALE_CURRENT_PHRASES = (
     "Current phase: V2 Application Foundation",
     "Current lifecycle phase: V2 Application Foundation",
     "| Current lifecycle phase | **V2 Application Foundation**",
+    "is the next mainline milestone and has not started",
+    "Persistent Project Foundation is the next" + chr(10) + "mainline milestone",
+    "Define the boundary and acceptance checks of M4",
+    "No SQLite persistence, model provisioner",
+    "persistent local projects are approved but not yet implemented",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -75,6 +80,13 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         in status
     )
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
+    assert (
+        "complete on `main`. **The next V2 milestone has not been scoped.**" in status
+    )
+    assert (
+        "| First V2 Persistent Project Foundation milestone (M4) | **COMPLETE"
+        in status
+    )
     assert (
         "| V1 final lifecycle phase (historical, immutable) | "
         "**Public Portfolio Delivery** — "
