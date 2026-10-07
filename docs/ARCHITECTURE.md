@@ -202,7 +202,10 @@ project store; the model provisioner is a later milestone.
 Managed files (database, sidecars, migration backups) are found by project id
 rather than through the main database, so a retried delete still cleans residue
 after an earlier partial deletion; listing reports residue-only ids as unreadable
-so they can be deleted. Deletion first overwrites stored content (`secure_delete`, then drops the
+so they can be deleted. A project path, its WAL/SHM/journal sidecars, and a migration backup path are never
+followed if they are symlinks: SQLite would read or write through the link, so such
+a path is never opened, purged, or used for a backup (listing reports it as
+unreadable, and delete removes only the link). Deletion first overwrites stored content (`secure_delete`, then drops the
 tables), folds the WAL into the database, and then removes the database, its
 `-wal`/`-shm`/`-journal` sidecars, and any migration backups. This is
 application-level removal: copies in exports, operating-system backups, file

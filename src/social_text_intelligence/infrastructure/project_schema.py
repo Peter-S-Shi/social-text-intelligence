@@ -13,6 +13,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from ..contracts.errors import ProjectStorageError
+from .sqlite_support import touches_symlink
 
 APPLICATION_ID = 0x53544932  # "STI2"
 SCHEMA_VERSION = 1
@@ -182,8 +183,9 @@ def _migrate(
     target: int,
     steps: Mapping[int, Migration],
 ) -> None:
-    if backup_path_for(database, version).is_symlink():
-        # Writing the backup would follow the link out of the projects directory.
+    if touches_symlink(backup_path_for(database, version)):
+        # Writing the backup (or its sidecars) would follow a link out of the
+        # projects directory.
         raise ProjectStorageError(
             code="migration_failed",
             message="The project could not be upgraded and was left unchanged.",

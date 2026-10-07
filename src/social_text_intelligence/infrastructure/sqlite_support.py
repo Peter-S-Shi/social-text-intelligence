@@ -29,6 +29,21 @@ _P = ParamSpec("_P")
 _R = TypeVar("_R")
 
 
+SIDECAR_SUFFIXES = ("-wal", "-shm", "-journal")
+
+
+def touches_symlink(path: Path) -> bool:
+    """True if this database path or any SQLite sidecar of it is a symlink.
+
+    SQLite follows links when it opens a database and its WAL, shared-memory,
+    or journal files, so a link here could lead a read or write outside the
+    projects directory. Such a path is never opened."""
+
+    return path.is_symlink() or any(
+        path.with_name(path.name + suffix).is_symlink() for suffix in SIDECAR_SUFFIXES
+    )
+
+
 def managed_project_id(file_name: str) -> str | None:
     """Return the project id a store-created file name belongs to, else None."""
 
@@ -129,7 +144,7 @@ def purge_database(path: Path) -> None:
     removed by the caller. This is application-level removal, not forensic erasure.
     """
 
-    if path.is_symlink():
+    if touches_symlink(path):
         return  # never overwrite a file outside the projects directory
     try:
         connection = connect(path)

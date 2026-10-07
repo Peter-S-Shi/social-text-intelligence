@@ -601,6 +601,89 @@ def test_a_migration_backup_never_writes_through_a_symlink(
     assert database.read_bytes() == before  # the project stays at its old version
 
 
+def make_outside_file(tmp_path: Path) -> Path:
+    outside = tmp_path / "outside.bin"
+    outside.write_bytes(bytes(range(256)) * 128)  # 32 KiB with a recognisable pattern
+    return outside
+
+
+def symlink_or_skip(link: Path, target: Path) -> None:
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available on this platform or account")
+
+
+@pytest.mark.parametrize("suffix", ["-wal", "-shm", "-journal"])
+def test_a_symlinked_sidecar_is_never_written_through(
+    tmp_path: Path, suffix: str
+) -> None:
+    repository = new_repository(tmp_path / "managed")
+    token = repository.create(rich_workspace())
+    outside = make_outside_file(tmp_path)
+    before = outside.read_bytes()
+    link = tmp_path / "managed" / "projects" / f"{token}.sqlite3{suffix}"
+    symlink_or_skip(link, outside)
+
+    assert [(i.project_id, i.status) for i in repository.list_projects()] == [
+        (token, ProjectStatus.UNREADABLE)
+    ]
+    assert repository.get(token) is None
+    assert repository.mutate(token, lambda w: replace(w, pending=None)) is None
+    assert repository.begin_analysis(token) is None
+    assert outside.read_bytes() == before
+
+    assert repository.delete(token) is True
+    assert project_files(tmp_path / "managed") == []
+    assert outside.read_bytes() == before
+
+
+@pytest.mark.parametrize("suffix", ["-wal", "-shm", "-journal"])
+def test_a_symlinked_backup_sidecar_blocks_migration_without_writing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, suffix: str
+) -> None:
+    repository = new_repository(tmp_path / "managed")
+    token = repository.create(rich_workspace())
+    outside = make_outside_file(tmp_path)
+    before = outside.read_bytes()
+    directory = tmp_path / "managed" / "projects"
+    symlink_or_skip(
+        directory / f"{token}.pre-migration-v1.sqlite3.bak{suffix}", outside
+    )
+    database = directory / f"{token}.sqlite3"
+    database_before = database.read_bytes()
+    monkeypatch.setattr(project_schema, "SCHEMA_VERSION", 2)
+    monkeypatch.setattr(project_schema, "MIGRATIONS", {1: lambda connection: None})
+
+    with pytest.raises(ProjectStorageError):
+        new_repository(tmp_path / "managed").get(token)
+
+    assert outside.read_bytes() == before
+    assert database.read_bytes() == database_before
+
+
+def test_a_lease_cannot_commit_after_its_file_becomes_a_symlink(
+    tmp_path: Path,
+) -> None:
+    external_root = tmp_path / "external"
+    external = new_repository(external_root).create_project(
+        BatchWorkspace(preview=one_row_preview()), name="External"
+    )
+    target = external_root / "projects" / f"{external.project_id}.sqlite3"
+    before = target.read_bytes()
+
+    repository = new_repository(tmp_path / "managed")
+    token = repository.create(BatchWorkspace(preview=one_row_preview()))
+    lease = repository.begin_analysis(token)
+    assert lease is not None
+    database = tmp_path / "managed" / "projects" / f"{token}.sqlite3"
+    database.unlink()
+    symlink_or_skip(database, target)
+
+    assert repository.complete_analysis(lease, analyzed_from(lease.workspace)) is False
+    assert target.read_bytes() == before
+
+
 def test_corrupted_project_can_still_be_deleted(tmp_path: Path) -> None:
     repository = new_repository(tmp_path)
     project_id = "c" * 32

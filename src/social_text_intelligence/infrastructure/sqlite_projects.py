@@ -11,6 +11,7 @@ includes project text. Deletion is application-level removal of the project's fi
 
 from __future__ import annotations
 
+import contextlib
 import secrets
 import sqlite3
 import threading
@@ -107,7 +108,7 @@ class SqliteProjectRepository:
         path = self._path(project_id)
         # A symlink with a managed name is never opened: it could lead to a
         # project (or any database) outside the projects directory.
-        if path.is_symlink() or not path.is_file():
+        if support.touches_symlink(path) or not path.is_file():
             yield None
             return
         connection = support.connect(path)
@@ -388,7 +389,11 @@ class SqliteProjectRepository:
             artifacts = self._artifacts(project_id)
             if not artifacts:
                 return False
-            for candidate in artifacts:
+            for link in artifacts:
+                if link.is_symlink():  # remove links first; never purge through them
+                    with contextlib.suppress(OSError):
+                        link.unlink()
+            for candidate in self._artifacts(project_id):
                 if candidate.suffix in {".sqlite3", ".bak"}:
                     support.purge_database(candidate)
             self._remove_files(project_id, strict=True)
