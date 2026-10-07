@@ -1,5 +1,46 @@
 # Development Log
 
+## V2 Functional Development — M5.2 Native Desktop Shell + Model Provisioning UI — complete
+
+M5.2 built the smallest real PySide6 / Qt Widgets shell that carries the approved
+M5.1 provisioning experience and wired it to the M5.0 `ModelProvisioning` port,
+without duplicating backend rules. The setup window, the sidebar Models status,
+the Models window, download with Stop and resume, discard, folder inspect then
+verified import, Verify, error recovery by code, details, and analysis gating all
+work against a fake provisioner and against the real provisioner with a synthetic
+manifest.
+
+Design choices worth keeping:
+
+- Everything except `desktop/qt/` is Qt-free: a controller, pure view models, and
+  wording. A test enforces the dependency direction, that the desktop layer never
+  imports SQLite, model libraries, an HTTP client, or Flask, and that only three Qt
+  modules are imported.
+- One job runner: workers run off the UI thread and results come back through a
+  single queued signal to a `QObject` slot, which is the rule that avoids the
+  deadlock seen in the architecture spike. Progress is coalesced to the latest
+  value. Verify has no Stop; closing refuses while it runs.
+- H2 is one `AnalysisGate` wrapping the analysis gateway, so every entry point
+  passes it. Review also closed a window where a Verify finishing while the first
+  analysis was still loading would not have latched the block.
+- Context pages are only what provisioning and gating need: a Projects list and
+  Analyze one text. No synthetic production data and no project creation.
+
+Review found one real bug (a folder check started from a failure result never
+showed its findings), a stale Try again target after a folder check, and test
+hang risks, plus dead code and a wrong claim about what the Qt wheel contains.
+All were fixed. A process note: a pytest run hung once because a failing test left
+a held worker thread alive, so held workers are now released in a `finally`.
+CI needs the Qt runtime libraries on Ubuntu and runs the Qt tests with
+`STI_REQUIRE_QT=1` so they can never skip silently.
+
+Qt is on the LGPL-3.0 route and recorded in the notices; the pre-distribution
+LGPL gate has not passed. Fonts use system fallbacks.
+
+**Next:** M5.3, Native Project Workflow (CSV import into a persistent project,
+batch analysis with progress and cancellation, open and delete), scoped from the
+actual remaining gap: the desktop has no way to create a project yet.
+
 ## V2 Functional Development — M5.1 Model Provisioning UI/UX Design — complete
 
 M5.1 designed the desktop model-provisioning experience from the M5.0 contract,
