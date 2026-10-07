@@ -43,7 +43,7 @@ development step. M5.2 has not started.
    - **Restart app:** keeps the simulated disk and resets the session. Use it
      to check what survives a restart.
    - **Speed:** 1× or 4×.
-2. **Or read the screenshots.** [`shots/`](shots/) holds 28 captures at
+2. **Or read the screenshots.** [`shots/`](shots/) holds 29 captures at
    1400×900. Each one is a deterministic state, and `?shot=<name>` reproduces
    it.
 
@@ -71,7 +71,8 @@ development step. M5.2 has not started.
 | `25_discard` | Confirming Discard partial download |
 | `26_session-verify-found` | **H2:** analysis had already run this session, then Verify confirms damage. The result says analysis is now off for the rest of this session, and the sidebar reads "Analysis off until restart" |
 | `27_session-blocked` | **H2:** Analyze one text is disabled for the rest of the session, with "Open models…" as the only route |
-| `28_session-repaired` | **H2:** after a successful repair download, analysis **stays off** in this session. The panel and sidebar say "models repaired · restart to analyse" |
+| `28_session-repaired` | **H2:** after a successful repair download, analysis **stays off** in this session. The panel and the sidebar ("Analysis off until restart" / "models repaired · restart to analyse") say so; the earlier result stays visible, as decision 11 states |
+| `29_session-repaired-models` | **H2:** the Models window after the repair. Both models are ready, but the header chip reads "Analysis off until restart · models ready" and the result says to restart |
 
 ## 2. The design in one paragraph
 
@@ -101,7 +102,10 @@ There are two reasons analysis can be blocked, with separate panels:
 - **The models are not ready** (`models_not_ready`). This panel offers "Set
   up models…".
 - **H2.** Verify confirmed damage after analysis had already loaded in this
-  session, so analysis is off until the app restarts.
+  session, so analysis is off until the app restarts. Every surface says so
+  from one shared text: the analysis pages, the Projects notice, the Models
+  window chip and result, the sidebar status, and the screen-reader
+  announcement.
 
 ## 3. Contract mapping
 
@@ -334,18 +338,19 @@ before M5.2 implements it. This sidecar does not change `main`.
   the interactive prototype. It is self-contained apart from web fonts for
   the mock; a shipped build bundles OFL fonts after the licence check noted in
   the UI/IA decision.
-- [`shots/`](shots/): 28 deterministic state captures, and only these.
+- [`shots/`](shots/): 29 deterministic state captures, and only these.
   Use `?shot=<name>` to reproduce one. The duplicate files named
   `shots${n}_*.png` that were committed by mistake in the prototype root have
   been removed.
 - This brief.
 
-**Closeout regeneration (after H1 and H2):** the 19 captures that show
-changed copy or behaviour were regenerated:
+**Closeout regeneration (after H1 and H2):** 19 existing captures were
+regenerated and 4 added, for 23 in total.
 
-- `01`–`03`, `07`–`15`, `17`–`19`, `21`, and `23`–`25`, all of which show the
-  models-folder wording;
-- the three new H2 captures, `26`–`28`.
+- **Regenerated:** `01`–`03`, `07`–`15`, `17`–`19`, `21`, and `23`–`25`.
+  These are all the captures that show the setup or Models window, where the
+  models-folder wording changed.
+- **Added:** the H2 captures `26`–`29`.
 
 `04`–`06`, `16`, `20` and `22` are unchanged.
 
@@ -361,6 +366,7 @@ changed copy or behaviour were regenerated:
   - focus retained on Stop during progress updates;
   - the H2 path: analysis loaded, then Verify finds damage and analysis is
     blocked, then a repair download makes the models ready while Analyze
-    stays disabled, the sidebar reads "Analysis off until restart · models
-    repaired", and after a restart analysis works again;
+    stays disabled and the sidebar reads "Analysis off until restart" with
+    "models repaired · restart to analyse", then a restart and analysis works
+    again;
   - the new Open models folder wording.
