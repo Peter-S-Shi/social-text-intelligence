@@ -1,13 +1,19 @@
 # M5.1 — Model Provisioning UI/UX Design: Human Gate brief
 
-**Status: design-only Human Gate, awaiting owner review.** This is a throwaway
-sidecar prototype on `prototype/m5-1-model-provisioning-uiux`, branched from
-`main` `36440dd`.
+**Status: M5.1 Human Gate PASS (2026-10-07).** The owner approved both
+decisions, H1 and H2 (section 8). They are now binding for M5.2.
 
-- It is not merged.
-- It contains no production code.
-- It changes no backend behaviour.
-- It changes nothing in the M5.0 contract.
+This is **throwaway design evidence** on the sidecar branch
+`prototype/m5-1-model-provisioning-uiux`, branched from `main` `36440dd`.
+
+- It must **not be merged into `main`** or copied into production.
+- It contains no production code, changes no backend behaviour, and changes
+  nothing in the M5.0 contract on `main`.
+
+**Next step:** a separate governance closeout on `main` records this gate.
+That closeout includes the contract amendment H2 requires, described in
+section 8. After it, **M5.2** (implementation of this design) is the next
+development step. M5.2 has not started.
 
 **Binding inputs:**
 
@@ -25,7 +31,8 @@ sidecar prototype on `prototype/m5-1-model-provisioning-uiux`, branched from
    product:
    - **Scenario buttons:** 1 First run, 2 Downloading, 3 Stopped → resume,
      4 Later, 5 Offline folder, 6 Silent damage → Verify, 7 Durable damage +
-     restart, 8 Different version, 9 Ready.
+     restart, 8 Different version, 9 Ready, 10 Damage found mid-session
+     (H2).
    - **Fault for the next operation:**
      - a connection drop at 40% of a weights file;
      - the server refusing the file;
@@ -36,7 +43,7 @@ sidecar prototype on `prototype/m5-1-model-provisioning-uiux`, branched from
    - **Restart app:** keeps the simulated disk and resets the session. Use it
      to check what survives a restart.
    - **Speed:** 1× or 4×.
-2. **Or read the screenshots.** [`shots/`](shots/) holds 25 captures at
+2. **Or read the screenshots.** [`shots/`](shots/) holds 28 captures at
    1400×900. Each one is a deterministic state, and `?shot=<name>` reproduces
    it.
 
@@ -62,6 +69,9 @@ sidecar prototype on `prototype/m5-1-model-provisioning-uiux`, branched from
 | `21_wrong-revision` | A different version was found. It is never used and left alone; download the approved version |
 | `22_ready` · `23_models-ready` · `24_models-details` | Steady state: the sidebar reads "Models ready", the Models window lets you manage the models, and details show provenance (full id, revision, licence, files) |
 | `25_discard` | Confirming Discard partial download |
+| `26_session-verify-found` | **H2:** analysis had already run this session, then Verify confirms damage. The result says analysis is now off for the rest of this session, and the sidebar reads "Analysis off until restart" |
+| `27_session-blocked` | **H2:** Analyze one text is disabled for the rest of the session, with "Open models…" as the only route |
+| `28_session-repaired` | **H2:** after a successful repair download, analysis **stays off** in this session. The panel and sidebar say "models repaired · restart to analyse" |
 
 ## 2. The design in one paragraph
 
@@ -85,6 +95,13 @@ word.
 Analysis surfaces (Analyze one text, project analysis) show an inline,
 non-modal blocked panel and disable only the Analyze action. Everything else
 in the app stays usable.
+
+There are two reasons analysis can be blocked, with separate panels:
+
+- **The models are not ready** (`models_not_ready`). This panel offers "Set
+  up models…".
+- **H2.** Verify confirmed damage after analysis had already loaded in this
+  session, so analysis is off until the app restarts.
 
 ## 3. Contract mapping
 
@@ -116,7 +133,7 @@ in the app stays usable.
 | Use a models folder: inspect | The folder dialog's "Check this folder". It states "read-only check, nothing was copied" |
 | Use a models folder: import | "Import both models" / "Import emotion model", for `found` models only |
 | Verify files | Models-window header, shown only when some model is `ready` or `corrupt`; "Verify again" on damaged cards; "Verify files" after `model_load_failed` |
-| Open models folder | Models-window header; `storage_failed` recovery |
+| Open models folder | Models-window header; `storage_failed` recovery. The note says the app manages this folder: Download, Import, Verify and Discard can add, replace or tidy up files in it, and changing files by hand can make a model not ready |
 | Model details and provenance | The "Details and provenance" disclosure on each card |
 
 ### Flows
@@ -150,6 +167,14 @@ in the app stays usable.
   - Repair is Download replacement, a models folder, or Verify again.
   - The quick status can't see same-size damage, so after `model_load_failed`
     the error offers Verify (`16`).
+  - **H2, binding:** if analysis had already loaded in this session and an
+    explicit Verify confirms damage, analysis is blocked at once for the rest
+    of the session (`26`–`28`).
+    - A successful repair by download, import or a matching Verify makes the
+      models `ready`, but it does **not** re-enable analysis in this process.
+    - The user restarts the app. On start, readiness is checked again and the
+      verified models are loaded fresh.
+    - Nothing is reloaded or unloaded in-process.
 
 ### Error codes (§8)
 
@@ -165,6 +190,7 @@ backend's **fixed message verbatim** as the body, followed by the code in mono.
 | `source_unreadable` | Couldn't read that folder | Choose another folder |
 | `provisioning_in_progress` | Another model operation is running | OK (wait) |
 | `models_not_ready` | Analysis is unavailable | Set up models… (also lists the non-ready models and their states) |
+| H2 session block (UI rule, no backend code) | Analysis is off until you restart the app | Open models…, for repair. The text says repairing does not turn analysis back on in this session, and to close and reopen the app |
 | `model_load_failed` (existing) | The model files could not be loaded | Verify files; Open models |
 
 ## 4. Design decisions and assumptions
@@ -202,6 +228,18 @@ backend's **fixed message verbatim** as the body, followed by the code in mono.
 10. **Project screens are not redesigned.** Projects, Analyze one text and New
     project appear only as the context in which provisioning shows up. They
     keep Round 3's layout, and they drop Decision Practice (U4).
+11. **The H2 session block is one flag for the whole session.** It is set only
+    when Verify confirms damage after the analysis service has been built. It
+    is checked by the single analysis gate that every analysis surface uses.
+    Nothing in the session clears it; a restart is the only way out.
+    - The UI offers no "restart now" button. That would be a new app-level
+      action, so the copy tells the user to close and reopen the app.
+    - A Direct result produced before the finding stays on screen as it was.
+      It was computed from models loaded before the damage was confirmed.
+12. **Wording for the models folder is conservative.** The UI no longer claims
+    the app never deletes files there. It says the folder is managed by the
+    app through Download, Import, Verify and Discard, and lists no internal
+    file types.
 
 ## 5. Accessibility, designed in (not audited)
 
@@ -254,24 +292,41 @@ backend's **fixed message verbatim** as the body, followed by the code in mono.
 None of these contradicts U1. The IA, the feature boundary and the
 AI-versus-human separation are untouched.
 
-## 8. Decisions for the owner (Human Gate)
+## 8. Owner decisions: Human Gate PASS (2026-10-07)
 
-1. **Adopt this design as the M5.2 implementation baseline?** Visual polish
-   can still change during implementation. The surfaces, states, actions,
-   copy structure and recovery routes above would become fixed.
-2. **A Verify finding mid-session: follow the contract as written, or block
-   immediately?**
-   - **As written (current design):** M5.0 §9 says that once the analysis
-     service has loaded, a later Verify finding takes effect at the next
-     start. The design follows it, shows the finding immediately everywhere,
-     and warns: "This session keeps using the models loaded at start. From
-     the next start, analysis is unavailable until the model is repaired."
-   - **Alternative:** the desktop also disables Analyze for the rest of the
-     session. This is stricter and simpler to explain, but it would add a
-     UI-level rule beyond the contract, so it needs your approval.
-   - **Recommendation:** block immediately. Results from a model the user has
-     just learned is damaged are hard to trust. If you approve, M5.2 adds the
-     UI rule and a one-line contract amendment.
+Both decisions below are owner-approved and binding for M5.2.
+
+### H1 — APPROVED: this design is the M5.2 implementation baseline
+
+The following are binding:
+
+- the surfaces, readiness states and action set;
+- the recovery routes and the sidebar Models entry;
+- the first-run flow and the offline inspect/import flow;
+- the error and recovery structure, and the copy hierarchy.
+
+M5.2 may polish the visuals at the implementation level, but must not
+reinvent the product interaction model.
+
+### H2 — APPROVED: a confirmed corruption mid-session blocks analysis for the rest of the session
+
+If the analysis service has already loaded and a later explicit Verify
+confirms corruption, all further analysis is blocked immediately for the
+remainder of that app session.
+
+- Repairing or replacing the files on disk does not re-enable analysis in the
+  current process.
+- The user must restart the app, pass readiness again, and load the verified
+  models fresh.
+- Providers are never silently reloaded in-process, and no unload or rebuild
+  mechanism is introduced.
+- The earlier design text ("this session keeps using the loaded models until
+  the next start") is withdrawn.
+
+**Consequence for `main`:** H2 is stricter than M5.0 contract §9 as merged,
+which says a later Verify finding "takes effect for analysis on the next
+start". The separate governance closeout on `main` should amend §9 to H2
+before M5.2 implements it. This sidecar does not change `main`.
 
 ## 9. Files
 
@@ -279,17 +334,33 @@ AI-versus-human separation are untouched.
   the interactive prototype. It is self-contained apart from web fonts for
   the mock; a shipped build bundles OFL fonts after the licence check noted in
   the UI/IA decision.
-- [`shots/`](shots/): 25 deterministic state captures. Use `?shot=<name>` to
-  reproduce one.
+- [`shots/`](shots/): 28 deterministic state captures, and only these.
+  Use `?shot=<name>` to reproduce one. The duplicate files named
+  `shots${n}_*.png` that were committed by mistake in the prototype root have
+  been removed.
 - This brief.
+
+**Closeout regeneration (after H1 and H2):** the 19 captures that show
+changed copy or behaviour were regenerated:
+
+- `01`–`03`, `07`–`15`, `17`–`19`, `21`, and `23`–`25`, all of which show the
+  models-folder wording;
+- the three new H2 captures, `26`–`28`.
+
+`04`–`06`, `16`, `20` and `22` are unchanged.
 
 **Verification performed:**
 
-- All 25 shot states render with no script errors in headless Edge.
+- All 28 shot states render with no script errors in headless Edge.
 - These live click-through runs passed in the browser pane:
   - Download, Stop (partial kept), resume to ready, Start, Analyze, Verify;
   - an offline import from a damaged copy that stops with `checksum_mismatch`
     while the earlier model stays installed;
   - silent damage leading to `model_load_failed`, then Verify, then a durable
     finding across a restart, then repair by download;
-  - focus retained on Stop during progress updates.
+  - focus retained on Stop during progress updates;
+  - the H2 path: analysis loaded, then Verify finds damage and analysis is
+    blocked, then a repair download makes the models ready while Analyze
+    stays disabled, the sidebar reads "Analysis off until restart · models
+    repaired", and after a restart analysis works again;
+  - the new Open models folder wording.

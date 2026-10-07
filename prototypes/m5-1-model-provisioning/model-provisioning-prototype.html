@@ -234,7 +234,7 @@ function stateSentence(st){
 }
 /* ======================= session state ======================= */
 let S;
-function fresh(disk){return {disk:disk||emptyDisk(),win:'setup',page:'projects',models:false,op:null,result:null,fault:'none',serviceBuilt:false,dlg:null,toast:null,speed:1,direct:{text:'Absolutely loved the new update, the app finally feels fast again!',out:null,err:null},newp:{created:false},scenario:'first-run',retFocus:null};}
+function fresh(disk){return {disk:disk||emptyDisk(),win:'setup',page:'projects',models:false,op:null,result:null,fault:'none',serviceBuilt:false,sessionBlocked:false,dlg:null,toast:null,speed:1,direct:{text:'Absolutely loved the new update, the app finally feels fast again!',out:null,err:null},newp:{created:false},scenario:'first-run',retFocus:null};}
 S=fresh();
 /* ======================= operation engine (tick-based, mirrors s6/s7 and the Verify rules) ======================= */
 const RATE=9*1048576; // bytes per tick while downloading/copying
@@ -268,7 +268,7 @@ function tick(){
    if(op.stage==='begin'){if(f.inst==='none'||f.inst==='wrongsize'){nextFile();return;}op.stage='hash';op.fileDone=0;}
    op.fileDone=Math.min(sz,op.fileDone+RATE*3);op.counted=op.fileDone;
    if(op.fault==='unreadable'&&isW&&s.key==='emotion'&&op.fileDone>sz*.3){return finish('failed','storage_failed');}
-   if(op.fileDone>=sz){if(f.inst==='ok')f.flag=false;else if(f.inst==='bad'){if(!f.flag)S.newCorrupt.push(s.key);f.flag=true;}nextFile();}
+   if(op.fileDone>=sz){if(f.inst==='ok')f.flag=false;else if(f.inst==='bad'){if(!f.flag)S.newCorrupt.push(s.key);f.flag=true;if(S.serviceBuilt)S.sessionBlocked=true;/* H2: off until restart */}nextFile();}
    return;
  }
  if(op.cancel&&op.stage==='begin')return cancelOp();
@@ -325,14 +325,17 @@ function actDownload(keys){keys=keys||notReady().map(x=>x.key);startOp('download
 function actStop(){if(S.op&&S.op.kind!=='verify'){S.op.cancel=true;}}
 function actVerify(){if(S.op)return;startOp('verify',MAN.map(s=>s.key));}
 function actDiscard(k){openDlg(()=>dlgDiscard(k));}
-function actOpenFolder(){toast(`Opens ${MODELS_DIR} in File Explorer. Deleting files there is your choice; the app never deletes them.`);}
+function actOpenFolder(){toast(`Opens the models folder (${MODELS_DIR}) in File Explorer. The app manages this folder: Download, Import, Verify and Discard can add, replace or tidy up files in it. Changing files by hand can make a model not ready.`);}
 function actUseFolder(){S.folder={step:'pick',choice:null,inspection:null,error:null};openDlg(dlgFolder);}
 function actModels(){S.models=true;S.retFocus='mstat';render();focusFirst('#models-h');}
 function closeModels(){S.models=false;render();const b=$('mstat');if(b)b.focus();}
 /* ======================= analysis (blocked when not ready; s9) ======================= */
+/* H2 (owner-approved): once Verify confirms corruption after analysis has loaded, analysis stays
+   off for the rest of the session. Repair does not lift it; only a restart (fresh readiness check
+   and a fresh load) does. Nothing is reloaded or unloaded in-process. */
+function analysisBlock(){if(S.sessionBlocked)return 'session';if(!S.serviceBuilt&&notReady().length)return 'not_ready';return null;}
 function analyzeDirect(){
- const nr=notReady();
- if(nr.length&&!S.serviceBuilt)return; // button is disabled; kept for safety
+ if(analysisBlock())return; // the button is disabled; kept for safety
  const hidden=MAN.some(s=>Object.values(S.disk[s.key].f).some(f=>f.inst==='bad'));
  if(hidden&&!S.serviceBuilt){S.direct.out=null;S.direct.err='model_load_failed';render();announce('The approved model files could not be loaded.',true);return;}
  S.serviceBuilt=true;S.direct.err=null;S.direct.out={sent:'positive',conf:.94,emo:'joy',sec:'admiration'};render();announce('Analysis finished.');
@@ -365,6 +368,7 @@ function footStatus(){
  if(S.op){const p=progressOf(S.op);const lbl=S.op.kind==='download'?'Downloading models':S.op.kind==='import'?'Importing models':'Verifying models';
   return {ico:'<span class="ico busy" aria-hidden="true">↓</span>',l:lbl,s:p?`${pct(p.done,p.total)}% · ${MB(p.done)} of ${MB(p.total)}`:'',meter:p?pct(p.done,p.total):0,aria:`${lbl}, ${p?pct(p.done,p.total):0} percent. Open models.`};}
  const nr=notReady();
+ if(S.sessionBlocked)return {ico:'<span class="ico err" aria-hidden="true">✕</span>',l:'Analysis off until restart',s:nr.length?`${spec(nr[0].key).label} model damaged`:'models repaired · restart to analyse',aria:`Analysis off until the app is restarted. ${nr.length?spec(nr[0].key).label+' model damaged.':'Models repaired.'} Open models.`};
  if(!nr.length)return {ico:'<span class="ico ok" aria-hidden="true">✓</span>',l:'Models ready',s:'2 of 2 · local, offline',aria:'Models ready, 2 of 2. Open models.'};
  const worst=nr.find(x=>x.r==='corrupt')||nr.find(x=>x.r==='incomplete')||nr.find(x=>x.r==='wrong_revision')||nr[0];
  const d=STATE[worst.r];
@@ -409,11 +413,11 @@ function resultPanel(){
   if(r.kind==='verify'){
    const bad=notReady().filter(x=>x.r==='corrupt');
    if(bad.length){const need=bad.reduce((a,x)=>a+x.need,0),nf=bad.reduce((a,x)=>a+x.wrong.length,0);
-    return box('err','Verify found a damaged file',`${bad.map(x=>spec(x.key).label).join(' and ')}: <span class="mono">${bad.flatMap(x=>x.wrong).map(esc).join(', ')}</span> failed its approved checksum. This finding is remembered — also after you restart — and analysis stays unavailable until the file is replaced by Download or a models folder, or a later Verify finds it intact.${S.serviceBuilt?' <b>Analysis already loaded in this session keeps working until you restart</b>; from the next start it is unavailable until repaired.':''}`,
+    return box('err','Verify found a damaged file',`${bad.map(x=>spec(x.key).label).join(' and ')}: <span class="mono">${bad.flatMap(x=>x.wrong).map(esc).join(', ')}</span> failed its approved checksum. This finding is remembered — also after you restart — and analysis stays unavailable until the file is replaced by Download or a models folder, or a later Verify finds it intact.${S.sessionBlocked?' <b>Analysis is now off for the rest of this session.</b> After repairing, close and reopen the app to analyse again.':''}`,
      `<button class="btn pri" onclick="actDownload(${JSON.stringify(bad.map(x=>x.key)).replace(/"/g,"'")})">Download replacement · ${nf} file${nf>1?'s':''}, ${MB(need)}</button>${folder}<button class="btn" onclick="actVerify()">Verify again</button>`);}
    return box('ok','All files verified','Every installed file matches its approved checksum.','');
   }
-  return allReady()?box('ok',`${r.kind==='import'?'Import':'Download'} complete — both models are ready`,'Analysis is available. Your text is analysed only on this computer.',''):box('ok',`${r.kind==='import'?'Import':'Download'} complete`,`The selected model is ready. ${notReady().length} model still needs attention.`,dl+folder);
+  return allReady()?(S.sessionBlocked?box('ok',`${r.kind==='import'?'Import':'Download'} complete — both models are ready`,'Analysis stays off in this session because Verify found damage after analysis had started. Close and reopen the app to analyse with the repaired models.',''):box('ok',`${r.kind==='import'?'Import':'Download'} complete — both models are ready`,'Analysis is available. Your text is analysed only on this computer.','')):box('ok',`${r.kind==='import'?'Import':'Download'} complete`,`The selected model is ready. ${notReady().length} model still needs attention.`,dl+folder);
  }
  if(r.outcome==='cancelled'){const kept=all().reduce((a,x)=>a+x.resumable,0);
   return box('info',`${r.kind==='import'?'Import':'Download'} stopped`,r.kind==='import'?'Nothing partial was kept. Models imported before you stopped stay installed; your folder was not changed.':`Finished files are kept${kept?` and ${MB(kept)} of a partial file is kept for resume`:''}. Download continues where it stopped.`,dl+(kept?`<button class="btn" onclick="actDiscard()">Discard partial download</button>`:'')+folder);}
@@ -490,7 +494,7 @@ function vSetup(){
  const right=`<div style="background:#FBFAF7;border-left:1px solid var(--line);padding:40px 36px;display:flex;flex-direction:column;gap:14px;overflow:auto;min-height:0" aria-label="Model status">
    ${opPanel(true)}${resultPanel()}
    ${MAN.map(s=>modelCard(s.key)).join('')}
-   <div class="footnote">Saved to ${esc(MODELS_DIR)} · per user · the app only adds or replaces verified files there</div></div>`;
+   <div class="footnote">Saved to ${esc(MODELS_DIR)} · per user · managed by the app through Download, Import and Verify</div></div>`;
  return `<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);height:100%;min-height:0">${left}${right}</div>`;
 }
 function enterMain(){S.win='main';S.page='projects';render();focusFirst('.bar h1');}
@@ -498,7 +502,6 @@ function enterMain(){S.win='main';S.page='projects';render();focusFirst('.bar h1
 function vModels(){
  const nr=notReady(),busy=!!S.op,ready=!nr.length;
  const dis=busy?'disabled':'';
- const flaggedAfterLoad=S.serviceBuilt&&nr.some(x=>x.r==='corrupt');
  return `<div class="subwin" role="dialog" aria-modal="true" aria-labelledby="models-h">
   <div class="tb"><span class="logo" aria-hidden="true">S</span><span>Models</span><button onclick="closeModels()" aria-label="Close models window">✕</button></div>
   <div style="overflow:auto;padding:22px 26px;display:flex;flex-direction:column;gap:14px">
@@ -510,9 +513,9 @@ function vModels(){
     <button class="btn ghost" onclick="actOpenFolder()">Open models folder</button></div>
    ${busy?`<p class="faint" style="font-size:12px">Other model actions are unavailable while this runs. Only one download, import or Verify runs at a time.</p>`:''}
    ${opPanel(false)}${resultPanel()}
-   ${flaggedAfterLoad&&!S.result?box('warn','Restart to apply this finding to analysis','Analysis already loaded in this session keeps using the models it loaded at start. From the next start, analysis is unavailable until the damaged model is repaired.',''):''}
+   ${S.sessionBlocked&&!(S.result&&S.result.kind==='verify')?sessionBox():''}
    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(340px,1fr))">${MAN.map(s=>modelCard(s.key,{details:true})).join('')}</div>
-   <div class="footnote">Location: ${esc(MODELS_DIR)} · per user, not roaming · the app only adds or replaces verified files here · downloads use HTTPS and send none of your text · system proxy settings apply</div>
+   <div class="footnote">Location: ${esc(MODELS_DIR)} · per user, not roaming · managed by the app through Download, Import, Verify and Discard · downloads use HTTPS and send none of your text · system proxy settings apply</div>
   </div></div>`;
 }
 /* ---------- dialogs ---------- */
@@ -544,6 +547,10 @@ function inspect(){const fol=FOLDERS.find(f=>f.id===S.folder.choice);S.folder.st
  render();focusFirst('#dlg-h');}
 function doImport(){const fol=FOLDERS.find(f=>f.id===S.folder.choice);const keys=S.folder.inspection.filter(x=>x.f==='found').map(x=>x.key);S.dlg=null;startOp('import',keys,fol);}
 /* ---------- main pages ---------- */
+function sessionBox(){return box('err','Analysis is off until you restart the app',`Verify confirmed a damaged model after analysis had started, so analysis is stopped for the rest of this session.${allReady()?' The models are repaired now; close and reopen the app to analyse again.':' Repair the model here, then close and reopen the app.'} Repairing does not turn analysis back on in this session: on the next start the models are checked again and loaded fresh.`,'');}
+function sessionPanel(){return `<div class="note-box err" id="blocked" role="status"><span class="ico err" aria-hidden="true">✕</span><div class="nb"><h3>Analysis is off until you restart the app</h3>
+  <div>Verify confirmed a damaged model after analysis had started in this session. Analysis stays off for the rest of this session${allReady()?', even though the models are repaired now':', even after the model is repaired'}. Close and reopen the app; on the next start the models are checked again and loaded fresh.</div>
+  <div class="acts"><button class="btn" onclick="actModels()">Open models…</button></div></div></div>`;}
 function blockedPanel(where){const nr=notReady();
  return `<div class="note-box warn" id="blocked" role="status"><span class="ico warn" aria-hidden="true"><b>!</b></span><div class="nb"><h3>Analysis is unavailable${where?' — '+where:''}</h3>
   <div>${esc(MSG.models_not_ready)}</div>
@@ -553,17 +560,16 @@ function vProjects(){const nr=notReady();
  const P=[['Product launch replies','launch-replies-sept.csv',214,'18 Sep'],['Community forum sample','forum-sample-q3.csv',96,'02 Oct'],['Support survey free text','survey-open-answers.csv',388,'06 Oct']];
  return `<div class="bar"><h1>Projects</h1><span class="sp"></span><button class="btn" onclick="S.page='direct';render()">Analyze one text</button><button class="btn pri" onclick="S.page='newp';S.newp={created:false};render()">New project from CSV…</button></div>
  <div class="pane" style="display:flex;flex-direction:column;gap:14px">
-  ${nr.length&&!S.op?`<div class="note-box info"><span class="ico ${STATE[(nr.find(x=>x.r!=='not_installed')||nr[0]).r].icls}" aria-hidden="true">${(nr.find(x=>x.r!=='not_installed')||nr[0]).r==='corrupt'?'✕':'<b>!</b>'}</span><div class="nb"><h3>Analysis is unavailable until both models are ready</h3><div class="muted">You can open, review and export these projects, and create new ones from a CSV.</div><div class="acts"><button class="btn sm" onclick="actModels()">Set up models…</button></div></div></div>`:''}
+  ${S.sessionBlocked&&!S.op?sessionPanel():''}
+  ${!S.sessionBlocked&&nr.length&&!S.op?`<div class="note-box info"><span class="ico ${STATE[(nr.find(x=>x.r!=='not_installed')||nr[0]).r].icls}" aria-hidden="true">${(nr.find(x=>x.r!=='not_installed')||nr[0]).r==='corrupt'?'✕':'<b>!</b>'}</span><div class="nb"><h3>Analysis is unavailable until both models are ready</h3><div class="muted">You can open, review and export these projects, and create new ones from a CSV.</div><div class="acts"><button class="btn sm" onclick="actModels()">Set up models…</button></div></div></div>`:''}
   <div class="card" style="overflow:hidden"><table class="t"><caption class="sr">Projects</caption><thead><tr><th>Project</th><th>Rows</th><th>Last opened</th><th></th></tr></thead><tbody>
   ${P.map(p=>`<tr><td><div class="serif" style="font-size:20px">${p[0]}</div><div class="mono faint">${p[1]}</div></td><td class="mono">${p[2]}</td><td class="mono muted">${p[3]}</td><td style="text-align:right"><button class="btn sm" onclick="toast('Opening a project needs no models. (Project pages are outside this M5.1 prototype.)')">Open</button></td></tr>`).join('')}
   </tbody></table></div>
   <div class="footnote">Synthetic projects. Project screens are the approved Round 3 baseline and are not redesigned here.</div></div>`;}
-function vDirect(){const nr=notReady(),d=S.direct;const blocked=nr.length&&!S.serviceBuilt;
- const flagged=S.serviceBuilt&&nr.some(x=>x.r==='corrupt');
+function vDirect(){const d=S.direct;const why=analysisBlock();const blocked=!!why;
  return `<div class="bar"><h1>Analyze one text</h1><span class="sp"></span><span class="mono faint">not saved · analysed on this computer</span></div>
  <div class="pane" style="display:flex;flex-direction:column;gap:14px;max-width:820px">
-  ${blocked?blockedPanel():''}
-  ${flagged?box('warn','A model failed verification after analysis started','This session keeps using the models loaded at start. From the next start, analysis is unavailable until the model is repaired.',`<button class="btn sm" onclick="actModels()">Open models…</button>`):''}
+  ${why==='session'?sessionPanel():why?blockedPanel():''}
   <label for="dtext" class="cap">Text</label>
   <textarea id="dtext" class="inp" oninput="S.direct.text=this.value">${esc(d.text)}</textarea>
   <div class="row"><span class="faint" style="font-size:12px">English · up to 20,000 characters</span><span class="sp"></span>
@@ -577,15 +583,15 @@ function vNew(){const nr=notReady();const n=S.newp;
   <div class="card" style="padding:16px 18px" aria-label="Validation"><div class="cap">Validation</div><div class="row" style="gap:30px;margin-top:6px"><div><span class="serif" style="font-size:34px">217</span> <span class="faint">rows</span></div><div><span class="serif" style="font-size:34px">214</span> <span class="faint">valid</span></div><div><span class="serif" style="font-size:34px">3</span> <span class="faint">invalid · kept with reasons</span></div></div>
    <div class="footnote" style="margin-top:6px">Importing and validating a CSV never needs the models.</div></div>
   ${n.created?box('ok','Project created','“Launch replies (Oct)” is saved. Its 214 valid rows are waiting to be analysed.',''):''}
-  ${nr.length&&!S.serviceBuilt?blockedPanel('the project can still be created now and analysed later'):''}
+  ${analysisBlock()==='session'?sessionPanel():analysisBlock()?blockedPanel('the project can still be created now and analysed later'):''}
   <div class="row"><span class="sp"></span>
    ${n.created?'':`<button class="btn" onclick="S.newp.created=true;render();announce('Project created.')">Create project without analysing</button>`}
-   <button class="btn pri" ${nr.length&&!S.serviceBuilt?'disabled aria-describedby="blocked"':''} onclick="toast('Analysis runs with row progress and Cancel (V2-4). Outside this prototype.')">Create and analyse 214 rows</button></div>
+   <button class="btn pri" ${analysisBlock()?'disabled aria-describedby="blocked"':''} onclick="toast('Analysis runs with row progress and Cancel (V2-4). Outside this prototype.')">Create and analyse 214 rows</button></div>
  </div>`;}
 /* ======================= demo bar and scenarios (outside the product) ======================= */
 const SCEN=[
  ['first-run','1 · First run'],['downloading','2 · Downloading'],['stopped','3 · Stopped → resume'],['later','4 · Later (blocked analysis)'],
- ['offline','5 · Offline folder'],['silent','6 · Silent damage → Verify'],['corrupt','7 · Durable damage + restart'],['wrongrev','8 · Different version'],['ready','9 · Ready (steady state)'],
+ ['offline','5 · Offline folder'],['silent','6 · Silent damage → Verify'],['corrupt','7 · Durable damage + restart'],['wrongrev','8 · Different version'],['ready','9 · Ready (steady state)'],['midsession','10 · Damage found mid-session (H2)'],
 ];
 function demobar(){
  return `<b>STI V2 · model provisioning (M5.1)</b>${SCEN.map(([k,l])=>`<button class="step ${S.scenario===k?'on':''}" onclick="scenario('${k}')">${l}</button>`).join('')}
@@ -608,6 +614,7 @@ function scenario(k,shot){clearInterval(timer);const sp=S.speed;S=fresh();S.spee
   case 'corrupt':installAll(d,'sentiment');installAll(d,'emotion');d.emotion.f['model.safetensors'].inst='bad';d.emotion.f['model.safetensors'].flag=true;S.win='setup';break;
   case 'wrongrev':installAll(d,'emotion');d.sentiment.others=[OTHER_REV];break;
   case 'ready':installAll(d,'sentiment');installAll(d,'emotion');d.sentiment.others=[OTHER_REV];S.win='main';S.page='projects';break;
+  case 'midsession':installAll(d,'sentiment');installAll(d,'emotion');S.win='main';S.page='direct';analyzeDirect();d.emotion.f['model.safetensors'].inst='bad';/* damaged on disk after the models loaded */break;
  }
  render();if(!shot)focusFirst(S.win==='setup'?'#setup-h':'.bar h1');
 }
@@ -640,6 +647,9 @@ const SHOTS={
  'models-ready':()=>{scenario('ready',1);S.models=true;},
  'models-details':()=>{scenario('ready',1);S.models=true;S.detailsOpen=true;},
  'discard':()=>{scenario('stopped',1);S.dlg=()=>dlgDiscard('emotion');},
+ 'session-verify-found':()=>{scenario('midsession',1);S.models=true;startOp('verify',['sentiment','emotion']);runAll();},
+ 'session-blocked':()=>{scenario('midsession',1);startOp('verify',['sentiment','emotion']);runAll();S.result=null;S.direct.out=null;},
+ 'session-repaired':()=>{scenario('midsession',1);startOp('verify',['sentiment','emotion']);runAll();startOp('download',['emotion']);runAll();S.result=null;S.direct.out=null;},
 };
 const qs=new URLSearchParams(location.search);
 if(qs.get('shot')&&SHOTS[qs.get('shot')]){SHOTS[qs.get('shot')]();clearInterval(timer);S.toast=null;render();}
