@@ -2,9 +2,12 @@
 
 A local-first NLP workbench that turns social text — feedback, comments,
 support messages, and similar text — into structured, licensed sentiment and
-emotion evidence, then carries that evidence through human review,
-moderation-decision practice, and support triage. Every model runs on your
-own machine; text is not sent to an inference API.
+emotion evidence, then carries that evidence through human review and
+trusted, descriptive insights. Every model runs on your own machine; text is
+not sent to an inference API. The V1 `0.10.0` baseline described below also
+contains Moderation Training and Support Triage workflows; they are retired
+from the V2 product surface but remain documented here as the unchanged V1
+baseline.
 
 > **Current lifecycle phase: V2 Persistent Project Foundation** (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
