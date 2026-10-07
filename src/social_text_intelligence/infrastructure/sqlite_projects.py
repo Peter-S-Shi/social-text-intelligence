@@ -118,17 +118,28 @@ class SqliteProjectRepository:
         finally:
             connection.close()
 
+    def _managed_files(self) -> list[tuple[str, Path]]:
+        directory = self._locations.projects_dir
+        if not directory.is_dir():
+            return []
+        return [
+            (project_id, path)
+            for path in sorted(directory.iterdir())
+            if (project_id := support.managed_project_id(path.name)) is not None
+            and (path.is_file() or path.is_symlink())
+        ]
+
     def _artifacts(self, project_id: str) -> tuple[Path, ...]:
         """Every managed file for a project id: database, sidecars, and backups.
 
         Found by id, not through the main database, so a retry still discovers
-        residue after an earlier partial deletion removed the main file.
+        residue after an earlier partial deletion removed the main file. Only the
+        file names this store creates qualify; anything else is left alone.
         """
 
-        directory = self._locations.projects_dir
-        if not directory.is_dir():
-            return ()
-        return tuple(sorted(directory.glob(f"{project_id}.*")))
+        return tuple(
+            path for found, path in self._managed_files() if found == project_id
+        )
 
     def _remove_files(self, project_id: str, *, strict: bool = False) -> None:
         failed = False
@@ -141,9 +152,8 @@ class SqliteProjectRepository:
             raise ProjectStorageError(
                 code="delete_failed",
                 message=(
-                    "The project's data was cleared but some of its files could "
-                    "not be removed. Close other programs using them and delete "
-                    "the project again."
+                    "Some of this project's files could not be removed. Close "
+                    "other programs using them and delete the project again."
                 ),
             )
 
@@ -197,13 +207,7 @@ class SqliteProjectRepository:
         directory = self._locations.projects_dir
         if not directory.is_dir():
             return ()
-        project_ids = sorted(
-            {
-                path.name[:32]
-                for path in directory.iterdir()
-                if support.MANAGED_FILE_PATTERN.fullmatch(path.name[:33])
-            }
-        )
+        project_ids = sorted({found for found, _ in self._managed_files()})
         summaries = [self._list_entry(project_id) for project_id in project_ids]
         epoch = datetime.min.replace(tzinfo=UTC)
         return tuple(

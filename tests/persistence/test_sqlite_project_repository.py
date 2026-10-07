@@ -97,17 +97,21 @@ def make_note(note_id: str) -> ContextNote:
     )
 
 
-def refuse_database_unlink(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Make removing a project database fail, as an antivirus or open handle can."""
+def refuse_unlink(monkeypatch: pytest.MonkeyPatch, suffix: str) -> None:
+    """Make removing files with this suffix fail, as an antivirus or open handle can."""
 
     real_unlink = Path.unlink
 
     def refuse(self: Path, missing_ok: bool = False) -> None:
-        if self.suffix == ".sqlite3":
+        if self.suffix == suffix:
             raise PermissionError("synthetic: file in use")
         real_unlink(self, missing_ok=missing_ok)
 
     monkeypatch.setattr(Path, "unlink", refuse)
+
+
+def refuse_database_unlink(monkeypatch: pytest.MonkeyPatch) -> None:
+    refuse_unlink(monkeypatch, ".sqlite3")
 
 
 # --- restart round-trips ---------------------------------------------------------
@@ -437,42 +441,65 @@ def test_delete_cleans_content_a_crashed_writer_left_in_the_wal(
     assert not list((crashed / "projects").glob("*-shm"))
 
 
-def test_a_partial_delete_can_be_retried_until_every_managed_file_is_gone(
+def make_partly_deleted_project(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+) -> tuple[SqliteProjectRepository, str, Path]:
+    """A first delete that removes the main database but not a migration backup."""
+
     repository = new_repository(tmp_path)
     created = repository.create_project(rich_workspace(), name=NAME_SENTINEL)
     directory = tmp_path / "projects"
     database = directory / f"{created.project_id}.sqlite3"
     backup = directory / f"{created.project_id}.pre-migration-v1.sqlite3.bak"
     shutil.copy(database, backup)  # a migration backup holds the project's data
-    stray_wal = directory / f"{created.project_id}.sqlite3-wal"
-    stray_wal.write_bytes(b"stray")
+    (directory / f"{created.project_id}.sqlite3-wal").write_bytes(b"stray")
     assert NAME_SENTINEL.encode() in backup.read_bytes()
 
-    real_unlink = Path.unlink
-
-    def refuse_backup(self: Path, missing_ok: bool = False) -> None:
-        if self.suffix == ".bak":
-            raise PermissionError("synthetic: backup in use")
-        real_unlink(self, missing_ok=missing_ok)
-
-    monkeypatch.setattr(Path, "unlink", refuse_backup)
+    refuse_unlink(monkeypatch, ".bak")
     with pytest.raises(ProjectStorageError) as raised:
         repository.delete(created.project_id)
     assert raised.value.code == "delete_failed"
-    # The main database could be removed, but the residue is not forgotten...
-    assert not database.exists() and backup.exists()
+    assert "cleared" not in raised.value.message  # no guarantee beyond removal
+    assert not database.exists()
+    return repository, created.project_id, backup
+
+
+def test_a_partial_delete_does_not_forget_the_residual_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository, project_id, backup = make_partly_deleted_project(tmp_path, monkeypatch)
+    assert backup.exists()
     assert NAME_SENTINEL.encode() not in backup.read_bytes()  # content was purged
     assert [(item.project_id, item.status) for item in repository.list_projects()] == [
-        (created.project_id, ProjectStatus.UNREADABLE)
+        (project_id, ProjectStatus.UNREADABLE)
     ]
 
-    # ...so a retry finds it even though the main database is gone.
+
+def test_a_retried_delete_removes_every_managed_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository, project_id, _ = make_partly_deleted_project(tmp_path, monkeypatch)
     monkeypatch.undo()
-    assert repository.delete(created.project_id) is True
+    assert repository.delete(project_id) is True
     assert project_files(tmp_path) == []
-    assert repository.delete(created.project_id) is False
+    assert repository.delete(project_id) is False
+
+
+def test_only_files_the_store_creates_count_as_project_residue(
+    tmp_path: Path,
+) -> None:
+    repository = new_repository(tmp_path)
+    directory = tmp_path / "projects"
+    directory.mkdir()
+    project_id = "e" * 32
+    foreign_file = directory / f"{project_id}.txt"
+    foreign_file.write_bytes(b"not ours")
+    foreign_directory = directory / f"{project_id}.sqlite3-dir"
+    foreign_directory.mkdir()
+
+    assert repository.list_projects() == ()
+    assert repository.delete(project_id) is False
+    assert foreign_file.exists() and foreign_directory.is_dir()
 
 
 def test_corrupted_project_can_still_be_deleted(tmp_path: Path) -> None:

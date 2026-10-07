@@ -17,12 +17,23 @@ from typing import ParamSpec, TypeVar
 from ..contracts.errors import ProjectStorageError
 
 PROJECT_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
-# A managed file name starts with a project id followed by a dot.
-MANAGED_FILE_PATTERN = re.compile(r"[0-9a-f]{32}\.")
+# Every file name this store creates for a project: the database, a migration
+# backup, and SQLite's WAL/SHM/journal sidecars of either.
+_MANAGED_FILE = re.compile(
+    r"([0-9a-f]{32})[.](?:sqlite3|pre-migration-v[0-9]+[.]sqlite3[.]bak)"
+    r"(?:-wal|-shm|-journal)?"
+)
 _BUSY_TIMEOUT_SECONDS = 5.0
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
+
+
+def managed_project_id(file_name: str) -> str | None:
+    """Return the project id a store-created file name belongs to, else None."""
+
+    match = _MANAGED_FILE.fullmatch(file_name)
+    return match.group(1) if match else None
 
 
 def valid_project_id(token: str) -> str | None:

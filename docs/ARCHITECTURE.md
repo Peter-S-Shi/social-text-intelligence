@@ -199,7 +199,10 @@ project store; the model provisioner is a later milestone.
   newer version, or one that is not ours, is refused without being modified. No
   migration exists yet: version 1 is the baseline.
 
-Deletion first overwrites stored content (`secure_delete`, then drops the
+Managed files (database, sidecars, migration backups) are found by project id
+rather than through the main database, so a retried delete still cleans residue
+after an earlier partial deletion; listing reports residue-only ids as unreadable
+so they can be deleted. Deletion first overwrites stored content (`secure_delete`, then drops the
 tables), folds the WAL into the database, and then removes the database, its
 `-wal`/`-shm`/`-journal` sidecars, and any migration backups. This is
 application-level removal: copies in exports, operating-system backups, file
