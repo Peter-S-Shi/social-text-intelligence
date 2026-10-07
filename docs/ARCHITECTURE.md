@@ -153,6 +153,61 @@ sliding-expiry process-memory store. `interface/triage_routes.py` parses HTTP
 inputs and submits current-state atomic mutations. Templates display already
 validated decisions and summaries; they do not define routing semantics.
 
+## V2 application and persistence layers
+
+`application/` is the framework-free layer shared by the legacy Flask surface and
+the future desktop shell: `AppSettings`, the use cases, safe error mapping, and
+the `ProjectRepository` port with its in-memory implementation (lease,
+atomic-mutation, and conflict behavior). `PersistentProjectRepository` extends
+that port with project identity only: `create_project` and `list_projects`; `get`
+is "open" and `delete` is removal from the application's data files.
+
+`infrastructure/` holds the adapters behind those ports. M4 adds the durable
+project store; the model provisioner is a later milestone.
+
+- `app_data.py`: `AppDataLocations(root)` is injectable so tests use a temporary
+  directory on any platform. `default_app_data_locations()` resolves the Windows
+  per-user LocalAppData folder (`%LOCALAPPDATA%\SocialTextIntelligence`) and
+  deliberately refuses other platforms; they are unclaimed for V2.0.
+- `sqlite_projects.py`: `SqliteProjectRepository`, supported by
+  `sqlite_support.py` (connections, transactions, checkpoint, purge, and the
+  content-free error guard) and `workspace_store.py` (shape validation and the
+  section-by-section read/write), keeps **one SQLite file per
+  project** under `<root>/projects/<32-hex-id>.sqlite3`, kept until the user
+  deletes it (no automatic expiry, no encryption). The project id is the
+  repository token and is validated before it can name a file. Every operation
+  opens and closes its own connection (`foreign_keys=ON`, `secure_delete=ON`,
+  WAL) and writes in a `BEGIN IMMEDIATE` transaction, so a failed write changes
+  nothing. Leases are process-local, so a crashed analysis never blocks a
+  project, and a per-project revision makes a stale lease fail to commit rather
+  than overwrite changes another process made. Analysis commits as one
+  transaction; a cancelled or crashed analysis therefore leaves no partial
+  result. After a committed write the WAL is checkpointed so replaced content does
+  not linger in write-ahead frames. Listing is read-only: it reports a file this
+  version cannot open as unreadable or from a newer version instead of touching it.
+- `workspace_codec.py`: stored values are rebuilt through the original
+  constructors, so contract checks run again on load. Floats use JSON's shortest
+  round-trip form, so values are restored exactly. AI outcomes and imported rows
+  are never updated in place (database triggers enforce this); a new analysis
+  replaces them by delete and insert in one transaction. Human reviews keep only
+  the current judgment, as in V1.
+- `project_schema.py`: `PRAGMA application_id` marks our files and `PRAGMA
+  user_version` holds the schema version. Migrations are forward-only, run in one
+  transaction that re-checks the version once it holds the write lock, and take a
+  consistent backup copy under that lock
+  (`<id>.pre-migration-v<N>.sqlite3.bak`, removed with the project). A file from a
+  newer version, or one that is not ours, is refused without being modified. No
+  migration exists yet: version 1 is the baseline.
+
+Deletion first overwrites stored content (`secure_delete`, then drops the
+tables), folds the WAL into the database, and then removes the database, its
+`-wal`/`-shm`/`-journal` sidecars, and any migration backups. This is
+application-level removal: copies in exports, operating-system backups, file
+history, or flash wear-levelling are outside the application's control, and the
+application never claims forensic erasure. Neither the store nor its errors log
+or echo project text; unreadable or tampered content is reported with a fixed,
+content-free message.
+
 ## Intended layers
 
 Future milestones should preserve these boundaries:
