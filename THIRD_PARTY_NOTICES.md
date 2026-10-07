@@ -91,9 +91,10 @@ dataset. Its sentiment subset and applicable platform terms are recorded in the
 - Installed only through the `desktop` or `dev` extra; it is not bundled in the
   repository, and no installer or frozen build exists yet.
 - Qt modules imported by the application: `QtCore`, `QtGui`, and `QtWidgets`,
-  and nothing else. `tests/desktop/test_boundaries.py` fails if another Qt
-  module is imported, so adding one (some Qt modules are GPL-only) forces a
-  licence check first.
+  and nothing else. The installed wheel carries more Qt modules than these, so
+  the audit tracks the imported set: `tests/desktop/test_boundaries.py` fails if
+  another Qt module is imported, so adding one (some Qt modules are GPL-only)
+  forces a licence check first.
 
 **Status of the LGPL obligations: tracked, not cleared.** M5.2 introduces the
 dependency for development only. The mandatory pre-distribution LGPL compliance

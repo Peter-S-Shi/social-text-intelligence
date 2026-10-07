@@ -23,7 +23,14 @@ from ..application.model_provisioning import (
 )
 from ..contracts.errors import ModelsNotReadyError
 from . import copy
-from .controller import Activity, ControllerState, FolderState, OperationReport
+from .controller import (
+    REPORTING_PROGRESS,
+    STOPPABLE,
+    Activity,
+    ControllerState,
+    FolderState,
+    OperationReport,
+)
 from .formatting import format_bytes
 from .gate import SESSION_BLOCK_MESSAGE, AnalysisAvailability
 
@@ -38,7 +45,6 @@ class ActionId(StrEnum):
     RETRY = "retry"
     DISMISS = "dismiss"
     CHOOSE_FOLDER = "choose_folder"
-    CHECK_FOLDER = "check_folder"
     IMPORT = "import"
     OPEN_MODELS = "open_models"
 
@@ -125,6 +131,7 @@ class PanelView:
     report: ReportView | None
     busy_note: str | None
     session_note: str | None
+    folder_note: str | None
 
 
 def model_title(key: str) -> str:
@@ -139,6 +146,12 @@ def _remaining(model: ModelStatus) -> int:
     """Bytes that still have to be obtained (the problem files)."""
 
     return max(model.total_bytes - model.installed_bytes, 0)
+
+
+def _left(model: ModelStatus) -> int:
+    """Bytes still to fetch once any partial download is counted."""
+
+    return max(_remaining(model) - model.resumable_bytes, 0)
 
 
 def _plural(count: int, noun: str) -> str:
@@ -156,10 +169,9 @@ def _card_sentence(model: ModelStatus) -> str:
         return f"Not downloaded yet · {format_bytes(model.total_bytes)}."
     if readiness is Readiness.INCOMPLETE:
         if model.resumable_bytes:
-            left = max(_remaining(model) - model.resumable_bytes, 0)
             return (
                 f"Interrupted: {format_bytes(model.resumable_bytes)} kept, "
-                f"{format_bytes(left)} left."
+                f"{format_bytes(_left(model))} left."
             )
         return f"{_plural(len(model.problem_files), 'required file')} missing."
     if readiness is Readiness.CORRUPT:
@@ -180,8 +192,7 @@ def _download_label(model: ModelStatus) -> str | None:
         return f"Download this model · {format_bytes(model.total_bytes)}"
     if readiness is Readiness.INCOMPLETE:
         if model.resumable_bytes:
-            left = max(_remaining(model) - model.resumable_bytes, 0)
-            return f"Download · resume, {format_bytes(left)} left"
+            return f"Download · resume, {format_bytes(_left(model))} left"
         return "Download missing files"
     if readiness is Readiness.CORRUPT:
         return (
@@ -283,19 +294,12 @@ def _bar(label: str, done: int, total: int) -> BarView:
 def _progress_view(
     activity: Activity, progress: ProvisioningProgress | None, *, stopping: bool
 ) -> ProgressView:
-    stoppable = activity in (Activity.DOWNLOADING, Activity.IMPORTING)
-    if activity is Activity.VERIFYING:
-        title = "Checking files"
-        note = copy.VERIFY_NOTE
-    elif activity is Activity.IMPORTING:
-        title = "Importing models"
-        note = copy.STOP_KEEPS_NOTHING
-    elif activity is Activity.DOWNLOADING:
-        title = "Downloading models"
-        note = copy.STOP_KEEPS_DOWNLOAD
-    else:
-        title = "Working…"
-        note = ""
+    stoppable = activity in STOPPABLE
+    title, note = {
+        Activity.VERIFYING: ("Checking files", copy.VERIFY_NOTE),
+        Activity.IMPORTING: ("Importing models", copy.STOP_KEEPS_NOTHING),
+        Activity.DOWNLOADING: ("Downloading models", copy.STOP_KEEPS_DOWNLOAD),
+    }[activity]
     if progress is not None:
         title = copy.PHASE_WORDS[progress.phase]
         bars = (
@@ -330,7 +334,7 @@ def _progress_view(
 # -- reports ----------------------------------------------------------------
 
 
-def _recovery(report: OperationReport, status: ModelsStatus) -> tuple[ActionView, ...]:
+def _recovery(report: OperationReport) -> tuple[ActionView, ...]:
     code = report.error_code
     again = ActionView(ActionId.DOWNLOAD, "Download again", keys=None, primary=True)
     use_folder = ActionView(ActionId.USE_FOLDER, "Use a models folder…")
@@ -347,6 +351,7 @@ def _recovery(report: OperationReport, status: ModelsStatus) -> tuple[ActionView
                 ActionView(
                     ActionId.CHOOSE_FOLDER, "Choose a different folder", primary=True
                 ),
+                again,
             )
         return (again, use_folder)
     if code == "storage_failed":
@@ -374,8 +379,6 @@ def _report_view(
     report: OperationReport,
     status: ModelsStatus,
     availability: AnalysisAvailability,
-    *,
-    busy: bool,
 ) -> ReportView:
     if report.outcome is ProvisioningOutcome.FAILED:
         code = report.error_code or "unexpected_error"
@@ -388,11 +391,7 @@ def _report_view(
             m.resumable_bytes for m in status.models
         ):
             body = f"{body} {_kept_text(status)}"
-        actions = tuple(
-            ActionView(a.action, a.label, a.enabled and not busy, a.keys, a.primary)
-            for a in _recovery(report, status)
-        )
-        return ReportView(ReportKind.ERROR, title, body, code, actions)
+        return ReportView(ReportKind.ERROR, title, body, code, _recovery(report))
     if report.outcome is ProvisioningOutcome.CANCELLED:
         if report.kind is Activity.IMPORTING:
             body = "The import was stopped. Nothing partial was kept."
@@ -449,11 +448,7 @@ def _report_view(
 
 
 def progress_for(state: ControllerState) -> ProgressView | None:
-    if state.activity not in (
-        Activity.DOWNLOADING,
-        Activity.IMPORTING,
-        Activity.VERIFYING,
-    ):
+    if state.activity not in REPORTING_PROGRESS:
         return None
     return _progress_view(state.activity, state.progress, stopping=state.stopping)
 
@@ -463,7 +458,7 @@ def report_for(
 ) -> ReportView | None:
     if state.report is None or state.busy:
         return None
-    return _report_view(state.report, state.status, availability, busy=False)
+    return _report_view(state.report, state.status, availability)
 
 
 def build_panel(
@@ -480,7 +475,7 @@ def build_panel(
     not_ready = [m for m in status.models if not m.ready]
     if len(not_ready) > 1:
         remaining = sum(
-            m.total_bytes if m.readiness is Readiness.NOT_INSTALLED else _remaining(m)
+            m.total_bytes if m.readiness is Readiness.NOT_INSTALLED else _left(m)
             for m in not_ready
         )
         actions.append(
@@ -522,6 +517,7 @@ def build_panel(
         if busy and state.activity is not Activity.VERIFYING
         else None,
         session_note=session_note,
+        folder_note=copy.FOLDER_NOTE if window == "models" else None,
     )
 
 
@@ -543,7 +539,7 @@ def build_sidebar_status(
     ready = sum(1 for m in status.models if m.ready)
     total = len(status.models)
     count = f"{ready} of {total} models ready"
-    if state.activity in (Activity.DOWNLOADING, Activity.IMPORTING, Activity.VERIFYING):
+    if state.activity in REPORTING_PROGRESS:
         verb = {
             Activity.DOWNLOADING: "Downloading models",
             Activity.IMPORTING: "Importing models",

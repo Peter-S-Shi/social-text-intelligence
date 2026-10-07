@@ -60,7 +60,6 @@ class FolderDialog(QDialog):
 
     def __init__(self, ui: ProvisioningUi, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._ui = ui
         self.setWindowTitle("Use a models folder")
         self.setAccessibleName("Use a models folder")
         self.setMinimumSize(560, 460)
@@ -154,6 +153,7 @@ class ProvisioningUi(QObject):
         models_root: Callable[[], Path],
         platform: DesktopPlatform,
         parent_window: QWidget,
+        notify: Callable[[str], None],
     ) -> None:
         super().__init__(parent_window)
         self.controller = controller
@@ -169,12 +169,9 @@ class ProvisioningUi(QObject):
         self.models_dialog.panel.action_requested.connect(self.handle)
         self.folder_dialog = FolderDialog(self, parent_window)
         self.folder_dialog.setObjectName("folder-dialog")
-        self.message: Callable[[str], None] = lambda text: None
+        self._notify = notify
         controller.subscribe(self.render)
         self.render(controller.state)
-
-    def availability(self) -> AnalysisAvailability:
-        return self.gate.availability(self.controller.state.status)
 
     # -- rendering ----------------------------------------------------------
 
@@ -215,9 +212,10 @@ class ProvisioningUi(QObject):
         self.models_dialog.raise_()
         self.models_dialog.activateWindow()
 
-    def show_folder(self) -> None:
-        self.controller.close_folder()
-        self.render(self.controller.state)
+    def show_folder(self, *, fresh: bool = True) -> None:
+        if fresh:
+            self.controller.close_folder()
+            self.render(self.controller.state)
         self.folder_dialog.show()
         self.folder_dialog.raise_()
         self.folder_dialog.activateWindow()
@@ -249,8 +247,6 @@ class ProvisioningUi(QObject):
                 controller.dismiss_report()
             case ActionId.OPEN_MODELS:
                 self.show_models()
-            case ActionId.CHECK_FOLDER:
-                self._choose_folder()
 
     def _discard(self, action: ActionView) -> None:
         status = self.controller.state.status
@@ -266,9 +262,11 @@ class ProvisioningUi(QObject):
     def _choose_folder(self) -> None:
         parent = self.folder_dialog if self.folder_dialog.isVisible() else self._window
         path = self.platform.pick_folder(parent)
-        if path is not None:
-            self.controller.inspect_folder(path)
+        if path is not None and self.controller.inspect_folder(path):
+            self.show_folder(
+                fresh=False
+            )  # the findings appear where they were asked for
 
     def open_models_folder(self) -> None:
         if not self.platform.open_folder(self._models_root()):
-            self.message("The models folder could not be opened.")
+            self._notify("The models folder could not be opened.")

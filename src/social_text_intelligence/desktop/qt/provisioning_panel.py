@@ -46,6 +46,8 @@ class ProvisioningPanel(QWidget):
         note_layout.addWidget(self.session_text)
         self.busy_note = label(role="muted")
         self.busy_note.setObjectName("busy-note")
+        self.folder_note = label(role="muted")
+        self.folder_note.setObjectName("folder-note")
         self.cards: dict[str, CardWidget] = {}
         self.cards_box = QVBoxLayout()
         self.action_row = ActionRow()
@@ -62,6 +64,7 @@ class ProvisioningPanel(QWidget):
         )
         self._layout.addLayout(self.cards_box)
         self._layout.addWidget(self.action_row)
+        self._layout.addWidget(self.folder_note)
         self._layout.addStretch(1)
         self.action_row.triggered.connect(self.action_requested.emit)
         self.report.triggered.connect(self.action_requested.emit)
@@ -70,6 +73,7 @@ class ProvisioningPanel(QWidget):
         self.report.setVisible(False)
         self.session_note.setVisible(False)
         self.busy_note.setVisible(False)
+        self.folder_note.setVisible(False)
 
     def _stop(self) -> None:
         self.action_requested.emit(ActionView(ActionId.STOP, "Stop"))
@@ -97,6 +101,8 @@ class ProvisioningPanel(QWidget):
         self.action_row.setVisible(bool(view.actions))
         self.busy_note.setText(view.busy_note or "")
         self.busy_note.setVisible(view.busy_note is not None)
+        self.folder_note.setText(view.folder_note or "")
+        self.folder_note.setVisible(view.folder_note is not None)
 
         was_running = self.progress.isVisible()
         if view.progress is not None:
@@ -110,7 +116,8 @@ class ProvisioningPanel(QWidget):
 
         if view.report is not None:
             self.report.setVisible(True)
-            self.report.show_report(view.report)
+            if self.report.show_report(view.report) and had_focus:
+                self.report.setFocus()  # only when the user is working in here
         else:
             self.report.setVisible(False)
             self.report.clear()

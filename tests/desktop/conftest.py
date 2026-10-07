@@ -19,7 +19,7 @@ def qapp() -> Iterator[Any]:
         import PySide6.QtWidgets as widgets
     else:
         widgets = pytest.importorskip("PySide6.QtWidgets", exc_type=ImportError)
-    app = widgets.QApplication.instance() or widgets.QApplication([])
+    app: Any = widgets.QApplication.instance() or widgets.QApplication([])
     from social_text_intelligence.desktop.qt.style import STYLESHEET
 
     app.setStyleSheet(STYLESHEET)

@@ -195,7 +195,7 @@ automatically.
 Run the native desktop shell (development preview, Windows only for now):
 
 ```text
-python -m pip install -e ".[desktop]"
+python -m pip install -e ".[desktop,sentiment,emotion]"
 sti-desktop
 ```
 
@@ -204,7 +204,8 @@ either is missing. Nothing downloads until you press a button that states its
 size; you can also import a models folder you already have, which is checked
 read-only before anything is copied. The sidebar always shows the Models status.
 This milestone ships only the provisioning experience plus a minimal Projects
-list and Analyze one text; importing CSV files into projects arrives later. The
+list and Analyze one text (which needs the `sentiment` and `emotion` extras
+installed above); importing CSV files into projects arrives later. The
 desktop shell uses Qt (LGPL-3.0); see [Third-party notices](THIRD_PARTY_NOTICES.md).
 
 Run the dependency-free test suite:

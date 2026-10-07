@@ -108,18 +108,22 @@ def test_only_one_operation_runs_at_a_time() -> None:
 
 
 def test_stop_sets_the_cancel_flag_and_keeps_what_was_kept() -> None:
-    fake = FakeProvisioning(current=MISSING, hold=threading.Event())
+    hold = threading.Event()
+    fake = FakeProvisioning(current=MISSING, hold=hold)
     runner = ThreadedRunner()
     controller, _ = make(fake, runner)
 
-    controller.download()
-    assert fake.started.wait(5)
-    assert controller.can_stop
-    controller.stop()
-    assert controller.state.stopping
-    fake.current = PARTIAL
-    runner.drain(lambda: controller.state.activity is Activity.IDLE)
-    runner.join()
+    try:
+        controller.download()
+        assert fake.started.wait(5)
+        assert controller.can_stop
+        controller.stop()
+        assert controller.state.stopping
+        fake.current = PARTIAL
+        runner.drain(lambda: controller.state.activity is Activity.IDLE)
+    finally:
+        hold.set()  # a failed assertion must never leave a spinning worker behind
+        runner.join()
 
     assert fake.saw_cancel
     report = controller.state.report
@@ -364,3 +368,22 @@ def test_when_idle_runs_immediately_or_after_the_operation() -> None:
     assert ran == ["now"]
     runner.run_next()
     assert ran == ["now", "later"]
+
+
+def test_try_again_still_retries_the_failed_download_after_a_folder_check() -> None:
+    inspection = FolderInspection(
+        (FolderModelFinding("sentiment", FolderFinding.NOT_FOUND, ()),)
+    )
+    fake = FakeProvisioning(
+        current=MISSING,
+        next_download=failed("storage_failed", MISSING),
+        next_inspection=inspection,
+    )
+    controller, _ = make(fake)
+    controller.download(("emotion",))
+    controller.inspect_folder(Path("synthetic-folder"))  # the report stays visible
+
+    fake.next_download = ProvisioningResult(ProvisioningOutcome.COMPLETED, READY)
+    assert controller.retry()
+
+    assert fake.calls[-1] == ("download", ("emotion",))

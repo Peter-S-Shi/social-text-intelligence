@@ -46,9 +46,12 @@ class AnalysisGate:
         self._inner = inner
         self._lock = Lock()
         self._session_blocked = False
+        self._loading = 0  # analyses in flight; the first one builds the service
 
     @property
     def initialized(self) -> bool:
+        """Part of the ``AnalysisGateway`` protocol this gate stands in for."""
+
         return self._inner.initialized
 
     @property
@@ -59,7 +62,7 @@ class AnalysisGate:
         """Latch the block when Verify confirms damage after the service loaded."""
 
         damaged = any(item.readiness is Readiness.CORRUPT for item in status.models)
-        if damaged and self._inner.initialized:
+        if damaged and (self._inner.initialized or self._loading):
             with self._lock:
                 self._session_blocked = True
 
@@ -73,4 +76,10 @@ class AnalysisGate:
     def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
         if self._session_blocked:
             raise AnalysisSessionBlockedError
-        return self._inner.analyze(record)
+        with self._lock:
+            self._loading += 1
+        try:
+            return self._inner.analyze(record)
+        finally:
+            with self._lock:
+                self._loading -= 1

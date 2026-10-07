@@ -204,10 +204,12 @@ class ReportBox(QFrame):
         layout.addWidget(self.action_row)
         self._last: ReportView | None = None
 
-    def show_report(self, view: ReportView) -> None:
+    def show_report(self, view: ReportView) -> bool:
+        """Show ``view``; True when it is new content (so the caller may focus it)."""
+
         if view == self._last:
             self.action_row.set_actions(view.actions)
-            return
+            return False
         self._last = view
         self.setProperty("role", "alert" if view.assertive else "notice")
         self.style().unpolish(self)
@@ -220,7 +222,7 @@ class ReportBox(QFrame):
         text = f"{view.title}. {view.body}"
         announce(self, text, assertive=view.assertive)
         self.setAccessibleDescription(view.code or "")
-        self.setFocus()
+        return True
 
     def clear(self) -> None:
         self._last = None

@@ -5,14 +5,14 @@ from __future__ import annotations
 import pytest
 
 from social_text_intelligence.application.model_provisioning import Readiness
-from social_text_intelligence.contracts import NormalizedTextInput
+from social_text_intelligence.contracts import AnalysisReport, NormalizedTextInput
 from social_text_intelligence.desktop.gate import (
     AnalysisAvailability,
     AnalysisGate,
     AnalysisSessionBlockedError,
 )
 
-from .fakes import StubGateway, status
+from .fakes import StubGateway, status, synthetic_report
 
 
 def record() -> NormalizedTextInput:
@@ -22,7 +22,7 @@ def record() -> NormalizedTextInput:
 
 
 def loaded_gate() -> tuple[AnalysisGate, StubGateway]:
-    inner = StubGateway(report=object())  # type: ignore[arg-type]
+    inner = StubGateway(report=synthetic_report())
     gate = AnalysisGate(inner)
     gate.analyze(record())  # the first analysis builds the service
     assert inner.initialized
@@ -83,3 +83,20 @@ def test_the_block_message_says_repair_needs_a_restart() -> None:
     message = AnalysisSessionBlockedError().message
     assert "restart" in message.lower() or "reopen" in message.lower()
     assert "repair" in message.lower()
+
+
+def test_damage_confirmed_while_the_first_analysis_is_still_loading_blocks() -> None:
+    gate_box: list[AnalysisGate] = []
+
+    class VerifyDuringLoad(StubGateway):
+        def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
+            # the service is not built yet, but this analysis is already loading
+            gate_box[0].note_verify_result(status(emotion=Readiness.CORRUPT))
+            return super().analyze(record)
+
+    gate = AnalysisGate(VerifyDuringLoad(report=object()))  # type: ignore[arg-type]
+    gate_box.append(gate)
+
+    gate.analyze(record())
+
+    assert gate.session_blocked

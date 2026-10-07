@@ -247,7 +247,7 @@ only place that imports `infrastructure`. The desktop layer never imports SQLite
 Transformers, PyTorch, an HTTP client, or Flask, and nothing in the inner layers
 imports `desktop`. `tests/desktop/test_boundaries.py` enforces these rules from the
 source and also pins the Qt modules in use to `QtCore`, `QtGui`, and `QtWidgets`
-(the LGPL set; see `THIRD_PARTY_NOTICES.md`).
+(imported-module audit; see `THIRD_PARTY_NOTICES.md`).
 
 - `controller.py`: `ProvisioningController` owns one operation at a time and routes
   Download, Stop, Discard, folder inspect and import, and Verify to the

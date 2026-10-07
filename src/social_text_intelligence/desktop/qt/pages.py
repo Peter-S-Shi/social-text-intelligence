@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
+from typing import cast
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -257,4 +258,4 @@ class ProjectsPage(QWidget):
             self.show_projects(())
             self.summary.setText("The project list could not be read.")
         else:
-            self.show_projects(outcome)  # type: ignore[arg-type]
+            self.show_projects(cast(tuple[ProjectSummary, ...], outcome))

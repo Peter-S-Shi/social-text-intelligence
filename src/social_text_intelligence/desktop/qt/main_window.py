@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QButtonGroup,
@@ -34,6 +33,7 @@ from .provisioning_ui import ProvisioningUi
 from .widgets import announce, frame, label
 
 APP_TITLE = "Social Text Intelligence"
+PAGES = ("Projects", "Analyze one text")  # sidebar order = stacked page order
 
 
 class MainWindow(QMainWindow):
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         side.addWidget(label(APP_TITLE, role="title"))
         self.nav = QButtonGroup(self)
         self.nav_buttons: dict[str, QPushButton] = {}
-        for name in ("Projects", "Analyze one text"):
+        for name in PAGES:
             button = QPushButton(name)
             button.setCheckable(True)
             button.setProperty("nav", True)
@@ -102,11 +102,11 @@ class MainWindow(QMainWindow):
             lambda: services.provisioning.models_root,
             platform or DesktopPlatform(),
             self,
+            lambda text: self.statusBar().showMessage(text, 8000),
         )
-        self.ui.message = lambda text: self.statusBar().showMessage(text, 8000)
 
-        self.nav_buttons["Projects"].clicked.connect(lambda: self._show_page(0))
-        self.nav_buttons["Analyze one text"].clicked.connect(lambda: self._show_page(1))
+        for name, button in self.nav_buttons.items():
+            button.clicked.connect(lambda _=False, page=name: self.show_page(page))
         self.models_button.clicked.connect(self.ui.show_models)
         self.projects_page.open_models.connect(self.ui.show_models)
         self.analyze_page.open_models.connect(self.ui.show_models)
@@ -116,7 +116,7 @@ class MainWindow(QMainWindow):
         self.provisioning.subscribe(self._on_provisioning)
         self.analysis.subscribe(self._on_analysis)
         self._last_announced = ""
-        self._show_page(0)
+        self.show_page(PAGES[0])
 
     # -- startup ------------------------------------------------------------
 
@@ -130,10 +130,10 @@ class MainWindow(QMainWindow):
 
     # -- rendering ----------------------------------------------------------
 
-    def _show_page(self, index: int) -> None:
-        self.pages.setCurrentIndex(index)
-        for position, button in enumerate(self.nav_buttons.values()):
-            button.setChecked(position == index)
+    def show_page(self, name: str) -> None:
+        self.pages.setCurrentIndex(PAGES.index(name))
+        for page, button in self.nav_buttons.items():
+            button.setChecked(page == name)
 
     def _on_provisioning(self, state: ControllerState) -> None:
         availability = self.services.gate.availability(state.status)
@@ -152,6 +152,8 @@ class MainWindow(QMainWindow):
 
     def _on_analysis(self, state: AnalysisPageState) -> None:
         self.analyze_page.render_analysis(state)
+        if self._closing and not state.running:
+            self._close_when_done()
 
     def _verify_from_analysis(self) -> None:
         self.provisioning.verify()
@@ -182,16 +184,7 @@ class MainWindow(QMainWindow):
         self.provisioning.when_idle(self._close_when_done)
 
     def _close_when_done(self) -> None:
-        if self.analysis.state.running:
-            self.analysis.subscribe(lambda state: self._retry_close(state))
-            return
+        if self.provisioning.state.busy or self.analysis.state.running:
+            return  # the next idle notification tries again
         self._closing = False
         self.close()
-
-    def _retry_close(self, state: AnalysisPageState) -> None:
-        if not state.running:
-            self._closing = False
-            self.close()
-
-    def focus_models(self) -> None:
-        self.models_button.setFocus(Qt.FocusReason.OtherFocusReason)

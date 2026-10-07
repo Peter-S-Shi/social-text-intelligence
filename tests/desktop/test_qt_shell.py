@@ -209,7 +209,7 @@ def test_later_keeps_the_app_usable_and_analysis_blocked_with_a_reason(
     assert not shell.setup.isVisible()
 
     page = shell.window.analyze_page
-    shell.window._show_page(1)
+    shell.window.show_page("Analyze one text")
     assert not page.analyze_button.isEnabled()
     assert page.block.isVisibleTo(page)
     assert "models are not ready" in page.block.body.text()
@@ -263,11 +263,9 @@ def test_real_threads_keep_the_ui_alive_and_stop_keeps_focus(
 
     assert panel.progress.stop_button.isVisibleTo(panel)
     assert shell.setup.focusWidget() is panel.progress.stop_button
-    ticks = []
-    for _ in range(20):
+    for _ in range(20):  # the event loop keeps running while the worker holds
         QCoreApplication.processEvents()
-        ticks.append(1)
-    assert len(ticks) == 20  # the event loop kept running while the worker held
+    assert not fake.saw_cancel and shell.window.provisioning.state.busy
 
     panel.progress.stop_button.click()
     pump(lambda: shell.window.provisioning.state.activity is Activity.IDLE)
@@ -396,7 +394,7 @@ def test_details_and_provenance_are_one_toggle_away(make_shell: Any) -> None:
 
 def test_analysis_runs_when_ready_and_shows_provenance(make_shell: Any) -> None:
     shell = make_shell(FakeProvisioning(current=status()))
-    shell.window._show_page(1)
+    shell.window.show_page("Analyze one text")
     page = shell.window.analyze_page
     assert page.analyze_button.isEnabled() and not page.block.isVisibleTo(page)
 
@@ -411,7 +409,7 @@ def test_analysis_runs_when_ready_and_shows_provenance(make_shell: Any) -> None:
 def test_h2_blocks_every_analysis_surface_until_restart(make_shell: Any) -> None:
     fake = FakeProvisioning(current=status(), next_verify=CORRUPT)
     shell = make_shell(fake)
-    shell.window._show_page(1)
+    shell.window.show_page("Analyze one text")
     page = shell.window.analyze_page
     page.editor.setPlainText("A synthetic sentence.")
     page.analyze_button.click()  # analysis loads the service
@@ -433,9 +431,7 @@ def test_h2_blocks_every_analysis_surface_until_restart(make_shell: Any) -> None
     shell.button(shell.models, "Download replacement · 1 file, 50.0 MB").click()
     assert fake.current.ready
     assert not page.analyze_button.isEnabled()
-    assert "restart" in shell.window.models_button.text().lower() or (
-        "restart" in shell.window.models_button.text()
-    )
+    assert "restart" in shell.window.models_button.text().lower()
     assert len(shell.gateway.records) == 1
 
 
@@ -459,3 +455,44 @@ def test_closing_while_verifying_is_refused_until_it_finishes(
     runner.run_next()
     QCoreApplication.processEvents()
     assert not shell.window.isVisible()  # closed itself once Verify finished
+
+
+def test_choosing_a_different_folder_from_a_failure_shows_the_findings(
+    make_shell: Any,
+) -> None:
+    inspection = FolderInspection(
+        (FolderModelFinding("sentiment", FolderFinding.FOUND, ()),)
+    )
+    fake = FakeProvisioning(
+        current=MISSING,
+        next_inspection=inspection,
+        next_import=failed("checksum_mismatch", MISSING),
+    )
+    platform = FakePlatform()
+    platform.folder = Path("synthetic-folder")
+    shell = make_shell(fake, platform=platform)
+    shell.button(shell.setup, "Use a models folder…").click()
+    dialog = shell.window.ui.folder_dialog
+    shell.button(dialog, "Choose a folder…").click()
+    shell.button(dialog, "Import sentiment model").click()
+    dialog.hide()  # the user closes it; the failure stays in the setup window
+
+    shell.button(shell.setup, "Choose a different folder").click()
+
+    assert dialog.isVisible()
+    assert dialog.status_label.text() == "Read-only check. Nothing was copied."
+
+
+def test_open_models_folder_never_creates_the_folder(make_shell: Any) -> None:
+    class Missing(FakePlatform):
+        def open_folder(self, path: Path) -> bool:
+            self.opened.append(path)
+            return False
+
+    platform = Missing()
+    shell = make_shell(FakeProvisioning(current=status()), platform=platform)
+    shell.window.ui.show_models()
+
+    shell.button(shell.models, "Open models folder").click()
+
+    assert "could not be opened" in shell.window.statusBar().currentMessage()

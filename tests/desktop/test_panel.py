@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
@@ -22,6 +24,8 @@ from social_text_intelligence.desktop.controller import (
 from social_text_intelligence.desktop.gate import AnalysisAvailability
 from social_text_intelligence.desktop.panel import (
     ActionId,
+    ActionView,
+    PanelView,
     ReportKind,
     build_analysis_block,
     build_folder_view,
@@ -36,11 +40,15 @@ NOT_READY = AnalysisAvailability.MODELS_NOT_READY
 BLOCKED = AnalysisAvailability.SESSION_BLOCKED
 
 
-def panel(state: ControllerState, availability=NOT_READY, window="models"):  # type: ignore[no-untyped-def]
+def panel(
+    state: ControllerState,
+    availability: AnalysisAvailability = NOT_READY,
+    window: Literal["setup", "models"] = "models",
+) -> PanelView:
     return build_panel(state, availability, window=window)
 
 
-def labels(actions) -> list[str]:  # type: ignore[no-untyped-def]
+def labels(actions: Iterable[ActionView]) -> list[str]:
     return [a.label for a in actions]
 
 
@@ -276,7 +284,7 @@ def test_a_checksum_failure_during_import_points_at_a_different_folder() -> None
     )
     report = panel(state).report
     assert report is not None
-    assert labels(report.actions) == ["Choose a different folder"]
+    assert labels(report.actions) == ["Choose a different folder", "Download again"]
 
 
 def test_verify_storage_failure_says_nothing_was_recorded() -> None:
@@ -361,7 +369,9 @@ def test_after_repair_the_models_are_ready_but_the_session_stays_blocked() -> No
     assert report is not None
     assert "Analysis stays off in this session" in report.body
     assert "reopen the app" in report.body
-    assert panel(state, AVAILABLE).report.body.startswith("Both models are installed")
+    plain = panel(state, AVAILABLE).report
+    assert plain is not None
+    assert plain.body.startswith("Both models are installed")
 
 
 def test_report_is_hidden_while_an_operation_runs() -> None:
@@ -505,3 +515,40 @@ def test_unreadable_folder_shows_the_fixed_message_and_choose_another() -> None:
     assert view.error.title == "Couldn't read that folder"
     assert view.error.body == "The chosen folder could not be read."
     assert labels(view.actions) == ["Choose a folder…"]
+
+
+def test_download_both_size_counts_only_what_is_left_after_partials() -> None:
+    state = ControllerState(
+        status(
+            Readiness.INCOMPLETE,
+            Readiness.NOT_INSTALLED,
+            sentiment_args={"resumable": 20 * MB, "problems": ("weights.bin",)},
+        )
+    )
+    both = panel(state).actions[0]
+    # 50 MB missing minus 20 MB already held, plus the whole 100 MB model
+    assert both.label == "Download both models · 130.0 MB"
+
+
+def test_a_checksum_failure_after_import_also_offers_download() -> None:
+    state = ControllerState(
+        status(Readiness.READY, Readiness.NOT_INSTALLED),
+        report=OperationReport(
+            Activity.IMPORTING,
+            ProvisioningOutcome.FAILED,
+            "checksum_mismatch",
+            "fixed",
+        ),
+    )
+    report = panel(state).report
+    assert report is not None
+    assert labels(report.actions) == ["Choose a different folder", "Download again"]
+
+
+def test_models_window_explains_that_the_app_manages_the_folder() -> None:
+    models = panel(ControllerState(status()), AVAILABLE, window="models")
+    assert models.folder_note is not None
+    assert "manages this folder" in models.folder_note
+    assert "by hand" in models.folder_note
+    setup = panel(ControllerState(status()), AVAILABLE, window="setup")
+    assert setup.folder_note is None

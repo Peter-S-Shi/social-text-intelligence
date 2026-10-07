@@ -31,6 +31,14 @@ UNEXPECTED_ERROR_MESSAGE = (
 )
 
 
+def _error_parts(error: BaseException) -> tuple[str, str]:
+    """The fixed code and message; unexpected errors never expose their own text."""
+
+    if isinstance(error, ModelProvisioningError):
+        return error.code, error.message
+    return UNEXPECTED_ERROR_CODE, UNEXPECTED_ERROR_MESSAGE
+
+
 class JobRunner(Protocol):
     """Runs work off the UI thread and brings results back to it."""
 
@@ -56,7 +64,9 @@ class Activity(StrEnum):
     DISCARDING = "discarding"
 
 
-_STOPPABLE = frozenset({Activity.DOWNLOADING, Activity.IMPORTING})
+STOPPABLE = frozenset({Activity.DOWNLOADING, Activity.IMPORTING})
+# Activities that report progress (and have a progress block in the UI).
+REPORTING_PROGRESS = (Activity.DOWNLOADING, Activity.IMPORTING, Activity.VERIFYING)
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,7 +126,7 @@ class ProvisioningController:
 
     @property
     def can_stop(self) -> bool:
-        return self._state.activity in _STOPPABLE and not self._state.stopping
+        return self._state.activity in STOPPABLE and not self._state.stopping
 
     def subscribe(self, listener: Listener) -> Callable[[], None]:
         self._listeners.append(listener)
@@ -227,28 +237,19 @@ class ProvisioningController:
             return self._provisioning.inspect_folder(path)
 
         def done(outcome: Any) -> None:
-            if isinstance(outcome, ModelProvisioningError):
-                folder = FolderState(
-                    path, error_code=outcome.code, error_message=outcome.message
-                )
-            elif isinstance(outcome, BaseException):
-                folder = FolderState(
-                    path,
-                    error_code=UNEXPECTED_ERROR_CODE,
-                    error_message=UNEXPECTED_ERROR_MESSAGE,
-                )
+            if isinstance(outcome, BaseException):
+                code, message = _error_parts(outcome)
+                folder = FolderState(path, error_code=code, error_message=message)
             else:
                 folder = FolderState(path, inspection=outcome)
             self._end(folder=folder)
 
-        started = self._start(
+        return self._start(
             Activity.INSPECTING,
             work,
             done,
-            retry=lambda: self.inspect_folder(path),
             folder=FolderState(path, checking=True),
         )
-        return started
 
     def stop(self) -> None:
         if self.can_stop:
@@ -278,7 +279,7 @@ class ProvisioningController:
         work: Callable[[], Any],
         done: Callable[[Any], None],
         *,
-        retry: Callable[[], bool],
+        retry: Callable[[], bool] | None = None,
         folder: FolderState | None = None,
     ) -> bool:
         if self._state.busy:
@@ -287,15 +288,16 @@ class ProvisioningController:
         with self._lock:
             self._latest = None
             self._update_pending = False
-        self._retry = retry
         changes: dict[str, Any] = {
             "activity": activity,
             "progress": None,
             "stopping": False,
         }
         if activity is Activity.INSPECTING:
+            # a folder check keeps the last report (and its Try again target)
             changes["folder"] = folder
         else:
+            self._retry = retry
             changes["report"] = None
         self._set(**changes)
         self._runner.run(work, done)
@@ -340,10 +342,7 @@ class ProvisioningController:
         self._end(**changes)
 
     def _finish_error(self, kind: Activity, error: BaseException) -> None:
-        if isinstance(error, ModelProvisioningError):
-            code, message = error.code, error.message
-        else:
-            code, message = UNEXPECTED_ERROR_CODE, UNEXPECTED_ERROR_MESSAGE
+        code, message = _error_parts(error)
         report = OperationReport(kind, ProvisioningOutcome.FAILED, code, message)
         self._end(report=report)
 

@@ -7,6 +7,7 @@ one ``QObject`` slot that lives on the UI thread, so it always runs there.
 
 from __future__ import annotations
 
+import contextlib
 import threading
 from collections.abc import Callable
 from typing import Any
@@ -29,7 +30,9 @@ class QtJobRunner(QObject):
     def post(self, call: Callable[[], None]) -> None:
         """Run ``call`` on the UI thread; safe from any thread."""
 
-        self._call_on_ui.emit(call)
+        # after shutdown the runner may already be deleted; nobody is left to notify
+        with contextlib.suppress(RuntimeError):
+            self._call_on_ui.emit(call)
 
     def run(self, work: Callable[[], Any], deliver: Callable[[Any], None]) -> None:
         """Run ``work`` off the UI thread, then ``deliver(result_or_error)`` on it."""

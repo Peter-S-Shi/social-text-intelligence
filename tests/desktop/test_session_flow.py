@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import TypeAlias
+
 import pytest
 
 from social_text_intelligence.application.model_provisioning import (
@@ -37,11 +40,19 @@ from .fakes import (
     synthetic_report,
 )
 
+Parts: TypeAlias = tuple[
+    DesktopServices,
+    FakeProvisioning,
+    StubGateway,
+    ProvisioningController,
+    AnalysisPageController,
+]
+
 CORRUPT = status(Readiness.READY, Readiness.CORRUPT)
 
 
 @pytest.fixture
-def parts(tmp_path):  # type: ignore[no-untyped-def]
+def parts(tmp_path: Path) -> Parts:
     fake = FakeProvisioning(current=status())
     gateway = StubGateway(report=synthetic_report())
     services = build_desktop_services(
@@ -60,7 +71,7 @@ def availability(
     return services.gate.availability(controller.state.status)
 
 
-def test_analysis_runs_when_models_are_ready_and_shows_a_result(parts) -> None:  # type: ignore[no-untyped-def]
+def test_analysis_runs_when_models_are_ready_and_shows_a_result(parts: Parts) -> None:
     services, _, gateway, controller, analysis = parts
     assert availability(services, controller) is AnalysisAvailability.AVAILABLE
 
@@ -72,7 +83,9 @@ def test_analysis_runs_when_models_are_ready_and_shows_a_result(parts) -> None: 
     assert len(gateway.records) == 1 and gateway.initialized
 
 
-def test_h2_verify_damage_after_analysis_blocks_every_later_entry_point(parts) -> None:  # type: ignore[no-untyped-def]
+def test_h2_verify_damage_after_analysis_blocks_every_later_entry_point(
+    parts: Parts,
+) -> None:
     services, fake, gateway, controller, analysis = parts
     analysis.submit("A synthetic sentence.")  # the service is now loaded
     first = analysis.state.result
@@ -92,7 +105,7 @@ def test_h2_verify_damage_after_analysis_blocks_every_later_entry_point(parts) -
         services.use_cases.analyze_text("x y z", max_text_length=1000)
 
 
-def test_h2_repair_by_download_does_not_unblock_until_restart(parts) -> None:  # type: ignore[no-untyped-def]
+def test_h2_repair_by_download_does_not_unblock_until_restart(parts: Parts) -> None:
     services, fake, gateway, controller, analysis = parts
     analysis.submit("A synthetic sentence.")
     fake.next_verify = CORRUPT
@@ -127,7 +140,9 @@ def test_h2_repair_by_download_does_not_unblock_until_restart(parts) -> None:  #
     assert restarted.gate.availability(fake.status()) is AnalysisAvailability.AVAILABLE
 
 
-def test_damage_found_before_analysis_ever_loaded_is_not_an_h2_block(parts) -> None:  # type: ignore[no-untyped-def]
+def test_damage_found_before_analysis_ever_loaded_is_not_an_h2_block(
+    parts: Parts,
+) -> None:
     services, fake, _, controller, _ = parts
     fake.next_verify = CORRUPT
     controller.verify()
@@ -157,7 +172,7 @@ def test_unexpected_analysis_errors_do_not_leak_text() -> None:
     assert "private" not in error.body and "private" not in error.title
 
 
-def test_blank_input_is_a_validation_message_not_a_crash(parts) -> None:  # type: ignore[no-untyped-def]
+def test_blank_input_is_a_validation_message_not_a_crash(parts: Parts) -> None:
     _, _, gateway, _, analysis = parts
     analysis.submit("   ")
     assert analysis.state.error is not None

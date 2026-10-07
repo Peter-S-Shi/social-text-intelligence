@@ -57,6 +57,11 @@ SESSION_BLOCK_REPAIRED = "models repaired · restart to analyse"
 
 MODELS_NOT_READY_TITLE = "Analysis is unavailable"
 
+FOLDER_NOTE = (
+    "The app manages this folder. Download, Import, Verify and Discard can add, "
+    "replace or tidy up files in it, and changing files by hand can make a model "
+    "not ready."
+)
 BUSY_NOTE = (
     "A model operation is running. The other actions are available when it finishes."
 )

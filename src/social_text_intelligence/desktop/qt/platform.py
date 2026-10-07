@@ -17,9 +17,7 @@ def _pick_folder(parent: QWidget | None) -> Path | None:
 
 
 def _open_folder(path: Path) -> bool:
-    try:
-        path.mkdir(parents=True, exist_ok=True)
-    except OSError:
+    if not path.is_dir():  # the app writes this folder only through provisioning
         return False
     return bool(QDesktopServices.openUrl(QUrl.fromLocalFile(str(path))))
 
