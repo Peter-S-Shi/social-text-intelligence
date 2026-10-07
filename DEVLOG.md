@@ -1,5 +1,28 @@
 # Development Log
 
+## V2 UI/IA Gate — PASS
+
+The repository owner closed the UI/IA Gate. Round 3 of the throwaway UI/IA
+exploration is the approved V2 baseline: visual treatment may be polished, but
+the project-centred information architecture, the strict V1-plus-gate-approved
+feature boundary, and the visual/semantic separation of immutable AI records
+from human judgment are fixed. V2-4 means batch progress plus cancellation with
+M3's atomic no-partial-commit behavior; the prototype's "finished rows survive
+cancellation and can resume later" behavior is not approved and may only be
+reconsidered in a future persistence/job milestone. Model provisioning requires
+progress, recovery, and offline/pre-provisioned support, with pause/resume only
+an implementation candidate. Moderation Training and Support Triage are retired
+from the V2 product surface (V1 `0.10.0` and repository history preserve them;
+no code was removed). The durable record is
+[docs/V2_UI_IA_DECISION.md](docs/V2_UI_IA_DECISION.md); the prototype branch
+`prototype/v2-ui-ia-exploration` was not merged or copied.
+
+`PROJECT_STATUS.md`, `ROADMAP.md`, and the README banner advance so that, after
+merge, the next mainline milestone is M4 — V2 Persistent Project Foundation.
+The lifecycle-consistency test's phase assertions were updated to match
+(documentation-consistency checks only). No product code, dependency, version,
+or prototype branch changed.
+
 ## V2 Architecture Gate — PASS
 
 The repository owner approved A1–A7 with binding refinements and replaced A8:
