@@ -11,7 +11,6 @@ includes project text. Deletion is application-level removal of the project's fi
 
 from __future__ import annotations
 
-import contextlib
 import secrets
 import sqlite3
 import threading
@@ -144,6 +143,16 @@ class SqliteProjectRepository:
             path for found, path in self._managed_files() if found == project_id
         )
 
+    @staticmethod
+    def _delete_failed() -> ProjectStorageError:
+        return ProjectStorageError(
+            code="delete_failed",
+            message=(
+                "Some of this project's files could not be removed. Close "
+                "other programs using them and delete the project again."
+            ),
+        )
+
     def _remove_files(self, project_id: str, *, strict: bool = False) -> None:
         failed = False
         for target in self._artifacts(project_id):
@@ -152,13 +161,7 @@ class SqliteProjectRepository:
             except OSError:
                 failed = True
         if failed and strict:
-            raise ProjectStorageError(
-                code="delete_failed",
-                message=(
-                    "Some of this project's files could not be removed. Close "
-                    "other programs using them and delete the project again."
-                ),
-            )
+            raise self._delete_failed()
 
     # --- create / list ------------------------------------------------------------
 
@@ -391,8 +394,12 @@ class SqliteProjectRepository:
                 return False
             for link in artifacts:
                 if link.is_symlink():  # remove links first; never purge through them
-                    with contextlib.suppress(OSError):
+                    try:
                         link.unlink()
+                    except OSError:
+                        # Stop before touching the real files so a retry can still
+                        # purge them; they cannot be purged while a link remains.
+                        raise self._delete_failed() from None
             for candidate in self._artifacts(project_id):
                 if candidate.suffix in {".sqlite3", ".bak"}:
                     support.purge_database(candidate)

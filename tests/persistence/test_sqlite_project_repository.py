@@ -684,6 +684,54 @@ def test_a_lease_cannot_commit_after_its_file_becomes_a_symlink(
     assert target.read_bytes() == before
 
 
+def test_the_real_database_is_still_purged_when_a_sidecar_link_exists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = new_repository(tmp_path / "managed")
+    created = repository.create_project(rich_workspace(), name=NAME_SENTINEL)
+    outside = make_outside_file(tmp_path)
+    directory = tmp_path / "managed" / "projects"
+    symlink_or_skip(directory / f"{created.project_id}.sqlite3-shm", outside)
+    assert NAME_SENTINEL.encode() in residual_bytes(tmp_path / "managed")
+
+    refuse_database_unlink(monkeypatch)  # leave the purged file behind to inspect
+    with pytest.raises(ProjectStorageError):
+        repository.delete(created.project_id)
+
+    assert NAME_SENTINEL.encode() not in residual_bytes(tmp_path / "managed")
+
+
+def test_delete_stops_before_touching_files_when_a_link_cannot_be_removed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = new_repository(tmp_path / "managed")
+    created = repository.create_project(rich_workspace(), name=NAME_SENTINEL)
+    outside = make_outside_file(tmp_path)
+    before = outside.read_bytes()
+    directory = tmp_path / "managed" / "projects"
+    database = directory / f"{created.project_id}.sqlite3"
+    symlink_or_skip(directory / f"{created.project_id}.sqlite3-shm", outside)
+
+    real_unlink = Path.unlink
+
+    def refuse_links(self: Path, missing_ok: bool = False) -> None:
+        if self.is_symlink():
+            raise PermissionError("synthetic: link in use")
+        real_unlink(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", refuse_links)
+    with pytest.raises(ProjectStorageError) as raised:
+        repository.delete(created.project_id)
+    assert raised.value.code == "delete_failed"
+    assert database.exists()  # kept, so the retry can still purge it properly
+    assert outside.read_bytes() == before
+
+    monkeypatch.undo()
+    assert repository.delete(created.project_id) is True
+    assert project_files(tmp_path / "managed") == []
+    assert outside.read_bytes() == before
+
+
 def test_corrupted_project_can_still_be_deleted(tmp_path: Path) -> None:
     repository = new_repository(tmp_path)
     project_id = "c" * 32
