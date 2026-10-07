@@ -47,16 +47,17 @@ class AppSettings:
 def build_analysis_service(settings: AppSettings) -> AnalysisGateway:
     """Construct models lazily; importing this module never loads model weights."""
 
-    def build() -> AnalysisService:
-        return AnalysisService(
-            sentiment_provider=CardiffSentimentProvider(
-                cache_dir=settings.cache_dir, offline=settings.offline
-            ),
-            emotion_provider=SamLoweEmotionProvider(
-                cache_dir=settings.cache_dir,
-                offline=settings.offline,
-                threshold=settings.emotion_threshold,
-            ),
-        )
+    return LazyAnalysisService(lambda: pinned_analysis_service(settings))
 
-    return LazyAnalysisService(build)
+
+def pinned_analysis_service(settings: AppSettings) -> AnalysisService:
+    return AnalysisService(
+        sentiment_provider=CardiffSentimentProvider(
+            cache_dir=settings.cache_dir, offline=settings.offline
+        ),
+        emotion_provider=SamLoweEmotionProvider(
+            cache_dir=settings.cache_dir,
+            offline=settings.offline,
+            threshold=settings.emotion_threshold,
+        ),
+    )
