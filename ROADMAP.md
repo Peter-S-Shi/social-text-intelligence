@@ -57,9 +57,10 @@ UI-neutral foundation: typed readiness, progress, and recovery; explicit,
 verified, resumable download of the two pinned models; verified import from an
 offline/pre-provisioned folder; and analysis that requires ready models and
 never downloads. M5.1 designed the desktop provisioning experience from that
-contract without changing its semantics; the owner approved the design as the
-M5.2 implementation baseline (H1) and decided that a confirmed corruption
-mid-session blocks analysis for the rest of the session (H2). M5.2 establishes
+contract; the owner approved the design as the M5.2 implementation baseline (H1)
+and decided that a confirmed corruption mid-session blocks analysis for the rest
+of the session (H2), the one explicitly approved semantic amendment to the
+contract, recorded in this closeout. M5.2 establishes
 the minimal native PySide6 desktop shell (already approved by the Architecture
 Gate, with LGPL compliance tracked from dependency introduction and cleared
 before any distributed Qt build) and implements that experience over the M5.0

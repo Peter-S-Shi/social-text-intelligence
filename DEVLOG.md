@@ -2,8 +2,9 @@
 
 ## V2 Functional Development — M5.1 Model Provisioning UI/UX Design — complete
 
-M5.1 designed the desktop model-provisioning experience from the M5.0 contract
-without changing its semantics, and passed its Human Gate on 2026-10-07. It
+M5.1 designed the desktop model-provisioning experience from the M5.0 contract,
+with H2 as the one explicitly approved semantic amendment (recorded below), and
+passed its Human Gate on 2026-10-07. It
 produced no production code. The evidence is the sidecar branch
 `prototype/m5-1-model-provisioning-uiux` at `d0abd7a`, pushed to `origin` and
 deliberately never merged: a design brief that maps each screen, state, action,
