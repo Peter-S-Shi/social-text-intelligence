@@ -1,0 +1,197 @@
+"""The smallest real shell: sidebar with persistent Models status, two pages."""
+
+from __future__ import annotations
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QCloseEvent
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QHBoxLayout,
+    QMainWindow,
+    QProgressBar,
+    QPushButton,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
+from ..analysis import AnalysisPageController, AnalysisPageState
+from ..composition import (
+    DesktopServices,
+    build_analysis_controller,
+    build_provisioning_controller,
+)
+from ..controller import (
+    Activity,
+    ControllerState,
+    JobRunner,
+    ProvisioningController,
+)
+from ..panel import build_sidebar_status
+from .pages import AnalyzePage, ProjectsPage
+from .platform import DesktopPlatform
+from .provisioning_ui import ProvisioningUi
+from .widgets import announce, frame, label
+
+APP_TITLE = "Social Text Intelligence"
+
+
+class MainWindow(QMainWindow):
+    def __init__(
+        self,
+        services: DesktopServices,
+        runner: JobRunner,
+        platform: DesktopPlatform | None = None,
+    ) -> None:
+        super().__init__()
+        self.services = services
+        self.runner = runner
+        self.setWindowTitle(APP_TITLE)
+        self.setMinimumSize(900, 620)
+        self.provisioning: ProvisioningController = build_provisioning_controller(
+            services, runner
+        )
+        self.analysis: AnalysisPageController = build_analysis_controller(
+            services, runner
+        )
+        self._closing = False
+
+        root = QWidget()
+        self.setCentralWidget(root)
+        layout = QHBoxLayout(root)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.sidebar = frame("panel")
+        self.sidebar.setObjectName("sidebar")
+        self.sidebar.setFixedWidth(250)
+        side = QVBoxLayout(self.sidebar)
+        side.addWidget(label(APP_TITLE, role="title"))
+        self.nav = QButtonGroup(self)
+        self.nav_buttons: dict[str, QPushButton] = {}
+        for name in ("Projects", "Analyze one text"):
+            button = QPushButton(name)
+            button.setCheckable(True)
+            button.setProperty("nav", True)
+            button.setAccessibleName(name)
+            button.setObjectName(f"nav-{name.split()[0].lower()}")
+            self.nav.addButton(button)
+            self.nav_buttons[name] = button
+            side.addWidget(button)
+        side.addStretch(1)
+        self.models_button = QPushButton()
+        self.models_button.setObjectName("models-status")
+        self.models_meter = QProgressBar()
+        self.models_meter.setRange(0, 1000)
+        self.models_meter.setTextVisible(False)
+        self.models_meter.setVisible(False)
+        side.addWidget(self.models_button)
+        side.addWidget(self.models_meter)
+        layout.addWidget(self.sidebar)
+
+        self.pages = QStackedWidget()
+        self.projects_page = ProjectsPage(services.projects.list_projects, runner)
+        self.analyze_page = AnalyzePage()
+        self.pages.addWidget(self.projects_page)
+        self.pages.addWidget(self.analyze_page)
+        layout.addWidget(self.pages, 1)
+
+        self.ui = ProvisioningUi(
+            self.provisioning,
+            services.gate,
+            lambda: services.provisioning.models_root,
+            platform or DesktopPlatform(),
+            self,
+        )
+        self.ui.message = lambda text: self.statusBar().showMessage(text, 8000)
+
+        self.nav_buttons["Projects"].clicked.connect(lambda: self._show_page(0))
+        self.nav_buttons["Analyze one text"].clicked.connect(lambda: self._show_page(1))
+        self.models_button.clicked.connect(self.ui.show_models)
+        self.projects_page.open_models.connect(self.ui.show_models)
+        self.analyze_page.open_models.connect(self.ui.show_models)
+        self.analyze_page.verify_requested.connect(self._verify_from_analysis)
+        self.analyze_page.analyze_requested.connect(self.analysis.submit)
+
+        self.provisioning.subscribe(self._on_provisioning)
+        self.analysis.subscribe(self._on_analysis)
+        self._last_announced = ""
+        self._show_page(0)
+
+    # -- startup ------------------------------------------------------------
+
+    def start(self) -> None:
+        """Quick status at launch; show the setup window unless models are ready."""
+
+        self.provisioning.refresh()
+        self.projects_page.refresh()
+        if not self.provisioning.state.status.ready:
+            self.ui.show_setup()
+
+    # -- rendering ----------------------------------------------------------
+
+    def _show_page(self, index: int) -> None:
+        self.pages.setCurrentIndex(index)
+        for position, button in enumerate(self.nav_buttons.values()):
+            button.setChecked(position == index)
+
+    def _on_provisioning(self, state: ControllerState) -> None:
+        availability = self.services.gate.availability(state.status)
+        view = build_sidebar_status(state, availability)
+        self.models_button.setText(f"{view.title}\n{view.line}")
+        self.models_button.setAccessibleName(view.accessible_name)
+        if view.accessible_name != self._last_announced:
+            self._last_announced = view.accessible_name
+            announce(self.models_button, view.accessible_name)
+        self.models_meter.setVisible(view.meter is not None)
+        if view.meter is not None:
+            self.models_meter.setValue(int(view.meter * 1000))
+            self.models_meter.setAccessibleName(view.accessible_name)
+        self.analyze_page.render_availability(state.status, availability)
+        self.projects_page.render_availability(state.status, availability)
+
+    def _on_analysis(self, state: AnalysisPageState) -> None:
+        self.analyze_page.render_analysis(state)
+
+    def _verify_from_analysis(self) -> None:
+        self.provisioning.verify()
+        self.ui.show_models()
+
+    # -- closing ------------------------------------------------------------
+
+    def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 (Qt override)
+        """Stop a stoppable operation and close when idle; Verify cannot be stopped."""
+
+        state = self.provisioning.state
+        if not state.busy and not self.analysis.state.running:
+            self.runner.wait_idle(5)
+            event.accept()
+            return
+        event.ignore()
+        if self._closing:
+            return
+        self._closing = True
+        if self.provisioning.can_stop:
+            self.provisioning.stop()
+        self.statusBar().showMessage(
+            "Finishing the current operation before closing…"
+            if state.activity is not Activity.VERIFYING
+            else "Verify is still running and cannot be stopped. The app closes when "
+            "it finishes."
+        )
+        self.provisioning.when_idle(self._close_when_done)
+
+    def _close_when_done(self) -> None:
+        if self.analysis.state.running:
+            self.analysis.subscribe(lambda state: self._retry_close(state))
+            return
+        self._closing = False
+        self.close()
+
+    def _retry_close(self, state: AnalysisPageState) -> None:
+        if not state.running:
+            self._closing = False
+            self.close()
+
+    def focus_models(self) -> None:
+        self.models_button.setFocus(Qt.FocusReason.OtherFocusReason)

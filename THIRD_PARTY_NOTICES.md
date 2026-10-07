@@ -74,6 +74,41 @@ fine-tuning benchmark. The project does not download or redistribute that
 dataset. Its sentiment subset and applicable platform terms are recorded in the
 [model audit](docs/MODEL_AUDIT.md) for provenance only.
 
+## V2 desktop shell dependency (M5.2)
+
+### Qt for Python: PySide6-Essentials and shiboken6
+
+- Packages: `PySide6-Essentials` and its dependency `shiboken6`, constrained to
+  `>=6.11,<7` (6.11.2 was used for development and tests).
+- Source: https://pypi.org/project/PySide6-Essentials/ (The Qt Company, Qt for
+  Python).
+- License declared by the installed package metadata:
+  `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only`. This project uses the
+  **LGPL-3.0** route and keeps the Qt libraries as separate, replaceable files.
+  Qt itself is also available under commercial terms, which this project does
+  not use.
+- Purpose: the native desktop shell and the model-provisioning windows.
+- Installed only through the `desktop` or `dev` extra; it is not bundled in the
+  repository, and no installer or frozen build exists yet.
+- Qt modules imported by the application: `QtCore`, `QtGui`, and `QtWidgets`,
+  and nothing else. `tests/desktop/test_boundaries.py` fails if another Qt
+  module is imported, so adding one (some Qt modules are GPL-only) forces a
+  licence check first.
+
+**Status of the LGPL obligations: tracked, not cleared.** M5.2 introduces the
+dependency for development only. The mandatory pre-distribution LGPL compliance
+gate (see [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md))
+has **not** been performed and has **not** passed. No installer or build that
+contains Qt may be distributed until it records at least: preserved copyright
+and licence notices with a prominent LGPL notice, Qt source provision or a
+written offer for the exact versions shipped, dynamic linking with replaceable
+Qt libraries and the information needed to run a relinked build, no GPL-only Qt
+module, and a distribution channel that adds no conflicting terms.
+
+The desktop shell uses system font fallbacks (Georgia, Segoe UI, Consolas). The
+web fonts used by the design prototypes are not bundled, and their licences have
+not been verified.
+
 ## Milestone 2 baseline
 
 The core runtime package has no mandatory third-party dependencies and includes

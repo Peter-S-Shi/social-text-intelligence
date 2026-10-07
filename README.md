@@ -192,6 +192,21 @@ installed, double-click `start_social_text_intelligence.bat` in the project
 folder to start the same offline, loopback-only server and open the browser
 automatically.
 
+Run the native desktop shell (development preview, Windows only for now):
+
+```text
+python -m pip install -e ".[desktop]"
+sti-desktop
+```
+
+On launch the shell checks the two approved models and opens a setup window if
+either is missing. Nothing downloads until you press a button that states its
+size; you can also import a models folder you already have, which is checked
+read-only before anything is copied. The sidebar always shows the Models status.
+This milestone ships only the provisioning experience plus a minimal Projects
+list and Analyze one text; importing CSV files into projects arrives later. The
+desktop shell uses Qt (LGPL-3.0); see [Third-party notices](THIRD_PARTY_NOTICES.md).
+
 Run the dependency-free test suite:
 
 ```text

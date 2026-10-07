@@ -32,7 +32,14 @@ emotion = [
 web = [
   "flask>=3.1,<4",
 ]
+# Native desktop shell. PySide6-Essentials ships only Qt Core, Gui, and Widgets (and
+# their dependencies); the app imports nothing beyond those three. Qt is LGPL-3.0:
+# see THIRD_PARTY_NOTICES.md. The pre-distribution LGPL compliance gate is still open.
+desktop = [
+  "PySide6-Essentials>=6.11,<7",
+]
 dev = [
+  "PySide6-Essentials>=6.11,<7",
   "flask>=3.1,<4",
   "mypy>=1.10,<2",
   "pytest>=8,<9",
@@ -42,6 +49,9 @@ dev = [
 [project.scripts]
 sti = "social_text_intelligence.cli:main"
 sti-web = "social_text_intelligence.interface.app:main"
+
+[project.gui-scripts]
+sti-desktop = "social_text_intelligence.desktop.qt.app:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
