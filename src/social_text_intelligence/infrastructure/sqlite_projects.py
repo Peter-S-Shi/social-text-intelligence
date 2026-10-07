@@ -105,7 +105,9 @@ class SqliteProjectRepository:
         """
 
         path = self._path(project_id)
-        if not path.is_file():
+        # A symlink with a managed name is never opened: it could lead to a
+        # project (or any database) outside the projects directory.
+        if path.is_symlink() or not path.is_file():
             yield None
             return
         connection = support.connect(path)

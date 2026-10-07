@@ -38,7 +38,13 @@ left data behind. Managed files (database, sidecars, migration backups) are now
 discovered by project id, only for the exact names the store creates, and
 listing shows residue-only ids so they can be deleted. Re-review also caught
 that purging followed a symlink to a file outside the projects directory; it now
-skips symlinks. Final-head CI passed on Python 3.11/3.12/3.13.
+skips symlinks. A further review closed the same trust boundary on open:
+a managed-name symlink is never opened as a project (it is listed as unreadable
+and delete removes only the link), and a symlinked migration-backup path makes a
+migration fail instead of writing outside the projects directory. Implementation
+commit `77d57be` passed CI on Python 3.11/3.12/3.13; the symlink-boundary fix
+landed afterwards, and the CI result for the final implementation head is
+recorded in `PROJECT_STATUS.md` once it completes.
 Deferred: a single-instance lock file, project rename and derived listing
 summaries, and wiring any UI to the repository. Docs updated:
 [Architecture](docs/ARCHITECTURE.md), `PROJECT_STATUS.md`, `ROADMAP.md`, and the

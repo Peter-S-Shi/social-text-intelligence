@@ -182,6 +182,12 @@ def _migrate(
     target: int,
     steps: Mapping[int, Migration],
 ) -> None:
+    if backup_path_for(database, version).is_symlink():
+        # Writing the backup would follow the link out of the projects directory.
+        raise ProjectStorageError(
+            code="migration_failed",
+            message="The project could not be upgraded and was left unchanged.",
+        )
     connection.execute("BEGIN IMMEDIATE")
     try:
         if read_identity(connection)[1] != version:

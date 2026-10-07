@@ -527,6 +527,80 @@ def test_delete_never_purges_through_a_symlink(tmp_path: Path, suffix: str) -> N
         connection.close()
 
 
+def link_to_external_project(
+    tmp_path: Path,
+) -> tuple[SqliteProjectRepository, str, Path]:
+    """A managed-name symlink whose target is a valid project outside the directory."""
+
+    external_root = tmp_path / "external"
+    external = new_repository(external_root).create_project(
+        rich_workspace(), name="External"
+    )
+    target = external_root / "projects" / f"{external.project_id}.sqlite3"
+    managed_root = tmp_path / "managed"
+    (managed_root / "projects").mkdir(parents=True)
+    link = managed_root / "projects" / f"{external.project_id}.sqlite3"
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available on this platform or account")
+    return new_repository(managed_root), external.project_id, target
+
+
+def test_a_symlinked_project_is_never_opened_or_modified(tmp_path: Path) -> None:
+    repository, project_id, target = link_to_external_project(tmp_path)
+    before = target.read_bytes()
+
+    assert [(i.project_id, i.status) for i in repository.list_projects()] == [
+        (project_id, ProjectStatus.UNREADABLE)
+    ]
+    assert repository.get(project_id) is None
+    assert repository.mutate(project_id, lambda w: replace(w, pending=None)) is None
+    assert repository.begin_analysis(project_id) is None
+
+    assert target.read_bytes() == before
+    external = new_repository(tmp_path / "external")
+    assert external.get(project_id) == rich_workspace()
+
+
+def test_deleting_a_symlinked_project_removes_only_the_link(tmp_path: Path) -> None:
+    repository, project_id, target = link_to_external_project(tmp_path)
+    before = target.read_bytes()
+
+    assert repository.delete(project_id) is True
+
+    assert not (tmp_path / "managed" / "projects" / target.name).is_symlink()
+    assert project_files(tmp_path / "managed") == []
+    assert target.read_bytes() == before
+    assert new_repository(tmp_path / "external").get(project_id) == rich_workspace()
+
+
+def test_a_migration_backup_never_writes_through_a_symlink(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = new_repository(tmp_path / "managed")
+    token = repository.create(rich_workspace())
+    outside = tmp_path / "outside.db"
+    make_foreign_database(outside)  # a valid database, so a write would succeed
+    before_outside = outside.read_bytes()
+    backup = tmp_path / "managed" / "projects" / f"{token}.pre-migration-v1.sqlite3.bak"
+    try:
+        backup.symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available on this platform or account")
+    database = tmp_path / "managed" / "projects" / f"{token}.sqlite3"
+    before = database.read_bytes()
+    monkeypatch.setattr(project_schema, "SCHEMA_VERSION", 2)
+    monkeypatch.setattr(project_schema, "MIGRATIONS", {1: lambda connection: None})
+
+    with pytest.raises(ProjectStorageError) as raised:
+        new_repository(tmp_path / "managed").get(token)
+
+    assert raised.value.code == "migration_failed"
+    assert outside.read_bytes() == before_outside
+    assert database.read_bytes() == before  # the project stays at its old version
+
+
 def test_corrupted_project_can_still_be_deleted(tmp_path: Path) -> None:
     repository = new_repository(tmp_path)
     project_id = "c" * 32
