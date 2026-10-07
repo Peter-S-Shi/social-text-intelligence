@@ -42,9 +42,10 @@ skips symlinks. A further review closed the same trust boundary on open:
 a managed-name symlink (database, SQLite sidecar, or backup) is never opened as a project (it is listed as unreadable
 and delete removes only the link), and a symlinked migration-backup path makes a
 migration fail instead of writing outside the projects directory. Implementation
-commit `77d57be` passed CI on Python 3.11/3.12/3.13; the symlink-boundary fix
-landed afterwards, and the CI result for the final implementation head is
-recorded in `PROJECT_STATUS.md` once it completes.
+commit `77d57be` passed CI on Python 3.11/3.12/3.13 first; after the
+symlink-boundary fixes, final implementation commit `b91694d` also passed CI on
+Python 3.11/3.12/3.13. The later governance-only head is a `[skip ci]` commit and
+has no CI run of its own.
 Deferred: a single-instance lock file, project rename and derived listing
 summaries, and wiring any UI to the repository. Docs updated:
 [Architecture](docs/ARCHITECTURE.md), `PROJECT_STATUS.md`, `ROADMAP.md`, and the
