@@ -6,13 +6,14 @@ emotion evidence, then carries that evidence through human review,
 moderation-decision practice, and support triage. Every model runs on your
 own machine; text is not sent to an inference API.
 
-> **Current lifecycle phase: V2 Application Foundation** (V2 Product Scope and
-> Architecture Gates are PASS; see
-> [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md) and
-> [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md)).
-> The first application foundation milestone is complete on `main`; S1–S4,
-> S6, and S7 are established. See [Project Status](PROJECT_STATUS.md) for the
-> next milestone boundary.
+> **Current lifecycle phase: V2 Persistent Project Foundation** (V2 Product
+> Scope, Architecture, and UI/IA Gates are PASS; see
+> [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
+> [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md),
+> and [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md)). The application
+> foundation milestone (M3) is complete on `main`; M4 — V2 Persistent Project
+> Foundation is the next mainline milestone and has not started. See
+> [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
 > Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,

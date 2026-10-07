@@ -36,6 +36,9 @@ STALE_CURRENT_PHRASES = (
     "Current lifecycle phase: V2 Desktop Architecture Exploration",
     "| Current lifecycle phase | **V2 Desktop Architecture Exploration**",
     "the Architecture Gate itself is pending",
+    "Current phase: V2 Application Foundation",
+    "Current lifecycle phase: V2 Application Foundation",
+    "| Current lifecycle phase | **V2 Application Foundation**",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -67,7 +70,11 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature milestone status | Milestones 1–10 complete |" in status
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
-    assert "| Current lifecycle phase | **V2 Application Foundation** — " in status
+    assert (
+        "| Current lifecycle phase | **V2 Persistent Project Foundation** — "
+        in status
+    )
+    assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
     assert (
         "| V1 final lifecycle phase (historical, immutable) | "
         "**Public Portfolio Delivery** — "
@@ -88,7 +95,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert "**Current phase: V2 Application Foundation.**" in roadmap
+    assert "**Current phase: V2 Persistent Project Foundation.**" in roadmap
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
     assert "**Status: Complete.**" in roadmap
