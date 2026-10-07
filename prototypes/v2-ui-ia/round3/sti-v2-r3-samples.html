@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STI V2 Round 3 Samples</title>
+<!-- PROTOTYPE - throwaway UI/IA sample sheet. Synthetic data only. Not production. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F0EB; --sheet:#FFFFFF; --ink:#131518; --ink2:#4B5057; --mute:#8A8F96; --faint:#B5B8BC;
+  --line:#E0DCD3; --line2:#EDEAE4; --side:#F7F5F1;
+  --machine:#33404F; --machine-soft:#EEF0F3; --machine-line:#D6DBE2;
+  --you:#2C47E0; --you-soft:#ECEFFF; --you-line:#C9D1FB;
+  --diff:#DF522C; --diff-soft:#FCEBE5;
+  --caution:#97670F; --caution-soft:#FBF1DC;
+  --neg:#C9543C; --neu:#A39F95; --pos:#2A7F95;
+  --serif:'Instrument Serif',Georgia,serif; --ui:'Inter','Segoe UI',system-ui,sans-serif; --mono:'IBM Plex Mono',Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#E6E3DC;color:var(--ink);font:13px/1.45 var(--ui);-webkit-font-smoothing:antialiased}
+.mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.01em}
+.serif{font-family:var(--serif);font-weight:400}
+.cap{font:500 10.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.muted{color:var(--ink2)} .faint{color:var(--mute)}
+/* ---------- sheet chrome (not part of the product) ---------- */
+.cover{max-width:1280px;margin:0 auto;padding:56px 0 24px}
+.cover h1{font:400 64px/1.02 var(--serif);letter-spacing:-.01em}
+.cover p{max-width:820px;font-size:15px;color:var(--ink2);margin-top:14px}
+.legend{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:28px}
+.legend div{background:var(--sheet);border:1px solid var(--line);border-radius:8px;padding:14px}
+.legend b{display:block;font:500 12px var(--ui);margin-bottom:4px}
+.screen{max-width:1280px;margin:0 auto;padding:44px 0 8px}
+.shead{display:flex;align-items:baseline;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.shead .n{font:400 44px/1 var(--serif);color:var(--mute)}
+.shead h2{font:400 32px/1 var(--serif)}
+.shead .tags{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.tag{font:500 10.5px var(--mono);padding:3px 7px;border-radius:4px;background:#fff;border:1px solid var(--line);color:var(--ink2)}
+.tag.v2{background:#F3ECFF;border-color:#DCCBFF;color:#5B34B8}
+.tag.ref{background:transparent;border-style:dashed}
+.snote{font-size:13px;color:var(--ink2);margin:-6px 0 14px;max-width:1000px}
+/* ---------- window ---------- */
+.win{width:1280px;height:800px;background:var(--paper);border-radius:10px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.04),0 18px 50px -12px rgba(30,25,15,.28);border:1px solid #CFCAC0;display:grid;grid-template-rows:34px 1fr;position:relative}
+.tb{display:flex;align-items:center;gap:10px;padding:0 0 0 12px;background:#EBE8E2;border-bottom:1px solid var(--line);font-size:12px;color:var(--ink2)}
+.tb .logo{width:16px;height:16px;border-radius:4px;background:var(--ink);display:grid;place-items:center;color:#fff;font:600 9px var(--mono)}
+.tb .ctl{margin-left:auto;display:flex;height:100%}
+.tb .ctl span{width:46px;display:grid;place-items:center;font-size:12px;color:var(--ink2)}
+.body{display:grid;grid-template-columns:236px 1fr;min-height:0}
+.body.solo{grid-template-columns:1fr}
+/* sidebar (R1) */
+.side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px;gap:2px;min-height:0}
+.proj{padding:10px 10px 12px;border-bottom:1px solid var(--line);margin:0 -10px 8px}
+.proj .t{font:500 13px var(--ui)}
+.proj .s{font:11px var(--mono);color:var(--mute);margin-top:2px}
+.nav-h{margin:12px 8px 4px}
+.nav{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:6px;color:var(--ink2);font-size:13px}
+.nav i{font-style:normal;width:14px;text-align:center;color:var(--mute);font-size:12px}
+.nav .c{margin-left:auto;font:11px var(--mono);color:var(--mute)}
+.nav.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.nav.on i{color:var(--ink)}
+.pend{font:500 9.5px var(--mono);letter-spacing:.06em;color:#5B34B8;background:#F3ECFF;border-radius:3px;padding:1px 5px;margin-left:auto}
+.side .foot{margin-top:auto;padding:10px 8px 2px;border-top:1px solid var(--line);font:11px var(--mono);color:var(--mute)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#2A7F95;margin-right:6px;vertical-align:1px}
+.main{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.bar{display:flex;align-items:center;gap:12px;padding:14px 24px 12px;border-bottom:1px solid var(--line2)}
+.bar h3{font:400 26px/1 var(--serif)}
+.bar .sp{flex:1}
+.pane{padding:18px 24px;overflow:hidden;flex:1;min-height:0}
+.pane>*,.grid>*{min-width:0}
+/* controls */
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:6px;border:1px solid #D5D1C8;background:#fff;font:500 12.5px var(--ui);color:var(--ink);white-space:nowrap}
+.btn.pri{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.you{background:var(--you);border-color:var(--you);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink2)}
+.btn.danger{color:var(--diff);border-color:#F0C3B6}
+.btn kbd,.k{font:500 10px var(--mono);color:inherit;opacity:.7;border:1px solid currentColor;border-radius:3px;padding:0 4px}
+.seg{display:inline-flex;background:#E9E6E0;border-radius:7px;padding:2px;gap:2px}
+.seg span{padding:4px 10px;border-radius:5px;font-size:12px;color:var(--ink2);white-space:nowrap}
+.seg span b{font:500 11px var(--mono);margin-left:6px;color:var(--mute)}
+.seg span.on{background:#fff;color:var(--ink);box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font:500 11px var(--ui);color:var(--ink2)}
+.inp{height:30px;border:1px solid #D5D1C8;border-radius:6px;background:#fff;padding:0 10px;display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink)}
+.inp.ph{color:var(--mute)}
+.inp .caret{color:var(--mute);font-size:10px}
+.area{border:1px solid #D5D1C8;border-radius:6px;background:#fff;padding:10px 12px;font-size:14px;line-height:1.5}
+.chip{display:inline-flex;align-items:center;gap:5px;font:500 11px var(--ui);padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink2);white-space:nowrap}
+.chip.ok{color:#22606F;background:#E8F3F5;border-color:#CBE4EA}
+.chip.err{color:var(--diff);background:var(--diff-soft);border-color:#F3CBBE}
+.chip.warn{color:var(--caution);background:var(--caution-soft);border-color:#EED9AE}
+.chip.you{color:var(--you);background:var(--you-soft);border-color:var(--you-line)}
+.chip.mac{color:var(--machine);background:var(--machine-soft);border-color:var(--machine-line)}
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:10px}
+.hr{height:1px;background:var(--line2)}
+.row{display:flex;align-items:center;gap:10px}
+.grid{display:grid;gap:14px}
+.big{font:400 52px/1 var(--serif);letter-spacing:-.01em}
+.huge{font:400 88px/.9 var(--serif);letter-spacing:-.02em}
+/* bars */
+.meter{height:6px;background:#ECE9E3;border-radius:3px;overflow:hidden}
+.meter>i{display:block;height:100%}
+.segm{display:flex;gap:2px}
+.segm i{height:10px;flex:1;border-radius:1px;background:#E6E2DA}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+table.t td{padding:8px 10px;border-bottom:1px solid var(--line2);vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}
+table.t tr.sel td{background:#F6F4EF}
+.ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s-neg{color:var(--neg)} .s-neu{color:var(--neu)} .s-pos{color:var(--pos)}
+.overlay{position:absolute;inset:34px 0 0 0;background:rgba(19,21,24,.28);display:grid;place-items:center}
+.pop{background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 20px 50px -10px rgba(0,0,0,.35)}
+/* native label grid (R5) */
+.elem{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.elem b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.elem div{border-radius:5px;padding:6px 6px 5px;min-height:46px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid rgba(0,0,0,.04)}
+.elem b{font:500 10.5px var(--ui)}
+.elem span{font:10px var(--mono);opacity:.8}
+.footnote{font:10.5px var(--mono);color:var(--mute)}
+@media (max-width:1320px){.screen,.cover{padding-left:16px;padding-right:16px}}
+body.only{background:#E6E3DC}
+body.only .cover,body.only .screen:not(.show){display:none}
+body.only .screen{padding:20px 20px 24px;max-width:none}
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="cap">Social Text Intelligence · V2 UI/IA exploration · round 3 · prototype, synthetic data</div>
+  <h1>Product feature samples:<br>a quiet desktop workbench for text evidence</h1>
+  <p>Eleven Windows desktop screens that cover every V1 feature area and the four gate-approved V2 additions, and nothing else. Each screen lists the feature IDs it implements (<span class="mono">F…</span> = V1, <span class="mono">V2-…</span> = gate-approved) and the references it borrows from (<span class="mono">R…</span>). The full lists are in FEATURE_BOUNDARY.md and REFERENCES.md.</p>
+  <div class="legend">
+    <div><b>Machine record</b><span class="muted">Graphite, read-only, kept exactly as produced. <span class="chip mac">AI</span></span></div>
+    <div><b>Your judgment</b><span class="muted">Ultramarine, stored separately, never overwrites the AI. <span class="chip you">You</span></span></div>
+    <div><b>Disagreement / failure</b><span class="muted">Vermilion only where you differ or a row failed. <span class="chip err">failed</span></span></div>
+    <div><b>Type</b><span class="muted">Instrument Serif for figures and quotes, Inter for the interface, IBM Plex Mono for provenance. All OFL, so they can be bundled in the Qt build.</span></div>
+  </div>
+</header>
+
+<!-- ======================= 01 FIRST RUN ======================= -->
+<section class="screen" id="s01">
+  <div class="shead"><span class="n">01</span><h2>First run · models</h2>
+    <div class="tags"><span class="tag v2">V2-2</span><span class="tag">F1.4</span><span class="tag ref">R6</span><span class="tag ref">R10</span></div></div>
+  <p class="snote">The only network request the app ever makes, and only if you choose it. The pinned revisions are identical to V1's provenance.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Social Text Intelligence — setup<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body solo"><div style="display:grid;grid-template-columns:1.05fr 1fr;height:100%">
+      <div style="padding:64px 56px;display:flex;flex-direction:column;gap:18px">
+        <div class="cap">Before the first analysis</div>
+        <div style="font:400 50px/1.04 var(--serif)">Two pinned models are needed once. After that, your text never leaves this computer.</div>
+        <p class="muted" style="font-size:14px;max-width:520px">The models are not bundled with the installer. They are fetched from huggingface.co at the exact revisions below and checked after download. A partially downloaded model is never used.</p>
+        <div style="margin-top:auto" class="row"><span class="btn ghost">Licences…</span><span style="flex:1"></span><span class="btn">Later</span><span class="btn pri">Continue in background</span></div>
+      </div>
+      <div style="background:#fff;border-left:1px solid var(--line);padding:56px 44px;display:flex;flex-direction:column;gap:22px">
+        <div>
+          <div class="row"><span class="cap">Sentiment</span><span style="flex:1"></span><span class="chip ok">ready · verified</span></div>
+          <div style="font:400 24px/1.2 var(--serif);margin-top:8px">cardiffnlp / twitter-roberta-base-sentiment-latest</div>
+          <div class="mono faint" style="margin-top:4px">rev 3216a57 · CC-BY-4.0 · 499 MB</div>
+          <div class="meter" style="margin-top:10px"><i style="width:100%;background:var(--ink)"></i></div>
+        </div>
+        <div>
+          <div class="row"><span class="cap">Emotion</span><span style="flex:1"></span><span class="mono" style="color:var(--you)">191 of 499 MB · about 50 s</span></div>
+          <div style="font:400 24px/1.2 var(--serif);margin-top:8px">SamLowe / roberta-base-go_emotions</div>
+          <div class="mono faint" style="margin-top:4px">rev d750483 · MIT · 499 MB</div>
+          <div class="meter" style="margin-top:10px"><i style="width:38%;background:var(--you)"></i></div>
+          <div class="row" style="margin-top:10px"><span class="btn">Pause</span><span class="btn">Cancel</span></div>
+        </div>
+        <div class="hr"></div>
+        <div class="grid" style="gap:10px">
+          <div class="cap">Other ways in</div>
+          <div class="row"><span class="btn">Use a folder I already have…</span><span class="faint" style="font-size:12px">Offline machines. Only the exact pinned revisions are accepted.</span></div>
+          <div class="card" style="padding:10px 12px;background:var(--diff-soft);border-color:#F3CBBE;font-size:12px"><b style="color:var(--diff)">If the download breaks:</b> it resumes from where it stopped. You can still create projects and import a CSV; analysis waits until both models are ready.</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= 02 PROJECTS ======================= -->
+<section class="screen" id="s02">
+  <div class="shead"><span class="n">02</span><h2>Projects</h2>
+    <div class="tags"><span class="tag v2">V2-1</span><span class="tag">F1</span><span class="tag">F3.5</span><span class="tag ref">R4</span><span class="tag ref">R11</span></div></div>
+  <p class="snote">A project is exactly one V1 batch workspace: one CSV and everything derived from it, saved until you delete it. "Analyze one text" stays outside projects, as in V1.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Social Text Intelligence<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body solo"><div style="padding:36px 56px;display:flex;flex-direction:column;gap:20px;height:100%">
+      <div class="row"><div style="font:400 44px/1 var(--serif)">Projects</div><span style="flex:1"></span>
+        <span class="btn">Analyze one text</span><span class="btn pri">New project from CSV…</span></div>
+      <div class="row"><span class="seg"><span class="on">All<b>4</b></span><span>In review<b>2</b></span><span>Fully reviewed<b>2</b></span></span><span style="flex:1"></span><span class="inp ph" style="width:260px">Filter by name</span></div>
+      <div class="card" style="overflow:hidden">
+        <table class="t">
+          <thead><tr><th style="width:34%">Project</th><th style="width:9%">Rows</th><th style="width:28%">Human review</th><th style="width:12%">Last opened</th><th style="width:17%"></th></tr></thead>
+          <tbody>
+            <tr class="sel"><td><div style="font:400 20px var(--serif)">Checkout feedback — autumn sample</div><div class="mono faint">checkout_autumn.csv · 2 failed rows</div></td><td class="mono">409</td>
+              <td><div class="segm" style="max-width:220px">
+                <i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--you)"></i><i></i><i></i><i></i></div><div class="mono faint" style="margin-top:5px">268 / 409 · 41 corrected · 9 uncertain</div></td>
+              <td class="mono muted">today 09:12</td><td style="text-align:right"><span class="btn pri">Open</span> <span class="btn ghost">⋯</span></td></tr>
+            <tr><td><div style="font:400 20px var(--serif)">Community forum — onboarding thread</div><div class="mono faint">forum_onboarding.csv</div></td><td class="mono">214</td>
+              <td><div class="segm" style="max-width:220px"><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--you)"></i></div><div class="mono faint" style="margin-top:5px">214 / 214 · review queue complete</div></td>
+              <td class="mono muted">3 Oct</td><td style="text-align:right"><span class="btn">Open</span> <span class="btn ghost">⋯</span></td></tr>
+            <tr><td><div style="font:400 20px var(--serif)">Support inbox pilot</div><div class="mono faint">support_pilot.csv</div></td><td class="mono">188</td>
+              <td><div class="segm" style="max-width:220px"><i style="background:var(--ink)"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="mono faint" style="margin-top:5px">22 / 188 reviewed</div></td>
+              <td class="mono muted">28 Sep</td><td style="text-align:right;position:relative"><span class="btn">Open</span> <span class="btn ghost" style="background:#EDEAE4">⋯</span></td></tr>
+            <tr><td><div style="font:400 20px var(--serif)">Domain evaluation set</div><div class="mono faint">domain_eval_120.csv</div></td><td class="mono">120</td>
+              <td><div class="segm" style="max-width:220px"><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i><i style="background:var(--ink)"></i></div><div class="mono faint" style="margin-top:5px">120 / 120 · review queue complete</div></td>
+              <td class="mono muted">21 Sep</td><td style="text-align:right"><span class="btn">Open</span> <span class="btn ghost">⋯</span></td></tr>
+          </tbody></table>
+      </div>
+      <div class="footnote" style="margin-top:auto">Projects are stored in %LOCALAPPDATA%\SocialTextIntelligence\projects · one file per project · kept until you delete it</div>
+    </div></div>
+    <div class="pop" style="position:absolute;right:70px;top:430px;width:380px;padding:18px 20px">
+      <div style="font:400 22px var(--serif)">Delete “Support inbox pilot”?</div>
+      <p class="muted" style="font-size:12.5px;margin-top:8px">188 rows, the AI record and 22 human reviews will be removed from this application's data files. Exports you saved, backups and copies made by Windows are not affected. This is not a secure erase.</p>
+      <div class="row" style="margin-top:14px"><span class="btn">Export reviewed CSV first…</span><span style="flex:1"></span><span class="btn">Cancel</span><span class="btn danger">Delete</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 03 ANALYZE ONE TEXT ======================= -->
+<section class="screen" id="s03">
+  <div class="shead"><span class="n">03</span><h2>Analyze one text</h2>
+    <div class="tags"><span class="tag">F1</span><span class="tag">F1.1</span><span class="tag">F1.2</span><span class="tag">F1.3</span><span class="tag">F1.4</span><span class="tag">F1.5</span><span class="tag v2">V2-3</span><span class="tag ref">R10</span><span class="tag ref">R5</span></div></div>
+  <p class="snote">The result reads like a specimen sheet. The threshold-fallback explanation and all 28 model-native scores are V1 behaviour. The language notice is the only V2 addition. Nothing here is saved.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Social Text Intelligence — Analyze one text<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body">
+      <aside class="side">
+        <div class="proj"><div class="t">No project</div><div class="s">single-text analysis is not saved</div></div>
+        <div class="nav on"><i>◇</i>Analyze one text</div>
+        <div class="nav"><i>▤</i>Projects</div>
+        <div class="foot"><span class="dot"></span>2 pinned models ready · offline</div>
+      </aside>
+      <div class="main">
+        <div class="bar"><h3>Analyze one text</h3><span class="sp"></span><span class="chip">English only</span><span class="chip">20,000-character limit</span><span class="chip">no truncation</span></div>
+        <div class="pane" style="display:grid;grid-template-columns:400px 1fr;gap:22px">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="area" style="height:150px">The new update finally fixed the login bug, but the app still crashes whenever I try to export a large file.</div>
+            <div class="row"><span class="mono faint">104 characters · within model limits</span><span style="flex:1"></span><span class="btn pri">Analyze locally</span></div>
+            <div class="hr" style="margin:6px 0"></div>
+            <div class="cap">Other states of this screen</div>
+            <div class="card" style="padding:10px 12px;background:var(--caution-soft);border-color:#EED9AE;font-size:12px"><b style="color:var(--caution)">Looks like French.</b> These models are English-only, so the result would be unreliable. You can still analyze; the notice stays on the result.<span class="tag v2" style="margin-left:6px">V2-3</span></div>
+            <div class="card" style="padding:10px 12px;background:var(--diff-soft);border-color:#F3CBBE;font-size:12px"><b style="color:var(--diff)">Not analyzed.</b> This text uses 731 model tokens; the limit is 512. It was rejected, not truncated.</div>
+            <div class="card" style="padding:10px 12px;font-size:12px"><b>Models not available.</b> Local model dependencies are not installed or not downloaded yet. <u>Open model setup</u>.</div>
+          </div>
+          <div class="card" style="padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:18px 26px;align-content:start">
+            <div>
+              <div class="row"><span class="chip mac">AI</span><span class="cap">Sentiment</span></div>
+              <div class="big s-neg" style="margin-top:8px">negative</div>
+              <div class="mono faint" style="margin-top:4px">confidence 0.687</div>
+              <div style="margin-top:12px;display:grid;gap:7px">
+                <div class="row"><span style="width:62px" class="muted">negative</span><div class="meter" style="flex:1"><i style="width:68.7%;background:var(--neg)"></i></div><span class="mono" style="width:40px;text-align:right">0.687</span></div>
+                <div class="row"><span style="width:62px" class="muted">neutral</span><div class="meter" style="flex:1"><i style="width:29.3%;background:var(--neu)"></i></div><span class="mono" style="width:40px;text-align:right">0.293</span></div>
+                <div class="row"><span style="width:62px" class="muted">positive</span><div class="meter" style="flex:1"><i style="width:2%;background:var(--pos)"></i></div><span class="mono" style="width:40px;text-align:right">0.020</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="row"><span class="chip mac">AI</span><span class="cap">Dominant emotion</span></div>
+              <div class="big" style="margin-top:8px">neutral</div>
+              <div class="mono faint" style="margin-top:4px">threshold ≥ 0.50 · secondary: none</div>
+              <div class="card" style="margin-top:12px;padding:9px 11px;background:var(--caution-soft);border-color:#EED9AE;font-size:12px"><b style="color:var(--caution)">Threshold fallback.</b> No non-neutral compact emotion reached 0.50. “Neutral” here is a fallback state, not a claim that the neutral score is highest.</div>
+            </div>
+            <div style="grid-column:1/-1">
+              <div class="row"><span class="cap">Nine compact emotion scores</span></div>
+              <div style="position:relative;display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-top:8px;align-items:end;height:112px"><div style="position:absolute;left:0;right:0;bottom:101px;border-top:1px dashed var(--caution)"></div><span class="mono" style="position:absolute;right:0;bottom:104px;color:var(--caution);font-size:10.5px">0.50 threshold · none reached</span>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:9px;background:var(--machine)"></div><span class="mono faint">joy</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:2px;background:var(--machine)"></div><span class="mono faint">amuse.</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:39px;background:var(--machine)"></div><span class="mono faint">admir.</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:1px;background:var(--machine)"></div><span class="mono faint">grat.</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:10px;background:var(--machine)"></div><span class="mono faint">anger</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:12px;background:var(--machine)"></div><span class="mono faint">sadness</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:1px;background:var(--machine)"></div><span class="mono faint">fear</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:1px;background:var(--machine)"></div><span class="mono faint">disgust</span></div>
+                <div style="display:flex;flex-direction:column;gap:4px;align-items:center"><div style="width:100%;height:53px;background:var(--neu)"></div><span class="mono faint">neutral</span></div>
+              </div>
+            </div>
+            <div style="grid-column:1/-1">
+              <div class="row"><span class="cap">All 28 model-native scores</span><span class="faint" style="font-size:11.5px">shade = score; outline = maps to a compact emotion</span></div>
+              <div class="elem" style="margin-top:8px" id="elem"></div>
+            </div>
+            <div style="grid-column:1/-1" class="footnote">cardiffnlp/twitter-roberta-base-sentiment-latest@3216a57 · SamLowe/roberta-base-go_emotions@d750483 · analyzed locally · not saved</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 04 IMPORT ======================= -->
+<section class="screen" id="s04">
+  <div class="shead"><span class="n">04</span><h2>New project · import &amp; validate</h2>
+    <div class="tags"><span class="tag">F2</span><span class="tag">F2.1</span><span class="tag">F2.2</span><span class="tag">F2.3</span><span class="tag v2">V2-1</span><span class="tag v2">V2-3</span><span class="tag v2">V2-4</span><span class="tag ref">R9</span><span class="tag ref">R2</span></div></div>
+  <p class="snote">File in, structured rows out. The V1 limits and the recognised metadata columns are shown as they are. Language notices come from a language check (V2-3), not from the models. Progress and cancel (V2-4) keep the finished rows.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Social Text Intelligence — New project<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body solo"><div style="display:grid;grid-template-columns:420px 1fr;height:100%">
+      <div style="background:#fff;border-right:1px solid var(--line);padding:30px 30px;display:flex;flex-direction:column;gap:16px">
+        <div class="cap">Step 1 of 2 · read the file</div>
+        <div style="font:400 30px/1.1 var(--serif)">checkout_autumn.csv</div>
+        <div class="mono faint">412 rows · 184 KB · UTF-8 · limits 2 MB / 500 rows</div>
+        <div class="field"><label>Project name</label><div class="inp">Checkout feedback — autumn sample</div></div>
+        <div class="field"><label>Text column</label><div class="inp">message_body <span class="caret">▾</span></div></div>
+        <div class="field"><label>Recognised metadata columns</label>
+          <div class="row" style="flex-wrap:wrap;gap:6px">
+            <span class="chip you">record_id</span><span class="chip you">source_type</span><span class="chip you">source_label</span><span class="chip you">topic</span><span class="chip you">timestamp</span><span class="chip">language — not in file</span><span class="chip">community — not in file</span><span class="chip">parent_record_id — not in file</span><span class="chip">notes — not in file</span>
+          </div>
+          <span class="faint" style="font-size:11.5px">Groups in Insights come only from these columns. Nothing is inferred.</span>
+        </div>
+        <div class="hr"></div>
+        <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px">
+          <div><div class="big">411</div><div class="mono faint">valid</div></div>
+          <div><div class="big" style="color:var(--diff)">1</div><div class="mono faint">invalid</div></div>
+          <div><div class="big" style="color:var(--caution)">3</div><div class="mono faint">possibly not English</div></div>
+        </div>
+        <div style="margin-top:auto" class="row"><span class="btn">Back</span><span style="flex:1"></span><span class="btn pri">Create project &amp; analyze 411 rows</span></div>
+      </div>
+      <div style="padding:26px 28px;display:flex;flex-direction:column;gap:14px;min-height:0">
+        <div class="row"><span class="cap">Preview &amp; validation</span><span style="flex:1"></span><span class="seg"><span class="on">All<b>412</b></span><span>Invalid<b>1</b></span><span>Language notice<b>3</b></span></span></div>
+        <div class="card" style="overflow:hidden">
+          <table class="t">
+            <thead><tr><th style="width:6%">Row</th><th style="width:11%">record_id</th><th style="width:47%">message_body</th><th style="width:12%">source_type</th><th style="width:24%">Check</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">2</td><td class="mono">c-1001</td><td class="ell">The new update finally fixed the login bug, but the app still crashes whenever I try…</td><td>app_store</td><td><span class="chip ok">ready</span></td></tr>
+              <tr><td class="mono">3</td><td class="mono">c-1002</td><td class="ell">Brilliant, another price rise right after you removed offline mode. Truly great work.</td><td>app_store</td><td><span class="chip ok">ready</span></td></tr>
+              <tr><td class="mono">4</td><td class="mono">c-1003</td><td class="ell">Sync has been stuck on ‘pending’ since yesterday and I have a client meeting in an hour.</td><td>support</td><td><span class="chip ok">ready</span></td></tr>
+              <tr><td class="mono">5</td><td class="mono">c-1004</td><td class="ell" style="color:var(--mute)">(empty)</td><td>support</td><td><span class="chip err">empty_text</span></td></tr>
+              <tr><td class="mono">6</td><td class="mono">c-1005</td><td class="ell">Merci, la nouvelle version est beaucoup plus rapide.</td><td>forum</td><td><span class="chip warn">ready · looks like French</span></td></tr>
+              <tr><td class="mono">7</td><td class="mono">c-1006</td><td class="ell">Happy to pay for this. It replaced three other tools for our team.</td><td>forum</td><td><span class="chip ok">ready</span></td></tr>
+              <tr><td class="mono">8</td><td class="mono">c-1007</td><td class="ell">I was charged twice this month. Please refund the duplicate payment.</td><td>support</td><td><span class="chip ok">ready</span></td></tr>
+              <tr><td class="mono">9</td><td class="mono">c-1008</td><td class="ell">Couldn’t find where to change the language. Gave up after ten minutes.</td><td>app_store</td><td><span class="chip ok">ready</span></td></tr>
+            </tbody></table>
+        </div>
+        <div class="faint" style="font-size:11.5px">Rows longer than either model’s token limit fail explicitly during analysis and stay in the project with their reason. Other rows continue.</div>
+        <div class="card" style="margin-top:auto;padding:16px 18px">
+          <div class="row"><span class="cap">Step 2 of 2 · analyzing on this computer</span><span style="flex:1"></span><span class="mono">187 of 411 · 2 failed · about 1 min</span></div>
+          <div class="segm" style="margin:12px 0 10px" id="prog"></div>
+          <div class="row"><span class="faint" style="font-size:12px">Each row is saved as soon as it is analyzed. Cancel keeps the 187 finished rows; the remaining rows stay queued and can be resumed.</span><span style="flex:1"></span><span class="btn">Pause</span><span class="btn danger">Cancel…</span></div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<!-- ======================= shared sidebar template is repeated per window (static mock) ======================= -->
+
+<!-- ======================= 05 RESULTS ======================= -->
+<section class="screen" id="s05">
+  <div class="shead"><span class="n">05</span><h2>Results</h2>
+    <div class="tags"><span class="tag">F2.4</span><span class="tag">F2.5</span><span class="tag">F2.6</span><span class="tag ref">R13</span><span class="tag ref">R2</span><span class="tag ref">R1</span></div></div>
+  <p class="snote">V1's aggregates become one big figure each with a small chart. The results table keeps V1's status, sentiment and dominant-emotion filters, and failed rows stay visible with their reason.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body">
+      <aside class="side" data-on="results"></aside>
+      <div class="main">
+        <div class="bar"><h3>Results</h3><span class="mono faint">409 analyzed · 2 failed · 1 invalid at import</span><span class="sp"></span><span class="btn">Export results CSV…</span></div>
+        <div class="pane" style="display:flex;flex-direction:column;gap:16px">
+          <div class="grid" style="grid-template-columns:1.05fr 2fr 1.1fr .65fr">
+            <div class="card" style="padding:16px 18px">
+              <div class="cap">AI sentiment · rows</div>
+              <div class="row" style="margin-top:10px;align-items:flex-end;gap:16px"><div><div class="big s-neg">171</div><div class="mono faint">negative</div></div><div><div class="big s-neu">72</div><div class="mono faint">neutral</div></div><div><div class="big s-pos">166</div><div class="mono faint">positive</div></div></div>
+              <div style="display:flex;height:6px;margin-top:12px;border-radius:3px;overflow:hidden"><i style="width:41.8%;background:var(--neg)"></i><i style="width:17.6%;background:var(--neu)"></i><i style="width:40.6%;background:var(--pos)"></i></div>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div class="cap">AI dominant emotion · rows</div>
+              <div id="emodist" style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px;align-items:end;height:92px;margin-top:10px"></div>
+              <div class="faint" style="font-size:11px;margin-top:6px">neutral includes 61 threshold fallbacks</div>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div class="cap">Compact activation rate</div>
+              <div style="display:grid;gap:6px;margin-top:10px">
+                <div class="row"><span style="width:76px" class="muted">anger</span><div class="meter" style="flex:1"><i style="width:16%;background:var(--machine)"></i></div><span class="mono" style="width:32px;text-align:right">16%</span></div>
+                <div class="row"><span style="width:76px" class="muted">joy</span><div class="meter" style="flex:1"><i style="width:15%;background:var(--machine)"></i></div><span class="mono" style="width:32px;text-align:right">15%</span></div>
+                <div class="row"><span style="width:76px" class="muted">admiration</span><div class="meter" style="flex:1"><i style="width:13%;background:var(--machine)"></i></div><span class="mono" style="width:32px;text-align:right">13%</span></div>
+                <div class="row"><span style="width:76px" class="muted">sadness</span><div class="meter" style="flex:1"><i style="width:10%;background:var(--machine)"></i></div><span class="mono" style="width:32px;text-align:right">10%</span></div>
+              </div>
+              <div class="faint" style="font-size:11px;margin-top:6px">independent rates; need not sum to 100%</div>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div class="cap">Failed</div>
+              <div class="big" style="color:var(--diff);margin-top:10px">2</div>
+              <div class="mono faint">input_too_long ×2<br>kept, not truncated</div>
+            </div>
+          </div>
+          <div class="row"><span class="seg"><span class="on">All<b>411</b></span><span>Analyzed<b>409</b></span><span>Failed<b>2</b></span></span>
+            <div class="inp" style="width:170px">Sentiment: any <span class="caret">▾</span></div><div class="inp" style="width:200px">Dominant emotion: any <span class="caret">▾</span></div><span style="flex:1"></span><span class="mono faint">411 rows shown</span></div>
+          <div class="card" style="overflow:hidden">
+            <table class="t">
+              <thead><tr><th style="width:5%">Row</th><th style="width:9%">record_id</th><th style="width:9%">Status</th><th style="width:39%">Text</th><th style="width:10%">Sentiment</th><th style="width:13%">Dominant</th><th style="width:15%">Secondary / error</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">2</td><td class="mono">c-1001</td><td><span class="chip ok">analyzed</span></td><td class="ell">The new update finally fixed the login bug, but the app still crashes whenever…</td><td class="s-neg">negative</td><td>neutral <span class="chip warn">fallback</span></td><td class="faint">none</td></tr>
+                <tr class="sel"><td class="mono">3</td><td class="mono">c-1002</td><td><span class="chip ok">analyzed</span></td><td class="ell">Brilliant, another price rise right after you removed offline mode. Truly great work.</td><td class="s-pos">positive</td><td>admiration</td><td class="faint">none</td></tr>
+                <tr><td class="mono">4</td><td class="mono">c-1003</td><td><span class="chip ok">analyzed</span></td><td class="ell">Sync has been stuck on ‘pending’ since yesterday and I have a client meeting…</td><td class="s-neg">negative</td><td>fear</td><td>annoyance→anger</td></tr>
+                <tr><td class="mono">6</td><td class="mono">c-1005</td><td><span class="chip ok">analyzed</span> <span class="chip warn">fr?</span></td><td class="ell">Merci, la nouvelle version est beaucoup plus rapide.</td><td class="s-neu">neutral</td><td>neutral</td><td class="faint">none</td></tr>
+                <tr><td class="mono">7</td><td class="mono">c-1006</td><td><span class="chip ok">analyzed</span></td><td class="ell">Happy to pay for this. It replaced three other tools for our team.</td><td class="s-pos">positive</td><td>joy</td><td>admiration</td></tr>
+                <tr><td class="mono">8</td><td class="mono">c-1007</td><td><span class="chip ok">analyzed</span></td><td class="ell">I was charged twice this month. Please refund the duplicate payment.</td><td class="s-neg">negative</td><td>neutral <span class="chip warn">fallback</span></td><td class="faint">none</td></tr>
+                <tr><td class="mono">41</td><td class="mono">c-1040</td><td><span class="chip err">failed</span></td><td class="ell faint">(long message, 2,904 characters)</td><td class="faint">—</td><td class="faint">—</td><td style="color:var(--diff)">input_too_long: 731 &gt; 512</td></tr>
+              </tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 06 REVIEW ======================= -->
+<section class="screen" id="s06">
+  <div class="shead"><span class="n">06</span><h2>Review</h2>
+    <div class="tags"><span class="tag">F3</span><span class="tag">F3.1</span><span class="tag">F3.2</span><span class="tag">F3.3</span><span class="tag">F3.4</span><span class="tag">F3.5</span><span class="tag">F1.3</span><span class="tag ref">R6</span><span class="tag ref">R4</span><span class="tag ref">R14</span><span class="tag ref">R12</span></div></div>
+  <p class="snote">The AI record and your judgment sit side by side as two equal cards, like a blind taste test. The AI card is read-only. Accept / Correct / Uncertain per dimension, labels, note, Save &amp; Next and Next Unreviewed are V1 exactly.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body">
+      <aside class="side" data-on="review"></aside>
+      <div class="main">
+        <div class="bar"><h3>Review</h3><span class="seg"><span>All<b>409</b></span><span class="on">Unreviewed<b>141</b></span><span>Reviewed<b>268</b></span><span>Corrected<b>41</b></span><span>Uncertain<b>9</b></span></span><span class="sp"></span>
+          <div style="width:230px"><div class="segm" id="revprog"></div><div class="mono faint" style="margin-top:4px">268 / 409 reviewed · 141 to go</div></div></div>
+        <div class="pane" style="display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px">
+          <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
+            <div style="padding:10px 12px" class="row"><span class="cap">Queue · unreviewed</span><span style="flex:1"></span><span class="mono faint">1 / 141</span></div>
+            <div class="hr"></div>
+            <div id="queue"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+            <div class="row"><span class="mono faint">row 3 · c-1002 · source_type app_store · topic pricing</span><span style="flex:1"></span><span class="btn ghost">‹ Previous</span><span class="btn ghost">Next unreviewed ›</span></div>
+            <div style="font:400 30px/1.18 var(--serif);max-width:860px">“Brilliant, another price rise right after you removed offline mode. Truly great work.”</div>
+            <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px;flex:1;min-height:0">
+              <div class="card" style="padding:18px 20px;background:var(--machine-soft);border-color:var(--machine-line);display:flex;flex-direction:column;gap:12px">
+                <div class="row"><span class="chip mac">AI record</span><span class="faint" style="font-size:11.5px">read-only · kept as produced</span></div>
+                <div class="row" style="align-items:flex-end;gap:18px;flex-wrap:wrap">
+                  <div><div class="cap">Sentiment</div><div class="big s-pos" style="font-size:38px">positive</div><div class="mono faint">confidence 0.571</div></div>
+                  <div><div class="cap">Dominant emotion</div><div class="big" style="font-size:38px">admiration</div><div class="mono faint">0.52 ≥ 0.50 · secondary: none</div></div>
+                </div>
+                <div style="display:grid;gap:6px">
+                  <div class="row"><span style="width:62px" class="muted">negative</span><div class="meter" style="flex:1;background:#E0E4EA"><i style="width:31.2%;background:var(--neg)"></i></div><span class="mono" style="width:40px;text-align:right">0.312</span></div>
+                  <div class="row"><span style="width:62px" class="muted">neutral</span><div class="meter" style="flex:1;background:#E0E4EA"><i style="width:11.7%;background:var(--neu)"></i></div><span class="mono" style="width:40px;text-align:right">0.117</span></div>
+                  <div class="row"><span style="width:62px" class="muted">positive</span><div class="meter" style="flex:1;background:#E0E4EA"><i style="width:57.1%;background:var(--pos)"></i></div><span class="mono" style="width:40px;text-align:right">0.571</span></div>
+                </div>
+                <div class="muted" style="font-size:12px;margin-top:auto">▸ Inspect all 28 model-native emotion scores</div>
+                <div class="footnote">sentiment@3216a57 · emotion@d750483</div>
+              </div>
+              <div class="card" style="padding:18px 20px;background:var(--you-soft);border-color:var(--you-line);display:flex;flex-direction:column;gap:12px">
+                <div class="row"><span class="chip you">Your judgment</span><span class="faint" style="font-size:11.5px">saved separately · never changes the AI record</span></div>
+                <div>
+                  <div class="cap">Sentiment</div>
+                  <div class="row" style="margin-top:6px"><span class="seg"><span>Accept AI</span><span class="on" style="color:var(--you)">Correct</span><span>Uncertain</span></span></div><div class="inp" style="margin-top:6px;border-color:var(--you-line)">Human sentiment: negative <span class="caret">▾</span></div>
+                </div>
+                <div>
+                  <div class="cap">Emotion</div>
+                  <div class="row" style="margin-top:6px"><span class="seg"><span>Accept AI</span><span class="on" style="color:var(--you)">Correct</span><span>Uncertain</span></span></div><div class="inp" style="margin-top:6px;border-color:var(--you-line)">Human emotion: anger <span class="caret">▾</span></div>
+                  <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px"><span class="faint" style="font-size:11.5px">Secondary</span><span class="chip you">disgust ✕</span><span class="chip">+ add</span></div>
+                </div>
+                <div class="field"><label>Optional review note</label><div class="area" style="font-size:12.5px;height:58px;color:var(--ink2)">Praise words used sarcastically; complaint about price and removed feature.</div></div>
+                <div class="faint" style="font-size:11.5px;margin-top:auto">Uncertain records no human label and is left out of agreement.</div><div class="row"><span class="btn ghost">Next unreviewed</span><span style="flex:1"></span><span class="btn you">Save &amp; next <kbd>Enter</kbd></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 07 AGREEMENT ======================= -->
+<section class="screen" id="s07">
+  <div class="shead"><span class="n">07</span><h2>Agreement, not accuracy</h2>
+    <div class="tags"><span class="tag">F3.6</span><span class="tag">F3.7</span><span class="tag">F3.8</span><span class="tag">F3.9</span><span class="tag ref">R7</span></div></div>
+  <p class="snote">V1's review summary set as a short report: three agreement figures over definitive reviews, sentiment confusion, V1's four confidence bands (shown once there are 5 or more definitive reviews), and the explicit reviewed export.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body">
+      <aside class="side" data-on="agreement"></aside>
+      <div class="main">
+        <div class="bar"><h3>Agreement</h3><span class="mono faint">268 of 409 reviewed · uncertain dimensions excluded from every denominator</span><span class="sp"></span><span class="btn pri">Export reviewed CSV…</span></div>
+        <div class="pane" style="display:grid;grid-template-columns:1.25fr 1fr;gap:28px">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:22px">
+              <div><div class="huge">79<span style="font-size:44px">%</span></div><div class="hr" style="margin:10px 0 8px"></div><div style="font-weight:500">Sentiment agreement</div><div class="mono faint">205 of 259 definitive</div></div>
+              <div><div class="huge">63<span style="font-size:44px">%</span></div><div class="hr" style="margin:10px 0 8px"></div><div style="font-weight:500">Dominant emotion</div><div class="mono faint">158 of 251 definitive</div></div>
+              <div><div class="huge">48<span style="font-size:44px">%</span></div><div class="hr" style="margin:10px 0 8px"></div><div style="font-weight:500">Exact emotion set</div><div class="mono faint">121 of 251 definitive</div></div>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div class="row"><span class="cap">Confidence and disagreement · sentiment</span><span style="flex:1"></span><span class="seg"><span class="on">Sentiment</span><span>Dominant emotion</span></span></div>
+              <div id="bands" style="display:grid;gap:10px;margin-top:14px"></div>
+              <div class="faint" style="font-size:11.5px;margin-top:10px">Disagreements / definitive reviews per AI confidence band. Shown after at least 5 definitive reviews.</div>
+            </div>
+            <div class="card" style="padding:14px 18px">
+              <div class="cap">Corrections · human sentiment after correcting</div>
+              <div class="row" style="margin-top:10px;gap:22px"><span><span class="mono s-neg" style="font-size:18px">30</span> <span class="muted">to negative</span></span><span><span class="mono s-neu" style="font-size:18px">16</span> <span class="muted">to neutral</span></span><span><span class="mono s-pos" style="font-size:18px">8</span> <span class="muted">to positive</span></span></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="card" style="padding:16px 18px">
+              <div class="cap">Sentiment confusion · AI rows × human columns</div>
+              <div id="cm" style="display:grid;grid-template-columns:90px repeat(3,1fr);gap:4px;margin-top:12px"></div>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div class="cap">Explicit reviewed export</div>
+              <p class="muted" style="font-size:12.5px;margin-top:8px">Every row, the immutable AI outputs, separate human fields, provenance, errors and agreement values. Nothing is written until you choose a file.</p>
+              <div style="display:grid;gap:6px;margin-top:10px;font-size:12.5px"><span>☑ Include failed rows with their reason</span><span>☐ Include 28 model-native emotion scores</span></div>
+              <div class="row" style="margin-top:12px"><span style="flex:1"></span><span class="btn pri">Export reviewed CSV…</span></div>
+            </div>
+            <div class="footnote">Agreement describes this project’s text and this reviewer only. It is not model accuracy.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 08 INSIGHTS COMPARE ======================= -->
+<section class="screen" id="s08">
+  <div class="shead"><span class="n">08</span><h2>Insights · compare groups</h2>
+    <div class="tags"><span class="tag">F4.1</span><span class="tag">F4.2</span><span class="tag">F4.3</span><span class="tag">F4.4</span><span class="tag">F4.7</span><span class="tag">F4.8</span><span class="tag ref">R8</span><span class="tag ref">R7</span></div></div>
+  <p class="snote">V1's dense settings form is split into three numbered steps. The answer shows its denominator, failed rows per group, and V1's sample-size level next to every figure.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body">
+      <aside class="side" data-on="compare"></aside>
+      <div class="main">
+        <div class="bar"><h3>Insights</h3><span class="seg"><span class="on">Compare groups</span><span>Notes &amp; cases</span></span><span class="sp"></span><span class="btn">Export insights CSV…</span></div>
+        <div class="pane" style="display:grid;grid-template-columns:330px 1fr;gap:26px">
+          <div style="display:flex;flex-direction:column">
+            <div style="border-top:1px solid var(--ink);padding:12px 0 14px"><div class="row"><span style="font:400 30px/1 var(--serif);color:var(--mute);width:44px">01</span><div style="flex:1"><div style="font-weight:500">Group by</div><div class="faint" style="font-size:11.5px">only columns from your file</div></div></div>
+              <div class="inp" style="margin-top:10px">source_type <span class="caret">▾</span></div>
+              <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px"><span class="chip you">app_store ✓</span><span class="chip you">support ✓</span><span class="chip you">forum ✓</span><span class="chip">compare 2–4</span></div></div>
+            <div style="border-top:1px solid var(--line);padding:12px 0 14px"><div class="row"><span style="font:400 30px/1 var(--serif);color:var(--mute);width:44px">02</span><div style="flex:1"><div style="font-weight:500">Perspective &amp; metric</div></div></div>
+              <div class="row" style="margin-top:10px"><span class="seg"><span>AI</span><span>Human</span><span class="on">Agreement</span></span></div>
+              <div class="inp" style="margin-top:8px">Sentiment disagreement <span class="caret">▾</span></div></div>
+            <div style="border-top:1px solid var(--line);padding:12px 0 14px"><div class="row"><span style="font:400 30px/1 var(--serif);color:var(--mute);width:44px">03</span><div style="flex:1"><div style="font-weight:500">Filters</div></div></div>
+              <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><div class="inp">AI sentiment: all <span class="caret">▾</span></div><div class="inp">AI emotion: all <span class="caret">▾</span></div><div class="inp ph">From date</div><div class="inp ph">To date</div></div></div>
+            <div style="border-top:1px solid var(--line);padding-top:12px" class="row"><span style="flex:1"></span><span class="btn pri">Apply view</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div><div class="cap">Metric and denominator</div><p class="muted" style="font-size:12.5px;margin-top:4px">AI–human sentiment disagreement among definitive whole-record sentiment reviews only. Agreement is descriptive, not model accuracy.</p></div>
+            <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px">
+              <div class="card" style="padding:16px 18px"><div class="row"><span style="font-weight:500">app_store</span><span style="flex:1"></span><span class="chip ok">descriptive</span></div><div class="huge" style="margin-top:12px">18<span style="font-size:40px">%</span></div><div class="meter" style="margin-top:10px"><i style="width:18%;background:var(--diff)"></i></div><div class="mono faint" style="margin-top:8px">27 / 148 eligible · 231 group rows</div><div class="mono faint">1 failed row assigned · 78 unreviewed · 5 uncertain</div></div>
+              <div class="card" style="padding:16px 18px"><div class="row"><span style="font-weight:500">support</span><span style="flex:1"></span><span class="chip ok">descriptive</span></div><div class="huge" style="margin-top:12px">28<span style="font-size:40px">%</span></div><div class="meter" style="margin-top:10px"><i style="width:28%;background:var(--diff)"></i></div><div class="mono faint" style="margin-top:8px">23 / 83 eligible · 128 group rows</div><div class="mono faint">1 failed row assigned · 41 unreviewed · 4 uncertain</div></div>
+              <div class="card" style="padding:16px 18px"><div class="row"><span style="font-weight:500">forum</span><span style="flex:1"></span><span class="chip ok">descriptive</span></div><div class="huge" style="margin-top:12px">14<span style="font-size:40px">%</span></div><div class="meter" style="margin-top:10px"><i style="width:14%;background:var(--diff)"></i></div><div class="mono faint" style="margin-top:8px">4 / 28 eligible · 50 group rows</div><div class="mono faint">0 failed · 22 unreviewed · 0 uncertain</div></div>
+            </div>
+            <div class="card" style="padding:12px 16px;background:var(--caution-soft);border-color:#EED9AE;font-size:12.5px"><b style="color:var(--caution)">Same view, grouped by topic:</b> “pricing / forum” has 4 eligible reviews, so it is marked <b>insufficient</b> and comparative emphasis is suppressed. Groups below 10 are marked <b>small</b>.</div>
+            <div class="muted" style="font-size:12px;border-left:2px solid var(--line);padding-left:12px">Descriptive, not causal. These values describe only this dataset. Groups are user-provided fields, not inferred identities. AI labels estimate expression in text; they do not establish feelings, psychology, culture, personality, risk or community traits.</div>
+            <div class="footnote" style="margin-top:auto">Model and review provenance · sentiment@3216a57 · emotion@d750483 · compact activation uses each row’s recorded threshold (≥ 0.50)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 09 NOTES & CASES ======================= -->
+<section class="screen" id="s09">
+  <div class="shead"><span class="n">09</span><h2>Insights · context notes &amp; representative cases</h2>
+    <div class="tags"><span class="tag">F4.5</span><span class="tag">F4.6</span><span class="tag">F4.7</span><span class="tag ref">R10</span><span class="tag ref">R4</span></div></div>
+  <p class="snote">Notes are human annotation and never reclassify a record. Cases are picked by V1's deterministic selection rules and labelled as a navigation aid, not as representative of people.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Checkout feedback — autumn sample<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body">
+      <aside class="side" data-on="notes"></aside>
+      <div class="main">
+        <div class="bar"><h3>Insights</h3><span class="seg"><span>Compare groups</span><span class="on">Notes &amp; cases</span></span><span class="sp"></span><span class="btn">Export insights CSV…</span></div>
+        <div class="pane" style="display:grid;grid-template-columns:400px 1fr;gap:24px">
+          <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">
+            <div class="row"><span class="cap">Add phrase and context note</span><span style="flex:1"></span><span class="chip">manual annotation only</span></div>
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px"><div class="field"><label>Association</label><div class="inp">record <span class="caret">▾</span></div></div><div class="field"><label>Value</label><div class="inp">c-1002 <span class="caret">▾</span></div></div></div>
+            <div class="field"><label>Phrase or expression</label><div class="inp">“Truly great work.”</div></div>
+            <div class="field"><label>Your explanation</label><div class="area" style="font-size:12.5px;padding:7px 10px">Praise phrase used to mock a price change.</div></div>
+            <div class="field"><label>Why context matters</label><div class="area" style="font-size:12.5px;padding:7px 10px;color:var(--ink2)">Read alone, the phrase is positive.</div></div>
+            <div class="field"><label>Tags</label><div class="row" style="flex-wrap:wrap;gap:5px"><span class="chip you">sarcasm_possible</span><span class="chip">mixed_stance</span><span class="chip">missing_context</span><span class="chip">idiom_or_slang</span><span class="chip">quotation</span><span class="chip">in_group_expression</span><span class="chip">annotation_uncertain</span><span class="chip">language_issue</span><span class="chip">other</span></div></div>
+            <div class="row"><span style="flex:1"></span><span class="btn you">Add note</span></div>
+            <div class="hr"></div>
+            <div class="cap">Current notes · 3</div>
+            <div style="font-size:12.5px"><b>topic · pricing</b> <span class="muted">— “offline mode” complaints often open with thanks.</span> <span class="mono faint">mixed_stance</span> <span class="btn ghost" style="height:22px">Delete</span></div>
+            <div style="font-size:12.5px"><b>record · c-1019</b> <span class="muted">— “sick update” is praise.</span> <span class="mono faint">idiom_or_slang</span> <span class="btn ghost" style="height:22px">Delete</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+            <div class="row" style="flex-wrap:wrap"><span class="cap">Representative cases · rule-selected</span><span style="flex:1"></span>
+              <div class="inp" style="width:200px">AI–human disagreement <span class="caret">▾</span></div><div class="inp" style="width:150px">Tag: any <span class="caret">▾</span></div><span class="btn">Select cases</span></div>
+            <div class="seg" style="align-self:flex-start;flex-wrap:wrap"><span>Highest AI score</span><span>Lowest AI confidence</span><span class="on">AI–human disagreement</span><span>Human corrected</span><span>Uncertain</span><span>With notes</span><span>User-selected</span></div>
+            <div class="card" style="padding:16px 18px">
+              <div style="font:400 22px/1.3 var(--serif)">“Brilliant, another price rise right after you removed offline mode. Truly great work.”</div>
+              <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><span class="chip mac">AI positive 57% · admiration 52%</span><span class="chip you">Human negative · anger</span><span class="chip">1 note · sarcasm_possible</span><span class="mono faint">c-1002</span></div>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div style="font:400 22px/1.3 var(--serif)">“I was charged twice this month. Please refund the duplicate p…”</div>
+              <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><span class="chip mac">AI negative 72% · neutral (fallback)</span><span class="chip you">Human negative · anger</span><span class="mono faint">c-1007</span><span class="btn ghost" style="height:22px">Reveal full local text</span></div>
+            </div>
+            <div class="card" style="padding:16px 18px">
+              <div style="font:400 22px/1.3 var(--serif)">“so bad it’s good honestly, the crash animation is art at this point”</div>
+              <div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap"><span class="chip mac">AI negative 83% · amusement 62%</span><span class="chip you">Human positive · amusement</span><span class="mono faint">c-1033</span></div>
+            </div>
+            <div class="footnote" style="margin-top:auto">Navigation aid only. Low confidence, disagreement, uncertainty and tags help locate records; they do not diagnose sarcasm, intent, culture or a person.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 10 MODERATION ======================= -->
+<section class="screen" id="s10">
+  <div class="shead"><span class="n">10</span><h2>Decision Practice · Moderation Training</h2>
+    <div class="tags"><span class="tag">F5</span><span class="tag">F5.1</span><span class="tag">F5.3</span><span class="tag">F5.4</span><span class="tag">F5.5</span><span class="tag">F5.6</span><span class="tag v2">pending P1/P2</span><span class="tag ref">R12</span></div></div>
+  <p class="snote">Shown as option P1: demoted under Decision Practice and visibly separate from projects. All fields are V1's. If the owner chooses P2 (retire), this screen and the next are removed.</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Decision Practice — Moderation Training<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body">
+      <aside class="side" data-on="mod"></aside>
+      <div class="main">
+        <div style="background:#F3ECFF;color:#5B34B8;font:500 11.5px var(--ui);padding:7px 24px;border-bottom:1px solid #E2D6FA">Training aid · versioned synthetic policy v1 · synthetic cases · the mock recommendation is a labelled fixture, not a model or expert</div>
+        <div class="bar"><h3>Session · case 3 of 8</h3><span class="seg"><span>1 Prepare</span><span class="on">2 Train</span><span>3 Review</span></span><span class="sp"></span><span class="btn ghost">Cancel session</span></div>
+        <div class="pane" style="display:grid;grid-template-columns:1fr 420px;gap:22px">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="row" style="gap:6px"><span class="chip">category: threat_violence</span><span class="chip">difficulty: medium</span><span class="chip">ambiguity: moderate</span><span class="chip warn">sensitive-content notice</span></div>
+            <div style="font:400 30px/1.25 var(--serif)">“If you post that build again I will make sure everyone knows where you work.”</div>
+            <div class="muted" style="font-size:12.5px">Context: reply in a public modding forum thread.</div>
+            <div class="card" style="padding:14px 16px;background:var(--machine-soft);border-color:var(--machine-line)">
+              <div class="row"><span class="chip mac">Contextual signals</span><span class="faint" style="font-size:11.5px">not moderation verdicts</span></div>
+              <div class="mono" style="margin-top:8px">Sentiment negative 0.81 @3216a57 · Emotion anger 0.44 (below 0.50, fallback neutral) @d750483</div>
+            </div>
+            <div class="card" style="padding:14px 16px">
+              <div class="row"><span class="cap">Synthetic mock recommendation</span><span style="flex:1"></span><span class="chip">fixture</span></div>
+              <div class="mono" style="margin-top:6px">remove · privacy_personal_information · high · escalate</div>
+            </div>
+            <div class="card" style="padding:12px 16px;font-size:12.5px;margin-top:auto"><b>After the session:</b> frozen feedback and the comparison with the reference are revealed. Results show raw denominators only, with no composite score. Export is privacy-default; source context is opt-in.</div>
+          </div>
+          <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:9px">
+            <div class="cap">Your first decision · immutable once submitted</div>
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+              <div class="field"><label>Disposition</label><div class="inp">remove <span class="caret">▾</span></div></div>
+              <div class="field"><label>Severity</label><div class="inp">high <span class="caret">▾</span></div></div>
+            </div>
+            <div class="field"><label>Primary violation</label><div class="inp">privacy_personal_information <span class="caret">▾</span></div></div>
+            <div class="field"><label>Secondary violations</label><div class="row" style="gap:5px;flex-wrap:wrap"><span class="chip you">harassment_abuse ✕</span><span class="chip">+ add</span></div></div>
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+              <div class="field"><label>Escalation</label><span class="seg"><span>No</span><span class="on">Yes</span></span></div>
+              <div class="field"><label>Escalation reason</label><div class="inp">credible threat <span class="caret">▾</span></div></div>
+            </div>
+            <div class="field"><label>Unclear / needs review reasons</label><div class="inp ph">Not applicable</div></div>
+            <div class="field"><label>Reasoning</label><div class="area" style="font-size:12.5px;padding:7px 10px;height:52px">Threat to expose workplace = doxxing intent.</div></div>
+            <div class="field"><label>Reviewer note</label><div class="area" style="font-size:12.5px;padding:7px 10px;height:40px;color:var(--mute)">required</div></div>
+            <div class="row" style="margin-top:auto"><span class="faint" style="font-size:11px">Guidance warnings never change or block your judgment.</span><span style="flex:1"></span><span class="btn pri">Submit first decision</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 11 TRIAGE ======================= -->
+<section class="screen" id="s11">
+  <div class="shead"><span class="n">11</span><h2>Decision Practice · Support Triage</h2>
+    <div class="tags"><span class="tag">F6</span><span class="tag">F6.1</span><span class="tag">F6.3</span><span class="tag">F6.4</span><span class="tag">F6.5</span><span class="tag v2">pending P1/P2</span><span class="tag ref">R2</span><span class="tag ref">R12</span></div></div>
+  <p class="snote">The V1 triage workspace and ticket decision as two panes. Supporting context is collapsed by default, and the mock suggestion stays hidden until the first finalize (independent mode).</p>
+  <div class="win"><div class="tb"><span class="logo">S</span>Decision Practice — Support Triage<div class="ctl"><span>—</span><span>▢</span><span>✕</span></div></div>
+    <div class="body">
+      <aside class="side" data-on="tri"></aside>
+      <div class="main">
+        <div style="background:#F3ECFF;color:#5B34B8;font:500 11.5px var(--ui);padding:7px 24px;border-bottom:1px solid #E2D6FA">Not a CRM or routing system · recommended queues and actions are decisions for review, not operations that occurred · mode: Independent</div>
+        <div class="bar"><h3>Triage workspace</h3><span class="seg"><span>1 Source &amp; guide</span><span class="on">2 Workspace</span><span>3 Summary &amp; export</span></span><span class="sp"></span><span class="mono faint">14 tickets · 6 finalized · 2 draft</span></div>
+        <div class="pane" style="display:grid;grid-template-columns:1fr 430px;gap:20px">
+          <div style="display:flex;flex-direction:column;gap:10px;min-height:0">
+            <div class="row" style="flex-wrap:wrap;gap:6px"><div class="inp" style="width:120px">Status: all <span class="caret">▾</span></div><div class="inp" style="width:130px">Urgency: all <span class="caret">▾</span></div><div class="inp" style="width:130px">Queue: all <span class="caret">▾</span></div><div class="inp" style="width:140px">Escalation: all <span class="caret">▾</span></div><span class="btn ghost">More filters (10)</span><div class="inp" style="width:170px">Sort: urgency <span class="caret">▾</span></div></div>
+            <div class="card" style="overflow:hidden">
+              <table class="t">
+                <thead><tr><th style="width:11%">ID</th><th style="width:15%">Source</th><th style="width:18%">Status</th><th style="width:12%">Urgency</th><th style="width:30%">Recommended queue</th><th style="width:14%">Warn.</th></tr></thead>
+                <tbody>
+                  <tr class="sel"><td class="mono">T-007</td><td>synthetic</td><td><span class="chip">draft</span></td><td>high</td><td class="ell">billing_operations</td><td class="faint">—</td></tr>
+                  <tr><td class="mono">T-003</td><td>synthetic</td><td><span class="chip you">finalized</span></td><td>critical</td><td class="ell">fraud_and_risk_review</td><td><span class="chip warn">1</span></td></tr>
+                  <tr><td class="mono">T-011</td><td>workspace</td><td><span class="chip you">finalized</span></td><td>normal</td><td class="ell">technical_support</td><td class="faint">—</td></tr>
+                  <tr><td class="mono">T-002</td><td>synthetic</td><td><span class="chip">untriaged</span></td><td class="faint">—</td><td class="faint">—</td><td class="faint">—</td></tr>
+                  <tr><td class="mono">T-009</td><td>synthetic</td><td><span class="chip">untriaged</span></td><td class="faint">—</td><td class="faint">—</td><td class="faint">—</td></tr>
+                  <tr><td class="mono">T-005</td><td>synthetic</td><td><span class="chip you">finalized</span></td><td>low</td><td class="ell">product_feedback</td><td class="faint">—</td></tr>
+                </tbody></table>
+            </div>
+            <div class="card" style="padding:12px 16px;font-size:12.5px;margin-top:auto"><b>Summary &amp; export (step 3):</b> coverage, finalized distributions, human–mock comparison (first and final) and follow-up reasons. Privacy-aware CSV; each private category must be selected explicitly.</div>
+          </div>
+          <div class="card" style="padding:16px 18px;display:flex;flex-direction:column;gap:8px">
+            <div class="row"><span class="mono">T-007</span><span class="faint" style="font-size:11.5px">frozen guide v1</span><span style="flex:1"></span><span class="chip">mock hidden until first finalize</span></div>
+            <div style="font:400 20px/1.3 var(--serif)">“You charged my card twice for the annual plan and the cancel button does nothing.”</div>
+            <div class="muted" style="font-size:12px">▸ Supporting context (sentiment, emotion, review, notes, metadata). Never decides triage.</div>
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:7px">
+              <div class="field"><label>Primary intent</label><div class="inp">dispute_charge_or_payment <span class="caret">▾</span></div></div>
+              <div class="field"><label>Secondary intents (≤2)</label><div class="inp">request_cancellation <span class="caret">▾</span></div></div>
+              <div class="field"><label>Issue category</label><div class="inp">billing_and_payment <span class="caret">▾</span></div></div>
+              <div class="field"><label>Urgency</label><div class="inp">high <span class="caret">▾</span></div></div>
+              <div class="field"><label>Recommended queue</label><div class="inp">billing_operations <span class="caret">▾</span></div></div>
+              <div class="field"><label>Escalation</label><span class="seg"><span class="on">No</span><span>Yes</span></span></div>
+              <div class="field" style="grid-column:1/-1"><label>Primary next action</label><div class="inp">review_transaction_or_billing_record <span class="caret">▾</span></div></div>
+              <div class="field" style="grid-column:1/-1"><label>Secondary actions (≤2)</label><div class="inp">process_cancellation_or_refund_review <span class="caret">▾</span></div></div>
+            </div>
+            <div class="field"><label>Human notes</label><div class="area" style="font-size:12.5px;padding:6px 10px;height:40px;color:var(--mute)">optional</div></div>
+            <div class="row" style="margin-top:auto"><span class="btn">Save draft</span><span style="flex:1"></span><span class="btn pri">Finalize</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="height:60px"></div>
+
+<script>
+// Sidebar is the same in every project window; build it once from data.
+const NAV=[["h","Project"],["import","↧","Import & validation",""],["results","▦","Results","409"],["review","✓","Review","141"],["agreement","≈","Agreement",""],["compare","◫","Insights · compare",""],["notes","✎","Insights · notes & cases","3"],["h","Tools"],["direct","◇","Analyze one text",""],["h","Decision Practice"],["mod","⚖","Moderation training","P"],["tri","☰","Support triage","P"]];
+document.querySelectorAll('aside.side[data-on]').forEach(a=>{
+  const on=a.dataset.on;
+  let h='<div class="proj"><div class="t">Checkout feedback — autumn sample</div><div class="s">409 rows · saved 09:41</div></div>';
+  for(const n of NAV){ if(n[0]==='h'){h+=`<div class="cap nav-h">${n[1]}</div>`;continue;}
+    const c=n[3]==='P'?'<span class="pend">PENDING</span>':(n[3]?`<span class="c">${n[3]}</span>`:'');
+    h+=`<div class="nav${n[0]===on?' on':''}"><i>${n[1]}</i>${n[2]}${c}</div>`;}
+  h+='<div class="foot"><span class="dot"></span>2 pinned models ready · offline</div>';
+  a.innerHTML=h;});
+// 28 native scores (illustrative values consistent with screen 03)
+const NATIVE=[["neutral",.322,1],["admiration",.236,1],["approval",.118,0],["disappointment",.094,0],["annoyance",.081,0],["sadness",.071,1],["anger",.063,1],["joy",.052,1],["realization",.041,0],["disapproval",.038,0],["optimism",.022,0],["confusion",.019,0],["relief",.012,0],["caring",.009,0],["curiosity",.008,0],["fear",.006,1],["amusement",.005,1],["excitement",.005,0],["surprise",.004,0],["disgust",.003,1],["gratitude",.002,1],["nervousness",.002,0],["love",.002,0],["remorse",.001,0],["pride",.001,0],["desire",.001,0],["embarrassment",.001,0],["grief",.001,0]];
+document.getElementById('elem').innerHTML=NATIVE.map(([n,v,c])=>{const a=Math.min(1,v/0.33);const bg=`rgba(51,64,79,${0.06+0.8*a})`;const fg=a>0.45?'#fff':'#131518';return `<div style="background:${bg};color:${fg};${c?'outline:1.5px solid #33404F;outline-offset:-1.5px':''}"><b>${n}</b><span>${v.toFixed(3)}</span></div>`}).join('');
+// import progress
+document.getElementById('prog').innerHTML=Array.from({length:60},(_,i)=>`<i style="height:14px;background:${i<27?(i===9||i===21?'var(--diff)':'var(--ink)'):'#E6E2DA'}"></i>`).join('');
+// review progress
+document.getElementById('revprog').innerHTML=Array.from({length:30},(_,i)=>`<i style="background:${i<17?'var(--ink)':(i<20?'var(--you)':'#E6E2DA')}"></i>`).join('');
+// emotion distribution
+const ED=[["neutral",118],["anger",64],["joy",58],["admir.",52],["sadness",39],["grat.",31],["fear",21],["disgust",14],["amuse.",12]];
+document.getElementById('emodist').innerHTML=ED.map(([n,v])=>`<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span class="mono" style="font-size:10px">${v}</span><div style="width:100%;height:${Math.round(v/118*58)}px;background:${n==='neutral'?'var(--neu)':'var(--machine)'}"></div><span class="mono faint" style="font-size:9px;max-width:100%;overflow:hidden;text-overflow:ellipsis">${n}</span></div>`).join('');
+// queue
+const Q=[["c-1002","Brilliant, another price rise right after you removed…",1],["c-1009","Export to CSV works fine now.",0],["c-1012","Sync is fine. Support was not.",0],["c-1014","Not sure the new layout is for me, but it’s growing on me.",0],["c-1019","sick update, honestly the best one yet",0],["c-1021","Fine.",0],["c-1024","Why does the export button move every release?",0],["c-1026","Thanks for nothing, I guess.",0],["c-1030","The dark mode is lovely; the battery drain is not.",0]];
+document.getElementById('queue').innerHTML=Q.map(([id,t,on])=>`<div style="padding:9px 12px;border-bottom:1px solid var(--line2);${on?'background:#F6F4EF;box-shadow:inset 3px 0 0 var(--you)':''}"><div class="mono faint">${id}</div><div class="ell" style="font-size:12.5px;${on?'color:#131518':'color:#4B5057'}">${t}</div></div>`).join('');
+// confidence bands (V1 bands)
+const B=[["0.00–0.49",9,21],["0.50–0.74",24,71],["0.75–0.89",13,82],["0.90–1.00",8,85]];
+document.getElementById('bands').innerHTML=B.map(([l,d,n])=>`<div class="row"><span class="mono" style="width:86px">${l}</span><div style="flex:1;height:18px;background:#ECE9E3;border-radius:3px;position:relative;overflow:hidden"><i style="position:absolute;left:0;top:0;bottom:0;width:${(d/n*100).toFixed(1)}%;background:var(--diff)"></i></div><span class="mono" style="width:120px;text-align:right">${d} / ${n} · ${(d/n*100).toFixed(0)}%</span></div>`).join('');
+// confusion matrix
+const CM=[[96,7,2],[9,31,6],[21,9,78]],L=["negative","neutral","positive"];
+let cm='<div></div>'+L.map(l=>`<div class="mono faint" style="text-align:center;font-size:10.5px">you ${l}</div>`).join('');
+CM.forEach((r,i)=>{cm+=`<div class="mono faint" style="font-size:10.5px;align-self:center">AI ${L[i]}</div>`;r.forEach((v,j)=>{const d=i===j;const a=d?0.15+0.75*v/96:0.12+0.8*v/21;cm+=`<div style="height:54px;display:grid;place-items:center;border-radius:4px;font:400 24px var(--serif);background:${d?`rgba(19,21,24,${a.toFixed(2)})`:`rgba(223,82,44,${a.toFixed(2)})`};color:${d&&a>.5?'#fff':'#131518'}">${v}</div>`})});
+document.getElementById('cm').innerHTML=cm;
+// ?only=NN renders a single screen (used for PNG capture)
+const only=new URLSearchParams(location.search).get('only');
+if(only){document.body.classList.add('only');const s=document.getElementById('s'+only);if(s)s.classList.add('show');}
+</script>
+</body>
+</html>

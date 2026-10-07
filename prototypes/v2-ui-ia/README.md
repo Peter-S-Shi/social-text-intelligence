@@ -10,8 +10,12 @@ and visual hierarchy should STI V2 use, inside the fixed V2 thesis and the
 Architecture Gate (Windows-first, PySide6 Qt Widgets, persistent projects,
 review at the centre, AI record separate from human judgment, no Flask)?
 
-**Round 2 (current):** D Casebook, E Instrument, F Field. Each has its own
-art direction and structure; see [UI_IA_GATE_R2.md](UI_IA_GATE_R2.md).
+**Round 3 (current):** one direction, delivered as an HTML product feature
+sample sheet within a strict V1 + gate-approved feature boundary, from a
+re-curated reference set. See [round3/UI_IA_GATE_R3.md](round3/UI_IA_GATE_R3.md).
+
+**Round 2:** D Casebook, E Instrument, F Field ([UI_IA_GATE_R2.md](UI_IA_GATE_R2.md));
+superseded because it contained features outside the V1 boundary.
 Round 1 (below) was rejected as too close to V1 and is kept only for
 comparison.
 
