@@ -25,7 +25,6 @@ from persistence.samples import (
 from social_text_intelligence.application.projects import (
     BatchWorkspace,
     PersistentProjectRepository,
-    ProjectStage,
     ProjectStatus,
 )
 from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
@@ -213,6 +212,8 @@ def test_text_that_cannot_be_encoded_is_refused_atomically(tmp_path: Path) -> No
             lambda w: replace(w, insights=InsightState(notes=(unencodable,))),
         )
     assert raised.value.code == "unsupported_text"
+    # The original failure holds the offending text, so it must not be reachable.
+    assert raised.value.__context__ is None and raised.value.__cause__ is None
     assert new_repository(tmp_path).get(token) == original
 
 
@@ -283,7 +284,7 @@ def test_no_sidecar_files_linger_after_operations(tmp_path: Path) -> None:
 # --- identity, listing, rename ---------------------------------------------------
 
 
-def test_listing_reports_identity_stage_and_recency(tmp_path: Path) -> None:
+def test_listing_reports_identity_and_recency(tmp_path: Path) -> None:
     ticks = iter(
         datetime(2026, 5, 1, tzinfo=UTC) + timedelta(hours=n) for n in range(99)
     )
@@ -291,50 +292,21 @@ def test_listing_reports_identity_stage_and_recency(tmp_path: Path) -> None:
         AppDataLocations(tmp_path), clock=lambda: next(ticks)
     )
     assert repository.list_projects() == ()
-    empty = repository.create_project(BatchWorkspace(), name="  Empty  ")
-    awaiting = repository.create_project(
-        BatchWorkspace(pending=pending_upload()), name="Awaiting"
-    )
-    ready = repository.create_project(
-        BatchWorkspace(preview=one_row_preview()), name="Ready"
-    )
-    done = repository.create_project(rich_workspace(), name="Done")
-    assert empty.name == "Empty"
+    first = repository.create_project(BatchWorkspace(), name="  First  ")
+    second = repository.create_project(rich_workspace(), name="Second")
+    assert first.name == "First"
 
     listed = repository.list_projects()
-    assert [item.name for item in listed] == ["Done", "Ready", "Awaiting", "Empty"]
-    assert {item.name: item.stage for item in listed} == {
-        "Empty": ProjectStage.EMPTY,
-        "Awaiting": ProjectStage.AWAITING_COLUMN,
-        "Ready": ProjectStage.READY,
-        "Done": ProjectStage.ANALYZED,
-    }
-    assert {item.name: item.row_count for item in listed} == {
-        "Empty": 0,
-        "Awaiting": 0,
-        "Ready": 1,
-        "Done": 8,
-    }
+    assert [item.name for item in listed] == ["Second", "First"]
+    assert [item.project_id for item in listed] == [
+        second.project_id,
+        first.project_id,
+    ]
     assert all(item.status is ProjectStatus.OK for item in listed)
-    assert listed[0].project_id == done.project_id
-    assert listed[0].created_at == done.created_at
-    assert awaiting.project_id != ready.project_id
+    assert listed[0].created_at == second.created_at
 
-    repository.mutate(empty.project_id, lambda w: replace(w, pending=pending_upload()))
-    assert repository.list_projects()[0].project_id == empty.project_id
-    assert repository.list_projects()[0].stage is ProjectStage.AWAITING_COLUMN
-
-
-def test_rename_changes_the_name_only(tmp_path: Path) -> None:
-    repository = new_repository(tmp_path)
-    created = repository.create_project(rich_workspace(), name="Before")
-    renamed = repository.rename_project(created.project_id, "After")
-    assert renamed is not None and renamed.name == "After"
-    assert renamed.updated_at is not None and created.updated_at is not None
-    assert renamed.updated_at >= created.updated_at
-    assert new_repository(tmp_path).get(created.project_id) == rich_workspace()
-    assert repository.rename_project("0" * 32, "x") is None
-    assert repository.rename_project("../escape", "x") is None
+    repository.mutate(first.project_id, lambda w: replace(w, pending=pending_upload()))
+    assert repository.list_projects()[0].project_id == first.project_id
 
 
 @pytest.mark.parametrize("bad", ["", "   ", "x" * 121, "tab\there", "nul\x00name"])
@@ -610,8 +582,10 @@ def test_a_project_from_a_newer_version_is_refused_and_left_untouched(
     token = repository.create(rich_workspace())
     database = tmp_path / "projects" / f"{token}.sqlite3"
     connection = sqlite3.connect(database)
-    connection.execute(f"PRAGMA user_version = {project_schema.SCHEMA_VERSION + 1}")
-    connection.close()
+    try:
+        connection.execute(f"PRAGMA user_version = {project_schema.SCHEMA_VERSION + 1}")
+    finally:
+        connection.close()
     before = database.read_bytes()
 
     with pytest.raises(ProjectStorageError) as raised:
@@ -702,7 +676,6 @@ def test_nothing_is_logged_and_errors_carry_no_project_text(
     created = repository.create_project(
         replace(rich_workspace(), pending=pending_upload()), name=NAME_SENTINEL
     )
-    repository.rename_project(created.project_id, NAME_SENTINEL + "2")
     repository.get(created.project_id)
     repository.list_projects()
     lease = repository.begin_analysis(created.project_id)
@@ -787,3 +760,40 @@ def test_a_missing_migration_step_is_reported_before_touching_the_file(
     assert raised.value.code == "migration_unavailable"
     assert database.read_bytes() == before
     assert not list((tmp_path / "projects").glob("*.bak"))
+
+
+def test_listing_reads_older_projects_without_migrating_or_writing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    created = new_repository(tmp_path).create_project(rich_workspace(), name="Older")
+    database = tmp_path / "projects" / f"{created.project_id}.sqlite3"
+    before = database.read_bytes()
+    monkeypatch.setattr(project_schema, "SCHEMA_VERSION", 2)
+    monkeypatch.setattr(project_schema, "MIGRATIONS", {1: lambda connection: None})
+
+    listed = new_repository(tmp_path).list_projects()
+
+    assert [(item.name, item.status) for item in listed] == [
+        ("Older", ProjectStatus.OK)
+    ]
+    assert not list((tmp_path / "projects").glob("*.bak"))
+    assert database.read_bytes() == before
+
+
+def test_replaced_content_does_not_linger_in_the_wal(tmp_path: Path) -> None:
+    repository = new_repository(tmp_path)
+    token = repository.create(BatchWorkspace(pending=pending_upload()))
+    database = tmp_path / "projects" / f"{token}.sqlite3"
+    # An idle open connection keeps the WAL alive, as another reader could.
+    reader = sqlite3.connect(database)
+    try:
+        reader.execute("PRAGMA journal_mode").fetchone()
+        repository.mutate(token, lambda w: replace(w, pending=None))
+        residue = b"".join(
+            path.read_bytes()
+            for path in (tmp_path / "projects").iterdir()
+            if path.name.startswith(token)
+        )
+    finally:
+        reader.close()
+    assert CSV_SENTINEL.encode() not in residue

@@ -129,17 +129,13 @@ def backup_path_for(database: Path, version: int) -> Path:
     return database.with_name(f"{database.stem}.pre-migration-v{version}.sqlite3.bak")
 
 
-def ensure_current(
-    connection: sqlite3.Connection,
-    database: Path,
-    *,
-    target_version: int | None = None,
-    migrations: Mapping[int, Migration] | None = None,
-) -> None:
-    """Accept, refuse, or migrate an opened project file."""
+def check_identity(
+    connection: sqlite3.Connection, *, target_version: int | None = None
+) -> int:
+    """Refuse files that are not ours or come from a newer version; return the
+    stored version. Never modifies the file."""
 
     target = SCHEMA_VERSION if target_version is None else target_version
-    steps = MIGRATIONS if migrations is None else migrations
     application_id, version = read_identity(connection)
     if application_id != APPLICATION_ID or version < 1:
         raise ProjectStorageError(
@@ -154,6 +150,21 @@ def ensure_current(
                 "and was left unchanged."
             ),
         )
+    return version
+
+
+def ensure_current(
+    connection: sqlite3.Connection,
+    database: Path,
+    *,
+    target_version: int | None = None,
+    migrations: Mapping[int, Migration] | None = None,
+) -> None:
+    """Accept, refuse, or migrate an opened project file."""
+
+    target = SCHEMA_VERSION if target_version is None else target_version
+    steps = MIGRATIONS if migrations is None else migrations
+    version = check_identity(connection, target_version=target)
     if version == target:
         return
     if any(step not in steps for step in range(version, target)):
@@ -171,22 +182,33 @@ def _migrate(
     target: int,
     steps: Mapping[int, Migration],
 ) -> None:
-    backup = sqlite3.connect(backup_path_for(database, version))
-    try:
-        backup.execute("PRAGMA secure_delete = ON")
-        connection.backup(backup)
-    finally:
-        backup.close()
     connection.execute("BEGIN IMMEDIATE")
     try:
+        if read_identity(connection)[1] != version:
+            # Another connection upgraded the file while this one waited for the
+            # write lock; there is nothing left to do.
+            connection.execute("ROLLBACK")
+            return
+        # With the write lock held no one can change the data, so a separate
+        # reader sees exactly the committed state that is about to be migrated.
+        source = sqlite3.connect(database)
+        backup = sqlite3.connect(backup_path_for(database, version))
+        try:
+            backup.execute("PRAGMA secure_delete = ON")
+            source.backup(backup)
+        finally:
+            backup.close()
+            source.close()
         for step in range(version, target):
             steps[step](connection)
             connection.execute(f"PRAGMA user_version = {step + 1}")
         connection.execute("COMMIT")
         return
-    except Exception:  # noqa: BLE001 - a migration may fail in any way
+    except BaseException as error:
         if connection.in_transaction:
             connection.execute("ROLLBACK")
+        if not isinstance(error, Exception):
+            raise
     # Raised outside the handler so a failure that quotes project content is not
     # chained onto the error.
     raise ProjectStorageError(

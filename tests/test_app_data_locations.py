@@ -1,5 +1,7 @@
 """The app-data resolver is injectable, and its production default is Windows."""
 
+import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -9,6 +11,7 @@ from social_text_intelligence.infrastructure.app_data import (
     APP_DIRECTORY_NAME,
     AppDataLocations,
     default_app_data_locations,
+    windows_local_app_data,
 )
 
 
@@ -61,3 +64,11 @@ def test_other_platforms_are_unclaimed_unless_a_root_is_injected(
         )
     assert raised.value.code == "unsupported_platform"
     assert AppDataLocations(tmp_path).projects_dir == tmp_path / "projects"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows Known Folder API")
+def test_the_real_windows_known_folder_matches_the_environment() -> None:
+    resolved = windows_local_app_data()
+    assert resolved is not None and resolved.is_dir()
+    assert os.path.samefile(resolved, os.environ["LOCALAPPDATA"])
+    assert default_app_data_locations().root == resolved / APP_DIRECTORY_NAME
