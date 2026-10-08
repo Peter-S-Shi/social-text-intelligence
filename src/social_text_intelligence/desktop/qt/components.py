@@ -39,7 +39,7 @@ from PySide6.QtWidgets import (
 from ..agreement_view import ConfusionView
 from ..scores import ScoreRow, ScoreSetView
 from . import style
-from .widgets import add_all, frame, label
+from .widgets import FlowLayout, add_all, frame, label
 
 MAX_CONTENT_WIDTH = 1180
 TONES = {
@@ -170,6 +170,30 @@ class EmptyState(QFrame):
         self.title.setText(title)
         self.body.setText(body)
         self.setAccessibleName(f"{title}. {body}")
+
+
+class FlowRow(QWidget):
+    """Controls in a row that wraps onto more lines instead of forcing the page wider."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.flow = FlowLayout(self, spacing=style.SPACE_S)
+        self.flow.setContentsMargins(0, 0, 0, 0)
+
+    def add(self, widget: QWidget) -> None:
+        self.flow.addWidget(widget)
+
+
+class LabeledControl(QWidget):
+    """A caption beside its control, kept together when a row wraps."""
+
+    def __init__(self, caption: str, control: QWidget, parent: QWidget | None = None):
+        super().__init__(parent)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(style.SPACE_S)
+        layout.addWidget(label(caption, role="muted", wrap=False))
+        layout.addWidget(control)
 
 
 class ReflowRow(QWidget):
@@ -673,6 +697,8 @@ __all__ = [
     "ConfusionGrid",
     "DataTable",
     "EmptyState",
+    "FlowRow",
+    "LabeledControl",
     "NavButton",
     "Page",
     "PageHeader",

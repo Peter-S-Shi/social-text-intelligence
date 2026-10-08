@@ -576,7 +576,7 @@ class ProjectsPage(QWidget):
 
     def _show_problems(self, state: ResultsState) -> None:
         view = build_validation_view(state)
-        shown = view is not None and not self._controller.state.busy
+        shown = view is not None
         self.problems_card.setVisible(shown)
         self.failures_card.setVisible(
             shown and view is not None and bool(view.failures)

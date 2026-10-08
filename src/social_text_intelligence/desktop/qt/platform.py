@@ -26,7 +26,7 @@ def _pick_csv(parent: QWidget | None) -> Path | None:
 def _pick_save_csv(parent: QWidget | None, suggested: str) -> Path | None:
     """Ask where to save; the dialog itself asks before replacing an existing file."""
 
-    dialog = QFileDialog(parent, "Save the reviewed CSV", suggested)
+    dialog = QFileDialog(parent, "Save the CSV file", suggested)
     dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
     dialog.setNameFilter("CSV files (*.csv)")
     dialog.setDefaultSuffix("csv")
@@ -42,7 +42,9 @@ def _open_folder(path: Path) -> bool:
     return bool(QDesktopServices.openUrl(QUrl.fromLocalFile(str(path))))
 
 
-def _confirm(parent: QWidget | None, title: str, text: str) -> bool:
+def confirm_box(parent: QWidget | None, title: str, text: str) -> QMessageBox:
+    """The confirmation dialog, built but not shown (Cancel is the default answer)."""
+
     box = QMessageBox(parent)
     box.setIcon(QMessageBox.Icon.Question)
     box.setWindowTitle(title)
@@ -51,7 +53,11 @@ def _confirm(parent: QWidget | None, title: str, text: str) -> bool:
         QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
     )
     box.setDefaultButton(QMessageBox.StandardButton.Cancel)
-    return box.exec() == QMessageBox.StandardButton.Ok
+    return box
+
+
+def _confirm(parent: QWidget | None, title: str, text: str) -> bool:
+    return confirm_box(parent, title, text).exec() == QMessageBox.StandardButton.Ok
 
 
 @dataclass(frozen=True, slots=True)

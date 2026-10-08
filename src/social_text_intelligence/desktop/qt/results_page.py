@@ -24,6 +24,7 @@ from .components import (
     Combo,
     DataTable,
     EmptyState,
+    FlowRow,
     Page,
     PageHeader,
     ReflowRow,
@@ -146,14 +147,16 @@ class ResultsPage(Page):
         self.clear_button = QPushButton("Clear filters")
         self.clear_button.setObjectName("results-clear")
         self.clear_button.clicked.connect(self._clear_filters)
-        self.shown_line = label(role="mono", wrap=False)
+        self.shown_line = label(role="mono")
         self.shown_line.setObjectName("results-shown")
-        filters = QHBoxLayout()
-        filters.setSpacing(8)
-        add_all(filters, self.status_filter, self.sentiment_filter, self.emotion_filter)
-        add_all(filters, self.clear_button)
-        filters.addStretch(1)
-        filters.addWidget(self.shown_line)
+        filters = FlowRow()
+        for control in (
+            self.status_filter,
+            self.sentiment_filter,
+            self.emotion_filter,
+            self.clear_button,
+        ):
+            filters.add(control)
 
         self.table = DataTable()
         self.table.setObjectName("results-table")
@@ -174,12 +177,13 @@ class ResultsPage(Page):
             role="muted",
         )
         footer = QHBoxLayout()
+        footer.addWidget(self.shown_line)
         footer.addWidget(self.review_hint, 1)
         footer.addWidget(self.review_button)
 
         add_all(self.body, self.header, self.notice, self.empty)
         add_all(self.body, self.language_box, self.cards)
-        self.body.addLayout(filters)
+        self.body.addWidget(filters)
         add_all(self.body, self.table_empty)
         self.body.addWidget(self.table, 1)
         self.body.addLayout(footer)

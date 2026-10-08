@@ -32,7 +32,15 @@ from ..review_view import (
     build_review_view,
     filters_from,
 )
-from .components import Card, Combo, Page, PageHeader, ScorePanel
+from .components import (
+    Card,
+    Combo,
+    FlowRow,
+    LabeledControl,
+    Page,
+    PageHeader,
+    ScorePanel,
+)
 from .platform import DesktopPlatform
 from .widgets import LanguageBox, NoticeBox, add_all, announce, label
 
@@ -306,22 +314,19 @@ class ReviewPage(Page):
         self.emotion_filter = self._filter(
             "filter-emotion", "AI dominant emotion filter"
         )
-        filters = QHBoxLayout()
-        filters.setSpacing(8)
+        filters = FlowRow()
         for caption, combo in (
             ("Review state", self.status_filter),
             ("AI sentiment", self.sentiment_filter),
             ("AI dominant emotion", self.emotion_filter),
         ):
-            filters.addWidget(label(caption, role="muted", wrap=False))
-            filters.addWidget(combo)
-        filters.addStretch(1)
+            filters.add(LabeledControl(caption, combo))
         self.progress = label()
         self.progress.setObjectName("review-progress")
         self.failed = label(role="muted")
         self.failed.setObjectName("review-failed")
         self.toolbar = Card()
-        self.toolbar.layout_.addLayout(filters)
+        self.toolbar.layout_.addWidget(filters)
         add_all(self.toolbar.layout_, self.progress, self.failed)
 
         self.native_box = QCheckBox(NATIVE_LABEL)
