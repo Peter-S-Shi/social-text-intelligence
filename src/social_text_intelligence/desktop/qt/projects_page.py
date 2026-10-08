@@ -76,10 +76,10 @@ class RowProgress(QWidget):
     def show_progress(self, view: ProjectProgressView) -> None:
         self.text.setText(view.text)
         self.bar.setValue(int(view.fraction * 1000))
-        self.bar.setAccessibleName(view.accessible_text)
+        self.bar.setAccessibleName(view.text)
         self.cancel_button.setVisible(True)
         self.cancel_button.setEnabled(view.can_cancel)
-        step = (view.text.split(" row ")[0], int(view.fraction * 10))
+        step = (view.stage, int(view.fraction * 10))
         if step != self._last_step:
             self._last_step = step
             announce(self.text, view.text)

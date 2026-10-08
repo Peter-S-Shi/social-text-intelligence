@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from ..application.model_provisioning import ModelsStatus
-from ..application.project_workflow import ProjectDetails, ProjectPhase
+from ..application.project_workflow import (
+    DEFAULT_PROJECT_NAME,
+    ProjectDetails,
+    ProjectPhase,
+)
 from ..application.projects import ProjectStatus, ProjectSummary
 from .gate import AnalysisAvailability
 from .panel import AnalysisBlockView, build_analysis_block
@@ -44,7 +48,7 @@ def row_view(summary: ProjectSummary) -> ProjectRowView:
     if summary.status is ProjectStatus.OK:
         return ProjectRowView(
             summary.project_id,
-            summary.name or "Untitled project",
+            summary.name or DEFAULT_PROJECT_NAME,
             f"Updated {_when(summary.updated_at)}",
             can_open=True,
         )
@@ -87,10 +91,7 @@ class ProjectProgressView:
     text: str
     fraction: float
     can_cancel: bool
-
-    @property
-    def accessible_text(self) -> str:
-        return self.text
+    stage: str  # "loading", "running", or "cancelling": drives the live announcements
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,16 +146,20 @@ def _progress(state: ProjectsState) -> ProjectProgressView | None:
     if state.cancelling:
         text = "Cancelling… finishing the current row. Nothing will be saved."
         fraction = state.progress.fraction if state.progress else 0.0
-        return ProjectProgressView(text, fraction, can_cancel=False)
+        return ProjectProgressView(text, fraction, can_cancel=False, stage="cancelling")
     if state.progress is None:
         return ProjectProgressView(
             "Loading the models and starting… the first analysis can take a while.",
             0.0,
             can_cancel=True,
+            stage="loading",
         )
     done, total = state.progress.completed, state.progress.total
     return ProjectProgressView(
-        f"Analyzing row {done} of {total}", state.progress.fraction, can_cancel=True
+        f"Analyzing row {done} of {total}",
+        state.progress.fraction,
+        can_cancel=True,
+        stage="running",
     )
 
 
@@ -172,7 +177,7 @@ def build_detail_view(
     block = build_analysis_block(models, availability) if ready else None
     busy = state.busy
     return ProjectDetailView(
-        title=details.summary.name or "Untitled project",
+        title=details.summary.name or DEFAULT_PROJECT_NAME,
         state_line=_STATE_LINES[details.phase],
         facts=_facts(details),
         column_choices=(

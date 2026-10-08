@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -32,43 +31,11 @@ from social_text_intelligence.infrastructure.app_data import AppDataLocations
 from social_text_intelligence.infrastructure.sqlite_projects import (
     SqliteProjectRepository,
 )
-from social_text_intelligence.providers import (
-    DeterministicEmotionProvider,
-    DeterministicSentimentProvider,
-)
-from social_text_intelligence.services import AnalysisService
 from social_text_intelligence.services.batch import BatchProgress
 
+from .workflow_samples import SENTINEL, ScriptedGateway, csv_text
+
 LIMITS = CsvLimits(max_bytes=20_000, max_rows=20, max_text_length=500)
-SENTINEL = "ZQX-private-sentinel-77"
-
-
-def csv_text(rows: int = 5, column: str = "text") -> bytes:
-    lines = [f"record_id,{column}"]
-    lines += [
-        f"r{n},{SENTINEL} synthetic message number {n}." for n in range(1, rows + 1)
-    ]
-    return ("\n".join(lines) + "\n").encode()
-
-
-class ScriptedGateway:
-    """Deterministic analysis with a hook before each row."""
-
-    initialized = True
-
-    def __init__(self, before_row: Callable[[int], None] | None = None) -> None:
-        self._service = AnalysisService(
-            sentiment_provider=DeterministicSentimentProvider(),
-            emotion_provider=DeterministicEmotionProvider(),
-        )
-        self.before_row = before_row
-        self.calls = 0
-
-    def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
-        self.calls += 1
-        if self.before_row is not None:
-            self.before_row(self.calls)
-        return self._service.analyze(record)
 
 
 def workflow(root: Path, gateway: ScriptedGateway | None = None) -> ProjectWorkflow:
@@ -354,3 +321,52 @@ def test_a_project_deleted_by_another_process_mid_analysis_is_not_resurrected(
 
     assert outcome is AnalysisRun.STALE
     assert flow.list_projects() == () and project_files(tmp_path) == []
+
+
+def test_a_batch_with_no_valid_rows_runs_nothing_and_commits_nothing(
+    tmp_path: Path,
+) -> None:
+    flow = workflow(tmp_path)
+    details = flow.import_csv(b"record_id,text\nr1,   \nr2,\n", name="Empty rows")
+    assert details.valid_rows == 0
+
+    assert flow.analyze(details.summary.project_id) is AnalysisRun.NOTHING_TO_ANALYZE
+
+    reopened = flow.open_project(details.summary.project_id)
+    assert reopened.phase is ProjectPhase.READY and reopened.analyzed_rows is None
+
+
+def test_an_analysed_project_is_never_silently_re_analysed(tmp_path: Path) -> None:
+    gateway = ScriptedGateway()
+    flow = workflow(tmp_path, gateway)
+    project_id = flow.import_csv(csv_text(3), name="P").summary.project_id
+    assert flow.analyze(project_id) is AnalysisRun.COMMITTED
+    calls = gateway.calls
+
+    assert flow.analyze(project_id) is AnalysisRun.NOTHING_TO_ANALYZE
+
+    assert gateway.calls == calls  # nothing re-ran, so derived state is untouched
+
+
+def test_only_the_repository_busy_error_becomes_a_busy_project(
+    tmp_path: Path,
+) -> None:
+    class Broken(ScriptedGateway):
+        def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
+            raise RuntimeError(SENTINEL)
+
+    flow = workflow(tmp_path, Broken())
+    project_id = flow.import_csv(csv_text(2), name="P").summary.project_id
+
+    # a generic failure is a row failure (V1 behaviour), never mistaken for "busy"
+    assert flow.analyze(project_id) is AnalysisRun.COMMITTED
+    assert flow.open_project(project_id).failed_rows == 2
+
+
+def test_describe_handles_a_workspace_with_no_data(tmp_path: Path) -> None:
+    from social_text_intelligence.application.project_workflow import describe
+    from social_text_intelligence.application.projects import BatchWorkspace
+
+    flow = workflow(tmp_path)
+    summary = flow.import_csv(csv_text(1), name="P").summary
+    assert describe(summary, BatchWorkspace()).phase is ProjectPhase.EMPTY

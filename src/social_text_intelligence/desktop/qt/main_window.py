@@ -203,8 +203,8 @@ class MainWindow(QMainWindow):
             else "Verify is still running and cannot be stopped. The app closes when "
             "it finishes."
         )
+        # the provisioning, analysis, and projects listeners all re-check on idle
         self.provisioning.when_idle(self._close_when_done)
-        self.projects.when_idle(self._close_when_done)
 
     def _close_when_done(self) -> None:
         if not self._idle():

@@ -18,6 +18,7 @@ from ..services.batch import BatchCancelled, BatchProgress
 from .projects import (
     BatchWorkspace,
     PersistentProjectRepository,
+    ProjectBusy,
     ProjectSummary,
     WorkspaceMutationConflict,
 )
@@ -203,13 +204,18 @@ class ProjectWorkflow:
         propagate: the lease is released and no partial result is stored.
         """
 
+        details = self.open_project(project_id)
+        if details.phase is not ProjectPhase.READY or details.valid_rows == 0:
+            # an analysed project is never silently re-analysed (that would reset
+            # derived state), and a batch with no valid rows has nothing to run
+            return AnalysisRun.NOTHING_TO_ANALYZE
         try:
             committed = self._use_cases.analyze_workspace(
                 project_id, progress=progress, cancelled=cancelled
             )
         except BatchCancelled:
             return AnalysisRun.CANCELLED
-        except RuntimeError:
+        except ProjectBusy:
             raise ProjectBusyError from None
         if committed is None:
             if self._repository.get(project_id) is None:
@@ -222,7 +228,7 @@ class ProjectWorkflow:
 
         try:
             return self._repository.delete(project_id)
-        except RuntimeError:
+        except ProjectBusy:
             raise ProjectBusyError from None
 
     def _summary(self, project_id: str) -> ProjectSummary | None:
@@ -230,3 +236,18 @@ class ProjectWorkflow:
             if summary.project_id == project_id:
                 return summary
         return None
+
+
+__all__ = [
+    "DEFAULT_PROJECT_NAME",
+    "AnalysisRun",
+    "BatchProgress",
+    "CsvLimits",
+    "ProjectBusyError",
+    "ProjectChangedError",
+    "ProjectDetails",
+    "ProjectNotFoundError",
+    "ProjectPhase",
+    "ProjectWorkflow",
+    "describe",
+]

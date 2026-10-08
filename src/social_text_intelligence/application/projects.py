@@ -21,6 +21,10 @@ from .workspace_mutation import (
 )
 
 
+class ProjectBusy(RuntimeError):
+    """The project is held by a running analysis (still a ``RuntimeError``)."""
+
+
 @dataclass(frozen=True, slots=True)
 class BatchWorkspace:
     pending: PendingBatchUpload | None = None
@@ -173,7 +177,7 @@ class InMemoryProjectRepository:
             if stored is None:
                 return None
             if stored.active_operation_id is not None:
-                raise RuntimeError(
+                raise ProjectBusy(
                     "This temporary batch is already being analyzed. Wait for the "
                     "active analysis to finish before trying again."
                 )
@@ -215,7 +219,7 @@ class InMemoryProjectRepository:
         with self._lock:
             stored = self._items.get(token)
             if stored is not None and stored.active_operation_id is not None:
-                raise RuntimeError(
+                raise ProjectBusy(
                     "This temporary batch is being analyzed and cannot be cleared "
                     "until the active analysis finishes."
                 )
@@ -230,6 +234,7 @@ __all__ = [
     "EphemeralBatchStore",
     "InMemoryProjectRepository",
     "PersistentProjectRepository",
+    "ProjectBusy",
     "ProjectRepository",
     "ProjectStatus",
     "ProjectSummary",

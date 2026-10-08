@@ -24,6 +24,7 @@ from pathlib import Path
 from ..application.projects import (
     BatchAnalysisLease,
     BatchWorkspace,
+    ProjectBusy,
     ProjectStatus,
     ProjectSummary,
 )
@@ -318,7 +319,7 @@ class SqliteProjectRepository:
             return None
         with self._lock:
             if project_id in self._leases:
-                raise RuntimeError(
+                raise ProjectBusy(
                     "This project is already being analyzed. Wait for the "
                     "active analysis to finish before trying again."
                 )
@@ -385,7 +386,7 @@ class SqliteProjectRepository:
             return False
         with self._lock:
             if project_id in self._leases:
-                raise RuntimeError(
+                raise ProjectBusy(
                     "This project is being analyzed and cannot be deleted "
                     "until the active analysis finishes."
                 )

@@ -6,7 +6,7 @@ import threading
 from pathlib import Path
 
 import pytest
-from persistence.test_project_workflow import (
+from persistence.workflow_samples import (
     SENTINEL,
     ScriptedGateway,
     csv_text,
@@ -385,3 +385,128 @@ def test_notices_never_carry_content_or_paths(tmp_path: Path) -> None:
         assert SENTINEL not in notice.body + notice.title
         assert str(tmp_path) not in notice.body + notice.title
         assert name not in notice.body
+
+
+def test_a_model_load_failure_through_the_gate_fails_the_run_and_stays_retryable(
+    tmp_path: Path,
+) -> None:
+    from social_text_intelligence.contracts.errors import ProviderError
+    from social_text_intelligence.desktop.gate import AnalysisGate
+
+    def fail_first(n: int) -> None:
+        raise ProviderError(
+            provider="p", code="model_load_failed", message="V1 offline mode text"
+        )
+
+    gateway = ScriptedGateway(fail_first)
+    rig = Rig(tmp_path, gateway=gateway)
+    rig.workflow = ProjectWorkflow(
+        SqliteProjectRepository(AppDataLocations(rig.root)),
+        AnalysisGate(gateway),
+        LIMITS,
+    )
+    rig.controller = ProjectsController(
+        rig.workflow, rig.runner, max_file_bytes=LIMITS.max_bytes
+    )
+    rig.controller.import_csv(rig.csv("p.csv", csv_text(4)))
+
+    rig.controller.analyze()
+
+    notice = rig.controller.state.notice
+    assert notice is not None and notice.code == "model_load_failed"
+    assert "offline mode" not in notice.body
+    current = rig.controller.state.current
+    assert current is not None and current.phase is ProjectPhase.READY  # retryable
+    assert gateway.calls == 1  # it did not grind through every row
+
+
+def test_nothing_to_analyse_says_so_instead_of_doing_nothing(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+    rig.controller.import_csv(rig.csv("p.csv", b"record_id,text\nr1,  \n"))
+
+    rig.controller.analyze()
+
+    notice = rig.state.notice
+    assert notice is not None and notice.code == "nothing_to_analyze"
+
+
+def test_choosing_a_column_for_a_project_removed_elsewhere_resyncs(
+    tmp_path: Path,
+) -> None:
+    rig = Rig(tmp_path)
+    rig.controller.import_csv(rig.csv("n.csv", csv_text(2, column="message")))
+    project_id = rig.state.projects[0].project_id
+    rig.workflow.delete_project(project_id)  # another process removed it
+
+    rig.controller.choose_column("message")
+
+    assert rig.state.notice is not None
+    assert rig.state.notice.code == "project_not_found"
+    assert rig.state.current is None and rig.state.projects == ()
+    assert rig.state.activity is ProjectsActivity.IDLE
+
+
+def test_analysing_a_project_removed_elsewhere_resyncs(tmp_path: Path) -> None:
+    rig = Rig(tmp_path)
+    rig.controller.import_csv(rig.csv("p.csv", csv_text(2)))
+    rig.workflow.delete_project(rig.state.projects[0].project_id)
+
+    rig.controller.analyze()
+
+    assert rig.state.notice is not None
+    assert rig.state.notice.code == "project_not_found"
+    assert rig.state.current is None and rig.state.projects == ()
+
+
+def test_a_failed_operation_re_lists_before_it_goes_idle(tmp_path: Path) -> None:
+    runner = ManualRunner()
+    rig = Rig(tmp_path, runner)
+    runner.run_next() if runner.jobs else None
+    ran: list[str] = []
+    rig.controller.import_csv(rig.csv("p.csv", csv_text(2)))
+    runner.run_next()
+    project_id = rig.state.projects[0].project_id
+    rig.workflow.delete_project(project_id)
+
+    rig.controller.open_project(project_id)
+    rig.controller.when_idle(lambda: ran.append("idle"))
+    runner.run_next()  # the open fails; the re-list is chained, not yet idle
+
+    assert rig.state.busy and ran == []
+    runner.run_next()
+    assert not rig.state.busy and ran == ["idle"]
+    assert rig.state.projects == ()
+
+
+def test_deleting_an_already_removed_project_does_not_claim_a_deletion(
+    tmp_path: Path,
+) -> None:
+    rig = Rig(tmp_path)
+    rig.controller.import_csv(rig.csv("p.csv", csv_text(2)))
+    project_id = rig.state.projects[0].project_id
+    rig.workflow.delete_project(project_id)
+
+    rig.controller.delete(project_id)
+
+    notice = rig.state.notice
+    assert notice is not None and notice.title == "Already removed"
+    assert "deleted" not in notice.body.lower()
+
+
+def test_a_cancel_that_arrives_after_the_commit_point_is_reported_truthfully(
+    tmp_path: Path,
+) -> None:
+    runner = ManualRunner()
+    rig = Rig(tmp_path, runner)
+    rig.controller.import_csv(rig.csv("p.csv", csv_text(2)))
+    runner.run_next()
+    rig.controller.analyze()
+    work, deliver = runner.jobs.popleft()
+    outcome = work()  # the batch already committed...
+    rig.controller.cancel()  # ...when Cancel arrives
+    deliver(outcome)
+
+    notice = rig.state.notice
+    assert notice is not None and notice.code == "analysis_saved"
+    current = rig.state.current
+    assert current is not None and current.phase is ProjectPhase.ANALYZED

@@ -95,6 +95,19 @@ class AnalysisSessionBlockedError(AnalysisUnavailableError):
         self.message = SESSION_BLOCK_MESSAGE
 
 
+class AnalysisSetupError(AnalysisUnavailableError):
+    """The model runtime could not be set up (load failure or missing runtime).
+
+    The provider's code and fixed message are kept. As an unavailability it fails a
+    whole batch instead of being recorded on every row.
+    """
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+
 class ModelsNotReadyError(AnalysisUnavailableError):
     """Analysis was requested while a required local model is not ready."""
 

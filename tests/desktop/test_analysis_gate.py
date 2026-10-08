@@ -6,6 +6,7 @@ import pytest
 
 from social_text_intelligence.application.model_provisioning import Readiness
 from social_text_intelligence.contracts import AnalysisReport, NormalizedTextInput
+from social_text_intelligence.contracts.errors import AnalysisSetupError, ProviderError
 from social_text_intelligence.desktop.gate import (
     AnalysisAvailability,
     AnalysisGate,
@@ -100,3 +101,22 @@ def test_damage_confirmed_while_the_first_analysis_is_still_loading_blocks() -> 
     gate.analyze(record())
 
     assert gate.session_blocked
+
+
+def test_a_model_load_failure_fails_the_whole_run_not_each_row() -> None:
+    class Failing(StubGateway):
+        def __init__(self, code: str) -> None:
+            super().__init__(report=synthetic_report())
+            self.code = code
+
+        def analyze(self, record: NormalizedTextInput) -> AnalysisReport:
+            raise ProviderError(provider="p", code=self.code, message="Fixed message.")
+
+    for code in ("model_load_failed", "missing_model_dependencies"):
+        with pytest.raises(AnalysisSetupError) as failure:
+            AnalysisGate(Failing(code)).analyze(record())
+        assert failure.value.code == code and failure.value.message == "Fixed message."
+
+    # an ordinary provider error stays a per-row matter
+    with pytest.raises(ProviderError):
+        AnalysisGate(Failing("synthetic_failure")).analyze(record())

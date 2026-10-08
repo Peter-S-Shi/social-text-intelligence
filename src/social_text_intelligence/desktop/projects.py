@@ -18,6 +18,7 @@ from typing import Any
 
 from ..application.project_workflow import (
     AnalysisRun,
+    BatchProgress,
     ProjectBusyError,
     ProjectChangedError,
     ProjectDetails,
@@ -27,12 +28,12 @@ from ..application.project_workflow import (
 from ..application.projects import ProjectSummary
 from ..contracts.errors import (
     AnalysisSessionBlockedError,
+    AnalysisSetupError,
     ModelsNotReadyError,
     ProjectStorageError,
     ProviderError,
     ValidationError,
 )
-from ..services.batch import BatchProgress
 from . import copy
 from .controller import JobRunner
 from .progress import CoalescedUpdates
@@ -86,6 +87,35 @@ class ProjectsState:
 Listener = Callable[[ProjectsState], None]
 
 
+_DELETED = ProjectsNotice(
+    NoticeKind.INFO, "project_deleted", "Project deleted", DELETE_NOTE
+)
+_ALREADY_GONE = ProjectsNotice(
+    NoticeKind.INFO,
+    "project_not_found",
+    "Already removed",
+    "That project was already gone. The list is up to date.",
+)
+_CANCELLED = ProjectsNotice(
+    NoticeKind.INFO,
+    "analysis_cancelled",
+    "Analysis cancelled",
+    "Nothing was saved from this run. You can analyse again.",
+)
+_NOTHING_TO_ANALYZE = ProjectsNotice(
+    NoticeKind.INFO,
+    "nothing_to_analyze",
+    "Nothing to analyse",
+    "This project has no rows ready to analyse, or it has already been analysed.",
+)
+_SAVED_BEFORE_CANCEL = ProjectsNotice(
+    NoticeKind.INFO,
+    "analysis_saved",
+    "Analysis finished",
+    "The analysis had already finished and was saved before Cancel took effect.",
+)
+
+
 def read_limited(path: Path, max_bytes: int) -> bytes:
     """Read at most ``max_bytes + 1`` bytes, so a huge file is never loaded whole."""
 
@@ -107,12 +137,18 @@ def notice_for(error: BaseException) -> ProjectsNotice:
         return ProjectsNotice(
             kind, error.code, copy.MODELS_NOT_READY_TITLE, error.message
         )
-    if isinstance(error, ProviderError) and error.code == "model_load_failed":
+    if isinstance(error, ProviderError | AnalysisSetupError) and (
+        error.code == "model_load_failed"
+    ):
         return ProjectsNotice(
             kind,
             error.code,
             copy.ERROR_TITLES["model_load_failed"],
             copy.ERROR_BODIES["model_load_failed"],
+        )
+    if isinstance(error, AnalysisSetupError):
+        return ProjectsNotice(
+            kind, error.code, copy.MODELS_NOT_READY_TITLE, error.message
         )
     if isinstance(error, ValidationError):
         return ProjectsNotice(kind, error.code, "This CSV can't be used", error.message)
@@ -210,7 +246,7 @@ class ProjectsController:
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
-                self._failed_with_refresh(outcome, project_id)
+                self._failed(outcome, project_id)
                 return
             self._end(current=outcome)
 
@@ -228,7 +264,7 @@ class ProjectsController:
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
-                self._end(notice=notice_for(outcome))
+                self._failed(outcome, project_id)
                 return
             details, listing = outcome
             self._end(current=details, **self._listing_changes(listing))
@@ -241,33 +277,26 @@ class ProjectsController:
             return False
         project_id = current.summary.project_id
 
-        def work() -> tuple[AnalysisRun, ProjectDetails | None, Any]:
+        def work() -> tuple[AnalysisRun, ProjectDetails, Any]:
             run = self._workflow.analyze(
                 project_id,
                 progress=self._progress.push,
                 cancelled=self._cancel.is_set,
             )
-            details = self._workflow.open_project(project_id)
-            return run, details, self._list_quietly()
+            return run, self._workflow.open_project(project_id), self._list_quietly()
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
-                self._end(notice=notice_for(outcome))
+                self._failed(outcome, project_id)
                 return
             run, details, listing = outcome
             changes: dict[str, Any] = {
                 "current": details,
                 **self._listing_changes(listing),
             }
-            if run is AnalysisRun.CANCELLED:
-                changes["notice"] = ProjectsNotice(
-                    NoticeKind.INFO,
-                    "analysis_cancelled",
-                    "Analysis cancelled",
-                    "Nothing was saved from this run. You can analyse again.",
-                )
-            elif run is AnalysisRun.STALE:
-                changes["notice"] = notice_for(ProjectChangedError())
+            notice = self._analysis_notice(run)
+            if notice is not None:
+                changes["notice"] = notice
             self._end(**changes)
 
         return self._start(ProjectsActivity.ANALYZING, work, done)
@@ -278,22 +307,18 @@ class ProjectsController:
             self._set(cancelling=True)
 
     def delete(self, project_id: str) -> bool:
-        def work() -> Any:
-            self._workflow.delete_project(project_id)
-            return self._list_quietly()
+        def work() -> tuple[bool, Any]:
+            deleted = self._workflow.delete_project(project_id)
+            return deleted, self._list_quietly()
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
-                self._failed_with_refresh(outcome, project_id)
+                self._failed(outcome, project_id)
                 return
+            deleted, listing = outcome
             changes: dict[str, Any] = {
-                **self._listing_changes(outcome),
-                "notice": ProjectsNotice(
-                    NoticeKind.INFO,
-                    "project_deleted",
-                    "Project deleted",
-                    DELETE_NOTE,
-                ),
+                **self._listing_changes(listing),
+                "notice": _DELETED if deleted else _ALREADY_GONE,
             }
             current = self._state.current
             if current is not None and current.summary.project_id == project_id:
@@ -325,24 +350,58 @@ class ProjectsController:
             return {"listed": True, "list_failed": True}
         return {"projects": listing, "listed": True, "list_failed": False}
 
-    def _failed_with_refresh(self, error: BaseException, project_id: str) -> None:
-        """Show the error, and re-list because the thing it names may be gone."""
+    def _analysis_notice(self, run: AnalysisRun) -> ProjectsNotice | None:
+        if run is AnalysisRun.CANCELLED:
+            return _CANCELLED
+        if run is AnalysisRun.NOTHING_TO_ANALYZE:
+            return _NOTHING_TO_ANALYZE
+        if run is AnalysisRun.STALE:
+            return notice_for(ProjectChangedError())
+        if self._state.cancelling:
+            return _SAVED_BEFORE_CANCEL  # Cancel arrived after the commit point
+        return None
 
-        changes: dict[str, Any] = {"notice": notice_for(error)}
-        current = self._state.current
-        if (
-            isinstance(error, ProjectNotFoundError)
-            and current is not None
-            and current.summary.project_id == project_id
-        ):
-            changes["current"] = None  # it no longer exists
-        self._end(**changes)
-        self._start(
-            ProjectsActivity.LISTING,
-            self._workflow.list_projects,
-            lambda outcome: self._end(**self._listing_changes(outcome)),
-            keep_notice=True,
+    def _failed(self, error: BaseException, project_id: str) -> None:
+        """Show the error; if the stored project is gone or changed, resync from disk.
+
+        The resync is chained without going idle, so a pending close cannot slip in
+        between the failure and the re-list.
+        """
+
+        notice = notice_for(error)
+        stale = isinstance(
+            error, ProjectNotFoundError | ProjectChangedError | ProjectStorageError
         )
+        if not stale:
+            self._end(notice=notice)
+            return
+        current = self._state.current
+        was_open = current is not None and current.summary.project_id == project_id
+
+        def work() -> tuple[ProjectDetails | None, Any]:
+            listing = self._list_quietly()
+            if not was_open:
+                return None, listing
+            try:
+                return self._workflow.open_project(project_id), listing
+            except Exception:
+                return None, listing
+
+        def done(outcome: Any) -> None:
+            if isinstance(outcome, BaseException):
+                self._end(notice=notice)
+                return
+            details, listing = outcome
+            changes: dict[str, Any] = {
+                "notice": notice,
+                **self._listing_changes(listing),
+            }
+            if was_open:
+                changes["current"] = details
+            self._end(**changes)
+
+        self._set(activity=ProjectsActivity.LISTING, progress=None, notice=notice)
+        self._runner.run(work, done)
 
     def _start(
         self,

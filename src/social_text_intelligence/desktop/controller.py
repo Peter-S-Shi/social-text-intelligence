@@ -157,7 +157,7 @@ class ProvisioningController:
     def download(self, keys: tuple[str, ...] | None = None) -> bool:
         def work() -> ProvisioningResult:
             return self._provisioning.download(
-                keys, on_progress=self._emit, cancelled=self._cancel.is_set
+                keys, on_progress=self._progress.push, cancelled=self._cancel.is_set
             )
 
         return self._start(
@@ -181,7 +181,10 @@ class ProvisioningController:
 
         def work() -> ProvisioningResult:
             return self._provisioning.import_folder(
-                path, chosen, on_progress=self._emit, cancelled=self._cancel.is_set
+                path,
+                chosen,
+                on_progress=self._progress.push,
+                cancelled=self._cancel.is_set,
             )
 
         def done(outcome: Any) -> None:
@@ -196,7 +199,7 @@ class ProvisioningController:
 
     def verify(self) -> bool:
         def work() -> ModelsStatus:
-            return self._provisioning.verify(on_progress=self._emit)
+            return self._provisioning.verify(on_progress=self._progress.push)
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
@@ -299,11 +302,6 @@ class ProvisioningController:
         self._set(**changes)
         self._runner.run(work, done)
         return True
-
-    def _emit(self, progress: ProvisioningProgress) -> None:
-        """Worker thread: keep only the latest value and post one UI update."""
-
-        self._progress.push(progress)
 
     def _apply_progress(self, progress: ProvisioningProgress) -> None:
         if self._state.busy:

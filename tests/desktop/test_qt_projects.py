@@ -12,7 +12,7 @@ import pytest
 if os.environ.get("STI_REQUIRE_QT") != "1":
     pytest.importorskip("PySide6.QtWidgets", exc_type=ImportError)
 
-from persistence.test_project_workflow import (  # noqa: E402
+from persistence.workflow_samples import (  # noqa: E402
     SENTINEL,
     ScriptedGateway,
     csv_text,

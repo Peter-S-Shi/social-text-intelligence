@@ -14,7 +14,15 @@ from threading import Lock
 from ..application.model_provisioning import ModelsStatus, Readiness
 from ..application.settings import AnalysisGateway
 from ..contracts import AnalysisReport, NormalizedTextInput
-from ..contracts.errors import SESSION_BLOCK_MESSAGE, AnalysisSessionBlockedError
+from ..contracts.errors import (
+    SESSION_BLOCK_MESSAGE,
+    AnalysisSessionBlockedError,
+    AnalysisSetupError,
+    ProviderError,
+)
+
+# A provider that cannot load its model fails every row alike: a whole-run failure.
+_SETUP_CODES = frozenset({"model_load_failed", "missing_model_dependencies"})
 
 
 class AnalysisAvailability(StrEnum):
@@ -64,6 +72,10 @@ class AnalysisGate:
             self._loading += 1
         try:
             return self._inner.analyze(record)
+        except ProviderError as error:
+            if error.code in _SETUP_CODES:
+                raise AnalysisSetupError(error.code, error.message) from None
+            raise
         finally:
             with self._lock:
                 self._loading -= 1
