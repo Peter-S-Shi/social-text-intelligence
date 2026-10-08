@@ -17,8 +17,14 @@ Decisions worth keeping:
   runtime failure) is an `AnalysisUnavailableError`: the batch re-raises it, the
   lease is released, and nothing is committed. Review caught that a model-load
   failure still committed an all-failed result that could not be retried.
-- An analysed project is never silently re-analysed, and a batch with no valid rows
-  runs nothing, so a future review state can never be reset by accident.
+- An analysed project is never re-analysed, and a batch with no valid rows runs
+  nothing, so a future review state can never be reset by accident. External
+  review found that the first version only checked in the workflow: another
+  process could analyse the project between that check and the lease, and this
+  process would then replace its result. The guard now lives in
+  `ApplicationUseCases.analyze_workspace`, on the leased workspace, so it holds
+  for every caller and across processes; a deterministic two-workflow regression
+  covers it.
 - The repository now raises a dedicated `ProjectBusy` (still a `RuntimeError`) so
   the workflow does not map every `RuntimeError` to "busy".
 - Error recovery resyncs: when a project is gone or changed, the list and the open
