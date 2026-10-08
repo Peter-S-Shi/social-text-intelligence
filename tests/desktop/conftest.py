@@ -48,12 +48,16 @@ class FakePlatform:
 
     def __init__(self) -> None:
         self.folder: Path | None = None
+        self.csv_file: Path | None = None
         self.opened: list[Path] = []
         self.confirmed = True
         self.confirmations: list[str] = []
 
     def pick_folder(self, parent: Any) -> Path | None:
         return self.folder
+
+    def pick_csv(self, parent: Any) -> Path | None:
+        return self.csv_file
 
     def open_folder(self, path: Path) -> bool:
         self.opened.append(path)
@@ -62,3 +66,35 @@ class FakePlatform:
     def confirm(self, parent: Any, title: str, text: str) -> bool:
         self.confirmations.append(text)
         return self.confirmed
+
+
+@pytest.fixture
+def make_shell(qapp: Any, tmp_path: Path) -> Iterator[Callable[..., Any]]:
+    from PySide6.QtCore import QCoreApplication
+
+    from .fakes import FakeProvisioning, ImmediateRunner
+    from .qt_support import Shell
+
+    shells: list[Shell] = []
+
+    def factory(
+        fake: FakeProvisioning,
+        runner: Any = None,
+        platform: Any = None,
+        gateway: Any = None,
+    ) -> Shell:
+        shell = Shell(tmp_path, fake, runner or ImmediateRunner(), platform, gateway)
+        shells.append(shell)
+        return shell
+
+    yield factory
+    for shell in shells:
+        for dialog in (
+            shell.window.ui.setup_dialog,
+            shell.window.ui.models_dialog,
+            shell.window.ui.folder_dialog,
+        ):
+            dialog.hide()
+        shell.window.hide()
+        shell.window.deleteLater()
+    QCoreApplication.processEvents()

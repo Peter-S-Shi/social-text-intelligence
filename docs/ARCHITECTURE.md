@@ -273,6 +273,24 @@ source and also pins the Qt modules in use to `QtCore`, `QtGui`, and `QtWidgets`
   states map to the M5.1 design (chips pair an icon with a word, the backend's
   fixed error messages are shown verbatim with a title, a code, and recovery
   actions, and the two flagged messages are replaced by code).
+- `application/project_workflow.py` (not Qt, not desktop-specific): `ProjectWorkflow`
+  is the project path a presentation layer uses: import one CSV into a durable
+  project (the `text` fast path, or a pending project that needs a column choice),
+  open, choose a column, analyse, and delete. It reuses `ApplicationUseCases` (CSV
+  limits, preview, leases, atomic commit) and the persistent repository, and adds
+  typed content-free errors (`ProjectBusyError`, `ProjectChangedError`,
+  `ProjectNotFoundError`) and a count-only read model (`ProjectDetails`). Invalid
+  input creates no project. Cancellation and `AnalysisUnavailableError` (models not
+  ready, or the H2 session block) commit nothing and release the lease: the batch
+  re-raises that error instead of recording it as a row failure, so an H2 latch
+  that lands mid-batch fails the whole run rather than producing a partial result.
+- `projects.py`, `projects_view.py`: the Qt-free Projects controller (one operation
+  at a time through the same job runner; Cancel is the only command allowed while
+  one runs) and its view models. Notices are fixed and never carry CSV text or
+  file paths. Delete is confirmed and worded as removal from this application's
+  data files, with no secure-erasure claim and no claim about exported copies or
+  operating-system backups. The file is read off the UI thread and only up to the
+  CSV limit plus one byte.
 - `analysis.py`: the "Analyze one text" page controller; an earlier result stays on
   screen after a session block.
 - `qt/`: widgets that render the view models and route action ids back to the

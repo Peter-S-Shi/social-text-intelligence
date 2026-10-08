@@ -13,7 +13,7 @@ from typing import Any
 
 from ..application.use_cases import ApplicationUseCases
 from ..contracts import AnalysisReport
-from ..contracts.errors import ModelsNotReadyError, ProviderError
+from ..contracts.errors import AnalysisSetupError, ModelsNotReadyError, ProviderError
 from . import copy
 from .controller import JobRunner
 from .gate import AnalysisSessionBlockedError
@@ -76,7 +76,10 @@ def analysis_error(error: BaseException) -> AnalysisError:
         return AnalysisError(
             error.code, copy.MODELS_NOT_READY_TITLE, error.message, offers_models=True
         )
-    if isinstance(error, ProviderError) and error.code == "model_load_failed":
+    if (
+        isinstance(error, ProviderError | AnalysisSetupError)
+        and error.code == "model_load_failed"
+    ):
         return AnalysisError(
             error.code,
             copy.ERROR_TITLES["model_load_failed"],

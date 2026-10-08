@@ -18,7 +18,7 @@ from ..contracts import (
     SourceType,
 )
 from ..contracts.errors import (
-    ModelsNotReadyError,
+    AnalysisUnavailableError,
     ProviderError,
     SocialTextIntelligenceError,
     ValidationError,
@@ -352,8 +352,8 @@ def analyze_batch(
         else:
             try:
                 report = analyzer.analyze(row.record)
-            except ModelsNotReadyError:
-                raise  # a setup failure for the whole batch, never a row result
+            except AnalysisUnavailableError:
+                raise  # a whole-batch failure (setup or H2), never a row result
             except SocialTextIntelligenceError as error:
                 if isinstance(error, (ValidationError, ProviderError)):
                     code = error.code

@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import threading
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pytest
 
@@ -24,27 +24,16 @@ from social_text_intelligence.application.model_provisioning import (  # noqa: E
     ProvisioningResult,
     Readiness,
 )
-from social_text_intelligence.desktop.composition import (  # noqa: E402
-    build_desktop_services,
-)
 from social_text_intelligence.desktop.controller import Activity  # noqa: E402
-from social_text_intelligence.desktop.qt.main_window import MainWindow  # noqa: E402
-from social_text_intelligence.desktop.qt.platform import DesktopPlatform  # noqa: E402
 from social_text_intelligence.desktop.qt.runner import QtJobRunner  # noqa: E402
-from social_text_intelligence.infrastructure.app_data import (  # noqa: E402
-    AppDataLocations,
-)
 
 from .conftest import FakePlatform  # noqa: E402
 from .fakes import (  # noqa: E402
     MB,
     FakeProvisioning,
-    ImmediateRunner,
-    StubGateway,
     failed,
     progress,
     status,
-    synthetic_report,
 )
 
 MISSING = status(Readiness.NOT_INSTALLED, Readiness.NOT_INSTALLED)
@@ -53,77 +42,6 @@ CORRUPT = status(
     Readiness.CORRUPT,
     emotion_args={"problems": ("model.safetensors",)},
 )
-
-
-class Shell:
-    def __init__(
-        self,
-        tmp_path: Path,
-        fake: FakeProvisioning,
-        runner: Any,
-        platform: FakePlatform | None = None,
-    ) -> None:
-        self.fake = fake
-        self.platform = platform or FakePlatform()
-        self.gateway = StubGateway(report=synthetic_report())
-        services = build_desktop_services(
-            AppDataLocations(tmp_path), provisioning=fake, analysis=self.gateway
-        )
-        self.window = MainWindow(
-            services,
-            runner,
-            DesktopPlatform(
-                pick_folder=self.platform.pick_folder,
-                open_folder=self.platform.open_folder,
-                confirm=self.platform.confirm,
-            ),
-        )
-        self.window.show()
-        self.window.start()
-
-    @property
-    def setup(self) -> Any:
-        return self.window.ui.setup_dialog
-
-    @property
-    def models(self) -> Any:
-        return self.window.ui.models_dialog
-
-    def button(self, parent: Any, text: str) -> QPushButton:
-        matches = [
-            b
-            for b in parent.findChildren(QPushButton)
-            if b.text() == text and b.isVisibleTo(parent)
-        ]
-        assert matches, f"no visible button {text!r}"
-        return cast(QPushButton, matches[0])
-
-    def close(self) -> None:
-        self.window.close()
-
-
-@pytest.fixture
-def make_shell(qapp: Any, tmp_path: Path):  # type: ignore[no-untyped-def]
-    shells: list[Shell] = []
-
-    def factory(
-        fake: FakeProvisioning, runner: Any = None, platform: Any = None
-    ) -> Shell:
-        shell = Shell(tmp_path, fake, runner or ImmediateRunner(), platform)
-        shells.append(shell)
-        return shell
-
-    yield factory
-    for shell in shells:
-        for dialog in (
-            shell.window.ui.setup_dialog,
-            shell.window.ui.models_dialog,
-            shell.window.ui.folder_dialog,
-        ):
-            dialog.hide()
-        shell.window.hide()
-        shell.window.deleteLater()
-    QCoreApplication.processEvents()
 
 
 def test_the_job_runner_works_off_the_ui_thread_and_delivers_on_it(

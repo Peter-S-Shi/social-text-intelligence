@@ -85,6 +85,8 @@ def test_the_desktop_layer_does_not_reach_models_sqlite_network_or_flask() -> No
         for module in modules_imported_by(path):
             if root_of(module) in FORBIDDEN_FOR_DESKTOP:
                 offenders.append(f"{path.relative_to(PACKAGE)} -> {module}")
+            if module.startswith(f"{ROOT_NAME}.services"):
+                offenders.append(f"{path.relative_to(PACKAGE)} -> {module}")
             if module.startswith(f"{ROOT_NAME}.interface"):
                 offenders.append(f"{path.relative_to(PACKAGE)} -> {module}")
             if module.startswith(f"{ROOT_NAME}.providers.") and module.split(".")[

@@ -1,5 +1,48 @@
 # Development Log
 
+## V2 Functional Development — M5.3 Native Project Workflow — complete
+
+M5.3 closed the desktop workflow gap with one truthful path: import one CSV,
+choose the text column when the file has none, create a durable project, analyse
+it with visible row progress and Cancel, reopen it later, and delete it. Nothing
+from the existing CSV rules, leases, or atomic commit was reimplemented: a small
+`ProjectWorkflow` in the application layer orchestrates `ApplicationUseCases` and
+the persistent repository, and the desktop only renders it.
+
+Decisions worth keeping:
+
+- Whole-run failures fail the whole run. The batch used to record every provider
+  error as a row failure. For the desktop, anything that makes analysis
+  unavailable (models not ready, the H2 session block, a model-load or missing
+  runtime failure) is an `AnalysisUnavailableError`: the batch re-raises it, the
+  lease is released, and nothing is committed. Review caught that a model-load
+  failure still committed an all-failed result that could not be retried.
+- An analysed project is never re-analysed, and a batch with no valid rows runs
+  nothing, so a future review state can never be reset by accident. External
+  review found that the first version only checked in the workflow: another
+  process could analyse the project between that check and the lease, and this
+  process would then replace its result. The guard now lives in
+  `ApplicationUseCases.analyze_workspace`, on the leased workspace, so it holds
+  for every caller and across processes; a deterministic two-workflow regression
+  covers it.
+- The repository now raises a dedicated `ProjectBusy` (still a `RuntimeError`) so
+  the workflow does not map every `RuntimeError` to "busy".
+- Error recovery resyncs: when a project is gone or changed, the list and the open
+  project are reloaded, chained so a pending window close cannot start a listing
+  after shutdown.
+- Text analysis and project analysis do not run together.
+- Delete is confirmed and worded as removal from this application's data files; it
+  claims no secure erasure and says nothing about exported copies or backups.
+
+Process notes: the first draft of the Qt tests used a gateway that answered every
+record with the same report, which the store rightly refused; the test fixture now
+uses a gateway that answers each record. Two repository-wide `ruff` runs reformatted
+unrelated files and were reverted immediately; only new files are formatted.
+
+**Next:** M5.4, Native Human Review and Reviewed Export, chosen from the remaining
+gap: a user can now analyse a project but cannot record a judgment or take the
+result out. Insights, notes, language detection, and packaging come later.
+
 ## V2 Functional Development — M5.2 Native Desktop Shell + Model Provisioning UI — complete
 
 M5.2 built the smallest real PySide6 / Qt Widgets shell that carries the approved

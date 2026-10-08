@@ -137,14 +137,12 @@ class ApplicationUseCases:
         )
         return self.analysis_gateway.analyze(record)
 
-    def upload_batch(
-        self,
-        content: bytes,
-        *,
-        max_bytes: int,
-        max_rows: int,
-        max_text_length: int,
-    ) -> str:
+    @staticmethod
+    def prepare_upload(
+        content: bytes, *, max_bytes: int, max_rows: int, max_text_length: int
+    ) -> BatchWorkspace:
+        """Validate a CSV into a workspace (the ``text`` fast path, else pending)."""
+
         pending = inspect_csv_upload(content, max_bytes=max_bytes)
         if "text" in pending.headers:
             preview = prepare_csv_batch(
@@ -153,8 +151,25 @@ class ApplicationUseCases:
                 max_rows=max_rows,
                 max_text_length=max_text_length,
             )
-            return self.projects.create(BatchWorkspace(preview=preview))
-        return self.projects.create(BatchWorkspace(pending=pending))
+            return BatchWorkspace(preview=preview)
+        return BatchWorkspace(pending=pending)
+
+    def upload_batch(
+        self,
+        content: bytes,
+        *,
+        max_bytes: int,
+        max_rows: int,
+        max_text_length: int,
+    ) -> str:
+        return self.projects.create(
+            self.prepare_upload(
+                content,
+                max_bytes=max_bytes,
+                max_rows=max_rows,
+                max_text_length=max_text_length,
+            )
+        )
 
     def select_batch_column(
         self, token: str, column: str, *, max_rows: int, max_text_length: int
@@ -182,7 +197,12 @@ class ApplicationUseCases:
         progress: Callable[[BatchProgress], None] | None = None,
         cancelled: Callable[[], bool] | None = None,
     ) -> bool | None:
-        """Return None for missing preview, False for stale lease, True on commit."""
+        """Return None for a missing preview or an already-analysed workspace.
+
+        False means a stale lease and True a commit. The analysed check is made on
+        the leased workspace, so a result committed by another process after the
+        caller last looked is never replaced (that would reset its reviews).
+        """
 
         assert self.analysis_gateway is not None
         lease = self.projects.begin_analysis(token)
@@ -190,7 +210,7 @@ class ApplicationUseCases:
             return None
         committed = False
         try:
-            if lease.workspace.preview is None:
+            if lease.workspace.preview is None or lease.workspace.result is not None:
                 return None
             result = analyze_batch(
                 lease.workspace.preview,

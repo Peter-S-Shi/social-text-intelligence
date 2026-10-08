@@ -14,23 +14,15 @@ from threading import Lock
 from ..application.model_provisioning import ModelsStatus, Readiness
 from ..application.settings import AnalysisGateway
 from ..contracts import AnalysisReport, NormalizedTextInput
-from ..contracts.errors import SocialTextIntelligenceError
-
-SESSION_BLOCK_MESSAGE = (
-    "Analysis is off until you restart the app. A model check found damaged "
-    "files after analysis had started in this session, and repairing the files "
-    "does not turn analysis back on here. Close and reopen the app to check the "
-    "models again and load them fresh."
+from ..contracts.errors import (
+    SESSION_BLOCK_MESSAGE,
+    AnalysisSessionBlockedError,
+    AnalysisSetupError,
+    ProviderError,
 )
 
-
-class AnalysisSessionBlockedError(SocialTextIntelligenceError):
-    """Analysis was requested after a mid-session corruption finding."""
-
-    def __init__(self) -> None:
-        super().__init__(SESSION_BLOCK_MESSAGE)
-        self.code = "analysis_session_blocked"
-        self.message = SESSION_BLOCK_MESSAGE
+# A provider that cannot load its model fails every row alike: a whole-run failure.
+_SETUP_CODES = frozenset({"model_load_failed", "missing_model_dependencies"})
 
 
 class AnalysisAvailability(StrEnum):
@@ -80,6 +72,18 @@ class AnalysisGate:
             self._loading += 1
         try:
             return self._inner.analyze(record)
+        except ProviderError as error:
+            if error.code in _SETUP_CODES:
+                raise AnalysisSetupError(error.code, error.message) from None
+            raise
         finally:
             with self._lock:
                 self._loading -= 1
+
+
+__all__ = [
+    "SESSION_BLOCK_MESSAGE",
+    "AnalysisAvailability",
+    "AnalysisGate",
+    "AnalysisSessionBlockedError",
+]

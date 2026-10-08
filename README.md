@@ -17,9 +17,10 @@ baseline.
 > foundation (M3) and persistent project foundation (M4) milestones are complete
 > on `main`. M5 is active: M5.0, the
 > [model provisioning contract](docs/MODEL_PROVISIONING.md) and its UI-neutral
-> foundation, M5.1 (provisioning UI/UX design), and M5.2 (the minimal native
-> desktop shell and provisioning UI) are complete, and M5.3 (the native project
-> workflow) is next. See [Project Status](PROJECT_STATUS.md).
+> foundation, M5.1 (provisioning UI/UX design), M5.2 (the minimal native
+> desktop shell and provisioning UI), and M5.3 (the native project workflow)
+> are complete, and M5.4 (native human review and reviewed export) is next. See
+> [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
 > Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,
@@ -203,9 +204,12 @@ On launch the shell checks the two approved models and opens a setup window if
 either is missing. Nothing downloads until you press a button that states its
 size; you can also import a models folder you already have, which is checked
 read-only before anything is copied. The sidebar always shows the Models status.
-This milestone ships only the provisioning experience plus a minimal Projects
-list and Analyze one text (which needs the `sentiment` and `emotion` extras
-installed above); importing CSV files into projects arrives later. The
+The shell also supports the project path: import one CSV as a project (choosing
+the text column when the file has no `text` column), analyse it with visible row
+progress and Cancel (a cancelled or failed run saves nothing), reopen it later, and
+delete it (removal from this application's data files). Analysis, including
+Analyze one text, needs the `sentiment` and `emotion` extras installed above.
+Review, insights, and exports are not in the desktop yet. The
 desktop shell uses Qt (LGPL-3.0); see [Third-party notices](THIRD_PARTY_NOTICES.md).
 
 Run the dependency-free test suite:

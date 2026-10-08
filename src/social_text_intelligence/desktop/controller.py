@@ -24,6 +24,7 @@ from ..application.model_provisioning import (
     Readiness,
 )
 from ..contracts.errors import ModelProvisioningError
+from .progress import CoalescedUpdates
 
 UNEXPECTED_ERROR_CODE = "unexpected_error"
 UNEXPECTED_ERROR_MESSAGE = (
@@ -115,9 +116,7 @@ class ProvisioningController:
         self._verify_observers: list[Callable[[ModelsStatus], None]] = []
         self._idle_callbacks: list[Callable[[], None]] = []
         self._cancel = threading.Event()
-        self._lock = threading.Lock()
-        self._latest: ProvisioningProgress | None = None
-        self._update_pending = False
+        self._progress = CoalescedUpdates(runner.post, self._apply_progress)
         self._retry: Callable[[], bool] | None = None
 
     @property
@@ -158,7 +157,7 @@ class ProvisioningController:
     def download(self, keys: tuple[str, ...] | None = None) -> bool:
         def work() -> ProvisioningResult:
             return self._provisioning.download(
-                keys, on_progress=self._emit, cancelled=self._cancel.is_set
+                keys, on_progress=self._progress.push, cancelled=self._cancel.is_set
             )
 
         return self._start(
@@ -182,7 +181,10 @@ class ProvisioningController:
 
         def work() -> ProvisioningResult:
             return self._provisioning.import_folder(
-                path, chosen, on_progress=self._emit, cancelled=self._cancel.is_set
+                path,
+                chosen,
+                on_progress=self._progress.push,
+                cancelled=self._cancel.is_set,
             )
 
         def done(outcome: Any) -> None:
@@ -197,7 +199,7 @@ class ProvisioningController:
 
     def verify(self) -> bool:
         def work() -> ModelsStatus:
-            return self._provisioning.verify(on_progress=self._emit)
+            return self._provisioning.verify(on_progress=self._progress.push)
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
@@ -285,9 +287,7 @@ class ProvisioningController:
         if self._state.busy:
             return False
         self._cancel.clear()
-        with self._lock:
-            self._latest = None
-            self._update_pending = False
+        self._progress.reset()
         changes: dict[str, Any] = {
             "activity": activity,
             "progress": None,
@@ -303,21 +303,8 @@ class ProvisioningController:
         self._runner.run(work, done)
         return True
 
-    def _emit(self, progress: ProvisioningProgress) -> None:
-        """Worker thread: keep only the latest value and post one UI update."""
-
-        with self._lock:
-            self._latest = progress
-            if self._update_pending:
-                return
-            self._update_pending = True
-        self._runner.post(self._apply_progress)
-
-    def _apply_progress(self) -> None:
-        with self._lock:
-            progress = self._latest
-            self._update_pending = False
-        if progress is not None and self._state.busy:
+    def _apply_progress(self, progress: ProvisioningProgress) -> None:
+        if self._state.busy:
             self._set(progress=progress)
 
     def _finish_result(
@@ -347,9 +334,7 @@ class ProvisioningController:
         self._end(report=report)
 
     def _end(self, **changes: Any) -> None:
-        with self._lock:
-            self._latest = None
-            self._update_pending = False
+        self._progress.reset()
         self._set(activity=Activity.IDLE, progress=None, stopping=False, **changes)
         callbacks, self._idle_callbacks = self._idle_callbacks, []
         for callback in callbacks:

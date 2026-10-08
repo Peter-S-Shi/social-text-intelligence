@@ -13,6 +13,7 @@ from ..application.model_provisioning import (
     ModelProvisioning,
     build_provisioned_analysis_service,
 )
+from ..application.project_workflow import CsvLimits, ProjectWorkflow
 from ..application.projects import PersistentProjectRepository
 from ..application.settings import AnalysisGateway, AppSettings
 from ..application.use_cases import ApplicationUseCases
@@ -23,6 +24,7 @@ from ..infrastructure.sqlite_projects import SqliteProjectRepository
 from .analysis import AnalysisPageController
 from .controller import JobRunner, ProvisioningController
 from .gate import AnalysisGate
+from .projects import ProjectsController
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +34,7 @@ class DesktopServices:
     provisioning: ModelProvisioning
     gate: AnalysisGate
     projects: PersistentProjectRepository
+    workflow: ProjectWorkflow
     use_cases: ApplicationUseCases
 
 
@@ -55,6 +58,7 @@ def build_desktop_services(
         provisioning=provisioning,
         gate=gate,
         projects=projects,
+        workflow=ProjectWorkflow(projects, gate, CsvLimits.from_settings(settings)),
         use_cases=ApplicationUseCases(projects, gate),
     )
 
@@ -78,3 +82,13 @@ def build_analysis_controller(
         return services.use_cases.analyze_text(text, max_text_length=limit)
 
     return AnalysisPageController(analyze, runner)
+
+
+def build_projects_controller(
+    services: DesktopServices, runner: JobRunner
+) -> ProjectsController:
+    return ProjectsController(
+        services.workflow,
+        runner,
+        max_file_bytes=services.settings.max_batch_bytes,
+    )
