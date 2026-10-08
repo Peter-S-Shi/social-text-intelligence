@@ -1,5 +1,49 @@
 # Development Log
 
+## V2 Functional Development — M5.5 Native Insights, Context Notes, and Representative Cases — complete
+
+M5.5 closed the largest remaining native gap: the desktop could analyse, review,
+and export a project but had no surface for the grouped insights, the notes, or
+the representative cases. It exposes the existing insight system and adds no
+analytics of its own: a thin `InsightsWorkflow` composes the existing use cases,
+and every denominator, membership, eligibility, agreement, threshold,
+case-selection, note-validation, and export rule stays in the insight service.
+
+Decisions worth keeping:
+
+- A requested view is validated before it is saved. The shared `resolve_insights`
+  saves the selection as a side effect and falls back to a default view on a
+  validation error, so a typo in a date could have replaced the saved view.
+  `apply` now runs the service's own validation first and raises instead.
+- The two approved views are two pages of one Insights surface (a tab bar over two
+  plain pages, because a tab widget sized itself to the taller page and stretched
+  the controls). Agreement lives in the perspective choice.
+- Sample-size handling follows the service: the warning text, the de-emphasised
+  percentages, and a comparison caution come from `SampleSizeAssessment`. The
+  service does not forbid a comparison of small groups, so neither does the UI;
+  it says so.
+- Notes are written through the repository's atomic current-state mutation, so a
+  note or a saved view never replaces another process's newer notes or human
+  reviews. A deterministic hook at the commit point proves it.
+- A note saved before a failed refresh is cleared from the draft with a truthful
+  message, because keeping it would let a retry save it twice.
+- The unsaved-note guard follows the M5.4 lesson: confirming a discard must really
+  discard, and a case cannot open in Review while the surface is busy.
+- The export save moved to a shared `exporting.py` so the reviewed and insights
+  exports share one explicit atomic write and one fixed failure message.
+
+Process notes: reviewing the first screenshot showed the controls panel stretched
+by a tab widget and unchecked list indicators that could not be seen, both fixed
+before the review. A first draft of the context line, `N eligible of M group
+rows`, mixed a metric-specific number with an unfiltered one and was reworded.
+Typing a space in the editable note value was erased because the draft stripped it;
+a test now types one.
+
+**Next:** M5.6, Language Detection and Unsupported-Language Warning (V2-3), chosen
+from the remaining approved scope: it is the only approved V2 feature with no
+implementation. Packaging, the formal accessibility audit, and the LGPL gate
+follow and need their own scoping.
+
 ## V2 Functional Development — M5.4 Native Human Review and Reviewed Export — complete
 
 M5.4 closed the next product gap: an analysed project could not be reviewed or

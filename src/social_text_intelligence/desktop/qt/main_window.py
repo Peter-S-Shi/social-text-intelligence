@@ -18,6 +18,7 @@ from ..analysis import AnalysisPageController, AnalysisPageState
 from ..composition import (
     DesktopServices,
     build_analysis_controller,
+    build_insights_controller,
     build_projects_controller,
     build_provisioning_controller,
     build_review_controller,
@@ -28,6 +29,7 @@ from ..controller import (
     JobRunner,
     ProvisioningController,
 )
+from ..insights import InsightsController, InsightsState
 from ..panel import build_sidebar_status
 from ..projects import ProjectsActivity, ProjectsState
 from ..review import ReviewController, ReviewState
@@ -43,6 +45,10 @@ LEAVE_PAGE_TEXT = (
     "You have unsaved changes to a review. Leave this page and discard them?"
 )
 CLOSE_WINDOW_TEXT = "You have unsaved changes to a review. Close without saving them?"
+LEAVE_NOTE_TEXT = (
+    "You have a context note that is not saved. Leave this page and discard it?"
+)
+CLOSE_NOTE_TEXT = "You have a context note that is not saved. Close without saving it?"
 
 
 class MainWindow(QMainWindow):
@@ -65,6 +71,7 @@ class MainWindow(QMainWindow):
         )
         self.projects = build_projects_controller(services, runner)
         self.review: ReviewController = build_review_controller(services, runner)
+        self.insights: InsightsController = build_insights_controller(services, runner)
         platform = platform or DesktopPlatform()
         self._platform = platform
         self._closing = False
@@ -103,7 +110,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.sidebar)
 
         self.pages = QStackedWidget()
-        self.projects_page = ProjectsPage(self.projects, self.review, platform)
+        self.projects_page = ProjectsPage(
+            self.projects, self.review, self.insights, platform
+        )
         self.analyze_page = AnalyzePage()
         self.pages.addWidget(self.projects_page)
         self.pages.addWidget(self.analyze_page)
@@ -130,6 +139,7 @@ class MainWindow(QMainWindow):
         self.analysis.subscribe(self._on_analysis)
         self.projects.subscribe(self._on_projects)
         self.review.subscribe(self._on_review)
+        self.insights.subscribe(self._on_insights)
         self._last_announced = ""
         self.show_page(PAGES[0])
 
@@ -146,14 +156,15 @@ class MainWindow(QMainWindow):
     # -- rendering ----------------------------------------------------------
 
     def _open_page(self, name: str) -> None:
-        """A sidebar click: never silently drop an unsaved review judgment."""
+        """A sidebar click: never silently drop an unsaved judgment or note."""
 
         leaving = PAGES[self.pages.currentIndex()] != name
-        if leaving and self._keep_unsaved_review(LEAVE_PAGE_TEXT):
+        if leaving and self._keep_unsaved_work(LEAVE_PAGE_TEXT, LEAVE_NOTE_TEXT):
             self.show_page(PAGES[self.pages.currentIndex()])  # re-check the button
             return
-        if leaving:
-            self.review.discard_changes()  # confirmed: it must not come back
+        if leaving:  # confirmed: neither may come back later
+            self.review.discard_changes()
+            self.insights.discard_changes()
         self.show_page(name)
 
     def show_page(self, name: str) -> None:
@@ -193,6 +204,10 @@ class MainWindow(QMainWindow):
         if self._closing and not state.busy:
             self._close_when_done()
 
+    def _on_insights(self, state: InsightsState) -> None:
+        if self._closing and not state.busy:
+            self._close_when_done()
+
     def _on_analysis(self, state: AnalysisPageState) -> None:
         self.analyze_page.render_analysis(state)
         self._on_provisioning(self.provisioning.state)
@@ -210,7 +225,7 @@ class MainWindow(QMainWindow):
 
         state = self.provisioning.state
         if self._idle():
-            if self._keep_unsaved_review(CLOSE_WINDOW_TEXT):
+            if self._keep_unsaved_work(CLOSE_WINDOW_TEXT, CLOSE_NOTE_TEXT):
                 event.ignore()
                 return
             self.runner.wait_idle(5)
@@ -233,10 +248,14 @@ class MainWindow(QMainWindow):
         # the provisioning, analysis, and projects listeners all re-check on idle
         self.provisioning.when_idle(self._close_when_done)
 
-    def _keep_unsaved_review(self, text: str) -> bool:
-        """Ask before dropping an unsaved judgment; True means stay where you are."""
+    def _keep_unsaved_work(self, review_text: str, note_text: str) -> bool:
+        """Ask before dropping unsaved work; True means stay where you are."""
 
-        if not self.review.state.has_unsaved_changes:
+        if self.review.state.has_unsaved_changes:
+            text = review_text
+        elif self.insights.state.has_unsaved_changes:
+            text = note_text
+        else:
             return False
         return not self._platform.confirm(self, "Unsaved changes", text)
 
@@ -252,4 +271,5 @@ class MainWindow(QMainWindow):
             or self.analysis.state.running
             or self.projects.state.busy
             or self.review.state.busy
+            or self.insights.state.busy
         )

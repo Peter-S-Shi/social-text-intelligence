@@ -619,14 +619,6 @@ class ApplicationUseCases:
                 perspective=InsightPerspective.AI,
                 metric=InsightMetric.AI_SENTIMENT,
             )
-        try:
-            summaries = build_group_metrics(
-                result, reviews, selection, comparison=comparison
-            )
-        except ValidationError as error:
-            error_message = error_message or error.message
-            summaries = ()
-
         if (
             InsightState(notes=insight_state.notes, selection=selection)
             != insight_state
@@ -640,6 +632,16 @@ class ApplicationUseCases:
             result = replacement.result
             reviews = replacement.reviews
             insight_state = replacement.insights
+
+        # Derived from the state the selection was saved against, so the metric
+        # cards, notes and examples always describe one generation of the project.
+        try:
+            summaries = build_group_metrics(
+                result, reviews, selection, comparison=comparison
+            )
+        except ValidationError as error:
+            error_message = error_message or error.message
+            summaries = ()
 
         try:
             example_mode = ExampleMode(

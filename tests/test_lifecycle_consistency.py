@@ -85,14 +85,20 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert (
         "**M5.0 — Model Provisioner Function Contract & Foundation, M5.1 — "
         "Model Provisioning UI/UX Design, M5.2 — Native Desktop Shell + Model "
-        "Provisioning UI, M5.3 — Native Project Workflow, and M5.4 — Native "
-        "Human Review and Reviewed Export are complete on `main`; M5.5 — Native "
-        "Insights, Context Notes, and Representative Cases is the next "
-        "development sub-milestone"
+        "Provisioning UI, M5.3 — Native Project Workflow, M5.4 — Native Human "
+        "Review and Reviewed Export, and M5.5 — Native Insights, Context Notes, "
+        "and Representative Cases are complete on `main`; M5.6 — Language "
+        "Detection and Unsupported-Language Warning is the next development "
+        "sub-milestone"
         in status
     )
     assert (
         "| M5.0 — Model Provisioner Function Contract & Foundation | **COMPLETE"
+        in status
+    )
+    assert (
+        "| M5.5 — Native Insights, Context Notes, and Representative Cases | "
+        "**COMPLETE"
         in status
     )
     assert (

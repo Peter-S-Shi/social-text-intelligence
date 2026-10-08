@@ -104,6 +104,8 @@ class ProjectDetailView:
     show_analyze: bool
     show_review: bool
     review_enabled: bool
+    show_insights: bool
+    insights_enabled: bool
     analyze_label: str
     analyze_enabled: bool
     progress: ProjectProgressView | None
@@ -191,6 +193,8 @@ def build_detail_view(
         show_analyze=ready,
         show_review=analyzed,
         review_enabled=analyzed and not busy,
+        show_insights=analyzed,
+        insights_enabled=analyzed and not busy,
         analyze_label=f"Analyze {details.valid_rows} rows",
         analyze_enabled=(
             ready

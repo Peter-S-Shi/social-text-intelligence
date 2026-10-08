@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..application.insights_workflow import InsightsWorkflow
 from ..application.model_provisioning import (
     ModelProvisioning,
     build_provisioned_analysis_service,
@@ -25,6 +26,7 @@ from ..infrastructure.sqlite_projects import SqliteProjectRepository
 from .analysis import AnalysisPageController
 from .controller import JobRunner, ProvisioningController
 from .gate import AnalysisGate
+from .insights import InsightsController
 from .projects import ProjectsController
 from .review import ReviewController
 
@@ -38,6 +40,7 @@ class DesktopServices:
     projects: PersistentProjectRepository
     workflow: ProjectWorkflow
     reviews: ReviewWorkflow
+    insights: InsightsWorkflow
     use_cases: ApplicationUseCases
 
 
@@ -63,6 +66,7 @@ def build_desktop_services(
         projects=projects,
         workflow=ProjectWorkflow(projects, gate, CsvLimits.from_settings(settings)),
         reviews=ReviewWorkflow(projects),
+        insights=InsightsWorkflow(projects),
         use_cases=ApplicationUseCases(projects, gate),
     )
 
@@ -102,3 +106,9 @@ def build_review_controller(
     services: DesktopServices, runner: JobRunner
 ) -> ReviewController:
     return ReviewController(services.reviews, runner)
+
+
+def build_insights_controller(
+    services: DesktopServices, runner: JobRunner
+) -> InsightsController:
+    return InsightsController(services.insights, runner)

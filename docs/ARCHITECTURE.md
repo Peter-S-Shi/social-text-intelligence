@@ -313,14 +313,39 @@ source and also pins the Qt modules in use to `QtCore`, `QtGui`, and `QtWidgets`
   agreement, never accuracy. Export writes only to a path the user chose in a save
   dialog, through a temporary file and a replace, with fixed messages that carry no
   path and no record text.
+- `application/insights_workflow.py` (not Qt): `InsightsWorkflow` is the insights
+  path a presentation layer uses. It reads the saved view (or the default one),
+  validates a requested view **before** saving it (so a typo can never replace the
+  saved view), adds and removes human-written context notes, selects representative
+  cases, and exports the insights CSV. Group membership, metric denominators, review
+  eligibility, agreement, sample-size assessment, case selection, note validation,
+  and spreadsheet-safe export all stay in `services/insights.py`; the workflow only
+  composes the existing `ApplicationUseCases` calls and returns an `InsightsSnapshot`.
+  Notes and the saved view are written through the repository's atomic
+  current-state mutation, so a note or view saved here never replaces another
+  process's newer notes or human reviews.
+- `insights.py`, `insights_view.py`: the Qt-free Insights controller (one operation at
+  a time; the not-yet-applied controls and an unsaved note are kept apart from the
+  saved state; a failed apply or note never drops the person's input) and its view
+  models. Every number shown is the service's own number with its denominator; the
+  sample-size warnings and comparison caution come from `SampleSizeAssessment`;
+  agreement is worded as agreement, never accuracy; the language grouping is labelled
+  "as supplied in the file" (automatic language detection is a separate, later
+  feature); and a note is labelled as human-written context apart from every AI and
+  review value.
+- `exporting.py`: the one explicit, atomic save used by every export (reviewed CSV and
+  insights CSV): write beside the target, then replace it, with one fixed failure
+  message that carries no path and no record text.
 - `analysis.py`: the "Analyze one text" page controller; an earlier result stays on
   screen after a session block.
 - `qt/`: widgets that render the view models and route action ids back to the
   controller. The same panel serves the setup window and the Models window. The
   shell is deliberately minimal: a sidebar with persistent Models status, a
-  Projects page (list, project detail, and the project's Review page), and Analyze
-  one text. The Review page is reached from an analysed project, not from the list,
-  and its AI block contains labels only, so no prediction can be edited.
+  Projects page (list, project detail, and the project's Review and Insights
+  pages), and Analyze one text. The Review and Insights pages are reached from an
+  analysed project, not from the list. The Review page's AI block contains labels
+  only, so no prediction can be edited, and an Insights case shows its AI record and
+  its human judgment as separate blocks.
 
 Flask remains a frozen compatibility surface and is not a desktop dependency. The
 desktop uses system font fallbacks; web fonts from the prototypes are not bundled.

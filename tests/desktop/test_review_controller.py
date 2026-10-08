@@ -404,3 +404,11 @@ def test_discarding_is_refused_while_busy(env: Env) -> None:
     assert controller.state.draft.note == "x"
     runner.run_next()
     assert snapshot_of(controller.state).review.note == "x"  # the save went through
+
+
+def test_opening_at_a_row_starts_there(env: Env) -> None:
+    controller = env.controller()
+
+    assert controller.open(env.project_id, row=3)
+
+    assert snapshot_of(controller.state).row_number == 3
