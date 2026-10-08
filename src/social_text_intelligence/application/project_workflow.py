@@ -206,8 +206,8 @@ class ProjectWorkflow:
 
         details = self.open_project(project_id)
         if details.phase is not ProjectPhase.READY or details.valid_rows == 0:
-            # an analysed project is never silently re-analysed (that would reset
-            # derived state), and a batch with no valid rows has nothing to run
+            # a fast path only: the shared use case re-checks the leased workspace,
+            # which is what stops a project analysed elsewhere since this look
             return AnalysisRun.NOTHING_TO_ANALYZE
         try:
             committed = self._use_cases.analyze_workspace(

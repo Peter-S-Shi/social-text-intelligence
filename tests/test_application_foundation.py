@@ -175,3 +175,19 @@ def test_application_batch_review_and_export_work_without_flask() -> None:
     assert insight is not None
     assert insight.selection.groups == ("shipping",)
     assert insight.error_message is None
+
+
+def test_an_analysed_workspace_is_not_analysed_again() -> None:
+    repository = InMemoryProjectRepository()
+    gateway = FailingGateway()
+    token = repository.create(BatchWorkspace(preview=one_row_preview()))
+    use_cases = ApplicationUseCases(repository, deterministic_gateway())
+    assert use_cases.analyze_workspace(token) is True
+    analysed = repository.get(token)
+
+    assert ApplicationUseCases(repository, gateway).analyze_workspace(token) is None
+
+    assert repository.get(token) is analysed  # result, reviews and insights kept
+    lease = repository.begin_analysis(token)  # and the lease was released
+    assert lease is not None
+    assert repository.cancel_analysis(lease)

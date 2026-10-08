@@ -197,7 +197,12 @@ class ApplicationUseCases:
         progress: Callable[[BatchProgress], None] | None = None,
         cancelled: Callable[[], bool] | None = None,
     ) -> bool | None:
-        """Return None for missing preview, False for stale lease, True on commit."""
+        """Return None for a missing preview or an already-analysed workspace.
+
+        False means a stale lease and True a commit. The analysed check is made on
+        the leased workspace, so a result committed by another process after the
+        caller last looked is never replaced (that would reset its reviews).
+        """
 
         assert self.analysis_gateway is not None
         lease = self.projects.begin_analysis(token)
@@ -205,7 +210,7 @@ class ApplicationUseCases:
             return None
         committed = False
         try:
-            if lease.workspace.preview is None:
+            if lease.workspace.preview is None or lease.workspace.result is not None:
                 return None
             result = analyze_batch(
                 lease.workspace.preview,

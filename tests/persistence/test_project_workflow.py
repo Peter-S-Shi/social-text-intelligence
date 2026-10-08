@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -16,7 +17,12 @@ from social_text_intelligence.application.project_workflow import (
     ProjectPhase,
     ProjectWorkflow,
 )
-from social_text_intelligence.application.projects import ProjectStatus
+from social_text_intelligence.application.projects import (
+    BatchAnalysisLease,
+    BatchWorkspace,
+    ProjectStatus,
+)
+from social_text_intelligence.application.use_cases import ApplicationUseCases
 from social_text_intelligence.contracts import (
     AnalysisReport,
     NormalizedTextInput,
@@ -370,3 +376,60 @@ def test_describe_handles_a_workspace_with_no_data(tmp_path: Path) -> None:
     flow = workflow(tmp_path)
     summary = flow.import_csv(csv_text(1), name="P").summary
     assert describe(summary, BatchWorkspace()).phase is ProjectPhase.EMPTY
+
+
+class RacingRepository(SqliteProjectRepository):
+    """Runs a hook at the moment this process enters the analysis boundary."""
+
+    def __init__(self, root: Path, before_begin: Callable[[], None]) -> None:
+        super().__init__(AppDataLocations(root))
+        self.before_begin = before_begin
+
+    def begin_analysis(self, token: str) -> BatchAnalysisLease | None:
+        self.before_begin()
+        return super().begin_analysis(token)
+
+
+def test_a_project_analysed_elsewhere_after_the_ready_check_is_not_re_analysed(
+    tmp_path: Path,
+) -> None:
+    other_gateway = ScriptedGateway()
+    other = workflow(tmp_path, other_gateway)  # process B
+    project_ids: list[str] = []
+    saved: list[BatchWorkspace] = []
+
+    def analyse_and_review_elsewhere() -> None:
+        assert other.analyze(project_ids[0]) is AnalysisRun.COMMITTED
+        reviewer = ApplicationUseCases(other._repository, other_gateway)
+        filters = {
+            "review_filter": "all",
+            "sentiment_filter": "all",
+            "emotion_filter": "all",
+        }
+        assert reviewer.save_review(
+            project_ids[0],
+            1,
+            action="accept_both",
+            values={},
+            secondary_emotions=(),
+            **filters,
+        )
+        current = other._repository.get(project_ids[0])
+        assert current is not None and current.reviews is not None
+        saved.append(current)
+
+    gateway = ScriptedGateway()
+    repository = RacingRepository(tmp_path, analyse_and_review_elsewhere)
+    flow = ProjectWorkflow(repository, gateway, LIMITS)  # process A
+    project_ids.append(flow.import_csv(csv_text(3), name="P").summary.project_id)
+    assert flow.open_project(project_ids[0]).phase is ProjectPhase.READY  # A's view
+
+    outcome = flow.analyze(project_ids[0])
+
+    assert outcome is AnalysisRun.NOTHING_TO_ANALYZE
+    assert gateway.calls == 0  # A ran no model rows
+    after = other._repository.get(project_ids[0])
+    assert after == saved[0]  # result, reviews and insights are B's, untouched
+    assert flow.open_project(project_ids[0]).phase is ProjectPhase.ANALYZED
+    # and the lease A took was released: the project is not left busy
+    assert flow.delete_project(project_ids[0]) is True
