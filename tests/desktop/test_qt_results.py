@@ -94,9 +94,7 @@ def test_after_analysis_the_failed_row_is_listed_apart_with_its_reason(
     assert page.problems_table.rowCount() == 1  # the rejected row is still listed
 
 
-def test_a_clean_csv_says_every_row_is_ready(
-    make_shell: Any, tmp_path: Path
-) -> None:
+def test_a_clean_csv_says_every_row_is_ready(make_shell: Any, tmp_path: Path) -> None:
     shell: Shell = make_shell(FakeProvisioning(current=READY))
     path = tmp_path / "clean.csv"
     path.write_bytes(b"record_id,text\nr1,hello there\nr2,plain words\n")
@@ -199,7 +197,9 @@ def test_the_sentiment_and_emotion_filters_combine_and_can_match_nothing(
     shell = opened(make_shell, tmp_path)
     results = shell.window.projects_page.results_page
 
-    results.sentiment_filter.setCurrentIndex(results.sentiment_filter.findData("negative"))
+    results.sentiment_filter.setCurrentIndex(
+        results.sentiment_filter.findData("negative")
+    )
     results.sentiment_filter.activated.emit(results.sentiment_filter.currentIndex())
     assert results.table.rowCount() == 7
 
@@ -256,10 +256,14 @@ def test_export_writes_every_row_with_the_supplied_and_detected_language_apart(
 
     results.export_button.click()
 
-    rows = list(csv.DictReader(io.StringIO((out / "normalized.csv").read_text("utf-8"))))
+    rows = list(
+        csv.DictReader(io.StringIO((out / "normalized.csv").read_text("utf-8")))
+    )
     assert len(rows) == 26
     assert "language" in rows[0] and "detected_language" in rows[0]
-    assert "native_emotion_scores" not in rows[0] or not rows[0]["native_emotion_scores"]
+    assert (
+        "native_emotion_scores" not in rows[0] or not rows[0]["native_emotion_scores"]
+    )
     assert text_of(results.notice.title).endswith("Normalized CSV saved")
     assert str(tmp_path) not in text_of(results.notice.body)
     assert [p.name for p in out.iterdir()] == ["normalized.csv"]

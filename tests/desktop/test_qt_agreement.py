@@ -128,7 +128,8 @@ def test_reviews_show_their_rates_with_denominators_and_the_confusion_counts(
     assert "Sentiment agreement" in sentiment.accessibleName()
     assert text_of(agreement.header.subtitle).startswith("4 of 24 reviewed")
     names = {
-        w.accessibleName() for w in agreement.confusion.findChildren(type(agreement.note))
+        w.accessibleName()
+        for w in agreement.confusion.findChildren(type(agreement.note))
     }
     assert any(n.startswith("AI negative, you neutral: 1") for n in names)
     assert not agreement.empty.isVisibleTo(agreement)
@@ -212,7 +213,9 @@ def test_no_text_on_the_page_calls_agreement_accuracy(
     agreement = go_agreement(shell)
 
     shown = " ".join(
-        w.text() for w in agreement.findChildren(type(agreement.note)) if w.isVisibleTo(agreement)
+        w.text()
+        for w in agreement.findChildren(type(agreement.note))
+        if w.isVisibleTo(agreement)
     ).lower()
 
     assert "not accuracy" in shown

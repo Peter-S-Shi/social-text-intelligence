@@ -301,7 +301,9 @@ class ProjectsPage(QWidget):
         self.problems_card = Card("ROWS REJECTED AT IMPORT")
         self.all_ready = label(role="muted")
         self.all_ready.setObjectName("all-ready")
-        self.problems_table = self._problem_table("problems-table", "Rows with problems")
+        self.problems_table = self._problem_table(
+            "problems-table", "Rows with problems"
+        )
         add_all(self.problems_card.layout_, self.all_ready, self.problems_table)
         self.failures_card = Card("ROWS THAT FAILED IN ANALYSIS")
         self.failures_table = self._problem_table(
@@ -327,7 +329,9 @@ class ProjectsPage(QWidget):
         table = DataTable()
         table.setObjectName(name)
         table.setAccessibleName(accessible)
-        table.set_columns([c for c, _ in PROBLEM_COLUMNS], [w for _, w in PROBLEM_COLUMNS])
+        table.set_columns(
+            [c for c, _ in PROBLEM_COLUMNS], [w for _, w in PROBLEM_COLUMNS]
+        )
         table.fit_rows(1)
         return table
 
@@ -482,7 +486,11 @@ class ProjectsPage(QWidget):
             return
         self._results_signature = signature
         project_id = details.summary.project_id
-        self._results.when_idle(lambda: self._results.open(project_id))
+
+        def load() -> None:
+            self._results.open(project_id)
+
+        self._results.when_idle(load)
 
     def _has_focus(self) -> bool:
         focused = self.window().focusWidget()
@@ -570,10 +578,17 @@ class ProjectsPage(QWidget):
         view = build_validation_view(state)
         shown = view is not None and not self._controller.state.busy
         self.problems_card.setVisible(shown)
-        self.failures_card.setVisible(shown and view is not None and bool(view.failures))
+        self.failures_card.setVisible(
+            shown and view is not None and bool(view.failures)
+        )
         if view is None or not shown:
             return
-        signature = (view.problems, view.failures, view.all_ready_line, view.ignored_line)
+        signature = (
+            view.problems,
+            view.failures,
+            view.all_ready_line,
+            view.ignored_line,
+        )
         self.ignored.setText(view.ignored_line)
         self.ignored.setVisible(bool(view.ignored_line))
         if signature == self._problem_signature:
@@ -652,4 +667,3 @@ class ProjectsPage(QWidget):
         heading, text = delete_confirmation(title)
         if self._platform.confirm(self, heading, text):
             self._controller.delete(project_id)
-

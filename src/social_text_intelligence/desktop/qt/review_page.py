@@ -240,9 +240,7 @@ class HumanBlock(QFrame):
                 button.group().setExclusive(True)
 
     @staticmethod
-    def _set_combo(
-        combo: Combo, chosen: SentimentLabel | EmotionLabel | None
-    ) -> None:
+    def _set_combo(combo: Combo, chosen: SentimentLabel | EmotionLabel | None) -> None:
         index = 0 if chosen is None else combo.findData(chosen.value)
         if combo.currentIndex() != index:
             combo.setCurrentIndex(index)

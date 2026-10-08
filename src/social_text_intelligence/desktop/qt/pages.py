@@ -71,7 +71,8 @@ class AnalyzePage(Page):
         self.header = PageHeader("Analyze one text")
         self.heading = self.header.title
         self.header.set_subtitle(
-            "Not saved: nothing is written to disk, and the text stays on this computer."
+            "Not saved: nothing is written to disk, and the text stays on this "
+            "computer."
         )
         self.block = AnalysisBlockBox()
         self.block.triggered.connect(lambda _: self.open_models.emit())

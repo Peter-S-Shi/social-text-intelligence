@@ -182,7 +182,12 @@ def test_projects_leaves_the_project_and_closes_its_pages(
     assert page.stack.currentWidget() is page.list_page
     assert not window.project_area.isVisibleTo(window)
     assert window.projects.state.current is None
-    for controller in (window.review, window.results, window.agreement, window.insights):
+    for controller in (
+        window.review,
+        window.results,
+        window.agreement,
+        window.insights,
+    ):
         assert not controller.state.active
     assert checked(shell) == ["Projects"]
     assert "1 project(s)" in text_of(page.summary)
@@ -238,7 +243,9 @@ def test_the_navigation_is_keyboard_reachable_named_and_has_no_stray_mnemonic(
         assert button.focusPolicy() != Qt.FocusPolicy.NoFocus, name
         assert button.accessibleName().startswith(name), name
         assert button.shortcut().isEmpty(), name  # "&" is a letter here, not a key
-    assert shell.window.nav_buttons["Import & validation"].text() == "Import && validation"
+    assert (
+        shell.window.nav_buttons["Import & validation"].text() == "Import && validation"
+    )
     assert shell.window.models_button.focusPolicy() != Qt.FocusPolicy.NoFocus
 
 

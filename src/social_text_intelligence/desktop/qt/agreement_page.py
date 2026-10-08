@@ -137,8 +137,8 @@ class AgreementPage(Page):
 
         self.confidence_cards = (ConfidenceCard(), ConfidenceCard())
         self.confidence_row = ReflowRow(min_width=360)
-        for card in self.confidence_cards:
-            self.confidence_row.add(card)
+        for panel_card in self.confidence_cards:
+            self.confidence_row.add(panel_card)
         self.confidence_note = label(role="muted")
         self.note = label(role="muted")
         self.note.setObjectName("agreement-note")
@@ -200,8 +200,10 @@ class AgreementPage(Page):
             ]
         )
         self.added_removed.setText(view.added_removed_line)
-        for card, panel in zip(self.confidence_cards, view.confidence, strict=True):
-            card.show_panel(panel)
+        for panel_card, panel in zip(
+            self.confidence_cards, view.confidence, strict=True
+        ):
+            panel_card.show_panel(panel)
         self.confidence_note.setText(view.confidence_note)
         self.note.setText(view.note)
         self.export_button.setText(view.export_label)

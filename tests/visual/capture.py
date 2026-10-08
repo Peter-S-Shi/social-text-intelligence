@@ -4,8 +4,8 @@ Not a test: run it by hand with the platform's own Qt plugin (not ``offscreen``)
 example ``python tests/visual/capture.py out_dir`` (Windows, with the ``dev`` extras).
 Every picture is ``QWidget.grab()`` of the application's own widgets, driven through
 its own controllers on synthetic data in a throwaway data directory, so it can never
-capture anything else on the desktop. Nothing here claims a screen-reader, high-contrast,
-or any other assistive-technology check.
+capture anything else on the desktop. Nothing here claims a screen-reader,
+high-contrast, or any other assistive-technology check.
 """
 
 from __future__ import annotations
@@ -20,19 +20,14 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))  # tests/ (desktop.fakes, persistence.*)
 sys.path.insert(0, str(HERE.parents[1] / "src"))
 
-from PySide6.QtCore import QCoreApplication  # noqa: E402
-from PySide6.QtWidgets import QApplication, QPushButton, QWidget  # noqa: E402
-from visual.synthetic import (  # noqa: E402
-    SyntheticEmotion,
-    SyntheticSentiment,
-    feedback_csv,
-)
-
 from desktop.fakes import (  # noqa: E402
     FakeProvisioning,
     ImmediateRunner,
     status,
 )
+from PySide6.QtCore import QCoreApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication, QPushButton, QWidget  # noqa: E402
+
 from social_text_intelligence.application.model_provisioning import (  # noqa: E402
     Readiness,
 )
@@ -60,12 +55,17 @@ from social_text_intelligence.providers.language_py3langid import (  # noqa: E40
     Py3LangidDetector,
 )
 from social_text_intelligence.services import AnalysisService  # noqa: E402
+from visual.synthetic import (  # noqa: E402
+    SyntheticEmotion,
+    SyntheticSentiment,
+    feedback_csv,
+)
 
 WIDTH, HEIGHT = 1280, 860
 
 
 class Gateway:
-    """The shared analysis service over the synthetic providers and the real detector."""
+    """The shared analysis service: synthetic providers, the real local detector."""
 
     initialized = True
 
@@ -149,8 +149,13 @@ class Run:
 
         settle()
         page = self.window.projects_page.stack.currentWidget()
+        assert page is not None
         scroller = getattr(page, "scroller", None)
-        target = scroller.widget() if scroller is not None else page
+        target: QWidget = page
+        if scroller is not None:
+            inner = scroller.widget()
+            assert isinstance(inner, QWidget)
+            target = inner
         path = self.out / f"{name}.png"
         target.grab().save(str(path))
         print("saved", path.name)
@@ -271,7 +276,9 @@ def scene_review(out: Path) -> None:
 
 def scene_agreement(out: Path) -> None:
     run = populated(out)
-    run.review_rows(range(1, 30), ["accept", "accept", "correct", "accept", "uncertain"])
+    run.review_rows(
+        range(1, 30), ["accept", "accept", "correct", "accept", "uncertain"]
+    )
     run.nav(Section.AGREEMENT)
     run.shot("08-agreement")
     run.full("08-agreement-full")
@@ -299,10 +306,14 @@ def scene_analyze(out: Path) -> None:
     run = Run(out)
     run.window.show_page("Analyze one text")
     page = run.window.analyze_page
-    page.editor.setPlainText("The new update fixed the login bug, thanks a lot to the team.")
+    page.editor.setPlainText(
+        "The new update fixed the login bug, thanks a lot to the team."
+    )
     page.analyze_button.click()
     run.shot("12-analyze-result")
-    page.editor.setPlainText("Merci beaucoup, la nouvelle version est beaucoup plus rapide.")
+    page.editor.setPlainText(
+        "Merci beaucoup, la nouvelle version est beaucoup plus rapide."
+    )
     page.analyze_button.click()
     run.shot("13-analyze-unsupported-language")
 

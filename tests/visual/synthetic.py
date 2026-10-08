@@ -26,12 +26,36 @@ from social_text_intelligence.contracts import (
 from social_text_intelligence.contracts.errors import ProviderError
 
 FAIL_MARKER = "FAILME"
-GO_EMOTIONS = (
-    "admiration amusement anger annoyance approval caring confusion curiosity desire "
-    "disappointment disapproval disgust embarrassment excitement fear gratitude grief "
-    "joy love nervousness optimism pride realization relief remorse sadness surprise "
-    "neutral"
-).split()
+GO_EMOTIONS = [
+    "admiration",
+    "amusement",
+    "anger",
+    "annoyance",
+    "approval",
+    "caring",
+    "confusion",
+    "curiosity",
+    "desire",
+    "disappointment",
+    "disapproval",
+    "disgust",
+    "embarrassment",
+    "excitement",
+    "fear",
+    "gratitude",
+    "grief",
+    "joy",
+    "love",
+    "nervousness",
+    "optimism",
+    "pride",
+    "realization",
+    "relief",
+    "remorse",
+    "sadness",
+    "surprise",
+    "neutral",
+]
 assert len(GO_EMOTIONS) == 28
 
 POSITIVE = (
@@ -159,9 +183,7 @@ class SyntheticEmotion:
     def analyze(self, record: NormalizedTextInput) -> EmotionResult:
         text = record.text
         base = {label: 0.02 + 0.2 * _unit(text, label.value) for label in EmotionLabel}
-        active = [
-            label for label, words in EMOTION_KEYWORDS if _has(text, words)
-        ][:2]
+        active = [label for label, words in EMOTION_KEYWORDS if _has(text, words)][:2]
         for rank, label in enumerate(active):
             base[label] = (0.88 - 0.06 * rank) * (0.8 + 0.2 * _unit(text, "lift"))
         if not active:
@@ -202,7 +224,9 @@ class SyntheticEmotion:
             threshold=self.threshold,
             secondary_emotions=secondary,
             scores=tuple(EmotionScore(label, base[label]) for label in EmotionLabel),
-            native_scores=tuple(NativeScore(name, native[name]) for name in GO_EMOTIONS),
+            native_scores=tuple(
+                NativeScore(name, native[name]) for name in GO_EMOTIONS
+            ),
             provider=EMOTION_META,
         )
 
@@ -247,7 +271,9 @@ def feedback_csv() -> bytes:
     Language: supplied tags and detected languages disagree on purpose.
     """
 
-    header = "record_id,text,source_type,source_label,language,timestamp,topic,community"
+    header = (
+        "record_id,text,source_type,source_label,language,timestamp,topic,community"
+    )
     rows: list[str] = [header]
     topics = ("billing", "login", "export", "sync", "")
     communities = ("north", "south", "west")
@@ -266,7 +292,10 @@ def feedback_csv() -> bytes:
     for index in range(38):
         add(f"c-{1001 + index}", SENTENCES[index % len(SENTENCES)])
     add("c-2001", "Merci beaucoup, la nouvelle version est beaucoup plus rapide.")
-    add("c-2002", "Das Update hat das Problem leider nicht gelöst und ich bin enttäuscht.")
+    add(
+        "c-2002",
+        "Das Update hat das Problem leider nicht gelöst und ich bin enttäuscht.",
+    )
     add("c-2003", "Gracias, el equipo respondió muy rápido y todo funciona bien.", "es")
     add("c-2004", "ok")
     add("c-2005", "👍👍👍")

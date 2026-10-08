@@ -113,17 +113,17 @@ class PageHeader(QWidget):
         self.subtitle = label(role="subtitle")
         text.addWidget(self.title)
         text.addWidget(self.subtitle)
-        self.actions = QHBoxLayout()
-        self.actions.setSpacing(style.SPACE_S)
+        self.action_row = QHBoxLayout()
+        self.action_row.setSpacing(style.SPACE_S)
         layout.addLayout(text, 1)
-        layout.addLayout(self.actions)
+        layout.addLayout(self.action_row)
 
     def set_subtitle(self, text: str) -> None:
         self.subtitle.setText(text)
         self.subtitle.setVisible(bool(text))
 
     def add_action(self, widget: QWidget) -> None:
-        self.actions.addWidget(widget, 0, Qt.AlignmentFlag.AlignTop)
+        self.action_row.addWidget(widget, 0, Qt.AlignmentFlag.AlignTop)
 
 
 class Card(QFrame):
@@ -173,7 +173,7 @@ class EmptyState(QFrame):
 
 
 class ReflowRow(QWidget):
-    """Equal-width children in as many columns as fit, so cards wrap on narrow windows."""
+    """Equal-width children in as many columns as fit; cards wrap when narrow."""
 
     def __init__(
         self,
@@ -221,7 +221,7 @@ class ReflowRow(QWidget):
 
 
 class Combo(QComboBox):
-    """A combo box that draws its own chevron, so the control looks the same everywhere."""
+    """A combo box that draws its own chevron, so it looks the same everywhere."""
 
     def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802 (Qt override)
         super().paintEvent(event)
@@ -324,7 +324,9 @@ class BarMeter(QWidget):
         painter.setBrush(QColor(style.PAPER_SUNK))
         painter.drawRoundedRect(track, 4, 4)
         if self._fraction > 0:
-            fill = QRectF(track.x(), top, max(6.0, track.width() * self._fraction), height)
+            fill = QRectF(
+                track.x(), top, max(6.0, track.width() * self._fraction), height
+            )
             painter.setBrush(QColor(TONES.get(self._tone, style.GRAPHITE)))
             painter.drawRoundedRect(fill, 4, 4)
 
@@ -373,8 +375,9 @@ class BarGrid(QWidget):
             self._grid.addWidget(value, index, 2)
             for column in range(3):
                 item = self._grid.itemAtPosition(index, column)
-                if item is not None and item.widget() is not None:
-                    item.widget().show()
+                shown = item.widget() if item is not None else None
+                if shown is not None:
+                    shown.show()
 
 
 def score_rows(rows: Sequence[ScoreRow]) -> list[tuple[str, float, str, str]]:
@@ -492,7 +495,7 @@ class SegmentedFilter(QWidget):
 
 
 class DataTable(QTableWidget):
-    """A read-only, keyboard-navigable table; Enter or a double click activates a row."""
+    """A read-only, keyboard-navigable table; Enter or double click activates."""
 
     row_activated = Signal(int)
 
@@ -520,12 +523,14 @@ class DataTable(QTableWidget):
         self.itemDoubleClicked.connect(lambda item: self.row_activated.emit(item.row()))
 
     def fit_rows(self, count: int, *, cap: int = 12) -> None:
-        """Be exactly tall enough for ``count`` rows (at most ``cap`` before scrolling)."""
+        """Be tall enough for ``count`` rows (at most ``cap`` before scrolling)."""
 
         shown = max(1, min(count, cap))
         height = (
-            self.horizontalHeader().height() or 30
-        ) + shown * self.verticalHeader().defaultSectionSize() + 6
+            (self.horizontalHeader().height() or 30)
+            + shown * self.verticalHeader().defaultSectionSize()
+            + 6
+        )
         self.setMinimumHeight(height)
         self.setMaximumHeight(height if count <= cap else height + 4)
 
@@ -559,7 +564,10 @@ class DataTable(QTableWidget):
             self.setUpdatesEnabled(True)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802 (Qt override)
-        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter) and self.currentRow() >= 0:
+        if (
+            event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+            and self.currentRow() >= 0
+        ):
             self.row_activated.emit(self.currentRow())
             return
         super().keyPressEvent(event)

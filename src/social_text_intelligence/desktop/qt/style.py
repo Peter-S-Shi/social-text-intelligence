@@ -1,3 +1,4 @@
+# ruff: noqa: E501  (a stylesheet reads best one declaration per line)
 """One stylesheet in the approved visual language, using system-safe font fallbacks.
 
 Warm paper, graphite for the machine, ultramarine for the human, vermilion only for
