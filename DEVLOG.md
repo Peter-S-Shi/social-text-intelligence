@@ -1,5 +1,47 @@
 # Development Log
 
+## V2 Functional Development — M5.4 Native Human Review and Reviewed Export — complete
+
+M5.4 closed the next product gap: an analysed project could not be reviewed or
+exported from the desktop. It adds a Review page that shows the immutable AI
+record and the human judgment as two separate blocks, saves judgments through the
+existing review use cases and repository, shows progress and agreement, and
+exports the reviewed CSV only to a path the person chooses. The review rules,
+filters, navigation, agreement, and spreadsheet-safe export were reused, not
+rewritten: a thin `ReviewWorkflow` in the application layer is the only new seam.
+
+Decisions worth keeping:
+
+- Stale writes are caught where the data is written. `save_review` now takes the
+  review the person was looking at and compares it with the stored review inside
+  the repository's atomic mutation, raising `ReviewConflict` on a difference. The
+  newer judgment is kept and shown. The same check protects the frozen Flask
+  surface for its read-to-write window. Qt knows nothing about it.
+- A conflict replaces the person's draft with the newer saved review rather than
+  merging, because a draft shown beside someone else's saved state is ambiguous;
+  the message says the unsaved change was not saved.
+- The AI block is built from labels only, and a test asserts it holds no input
+  widget, so a prediction cannot be edited by accident.
+- Navigation treats the just-saved record as part of the queue. Review found that
+  under the Unreviewed filter, Save and next jumped back to the first match,
+  because the saved record had left the filter.
+- Export writes a temporary file beside the target and replaces it, so a failed
+  write never leaves a half-written file, and the message carries no path.
+- Unsaved changes are confirmed before anything that would drop them: navigation,
+  filters, leaving the page, switching sidebar pages, and closing the window.
+
+Process notes: Qt's `clicked(bool)` was first taken as the `advance` argument by
+a bound method, so saved notices silently disappeared; the buttons now use
+lambdas, and a test covers the notice. The first CI run failed only because
+`mypy` also checks `tests`, which a local `mypy src` run had not covered.
+A word-wrapped label in the Review page looked clipped in the first screenshot,
+which turned out to be a stale layout in the capture, not a defect.
+
+**Next:** M5.5, Native Insights, Context Notes, and Representative Cases, chosen
+from the remaining gap: the desktop has no native surface for the grouped AI,
+human, and agreement insights, the notes, the representative cases, or their
+export. Language detection and packaging come later.
+
 ## V2 Functional Development — M5.3 Native Project Workflow — complete
 
 M5.3 closed the desktop workflow gap with one truthful path: import one CSV,

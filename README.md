@@ -18,8 +18,9 @@ baseline.
 > on `main`. M5 is active: M5.0, the
 > [model provisioning contract](docs/MODEL_PROVISIONING.md) and its UI-neutral
 > foundation, M5.1 (provisioning UI/UX design), M5.2 (the minimal native
-> desktop shell and provisioning UI), and M5.3 (the native project workflow)
-> are complete, and M5.4 (native human review and reviewed export) is next. See
+> desktop shell and provisioning UI), M5.3 (the native project workflow), and
+> M5.4 (native human review and reviewed export) are complete, and M5.5 (native
+> insights, context notes, and representative cases) is next. See
 > [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
