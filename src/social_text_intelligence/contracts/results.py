@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 from .errors import InvalidProviderOutputError, ValidationError
 from .inputs import NormalizedTextInput
+from .language import LanguageAssessment
 
 
 class TaskType(StrEnum):
@@ -242,6 +243,11 @@ class AnalysisReport:
     record: NormalizedTextInput
     sentiment: SentimentResult
     emotion: EmotionResult
+    # What the local language check concluded for the text. It is evidence about the
+    # text, separate from ``record.language`` (the language a file supplied).
+    language: LanguageAssessment = field(
+        default_factory=LanguageAssessment.not_assessed
+    )
 
     def __post_init__(self) -> None:
         expected = self.record.record_id

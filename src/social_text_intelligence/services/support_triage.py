@@ -38,6 +38,7 @@ from ..contracts.triage import (
 )
 from .batch import BatchResult, safe_spreadsheet_text
 from .insights import InsightState, SampleSizeAssessment, sample_size_assessment
+from .language import language_caveat, language_signal
 from .review import ReviewState
 
 CORE_COMPARISON_FIELDS = (
@@ -442,7 +443,7 @@ def prepare_workspace_ticket(
     metadata = {
         "source_type": record.source_type.value,
         "source_label": record.source_label or "",
-        "language": record.language or "",
+        "language": outcome.prepared.supplied_language or "",
         "timestamp": record.timestamp.isoformat() if record.timestamp else "",
         "topic": record.topic or "",
         "community": record.community or "",
@@ -465,6 +466,16 @@ def prepare_workspace_ticket(
         source_timestamp=metadata["timestamp"],
         sentiment_signal=sentiment,
         emotion_signal=emotion,
+        language_signal=(
+            language_signal(outcome.report.language, " | ")
+            if outcome.report is not None
+            else ""
+        ),
+        language_caveat=(
+            language_caveat(outcome.report.language)
+            if outcome.report is not None
+            else ""
+        ),
         human_review=review_text,
         context_notes=_record_notes(
             insights,
@@ -1108,6 +1119,7 @@ def export_triage_csv(
             "final_field_comparison",
             "first_override_fields",
             "final_override_fields",
+            "language_signal",
         )
     )
     exported_at = now().astimezone(UTC).isoformat()
@@ -1126,7 +1138,7 @@ def export_triage_csv(
             summary.excluded_count,
             summary.sample.level.value,
             summary.sample.message or "",
-            *("" for _ in range(34)),
+            *("" for _ in range(35)),
         )
     )
     for metric in (*summary.first_agreement, *summary.final_agreement):
@@ -1141,7 +1153,7 @@ def export_triage_csv(
                 metric.sample.level.value,
                 metric.sample.message or "",
                 metric.name,
-                *("" for _ in range(33)),
+                *("" for _ in range(34)),
             )
         )
     for entry in workspace.entries:
@@ -1212,6 +1224,9 @@ def export_triage_csv(
             _fields_cell(entry.final.fields if entry.final else None),
             _fields_cell(mock.fields if mock else None),
             mock.rationale if mock else "",
+            snapshot.language_signal
+            if snapshot is not None and include_signals
+            else "",
         )
         safe = tuple(safe_spreadsheet_text(value) for value in user_cells)
         writer.writerow(
@@ -1284,6 +1299,7 @@ def export_triage_csv(
                     if final_comparison
                     else ""
                 ),
+                safe[11],
             )
         )
     return output.getvalue()

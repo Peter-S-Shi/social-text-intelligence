@@ -248,6 +248,38 @@ class NoticeBox(ReportBox):
         return self.show_report(_report(notice))
 
 
+class LanguageBox(QFrame):
+    """The language check beside model labels: a quiet panel, or a notice if it warns.
+
+    A warning is an icon and words, never colour alone. Hidden until it has text.
+    """
+
+    def __init__(self, name: str, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setObjectName(name)
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.setProperty("role", "panel")
+        layout = QVBoxLayout(self)
+        self.headline = label(role="title")
+        self.headline.setObjectName(f"{name}-headline")
+        self.detail = label(role="muted")
+        self.detail.setObjectName(f"{name}-detail")
+        add_all(layout, self.headline, self.detail)
+        self.setVisible(False)
+
+    def show_language(self, headline: str | None, detail: str, warns: bool) -> None:
+        self.setVisible(headline is not None)
+        if headline is None:
+            return
+        self.headline.setText(f"⚠ {headline}" if warns else headline)
+        self.detail.setText(detail)
+        self.setAccessibleName(f"Language check. {headline}")
+        self.setAccessibleDescription(detail)
+        self.setProperty("role", "notice" if warns else "panel")
+        self.style().unpolish(self)
+        self.style().polish(self)
+
+
 class CardWidget(QFrame):
     """One model: state chip (icon + word), sentence, files, actions, details."""
 

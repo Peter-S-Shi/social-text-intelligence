@@ -9,7 +9,7 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from social_text_intelligence.application.model_provisioning import (
     FolderInspection,
@@ -293,17 +293,49 @@ class ThreadedRunner:
         return True
 
 
-def synthetic_report(text: str = "A synthetic sentence.") -> AnalysisReport:
+class SyntheticDetector:
+    """A deterministic language detector: always the language it was given."""
+
+    def __init__(self, language: str | None) -> None:
+        self.language = language
+
+    @property
+    def info(self) -> Any:
+        from social_text_intelligence.contracts import DetectorInfo
+
+        return DetectorInfo(name="synthetic", version="1", model="m", min_score=0.5)
+
+    def detect(self, text: str) -> Any:
+        from social_text_intelligence.contracts import Detection, LanguageReason
+
+        if self.language is None:
+            return Detection(language=None, reason=LanguageReason.LOW_SCORE)
+        return Detection(language=self.language, score=0.93)
+
+
+def synthetic_report(
+    text: str = "A synthetic sentence.",
+    *,
+    detected: str | None | Literal[False] = False,
+    language: str | None = "en",
+) -> AnalysisReport:
+    """``detected``: False = no language check ran; None = undetermined; else a code."""
+
     from social_text_intelligence.providers import (
         DeterministicEmotionProvider,
         DeterministicSentimentProvider,
     )
     from social_text_intelligence.services import AnalysisService
 
-    record = NormalizedTextInput.from_text(text, language="en", max_text_length=1000)
+    record = NormalizedTextInput.from_text(
+        text, language=language, max_text_length=1000
+    )
     return AnalysisService(
         sentiment_provider=DeterministicSentimentProvider(),
         emotion_provider=DeterministicEmotionProvider(),
+        language_detector=(
+            None if detected is False else SyntheticDetector(detected or None)
+        ),
     ).analyze(record)
 
 

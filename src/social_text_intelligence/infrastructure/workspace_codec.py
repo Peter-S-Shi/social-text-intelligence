@@ -14,9 +14,13 @@ from typing import Any, TypeAlias
 
 from ..contracts import (
     AnalysisReport,
+    DetectorInfo,
     EmotionLabel,
     EmotionResult,
     EmotionScore,
+    LanguageAssessment,
+    LanguageReason,
+    LanguageStatus,
     NativeScore,
     NormalizedTextInput,
     ProviderMetadata,
@@ -193,11 +197,47 @@ def _decode_provider(data: Json) -> ProviderMetadata:
     )
 
 
+def _encode_language(language: LanguageAssessment) -> Json:
+    detector = language.detector
+    return {
+        "status": language.status.value,
+        "detected_language": language.detected_language,
+        "score": language.score,
+        "supported_languages": list(language.supported_languages),
+        "reason": None if language.reason is None else language.reason.value,
+        "detector": None
+        if detector is None
+        else {
+            "name": detector.name,
+            "version": detector.version,
+            "model": detector.model,
+            "min_score": detector.min_score,
+        },
+    }
+
+
+def _decode_language(data: Json) -> LanguageAssessment:
+    """A report stored before language checks existed has no entry: not assessed."""
+
+    if data is None:
+        return LanguageAssessment.not_assessed()
+    detector = data["detector"]
+    return LanguageAssessment(
+        status=LanguageStatus(data["status"]),
+        detected_language=data["detected_language"],
+        score=data["score"],
+        supported_languages=tuple(data["supported_languages"]),
+        detector=None if detector is None else DetectorInfo(**detector),
+        reason=None if data["reason"] is None else LanguageReason(data["reason"]),
+    )
+
+
 def encode_report(report: AnalysisReport) -> str:
     sentiment = report.sentiment
     emotion = report.emotion
     return dumps(
         {
+            "language": _encode_language(report.language),
             "sentiment": {
                 "record_id": sentiment.record_id,
                 "label": sentiment.label.value,
@@ -232,6 +272,7 @@ def decode_report(payload: str, record: NormalizedTextInput) -> AnalysisReport:
     emotion = data["emotion"]
     return AnalysisReport(
         record=record,
+        language=_decode_language(data.get("language")),
         sentiment=SentimentResult(
             record_id=sentiment["record_id"],
             label=SentimentLabel(sentiment["label"]),

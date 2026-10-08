@@ -23,6 +23,7 @@ from ..contracts.errors import (
     SocialTextIntelligenceError,
     ValidationError,
 )
+from .language import LANGUAGE_EXPORT_FIELDS, language_export_cells
 
 DEFAULT_MAX_BATCH_BYTES = 2 * 1024 * 1024
 DEFAULT_MAX_BATCH_ROWS = 500
@@ -61,6 +62,12 @@ class PreparedBatchRow:
     @property
     def value_map(self) -> dict[str, str]:
         return dict(self.input_values)
+
+    @property
+    def supplied_language(self) -> str | None:
+        """The language tag exactly as the file supplied it; None if it gave none."""
+
+        return self.value_map.get("language", "").strip() or None
 
 
 @dataclass(frozen=True, slots=True)
@@ -276,7 +283,7 @@ def prepare_csv_batch(
                 record_id=identity,
                 source_type=_parse_source_type(values["source_type"]),
                 source_label=values["source_label"],
-                language=values["language"] or "en",
+                language=values["language"] or None,  # never a default: see detection
                 timestamp=_parse_timestamp(values["timestamp"]),
                 topic=values["topic"],
                 community=values["community"],
@@ -453,6 +460,7 @@ def export_batch_csv(result: BatchResult, *, include_native: bool) -> str:
         "emotion_provider",
         "emotion_model",
         "emotion_revision",
+        *LANGUAGE_EXPORT_FIELDS,
         *native_fields,
     )
     output = io.StringIO(newline="")
@@ -498,6 +506,7 @@ def export_batch_csv(result: BatchResult, *, include_native: bool) -> str:
                     "emotion_provider": report.emotion.provider.provider,
                     "emotion_model": report.emotion.provider.model_name,
                     "emotion_revision": report.emotion.provider.revision,
+                    **language_export_cells(report.language),
                 }
             )
             if include_native:

@@ -29,8 +29,15 @@ emotion = [
   "torch>=2.13,<3",
   "transformers>=5.14,<6",
 ]
+# Local, offline language identification (BSD-3-Clause; the model ships inside the
+# package, so nothing is downloaded). Without it the language check reports
+# "unavailable" rather than guessing. See THIRD_PARTY_NOTICES.md.
+language = [
+  "py3langid>=0.4,<0.5",
+]
 web = [
   "flask>=3.1,<4",
+  "py3langid>=0.4,<0.5",
 ]
 # Native desktop shell. The app imports only the Qt Core, Gui, and Widgets modules
 # (a test enforces this); PySide6-Essentials carries more than those, so the
@@ -38,9 +45,11 @@ web = [
 # see THIRD_PARTY_NOTICES.md. The pre-distribution LGPL compliance gate is still open.
 desktop = [
   "PySide6-Essentials>=6.11,<7",
+  "py3langid>=0.4,<0.5",
 ]
 dev = [
   "PySide6-Essentials>=6.11,<7",
+  "py3langid>=0.4,<0.5",
   "flask>=3.1,<4",
   "mypy>=1.10,<2",
   "pytest>=8,<9",
@@ -83,3 +92,18 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 python_version = "3.11"
 strict = true
 files = ["src", "tests"]
+follow_imports_for_stubs = true
+
+# NumPy is not part of this project's type surface: no module here imports it. It
+# reaches the checker only because pytest imports `ndarray` under TYPE_CHECKING, and
+# NumPy 2.5+ (installed on Python 3.12/3.13 as a dependency of py3langid) ships stubs
+# that use `type X = ...`, a syntax error under python_version = "3.11". We keep the
+# lowest-supported language level and stop MyPy at the NumPy boundary instead of
+# capping a transitive runtime dependency. `follow_imports_for_stubs` is required
+# because MyPy otherwise follows .pyi files whatever `follow_imports` says; it only
+# affects modules that opt out of following, i.e. NumPy. tests/test_type_surface.py
+# fails if repo code ever starts importing NumPy, because this skip would then hide
+# real errors.
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"

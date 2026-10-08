@@ -43,7 +43,7 @@ from ..insights_view import (
     build_insights_view,
 )
 from .platform import DesktopPlatform
-from .widgets import NoticeBox, add_all, announce, frame, label
+from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
 
 EXPORT_FILE_NAME = "insights.csv"
 DISCARD_TITLE = "Unsaved note"
@@ -119,6 +119,10 @@ class GroupCardWidget(QFrame):
             layout.addWidget(line)
         if view.review_line:
             layout.addWidget(label(view.review_line, role="muted"))
+        if view.language_line:
+            note = label(view.language_line)
+            note.setObjectName("group-language")
+            layout.addWidget(note)
 
 
 class NoteWidget(QFrame):
@@ -153,6 +157,11 @@ class CaseWidget(QFrame):
             layout, label(view.reason, role="muted"), label(view.title, role="title")
         )
         layout.addWidget(label(view.text))
+        language = LanguageBox("case-language")
+        language.show_language(
+            view.language_headline, view.language_detail, view.language_warns
+        )
+        layout.addWidget(language)
         columns = QHBoxLayout()
         ai, human = frame("ai"), frame("human")
         ai_layout, human_layout = QVBoxLayout(ai), QVBoxLayout(human)
@@ -282,6 +291,7 @@ class InsightsPage(QWidget):
         self.definition.setObjectName("metric-definition")
         self.caution = label()
         self.caution.setObjectName("comparison-caution")
+        self.language_box = LanguageBox("insights-language")
         self.cards_box = QVBoxLayout()
         self.limitations = label(LIMITATIONS, role="muted")
         self.provenance = label(role="mono")
@@ -296,7 +306,8 @@ class InsightsPage(QWidget):
         export_row.addWidget(self.export_button)
         export_row.addStretch(1)
 
-        add_all(layout, controls, self.filters_line, self.definition, self.caution)
+        add_all(layout, controls, self.language_box)
+        add_all(layout, self.filters_line, self.definition, self.caution)
         layout.addLayout(self.cards_box)
         add_all(layout, self.limitations, self.provenance)
         add_all(layout, self.records_box, self.native_box)
@@ -529,6 +540,9 @@ class InsightsPage(QWidget):
             f"◆ {view.comparison_caution}" if view.comparison_caution else ""
         )
         self.caution.setVisible(bool(view.comparison_caution))
+        self.language_box.show_language(
+            view.language_headline, view.language_detail, view.language_warns
+        )
         self.provenance.setText("\n".join(view.provenance_lines))
         signature = view.cards
         if signature != self._signatures.get("cards"):

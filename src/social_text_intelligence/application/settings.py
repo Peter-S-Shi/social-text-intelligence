@@ -8,6 +8,7 @@ from typing import Protocol
 
 from ..contracts import AnalysisReport, NormalizedTextInput
 from ..providers import CardiffSentimentProvider, SamLoweEmotionProvider
+from ..providers.language_py3langid import Py3LangidDetector
 from ..providers.samlowe_emotion import DEFAULT_EMOTION_THRESHOLD
 from ..services import AnalysisService, LazyAnalysisService
 from ..services.batch import DEFAULT_MAX_BATCH_BYTES, DEFAULT_MAX_BATCH_ROWS
@@ -60,4 +61,6 @@ def pinned_analysis_service(settings: AppSettings) -> AnalysisService:
             offline=settings.offline,
             threshold=settings.emotion_threshold,
         ),
+        # Local and offline; reports itself unavailable if its package is missing.
+        language_detector=Py3LangidDetector(),
     )

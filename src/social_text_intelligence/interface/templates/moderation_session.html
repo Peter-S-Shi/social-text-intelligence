@@ -38,6 +38,7 @@
       <details class="nested-panel">
         <summary>Contextual M3–M8 signals (not moderation verdicts)</summary>
         <p class="privacy-note">Sentiment and emotion estimates are contextual signals, not moderation verdicts. They do not alter disposition, severity, escalation, reference, or comparison.</p>
+        {% if frozen.case.source_snapshot.language_caveat %}<p class="warning"><strong>Warning:</strong> {{ frozen.case.source_snapshot.language_caveat }}. The approved models may not suit this text; its labels have not been changed.</p>{% endif %}
         {% if frozen.case.source_snapshot.sentiment %}<p><strong>Sentiment:</strong> {{ frozen.case.source_snapshot.sentiment.label }} · {{ frozen.case.source_snapshot.sentiment.model_name }}@{{ frozen.case.source_snapshot.sentiment.revision }}</p>{% endif %}
         {% if frozen.case.source_snapshot.emotion %}<p><strong>Emotion:</strong> {{ frozen.case.source_snapshot.emotion.dominant_emotion }} · threshold {{ frozen.case.source_snapshot.emotion.threshold }} · {{ frozen.case.source_snapshot.emotion.model_name }}@{{ frozen.case.source_snapshot.emotion.revision }}</p>{% endif %}
         {% if frozen.case.source_snapshot.human_review %}<p><strong>Separate human NLP review:</strong> {{ frozen.case.source_snapshot.human_review.status }} · sentiment {{ frozen.case.source_snapshot.human_review.sentiment_judgment or 'unset' }} · emotion {{ frozen.case.source_snapshot.human_review.emotion_judgment or 'unset' }}</p>{% endif %}

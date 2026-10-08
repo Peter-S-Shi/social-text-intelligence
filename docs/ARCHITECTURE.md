@@ -62,6 +62,18 @@ normalization); if either provider is over budget, no combined report is
 produced. The current version deliberately has no chunking, aggregation,
 summarization, or long-form workflow.
 
+Language detection joins an analysis in exactly one place: `AnalysisService` hands
+the models the text only (never a supplied language tag), then asks an optional
+`LanguageDetector` port (`providers/base.py`; the adapter is
+`providers/language_py3langid.py`) about the same text. `services/language.py` turns
+the answer into an immutable `LanguageAssessment` carried on the `AnalysisReport`
+(`contracts/language.py`): `supported`, `unsupported`, `undetermined`, or
+`not_assessed`, with the detector's identity and the languages the approved models
+support. A detector that is missing or fails is a `not_assessed` result, never an
+error and never "supported". Persistence stores the assessment inside the immutable
+report; a report stored before it existed decodes as `not_assessed`. See
+[Language detection](LANGUAGE_DETECTION.md).
+
 Batch business rules remain in `services/batch.py`, independent of Flask. The
 interface keeps each active upload in a random-token, capacity-blocking,
 time-limited in-memory workspace. Preview replaces raw upload bytes with typed
@@ -330,8 +342,8 @@ source and also pins the Qt modules in use to `QtCore`, `QtGui`, and `QtWidgets`
   models. Every number shown is the service's own number with its denominator; the
   sample-size warnings and comparison caution come from `SampleSizeAssessment`;
   agreement is worded as agreement, never accuracy; the language grouping is labelled
-  "as supplied in the file" (automatic language detection is a separate, later
-  feature); and a note is labelled as human-written context apart from every AI and
+  "as supplied in the file" (the detected language is separate evidence shown as a
+  caveat, never a grouping); and a note is labelled as human-written context apart from every AI and
   review value.
 - `exporting.py`: the one explicit, atomic save used by every export (reviewed CSV and
   insights CSV): write beside the target, then replace it, with one fixed failure

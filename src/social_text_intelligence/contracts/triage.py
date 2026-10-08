@@ -415,6 +415,10 @@ class TriageContextSnapshot:
     human_review: str
     context_notes: tuple[str, ...]
     snapshot_at: datetime
+    # The language check frozen beside the AI signals, and its caveat (empty when the
+    # language is supported or was never assessed).
+    language_signal: str = ""
+    language_caveat: str = ""
 
     def __post_init__(self) -> None:
         object.__setattr__(

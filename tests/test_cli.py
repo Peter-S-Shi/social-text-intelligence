@@ -7,6 +7,8 @@ from unittest.mock import patch
 
 from social_text_intelligence.cli import main
 from social_text_intelligence.contracts import (
+    Detection,
+    DetectorInfo,
     EmotionLabel,
     ModelInputTooLongError,
     NormalizedTextInput,
@@ -108,6 +110,42 @@ class CliTests(unittest.TestCase):
         self.assertIn("Secondary emotions: joy=", rendered)
         self.assertIn("not psychological diagnoses", rendered)
         self.assertNotIn("A private combined synthetic input", rendered)
+
+    def test_analyze_states_the_detected_language_and_warns_when_unsupported(
+        self,
+    ) -> None:
+        class FrenchDetector:
+            info = DetectorInfo(name="fake", version="1", model="m", min_score=0.5)
+
+            def detect(self, text: str) -> Detection:
+                return Detection(language="fr", score=0.9)
+
+        output = io.StringIO()
+
+        with (
+            patch(
+                "social_text_intelligence.cli.CardiffSentimentProvider",
+                return_value=DeterministicSentimentProvider(),
+            ),
+            patch(
+                "social_text_intelligence.cli.SamLoweEmotionProvider",
+                return_value=DeterministicEmotionProvider(),
+            ),
+            patch(
+                "social_text_intelligence.cli.Py3LangidDetector",
+                return_value=FrenchDetector(),
+            ),
+            redirect_stdout(output),
+        ):
+            exit_code = main(
+                ["analyze", "A private synthetic input.", "--language", "en"]
+            )
+
+        rendered = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Warning: Detected language: French (fr)", rendered)
+        self.assertIn("Sentiment: neutral", rendered)  # labels are not changed
+        self.assertNotIn("A private synthetic input", rendered)
 
     def test_no_command_prints_help(self) -> None:
         output = io.StringIO()

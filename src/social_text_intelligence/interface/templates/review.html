@@ -62,7 +62,9 @@
       <blockquote>{{ current.outcome.report.record.text }}</blockquote>
       <dl class="metadata-grid">
         <div><dt>Row</dt><dd>{{ current.outcome.prepared.row_number }}</dd></div>
-        <div><dt>Language</dt><dd>{{ current.outcome.report.record.language or 'not supplied' }}</dd></div>
+        <div><dt>Language supplied in the file</dt><dd>{{ current.outcome.prepared.supplied_language or 'not supplied' }}</dd></div>
+        {% set language = language_notice(current.outcome.report.language) %}
+        <div><dt>Language check</dt><dd class="{{ 'warning' if language.warns else '' }}">{{ language.text }}. {{ language.detail }}</dd></div>
         <div><dt>Source</dt><dd>{{ current.outcome.report.record.source_label or current.outcome.report.record.source_type }}</dd></div>
         <div><dt>Topic</dt><dd>{{ current.outcome.report.record.topic or 'not supplied' }}</dd></div>
         <div><dt>Community</dt><dd>{{ current.outcome.report.record.community or 'not supplied' }}</dd></div>

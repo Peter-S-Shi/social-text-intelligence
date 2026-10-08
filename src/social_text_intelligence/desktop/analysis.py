@@ -11,6 +11,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 from typing import Any
 
+from ..application.language import describe_language
 from ..application.use_cases import ApplicationUseCases
 from ..contracts import AnalysisReport
 from ..contracts.errors import AnalysisSetupError, ModelsNotReadyError, ProviderError
@@ -27,6 +28,9 @@ class ResultView:
     emotion_confidence: str
     secondary_emotions: tuple[str, ...]
     provenance: tuple[str, ...]
+    language_headline: str
+    language_detail: str
+    language_warns: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +55,7 @@ def _percent(value: float) -> str:
 
 def result_view(report: AnalysisReport) -> ResultView:
     sentiment, emotion = report.sentiment, report.emotion
+    language = describe_language(report.language)
     return ResultView(
         sentiment=sentiment.label.value.title(),
         sentiment_confidence=_percent(sentiment.confidence),
@@ -64,6 +69,9 @@ def result_view(report: AnalysisReport) -> ResultView:
             f"{meta.model_name} · revision {meta.revision[:7]}"
             for meta in (sentiment.provider, emotion.provider)
         ),
+        language_headline=language.headline,
+        language_detail=language.detail,
+        language_warns=language.warns,
     )
 
 

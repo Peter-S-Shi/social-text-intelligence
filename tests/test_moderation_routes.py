@@ -334,6 +334,7 @@ class ModerationRouteTests(unittest.TestCase):
         self.assertEqual(default_case["source_text"], "")
         self.assertEqual(default_case["sentiment_signal"], "")
         self.assertEqual(default_case["emotion_signal"], "")
+        self.assertEqual(default_case["language_signal"], "")
         self.assertEqual(default_case["trusted_metadata"], "")
 
         opted_in = self.client.get(
@@ -358,6 +359,11 @@ class ModerationRouteTests(unittest.TestCase):
         self.assertIn(
             "deterministic-emotion",
             opted_in_case["emotion_signal"],
+        )
+        # the language evidence travels with the AI signals (no detector here)
+        self.assertTrue(
+            opted_in_case["language_signal"].startswith("not_assessed|"),
+            opted_in_case["language_signal"],
         )
         self.assertIn("topic=testing", opted_in_case["trusted_metadata"])
 

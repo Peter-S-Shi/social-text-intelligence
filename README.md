@@ -15,13 +15,16 @@ baseline.
 > [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md),
 > and [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md)). The application
 > foundation (M3) and persistent project foundation (M4) milestones are complete
-> on `main`. M5 is active: M5.0, the
+> on `main`. M5 is complete (its functional exit audit is PASS): M5.0, the
 > [model provisioning contract](docs/MODEL_PROVISIONING.md) and its UI-neutral
 > foundation, M5.1 (provisioning UI/UX design), M5.2 (the minimal native
 > desktop shell and provisioning UI), M5.3 (the native project workflow), M5.4
-> (native human review and reviewed export), and M5.5 (native insights, context
-> notes, and representative cases) are complete, and M5.6 (language detection and
-> an unsupported-language warning) is next. See [Project Status](PROJECT_STATUS.md).
+> (native human review and reviewed export), M5.5 (native insights, context
+> notes, and representative cases), and M5.6 (language detection and an
+> unsupported-language warning) are complete on `main`, and M6 (full UI
+> integration and polish) is the next lifecycle phase. V2 is not
+> release-ready: hardening, the formal accessibility acceptance, the
+> LGPL gate, and packaging come later. See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
 > Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,
@@ -281,8 +284,10 @@ row receives an explicit `model_input_too_long` error; no partial inference
 is run, other valid rows continue, and exports leave model scores and
 provenance blank for the failed row. Required and supported metadata fields
 are documented in [Contracts](docs/CONTRACTS.md). Duplicate supplied IDs,
-invalid metadata, empty text, unsupported languages, and provider failures
-remain row-level outcomes and do not abort the batch. Uploaded content is
+invalid metadata, empty text, and provider failures remain row-level outcomes
+and do not abort the batch. A text in a language the approved English models do
+not support is still analysed and carries a visible language warning (see
+[Language detection](docs/LANGUAGE_DETECTION.md)). Uploaded content is
 held only in bounded, expiring process memory; there is no database,
 automatic save, or upload history. Native emotion scores are an optional
 export. Use `sti-web --help` to configure the file-byte, row-count, and

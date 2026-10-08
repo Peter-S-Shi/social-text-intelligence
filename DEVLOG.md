@@ -1,5 +1,55 @@
 # Development Log
 
+## V2 Functional Development — M5.6 Language Detection and Unsupported-Language Warning — complete; M5 Functional Exit PASS
+
+M5.6 delivered V2-3: a local check of each analysed text's language, and a warning
+wherever model labels would otherwise be read without it. It translates nothing,
+reclassifies nothing, blocks nothing, and claims no multilingual capability.
+
+Decisions worth keeping:
+
+- The detector was chosen from a bounded spike. `lingua` needs Python 3.12 and is
+  about 290 MB; `langdetect` is non-deterministic unless seeded and unmaintained;
+  `py3langid` is BSD-3-Clause, small, deterministic, loads its bundled model
+  without pickle, and supports 3.10 to 3.14. A 74-text synthetic set showed a
+  clean gap between real text (scores 0.63 and up) and text with too little
+  language (0.16 and below), so the threshold is 0.5. That shows the policy is
+  sensible; it is not an accuracy claim.
+- Supplied language and detected language are different facts and coexist. The
+  models no longer see a supplied tag at all, because a CSV field must not decide
+  model support. That is a behaviour change: a row tagged `fr` used to fail with
+  `unsupported_language` while the same text untagged was analysed.
+- False English defaults were the real hazard: import stored `en` for an empty
+  cell and direct analysis hard-coded it. Both now record nothing, and the
+  Insights Language grouping reads the supplied value from the file, which also
+  regroups older projects truthfully without rewriting them.
+- Migration needed no schema change: a stored report with no language entry
+  decodes as *not assessed*, which shows no warning and runs nothing.
+- A missing or failing detector is a visible result, never *supported*, and a
+  malformed detector answer is a failed check, not a crash. The first draft
+  treated a service with no detector as a silent pass; review caught it.
+- Review found Moderation and Triage snapshots and the Flask Insights page
+  showing model evidence with no language evidence, web warnings that relied on
+  colour alone, and, on the final head, a packed export cell that made a failed
+  check look like an old result.
+- CI went red on Python 3.12 and 3.13 only. The new dependency brings NumPy; its
+  2.5 stubs use `type X = ...`, which MyPy rejects at the repository's deliberate
+  3.11 check level, and MyPy reached them through pytest's typing-only import.
+  Running MyPy with a newer `--python-version` locally had hidden it; the lesson
+  is to run the exact CI command. The fix keeps 3.11 and stops MyPy at the NumPy
+  boundary, with a test that fails if repository code ever imports NumPy.
+
+M5 Functional Exit audit: PASS. V2-1 to V2-4 exist behind stable application
+contracts and are reachable in the native desktop. The audit also recorded, rather
+than hid, V1 detail views the desktop does not yet present (score breakdowns,
+per-row validation and failure reasons, a results view with filters, and the
+agreement confusion and confidence bands); they are M6 integration inputs. The
+classification of those as presentation, not missing capability, is a judgement the
+owner can overturn at the M6 boundary.
+
+**Next:** M6, Full UI Integration / Polish, once its boundary is defined. V2 is not
+release-ready.
+
 ## V2 Functional Development — M5.5 Native Insights, Context Notes, and Representative Cases — complete
 
 M5.5 closed the largest remaining native gap: the desktop could analyse, review,

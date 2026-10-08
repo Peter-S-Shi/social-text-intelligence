@@ -46,6 +46,14 @@ tested against a fake `ModelProvisioning`; a smaller set of tests drives the rea
 provisioner with a synthetic manifest and an in-memory transport. None of them
 touch the network or real model weights.
 
+## Language detection tests
+
+Language identification uses the optional `language` extra (`py3langid`, included in
+`dev`, `desktop` and `web`). Tests that need the real detector skip when it is not
+installed; set `STI_REQUIRE_LANGID=1` to make a missing detector an error instead, as
+CI does. Everything else uses deterministic fake detectors. See
+[Language detection](LANGUAGE_DETECTION.md).
+
 ## Optional real-model validation
 
 To validate the approved immutable revision locally:

@@ -8,7 +8,9 @@ real local sentiment, emotion, and combined single-text analysis.
 `NormalizedTextInput` converts platform-neutral text and metadata into an
 immutable record. It normalizes Unicode and line endings, validates length and
 language metadata, and rejects empty input. It does not detect language, store
-records, or log text.
+records, or log text. The `language` it carries is whatever the caller supplied,
+kept exactly as supplied; a missing language stays missing and is never
+defaulted to English.
 
 ## Normalized results
 
@@ -113,7 +115,9 @@ blank review fields but remain in reviewed export alongside their original error
 Expected contract failures use typed exceptions:
 
 - `ValidationError` for invalid input or scores;
-- `UnsupportedLanguageError` for provider-language mismatches;
+- `UnsupportedLanguageError` when a provider is called directly with an explicit
+  non-English tag (the shared analysis path does not pass supplied tags to models;
+  see Language evidence below);
 - `ModelInputTooLongError` (`model_input_too_long`) when a pinned model cannot
   consume the complete encoded input;
 - `InvalidProviderOutputError` for results that violate normalized contracts;
@@ -172,6 +176,22 @@ because the local product intentionally serves loopback HTTP, and CORS is not
 enabled. Host rejection is 400, origin/referer rejection is 403, request-body
 rejection remains 413, mutation conflict remains 409, and expired state remains
 404.
+
+## Language evidence
+
+`AnalysisReport.language` is a `LanguageAssessment`: the local language check's
+evidence about the text, separate from `record.language` (the value a file
+supplied). Its `status` is `supported`, `unsupported`, `undetermined`, or
+`not_assessed`; it carries the detected language code and the detector's own score
+(not a probability) when one was found, the languages the approved models support
+(from their capability metadata), the detector's name, version, model, and abstention
+threshold, and a `reason` when no language was detected. An unsupported or
+undetermined result is a warning, not a reclassification: the text is still analysed
+and its labels are unchanged. A report stored before the check existed is
+`not_assessed` with reason `not_run`. Exports that carry model evidence add
+`detected_language`, `language_status`, `language_score`, `language_reason`, and
+`language_detector` columns apart from the supplied `language` column. Details and
+the detector evidence: [Language detection](LANGUAGE_DETECTION.md).
 
 ## Insights and context notes
 

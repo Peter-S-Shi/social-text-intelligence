@@ -86,14 +86,25 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "**M5.0 — Model Provisioner Function Contract & Foundation, M5.1 — "
         "Model Provisioning UI/UX Design, M5.2 — Native Desktop Shell + Model "
         "Provisioning UI, M5.3 — Native Project Workflow, M5.4 — Native Human "
-        "Review and Reviewed Export, and M5.5 — Native Insights, Context Notes, "
-        "and Representative Cases are complete on `main`; M5.6 — Language "
-        "Detection and Unsupported-Language Warning is the next development "
-        "sub-milestone"
+        "Review and Reviewed Export, M5.5 — Native Insights, Context Notes, "
+        "and Representative Cases, and M5.6 — Language Detection and "
+        "Unsupported-Language Warning are complete on `main`; the M5 "
+        "Functional Exit is PASS; M6 — Full UI Integration / Polish is the "
+        "next lifecycle phase.**"
         in status
     )
     assert (
         "| M5.0 — Model Provisioner Function Contract & Foundation | **COMPLETE"
+        in status
+    )
+    assert (
+        "| M5.6 — Language Detection and Unsupported-Language Warning (V2-3) | "
+        "**COMPLETE"
+        in status
+    )
+    assert "| M5 Functional Exit audit | **PASS (2026-10-08)**" in status
+    assert (
+        "| M6 — Full UI Integration / Polish | **NEXT lifecycle phase — not begun.**"
         in status
     )
     assert (
@@ -141,7 +152,11 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert "**Current phase: V2 Functional Development (M5).**" in roadmap
+    assert (
+        "**Current phase: V2 Functional Development (M5) is complete (Functional "
+        "Exit PASS); the next lifecycle phase is M6 — Full UI Integration / "
+        "Polish.**" in roadmap
+    )
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
     assert "**Status: Complete.**" in roadmap
