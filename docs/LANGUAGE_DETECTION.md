@@ -123,10 +123,19 @@ Requirements: deterministic, local and offline, no model download at runtime, Py
 `py3langid` (a maintained fork of `langid.py`) ships its statistical model inside the
 package as an LZMA-compressed NumPy archive loaded with `allow_pickle=False`. There is
 no network access and nothing to provision. It depends on `numpy >= 2.0` (BSD-3-Clause), which
-is installed with it. Its published model is trained
+is installed with it; STI does not import NumPy itself. Its published model is trained
 on public corpora (Wikipedia, Tatoeba, CC100, GlotCC); those corpora keep their own
 terms, STI redistributes none of them, and the package declares BSD-3-Clause for the
 code and bundled model. This residual note is recorded in `THIRD_PARTY_NOTICES.md`.
+
+**Type checking and NumPy.** Installing NumPy made the CI type check fail on Python 3.12 and
+3.13 (not on 3.11): pytest imports `ndarray` for typing only, MyPy followed it into NumPy's
+stubs, and NumPy 2.5+ stubs use `type X = ...` statements, which are a syntax error under
+the repository's deliberate `python_version = "3.11"` check level. Rather than raise that
+level or cap a transitive runtime dependency, `pyproject.toml` stops MyPy at the NumPy
+boundary (`follow_imports = "skip"` for `numpy`, with `follow_imports_for_stubs` so it applies
+to `.pyi` files). That is safe only while nothing here uses NumPy, which
+`tests/test_type_surface.py` enforces.
 
 It is an **optional extra** (`pip install ".[language]"`, included in `desktop` and
 `dev`). Without it the language check reports *unavailable* rather than answering.
