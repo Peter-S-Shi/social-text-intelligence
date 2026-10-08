@@ -5,15 +5,15 @@ from __future__ import annotations
 import pytest
 
 from social_text_intelligence.contracts import (
+    Detection,
     DetectorInfo,
     LanguageAssessment,
     LanguageReason,
     LanguageStatus,
 )
 from social_text_intelligence.contracts.errors import ValidationError
+from social_text_intelligence.contracts.language import LanguageDetectorUnavailable
 from social_text_intelligence.services.language import (
-    Detection,
-    LanguageDetectorUnavailable,
     assess_language,
     describe_language,
     describe_summary,
@@ -96,12 +96,28 @@ def test_support_comes_from_the_models_not_from_the_detection() -> None:
     assert result.status is LanguageStatus.SUPPORTED  # a model that covers French
 
 
-def test_a_missing_detector_is_not_assessed_without_a_warning() -> None:
+def test_an_unconfigured_detector_is_a_visible_unavailable_check_not_a_pass() -> None:
     result = assess_language(None, "text", supported=("en",))
 
     assert result.status is LanguageStatus.NOT_ASSESSED
-    assert result.reason is LanguageReason.NOT_RUN
-    assert not result.needs_attention  # nothing was attempted, so nothing failed
+    assert result.reason is LanguageReason.DETECTOR_UNAVAILABLE
+    assert result.needs_attention  # a fresh analysis is never silently "fine"
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        Detection(language="", score=0.9),  # blank code
+        Detection(language=" ", score=0.5),  # whitespace only
+    ],
+)
+def test_a_detector_that_returns_nonsense_is_a_failed_check_not_a_crash(
+    answer: Detection,
+) -> None:
+    result = assess_language(FakeDetector(answer), "text", supported=("en",))
+
+    assert result.status is LanguageStatus.NOT_ASSESSED
+    assert result.reason is LanguageReason.DETECTOR_FAILED
 
 
 @pytest.mark.parametrize(
@@ -120,7 +136,8 @@ def test_a_detector_that_cannot_run_is_never_treated_as_supported(
     assert result.reason is reason
     assert result.needs_attention  # the person is told the check did not happen
     assert result.detected_language is None
-    assert "secret" not in repr(result)  # the failure text is not kept
+    # nothing of the failure (which can contain record text) is kept anywhere
+    assert "secret" not in repr(result) + repr(result.detector)
 
 
 def test_the_assessment_carries_no_supplied_metadata() -> None:
@@ -281,7 +298,7 @@ def test_the_summary_counts_every_state_and_names_the_languages() -> None:
         summary.not_assessed,
     ) == (8, 2, 3, 1, 1, 1)
     assert summary.unsupported_languages == (("fr", 2), ("es", 1))
-    assert summary.needs_attention == 5  # 3 unsupported + 1 undetermined + 1 unchecked
+    assert summary.attention_count == 5  # 3 unsupported + 1 undetermined + 1 unchecked
 
 
 def test_the_summary_wording_warns_without_claiming_more_than_it_knows() -> None:

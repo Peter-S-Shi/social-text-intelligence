@@ -37,6 +37,7 @@ language = [
 ]
 web = [
   "flask>=3.1,<4",
+  "py3langid>=0.4,<0.5",
 ]
 # Native desktop shell. The app imports only the Qt Core, Gui, and Widgets modules
 # (a test enforces this); PySide6-Essentials carries more than those, so the

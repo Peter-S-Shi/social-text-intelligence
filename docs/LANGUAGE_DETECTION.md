@@ -73,10 +73,13 @@ These were deliberate, and are the places a reviewer should look:
 | `supported` | a language the approved models support was detected | no |
 | `unsupported` | another language was detected | yes |
 | `undetermined` | too little language to decide (short text, symbols, links, numbers) | yes |
-| `not_assessed` / `not_run` | no check was part of this result (older project, or no detector configured) | no |
-| `not_assessed` / `detector_unavailable` or `detector_failed` | a check was attempted and could not finish | yes |
+| `not_assessed` / `not_run` | a result stored before language checks existed | no |
+| `not_assessed` / `detector_unavailable` or `detector_failed` | a check was attempted and could not finish, or no detector was configured for a fresh analysis | yes |
 
-A detector problem is a **result**, not an error: analysis continues, the text is
+A fresh analysis that has no detector configured is *unavailable*, not "not run": only a
+result stored before M5.6 is ever "not run". A detector problem is a **result**, not an
+error (this includes a detector that returns an answer that breaks the evidence
+contract): analysis continues, the text is
 never treated as supported, and the failure text (which could contain record text) is
 not kept.
 
@@ -93,8 +96,11 @@ in the file"); Insights (a project-wide caveat, a per-group "N of M analysed tex
 line that changes no metric or denominator, and a notice on every representative
 case). The frozen Flask surface and the `sti analyze` command show the same wording.
 
-Exports that carry model evidence (normalized batch CSV, reviewed CSV, insights CSV
-with records) carry `detected_language`, `language_status`, `language_score`,
+Moderation Training and Support Triage freeze the language evidence into the record
+snapshot they already freeze beside the AI signals, show its caveat where those signals
+are shown, and add a `language_signal` column to their opt-in signals export; the
+`language` in their trusted metadata is the supplied value only. Exports that carry
+model evidence (normalized batch CSV, reviewed CSV, insights CSV with records) carry `detected_language`, `language_status`, `language_score`,
 `language_reason`, and `language_detector` as columns **separate from** the supplied
 `language` column; the insights export adds a note saying which is which.
 

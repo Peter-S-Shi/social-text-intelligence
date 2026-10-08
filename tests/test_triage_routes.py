@@ -506,6 +506,8 @@ class TriageRouteTests(unittest.TestCase):
         self.assertEqual(source["sentiment_signal"], "")
         signals, _ = ticket_row("?signals=1")
         self.assertIn("deterministic-sentiment", signals["sentiment_signal"])
+        self.assertTrue(signals["language_signal"].startswith("not_assessed | "))
+        self.assertEqual(default["language_signal"], "")
         self.assertEqual(signals["human_review"], "")
         review, _ = ticket_row("?human_review=1")
         self.assertIn("Synthetic human review", review["human_review"])

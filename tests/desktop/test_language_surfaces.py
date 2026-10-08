@@ -37,11 +37,26 @@ def test_typed_text_that_cannot_be_judged_is_not_confidently_determined() -> Non
     assert "not confidently determined" in view.language_headline
 
 
-def test_a_result_with_no_language_check_says_not_assessed_without_a_warning() -> None:
-    view = result_view(synthetic_report())
+def test_a_result_stored_before_language_checks_is_not_assessed_without_a_warning() -> (
+    None
+):
+    from dataclasses import replace
+
+    from social_text_intelligence.application.language import LanguageAssessment
+
+    legacy = replace(synthetic_report(), language=LanguageAssessment.not_assessed())
+
+    view = result_view(legacy)
 
     assert not view.language_warns
     assert "not assessed" in view.language_headline.lower()
+
+
+def test_a_fresh_result_with_no_detector_warns_that_the_check_was_unavailable() -> None:
+    view = result_view(synthetic_report())  # the service had no detector
+
+    assert view.language_warns
+    assert "unavailable" in view.language_headline.lower()
 
 
 # -- the real Qt page ----------------------------------------------------------
@@ -79,11 +94,11 @@ def test_the_analyze_page_does_not_warn_for_a_supported_language(
     assert "English (en)" in page.language_headline.text()
 
 
-def test_the_analyze_page_says_not_assessed_when_no_check_ran(make_shell: Any) -> None:
+def test_the_analyze_page_warns_when_the_check_could_not_run(make_shell: Any) -> None:
     page = analyse(make_shell, synthetic_report())
 
-    assert "not assessed" in page.language_headline.text().lower()
-    assert page.language_box.property("role") == "panel"
+    assert "unavailable" in page.language_headline.text().lower()
+    assert page.language_box.property("role") == "notice"
 
 
 # -- project summary -------------------------------------------------------------

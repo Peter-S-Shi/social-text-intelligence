@@ -73,3 +73,38 @@ def test_a_review_record_names_supplied_and_detected_language_apart() -> None:
 
     assert "Language supplied in the file" in html
     assert "Detected language: French (fr)" in html
+
+
+def test_every_web_warning_says_warning_in_words() -> None:
+    c = client()
+    url = uploaded_batch(c)
+    token = url.rsplit("/", 1)[-1]
+
+    pages = {
+        "batch": c.get(url).get_data(as_text=True),
+        "review": c.get(f"/batch/{token}/review/2").get_data(as_text=True),
+        "direct": c.post("/", data={"text": "bonjour tout le monde merci"}).get_data(
+            as_text=True
+        ),
+    }
+
+    for name, html in pages.items():
+        assert "Warning: " in html, name
+
+
+def test_the_batch_table_marks_each_row_and_the_insights_page_carries_the_caveat() -> (
+    None
+):
+    c = client()
+    url = uploaded_batch(c)
+    token = url.rsplit("/", 1)[-1]
+
+    table = c.get(url).get_data(as_text=True)
+    insights = c.get(
+        f"/batch/{token}/insights?grouping=language&groups=en"
+    ).get_data(as_text=True)
+
+    assert "Language check" in table and "⚠ French (fr)" in table
+    assert "Language (as supplied in the file)" in insights
+    assert "Language check: 3 of 5 analysed texts" in insights
+    assert "2 of 3 analysed texts here are not confirmed" in insights

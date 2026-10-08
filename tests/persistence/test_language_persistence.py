@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -25,7 +23,12 @@ from social_text_intelligence.infrastructure.sqlite_projects import (
     SqliteProjectRepository,
 )
 
-from .language_samples import INFO, LanguageGateway, mixed_language_csv
+from .language_samples import (
+    INFO,
+    LanguageGateway,
+    mixed_language_csv,
+    strip_language_evidence,
+)
 from .workflow_samples import ScriptedGateway
 
 LIMITS = CsvLimits(max_bytes=50_000, max_rows=100, max_text_length=500)
@@ -100,23 +103,7 @@ def test_a_project_analysed_before_language_checks_opens_as_not_assessed(
     tmp_path: Path,
 ) -> None:
     project_id = analysed(tmp_path, ScriptedGateway())
-    (path,) = (tmp_path / "projects").glob("*")
-    connection = sqlite3.connect(path)
-    try:
-        connection.execute("DROP TRIGGER analysis_outcome_is_immutable")
-        rows = connection.execute(
-            "SELECT row_number, report_json FROM analysis_outcome"
-        ).fetchall()
-        for number, payload in rows:
-            data = json.loads(payload)
-            data.pop("language", None)  # the exact pre-M5.6 stored shape
-            connection.execute(
-                "UPDATE analysis_outcome SET report_json = ? WHERE row_number = ?",
-                (json.dumps(data), number),
-            )
-        connection.commit()
-    finally:
-        connection.close()
+    strip_language_evidence(tmp_path)  # the exact pre-M5.6 stored shape
 
     legacy = report_of(tmp_path, project_id, 2)
 

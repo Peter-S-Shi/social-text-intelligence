@@ -40,7 +40,7 @@
     {% if report %}
     {% set language = language_notice(report.language) %}
     <section class="panel" aria-label="Language check">
-      <p class="{{ 'warning' if language.warns else 'privacy-note' }}"><strong>{% if language.warns %}Warning: {% endif %}{{ language.headline }}.</strong> {{ language.detail }}</p>
+      <p class="{{ 'warning' if language.warns else 'privacy-note' }}"><strong>{{ language.text }}.</strong> {{ language.detail }}</p>
     </section>
     <section class="result-grid" aria-label="Analysis results">
       <article class="panel">

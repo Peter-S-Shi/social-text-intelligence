@@ -32,7 +32,7 @@ from ..services.insights import (
     available_group_values,
     build_group_metrics,
 )
-from ..services.language import LanguageSummary, summarize_languages
+from ..services.language import LanguageSummary, summarize_result
 from .project_workflow import ProjectBusyError, ProjectNotFoundError
 from .projects import BatchWorkspace, ProjectRepository, WorkspaceMutationConflict
 from .use_cases import INSIGHT_METRICS_BY_PERSPECTIVE, ApplicationUseCases
@@ -318,11 +318,7 @@ class InsightsWorkflow:
             association_values=tuple(view.association_values.items()),
             provenance=view.first_report,
             error_message=view.error_message,
-            language=summarize_languages(
-                outcome.report.language
-                for outcome in view.successful_outcomes
-                if outcome.report is not None
-            ),
+            language=summarize_result(workspace.result),
         )
 
 

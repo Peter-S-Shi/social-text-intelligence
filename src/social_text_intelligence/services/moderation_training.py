@@ -54,6 +54,7 @@ from .insights import (
     SampleSizeAssessment,
     sample_size_assessment,
 )
+from .language import language_caveat, language_signal
 from .review import ReviewState
 
 DEFAULT_MAX_PREPARED_CASES = 100
@@ -469,7 +470,7 @@ def prepare_workspace_case(
     metadata_values = {
         "source_type": record.source_type.value,
         "source_label": record.source_label or "",
-        "language": record.language or "",
+        "language": outcome.prepared.supplied_language or "",
         "timestamp": record.timestamp.isoformat() if record.timestamp else "",
         "topic": record.topic or "",
         "community": record.community or "",
@@ -512,6 +513,8 @@ def prepare_workspace_case(
             community=record.community or "",
             source_label=record.source_label or "",
         ),
+        language_signal=language_signal(report.language),
+        language_caveat=language_caveat(report.language),
     )
     case_id = f"workspace-{case_id_factory()}"
     prepared = ModerationTrainingCase(
@@ -1444,6 +1447,7 @@ MODERATION_EXPORT_FIELDS = (
     "source_text",
     "sentiment_signal",
     "emotion_signal",
+    "language_signal",
     "context_notes",
     "trusted_metadata",
 )
@@ -1770,6 +1774,7 @@ def export_moderation_session_csv(
                 if snapshot.emotion
                 else ""
             )
+            row["language_signal"] = safe_spreadsheet_text(snapshot.language_signal)
         if snapshot is not None and include_context_notes:
             row["context_notes"] = safe_spreadsheet_text(
                 "||".join(

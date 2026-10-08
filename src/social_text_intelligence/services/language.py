@@ -12,15 +12,18 @@ from __future__ import annotations
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from ..contracts.language import (
-    Detection,
     LanguageAssessment,
     LanguageDetectorUnavailable,
     LanguageReason,
     LanguageStatus,
 )
 from ..providers.base import LanguageDetector
+
+if TYPE_CHECKING:
+    from .batch import BatchResult
 
 # Only a display aid: an unknown code is shown as the code itself.
 LANGUAGE_NAMES = {
@@ -56,38 +59,43 @@ def assess_language(
 
     languages = tuple(item.lower() for item in supported)
     if detector is None:
-        return LanguageAssessment.not_assessed(supported_languages=languages)
+        # A fresh analysis with no detector configured is a check that could not
+        # run, never a silent pass. ("Not run" is only for results stored earlier.)
+        return LanguageAssessment.not_assessed(
+            LanguageReason.DETECTOR_UNAVAILABLE, supported_languages=languages
+        )
     try:
         detection = detector.detect(text)
         info = detector.info
+        if detection.language is None:
+            return LanguageAssessment(
+                status=LanguageStatus.UNDETERMINED,
+                supported_languages=languages,
+                detector=info,
+                reason=detection.reason,
+            )
+        detected = detection.language.lower()
+        return LanguageAssessment(
+            status=(
+                LanguageStatus.SUPPORTED
+                if detected in languages
+                else LanguageStatus.UNSUPPORTED
+            ),
+            detected_language=detected,
+            score=detection.score,
+            supported_languages=languages,
+            detector=info,
+        )
     except LanguageDetectorUnavailable:
         return LanguageAssessment.not_assessed(
             LanguageReason.DETECTOR_UNAVAILABLE, supported_languages=languages
         )
     except Exception:
-        # The failure text may contain the record's text, so it is not kept.
+        # The failure text may contain the record's text, so it is not kept; an
+        # answer that breaks the evidence contract is a failed check too.
         return LanguageAssessment.not_assessed(
             LanguageReason.DETECTOR_FAILED, supported_languages=languages
         )
-    if detection.language is None:
-        return LanguageAssessment(
-            status=LanguageStatus.UNDETERMINED,
-            supported_languages=languages,
-            detector=info,
-            reason=detection.reason,
-        )
-    detected = detection.language.lower()
-    return LanguageAssessment(
-        status=(
-            LanguageStatus.SUPPORTED
-            if detected in languages
-            else LanguageStatus.UNSUPPORTED
-        ),
-        detected_language=detected,
-        score=detection.score,
-        supported_languages=languages,
-        detector=info,
-    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,19 +106,32 @@ class LanguageNotice:
     detail: str
     warns: bool
 
+    @property
+    def text(self) -> str:
+        """The headline for a surface that has no icon: a warning says so in words."""
 
-_MODELS = "The approved models were built for English"
+        return f"Warning: {self.headline}" if self.warns else self.headline
+
+
+def _models(languages: Sequence[str]) -> str:
+    """What the approved models cover, from their capability metadata."""
+
+    if not languages:
+        return "The approved models' supported languages are not recorded"
+    names = ", ".join(language_name(code) for code in sorted(languages))
+    return f"The approved models support only {names}"
+
+
 _UNCHANGED = "The text was still analysed and its labels have not been changed."
 
 
 def describe_language(assessment: LanguageAssessment) -> LanguageNotice:
     status = assessment.status
+    models = _models(assessment.supported_languages)
+    detected = language_name(assessment.detected_language or "")
     if status is LanguageStatus.SUPPORTED:
-        assert assessment.detected_language is not None
         return LanguageNotice(
-            headline=(
-                f"Detected language: {language_name(assessment.detected_language)}"
-            ),
+            headline=f"Detected language: {detected}",
             detail=(
                 "A language the approved models support. Detected automatically on "
                 "this device; the detector's score is not a probability."
@@ -118,17 +139,13 @@ def describe_language(assessment: LanguageAssessment) -> LanguageNotice:
             warns=False,
         )
     if status is LanguageStatus.UNSUPPORTED:
-        assert assessment.detected_language is not None
         return LanguageNotice(
             headline=(
-                "Detected language: "
-                f"{language_name(assessment.detected_language)}, not supported by "
-                "the approved models"
+                f"Detected language: {detected}, not supported by the approved models"
             ),
             detail=(
-                f"{_MODELS}, so these results may be unreliable. {_UNCHANGED} "
-                "This describes the wording of the text only; it says nothing about "
-                "who wrote it."
+                f"{models}, so these results may be unreliable. {_UNCHANGED} "
+                "This describes the wording of the text only."
             ),
             warns=True,
         )
@@ -137,7 +154,7 @@ def describe_language(assessment: LanguageAssessment) -> LanguageNotice:
             headline="Detected language: not confidently determined",
             detail=(
                 "There was too little language to tell (for example a very short "
-                f"text, symbols, links, or numbers). {_MODELS}, so read these "
+                f"text, symbols, links, or numbers). {models}, so read these "
                 f"results with care. {_UNCHANGED}"
             ),
             warns=True,
@@ -147,7 +164,7 @@ def describe_language(assessment: LanguageAssessment) -> LanguageNotice:
             headline="Language check unavailable",
             detail=(
                 "The language check could not run on this device, so whether this "
-                f"text is in a supported language is unknown. {_MODELS}. "
+                f"text is in a supported language is unknown. {models}. "
                 f"{_UNCHANGED}"
             ),
             warns=True,
@@ -157,7 +174,7 @@ def describe_language(assessment: LanguageAssessment) -> LanguageNotice:
             headline="Language check failed for this text",
             detail=(
                 "The language check did not finish, so whether this text is in a "
-                f"supported language is unknown. {_MODELS}. {_UNCHANGED}"
+                f"supported language is unknown. {models}. {_UNCHANGED}"
             ),
             warns=True,
         )
@@ -183,9 +200,10 @@ class LanguageSummary:
     unavailable: int  # the check was attempted and could not finish
     not_assessed: int  # no check was part of the analysis (e.g. an older project)
     unsupported_languages: tuple[tuple[str, int], ...]
+    supported_languages: tuple[str, ...] = ()  # what the approved models cover
 
     @property
-    def needs_attention(self) -> int:
+    def attention_count(self) -> int:
         return self.unsupported + self.undetermined + self.unavailable
 
 
@@ -208,6 +226,19 @@ def summarize_languages(assessments: Iterable[LanguageAssessment]) -> LanguageSu
         unavailable=states["unavailable"],
         not_assessed=states[LanguageStatus.NOT_ASSESSED.value],
         unsupported_languages=tuple(ranked),
+        supported_languages=tuple(
+            sorted({code for item in items for code in item.supported_languages})
+        ),
+    )
+
+
+def summarize_result(result: BatchResult) -> LanguageSummary:
+    """The language check over every successfully analysed row of a batch."""
+
+    return summarize_languages(
+        outcome.report.language
+        for outcome in result.outcomes
+        if outcome.report is not None
     )
 
 
@@ -216,7 +247,7 @@ def describe_summary(summary: LanguageSummary) -> LanguageNotice | None:
 
     if summary.total == 0:
         return None
-    if summary.needs_attention:
+    if summary.attention_count:
         parts = []
         if summary.unsupported:
             named = ", ".join(
@@ -230,11 +261,12 @@ def describe_summary(summary: LanguageSummary) -> LanguageNotice | None:
             parts.append(f"{summary.unavailable} could not be checked")
         return LanguageNotice(
             headline=(
-                f"Language check: {summary.needs_attention} of {summary.total} "
+                f"Language check: {summary.attention_count} of {summary.total} "
                 "analysed texts are not confirmed as a supported language"
             ),
             detail=(
-                f"{'; '.join(parts)}. {_MODELS}, so read those results with care. "
+                f"{'; '.join(parts)}. {_models(summary.supported_languages)}, so "
+                f"read those results with care. "
                 f"{_UNCHANGED}"
             ),
             warns=True,
@@ -261,6 +293,35 @@ def describe_summary(summary: LanguageSummary) -> LanguageNotice | None:
         detail=f"Detected automatically on this device.{note}",
         warns=False,
     )
+
+
+def language_signal(assessment: LanguageAssessment, separator: str = "|") -> str:
+    """One cell of language evidence, for snapshots frozen beside the AI signals."""
+
+    cells = language_export_cells(assessment)
+    return separator.join(
+        str(cells[key])
+        for key in ("language_status", "detected_language", "language_score")
+    ) + f"{separator}{cells['language_detector']}"
+
+
+def language_short(assessment: LanguageAssessment) -> str:
+    """A few words for a table cell; the full notice is shown elsewhere."""
+
+    status = assessment.status
+    if status is LanguageStatus.SUPPORTED or status is LanguageStatus.UNSUPPORTED:
+        name = language_name(assessment.detected_language or "")
+        return f"{'⚠ ' if status is LanguageStatus.UNSUPPORTED else ''}{name}"
+    if status is LanguageStatus.UNDETERMINED:
+        return "⚠ not confidently determined"
+    return "⚠ check unavailable" if assessment.check_failed else "not assessed"
+
+
+def language_caveat(assessment: LanguageAssessment) -> str:
+    """The warning headline when the language needs attention, else nothing."""
+
+    notice = describe_language(assessment)
+    return notice.headline if notice.warns else ""
 
 
 LANGUAGE_EXPORT_FIELDS = (
@@ -294,16 +355,18 @@ def language_export_cells(assessment: LanguageAssessment) -> dict[str, object]:
 
 
 __all__ = [
-    "LanguageSummary",
-    "describe_summary",
-    "summarize_languages",
     "LANGUAGE_EXPORT_FIELDS",
     "LANGUAGE_FIELDS_NOTE",
-    "language_export_cells",
-    "Detection",
-    "LanguageDetectorUnavailable",
     "LanguageNotice",
+    "LanguageSummary",
     "assess_language",
     "describe_language",
+    "describe_summary",
+    "language_caveat",
+    "language_export_cells",
     "language_name",
+    "language_short",
+    "language_signal",
+    "summarize_languages",
+    "summarize_result",
 ]

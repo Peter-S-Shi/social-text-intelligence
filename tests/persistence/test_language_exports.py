@@ -26,7 +26,11 @@ from social_text_intelligence.services.insights import (
     InsightPerspective,
 )
 
-from .language_samples import LanguageGateway, mixed_language_csv
+from .language_samples import (
+    LanguageGateway,
+    mixed_language_csv,
+    strip_language_evidence,
+)
 from .workflow_samples import ScriptedGateway
 
 LIMITS = CsvLimits(max_bytes=50_000, max_rows=100, max_text_length=500)
@@ -87,7 +91,8 @@ def test_the_normalized_export_carries_supplied_and_detected_language_apart(
 def test_an_unchecked_result_exports_as_not_assessed_never_as_english(
     tmp_path: Path,
 ) -> None:
-    project_id = analysed(tmp_path, ScriptedGateway())
+    project_id = analysed(tmp_path, ScriptedGateway())  # no detector configured
+    strip_language_evidence(tmp_path)  # ...and one stored before M5.6 anyway
     workspace = repository(tmp_path).get(project_id)
     assert workspace is not None
 
@@ -96,6 +101,18 @@ def test_an_unchecked_result_exports_as_not_assessed_never_as_english(
     assert {row["language_status"] for row in rows} == {"not_assessed"}
     assert {row["detected_language"] for row in rows} == {""}
     assert {row["language_reason"] for row in rows} == {"not_run"}
+
+
+def test_a_fresh_analysis_without_a_detector_exports_as_unavailable(
+    tmp_path: Path,
+) -> None:
+    project_id = analysed(tmp_path, ScriptedGateway())
+    workspace = repository(tmp_path).get(project_id)
+    assert workspace is not None
+
+    rows = rows_of(ApplicationUseCases.export_batch(workspace, include_native=False))
+
+    assert {row["language_reason"] for row in rows} == {"detector_unavailable"}
 
 
 def test_the_reviewed_export_keeps_the_language_evidence(tmp_path: Path) -> None:

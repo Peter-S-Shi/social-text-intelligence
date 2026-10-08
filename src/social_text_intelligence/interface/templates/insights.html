@@ -47,7 +47,7 @@
         <input type="hidden" name="view" value="{{ view }}">
         <label>Trusted grouping
           <select name="grouping">
-            {% for option in grouping_options %}<option value="{{ option }}" {% if selection.grouping == option %}selected{% endif %}>{{ option|replace('_',' ')|title }}</option>{% endfor %}
+            {% for option in grouping_options %}<option value="{{ option }}" {% if selection.grouping == option %}selected{% endif %}>{{ 'Language (as supplied in the file)' if option == 'language' else option|replace('_',' ')|title }}</option>{% endfor %}
           </select>
         </label>
         <label for="insight-groups">{{ 'Compare 2–4 groups' if view == 'comparison' else 'Displayed groups' }}</label>
@@ -80,6 +80,8 @@
     <section class="panel methodology" aria-label="Metric definition">
       <h2>Metric and denominator</h2>
       <p>{{ metric_definition }}</p>
+      {% set language = language_outcomes_notice(successful_outcomes) %}
+      {% if language %}<p class="{{ 'warning' if language.warns else 'privacy-note' }}"><strong>{{ language.text }}.</strong> {{ language.detail }}</p>{% endif %}
       <p><strong>Active grouping:</strong> {{ selection.grouping|replace('_',' ') }} · <strong>Perspective:</strong> {{ selection.perspective }} · <strong>Metric:</strong> {{ selection.metric|replace('_',' ') }}</p>
       <p><strong>Active filters:</strong> sentiment {{ query_sentiment or 'all' }}, dominant emotion {{ query_emotion or 'all' }}, date {{ query_date_from or 'unbounded' }} to {{ query_date_to or 'unbounded' }}.</p>
     </section>
@@ -88,6 +90,7 @@
       {% for summary in summaries %}<article class="panel metric-card">
         <div class="section-heading"><h2>{{ summary.group }}</h2><span>{{ summary.eligible_count }} eligible / {{ summary.total_count }} group rows</span></div>
         <p><small><strong>Group context:</strong> {{ summary.successful_count }} successful analysis row{{ '' if summary.successful_count == 1 else 's' }} · {{ summary.failed_count }} failed row{{ '' if summary.failed_count == 1 else 's' }} assigned reliably to this group · {{ summary.unassigned_failed_count }} failed row{{ '' if summary.unassigned_failed_count == 1 else 's' }} unassigned across this grouping. No group is guessed.</small></p>
+        {% if summary.language_attention_count %}<p class="warning"><strong>Warning:</strong> {{ summary.language_attention_count }} of {{ summary.filtered_successful_count }} analysed texts here are not confirmed as a supported language. They are still counted below.</p>{% endif %}
         {% if summary.sample.message %}<p class="sample-warning status-{{ summary.sample.level }}"><strong>{{ summary.sample.message }}</strong>{% if summary.sample.level == 'insufficient' %}; comparative emphasis is suppressed.{% endif %}</p>{% endif %}
         <div class="distribution-list">
           {% for value in summary.values %}<div class="distribution-row">
@@ -149,6 +152,8 @@
       <div class="section-heading"><h2>{{ example.outcome.prepared.identity }}</h2><span>{{ example.reason }}</span></div>
       <p class="text-preview">{{ example.outcome.report.record.text[:240] }}{% if example.outcome.report.record.text|length > 240 %}…{% endif %}</p>
       {% if example.outcome.report.record.text|length > 240 %}<details><summary>Reveal full local text</summary><blockquote>{{ example.outcome.report.record.text }}</blockquote></details>{% endif %}
+      {% set case_language = language_notice(example.outcome.report.language) %}
+      <p class="{{ 'warning' if case_language.warns else 'privacy-note' }}"><strong>{{ case_language.text }}.</strong> {{ case_language.detail }}</p>
       <p>AI sentiment {{ example.outcome.report.sentiment.label }} ({{ '%.1f'|format(example.outcome.report.sentiment.confidence * 100) }}%) · AI dominant emotion {{ example.outcome.report.emotion.dominant_emotion }} ({{ '%.1f'|format(example.outcome.report.emotion.confidence * 100) }}%).</p>
       {% if example.review %}<p>Human sentiment {{ example.review.human_sentiment or 'not definitive' }} · human dominant emotion {{ example.review.human_dominant_emotion or 'not definitive' }} · {{ 'uncertain' if example.review.is_uncertain else ('reviewed' if example.review.is_reviewed else 'unreviewed') }}.</p>{% endif %}
     </article>{% endfor %}</section>{% else %}<section class="panel"><p>No records meet this rule.</p></section>{% endif %}

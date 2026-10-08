@@ -510,6 +510,10 @@ class SourceRecordSnapshot:
     emotion: EmotionSignalSnapshot | None
     human_review: HumanReviewSnapshot | None
     context_notes: tuple[ContextNoteSnapshot, ...]
+    # The language check frozen beside the AI signals, and its caveat (empty when the
+    # language is supported or was never assessed).
+    language_signal: str = ""
+    language_caveat: str = ""
 
 
 @dataclass(frozen=True, slots=True)

@@ -40,10 +40,10 @@ _NOT_ASSESSED_REASONS = {
 }
 
 
-def _invalid(field: str, message: str) -> ValidationError:
-    return ValidationError(
-        field=field, code="invalid_language_assessment", message=message
-    )
+def _invalid(
+    field: str, message: str, code: str = "invalid_language_assessment"
+) -> ValidationError:
+    return ValidationError(field=field, code=code, message=message)
 
 
 @dataclass(frozen=True, slots=True)
@@ -159,9 +159,17 @@ class Detection:
     def __post_init__(self) -> None:
         if self.language is None:
             if self.score is not None or self.reason not in _UNDETERMINED_REASONS:
-                raise _invalid("language", "An abstention names why, and has no score.")
+                raise _invalid(
+                    "language",
+                    "An abstention names why, and has no score.",
+                    "invalid_detection",
+                )
         elif self.score is None or self.reason is not None:
-            raise _invalid("score", "A detected language has a score and no reason.")
+            raise _invalid(
+                "score",
+                "A detected language has a score and no reason.",
+                "invalid_detection",
+            )
 
 
 class LanguageDetectorUnavailable(Exception):

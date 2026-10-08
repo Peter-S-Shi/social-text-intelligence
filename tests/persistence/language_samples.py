@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import json
+import sqlite3
 from collections.abc import Callable
+from pathlib import Path
 
 from social_text_intelligence.contracts import (
     AnalysisReport,
@@ -73,3 +76,25 @@ def mixed_language_csv() -> bytes:
         b"r4,bonjour encore une fois,\n"
         b"r5,ok,en\n"
     )
+
+
+def strip_language_evidence(root: Path) -> None:
+    """Rewrite stored reports into the exact shape written before M5.6."""
+
+    (path,) = (root / "projects").glob("*")
+    connection = sqlite3.connect(path)
+    try:
+        connection.execute("DROP TRIGGER analysis_outcome_is_immutable")
+        rows = connection.execute(
+            "SELECT row_number, report_json FROM analysis_outcome"
+        ).fetchall()
+        for number, payload in rows:
+            data = json.loads(payload)
+            data.pop("language", None)
+            connection.execute(
+                "UPDATE analysis_outcome SET report_json = ? WHERE row_number = ?",
+                (json.dumps(data), number),
+            )
+        connection.commit()
+    finally:
+        connection.close()

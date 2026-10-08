@@ -15,7 +15,7 @@ from enum import StrEnum
 
 from ..contracts.errors import SocialTextIntelligenceError, ValidationError
 from ..services.batch import BatchCancelled, BatchProgress
-from ..services.language import LanguageSummary, summarize_languages
+from ..services.language import LanguageSummary, summarize_result
 from .projects import (
     BatchWorkspace,
     PersistentProjectRepository,
@@ -136,11 +136,7 @@ def describe(summary: ProjectSummary, workspace: BatchWorkspace) -> ProjectDetai
         sentiment_counts=tuple(
             (label.value, count) for label, count in aggregates.sentiment_counts
         ),
-        language=summarize_languages(
-            outcome.report.language
-            for outcome in result.outcomes
-            if outcome.report is not None
-        ),
+        language=summarize_result(result),
     )
 
 

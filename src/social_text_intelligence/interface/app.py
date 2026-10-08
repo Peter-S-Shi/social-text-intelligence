@@ -15,7 +15,9 @@ from werkzeug.exceptions import RequestEntityTooLarge, SecurityError
 from ..application.language import (
     describe_language,
     describe_summary,
+    language_short,
     summarize_languages,
+    summarize_result,
 )
 from ..application.projects import InMemoryProjectRepository
 from ..application.settings import AnalysisGateway, AppSettings, build_analysis_service
@@ -117,12 +119,14 @@ def create_app(
     # The same wording the desktop shows for the language check.
     app.jinja_env.globals["language_notice"] = describe_language
     app.jinja_env.globals["language_summary_notice"] = lambda result: describe_summary(
-        summarize_languages(
-            outcome.report.language
-            for outcome in result.outcomes
-            if outcome.report is not None
+        summarize_result(result)
+    )
+    app.jinja_env.globals["language_outcomes_notice"] = lambda outcomes: (
+        describe_summary(
+            summarize_languages(o.report.language for o in outcomes if o.report)
         )
     )
+    app.jinja_env.globals["language_short"] = language_short
     app.config.from_mapping(
         CACHE_DIR="model_cache",
         OFFLINE=False,

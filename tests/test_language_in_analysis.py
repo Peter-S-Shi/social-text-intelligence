@@ -92,12 +92,13 @@ def test_the_detector_sees_only_the_text() -> None:
     assert detector.seen == ["Only these words."]
 
 
-def test_no_detector_means_not_assessed_not_english() -> None:
+def test_no_detector_is_an_unavailable_check_not_english_and_not_a_pass() -> None:
     report = service(None).analyze(record())
 
     assert report.language == LanguageAssessment.not_assessed(
-        supported_languages=("en",)
+        LanguageReason.DETECTOR_UNAVAILABLE, supported_languages=("en",)
     )
+    assert report.language.needs_attention
 
 
 def test_an_undetermined_text_is_analysed_and_flagged() -> None:
