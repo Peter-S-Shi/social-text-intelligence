@@ -16,6 +16,11 @@ from secrets import token_urlsafe
 from ..contracts import EmotionLabel, SentimentLabel, SourceType
 from ..contracts.errors import ValidationError
 from .batch import BatchOutcome, BatchResult, safe_spreadsheet_text
+from .language import (
+    LANGUAGE_EXPORT_FIELDS,
+    LANGUAGE_FIELDS_NOTE,
+    language_export_cells,
+)
 from .review import (
     HumanReview,
     ReviewCase,
@@ -227,6 +232,9 @@ class GroupMetricSummary:
     sample: SampleSizeAssessment
     unreviewed_count: int = 0
     uncertain_count: int = 0
+    # Analysed texts in this group (after filters) whose language is not confirmed as
+    # one the approved models support. A caveat only: it changes no metric.
+    language_attention_count: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -325,6 +333,9 @@ def _record_group_value(
         return None
     if grouping is GroupingDimension.TIMESTAMP_MONTH:
         return record.timestamp.strftime("%Y-%m") if record.timestamp else MISSING_GROUP
+    if grouping is GroupingDimension.LANGUAGE:
+        # Exactly what the file supplied: never a default and never a detection.
+        return outcome.prepared.supplied_language or MISSING_GROUP
     value = getattr(record, grouping.value)
     return str(value.value if hasattr(value, "value") else value or MISSING_GROUP)
 
@@ -353,8 +364,9 @@ def _failed_raw_group_value(
         except ValueError:
             return None
     if grouping is GroupingDimension.LANGUAGE:
-        value = raw or "en"
-        return value if _LANGUAGE_PATTERN.fullmatch(value) else None
+        if not raw:
+            return MISSING_GROUP
+        return raw if _LANGUAGE_PATTERN.fullmatch(raw) else None
     if len(raw) > 512:
         return None
     return raw or MISSING_GROUP
@@ -577,6 +589,11 @@ def _summarize_group(
         sample=sample_size_assessment(eligible),
         unreviewed_count=unreviewed,
         uncertain_count=uncertain,
+        language_attention_count=sum(
+            outcome.report.language.needs_attention
+            for outcome in outcomes
+            if outcome.report
+        ),
     )
 
 
@@ -952,6 +969,8 @@ INSIGHT_EXPORT_FIELDS = (
     "emotion_threshold",
     "emotion_threshold_semantics",
     "native_emotion_scores",
+    *LANGUAGE_EXPORT_FIELDS,
+    "language_fields_note",
 )
 
 
@@ -1051,6 +1070,7 @@ def export_insights_csv(
             "Inclusive per-row threshold: a compact non-neutral emotion is active "
             "when score >= that row's recorded threshold."
         ),
+        "language_fields_note": LANGUAGE_FIELDS_NOTE,
     }
     writer.writerow({"section": "export_metadata", **selection_fields})
     for summary in summaries:
@@ -1104,7 +1124,9 @@ def export_insights_csv(
                     "source_label": safe_spreadsheet_text(
                         report.record.source_label or ""
                     ),
-                    "language": safe_spreadsheet_text(report.record.language or ""),
+                    "language": safe_spreadsheet_text(
+                        outcome.prepared.supplied_language or ""
+                    ),
                     "timestamp": (
                         report.record.timestamp.isoformat()
                         if report.record.timestamp
@@ -1131,6 +1153,7 @@ def export_insights_csv(
                         if include_native
                         else ""
                     ),
+                    **language_export_cells(report.language),
                 }
             )
     return output.getvalue()

@@ -122,6 +122,9 @@ class ReviewRecord:
     row_number: int
     report: AnalysisReport
     review: HumanReview
+    # The language tag exactly as the file supplied it (None if it gave none). It is
+    # not the detected language, which lives in ``report.language``.
+    supplied_language: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,6 +189,7 @@ class ReviewWorkflow:
                 row_number=details.current.outcome.prepared.row_number,
                 report=report,
                 review=details.current.review,
+                supplied_language=details.current.outcome.prepared.supplied_language,
             ),
             position=details.position,
             queue_total=details.queue_total,

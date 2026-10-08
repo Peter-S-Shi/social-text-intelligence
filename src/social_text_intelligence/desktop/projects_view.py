@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+from ..application.language import describe_summary
 from ..application.model_provisioning import ModelsStatus
 from ..application.project_workflow import (
     DEFAULT_PROJECT_NAME,
@@ -112,6 +113,9 @@ class ProjectDetailView:
     delete_enabled: bool
     block: AnalysisBlockView | None
     notice: ProjectsNotice | None
+    language_headline: str | None = None
+    language_detail: str = ""
+    language_warns: bool = False
 
 
 _STATE_LINES = {
@@ -182,6 +186,7 @@ def build_detail_view(
     analyzed = details.phase is ProjectPhase.ANALYZED and bool(details.analyzed_rows)
     block = build_analysis_block(models, availability) if ready else None
     busy = state.busy
+    language = describe_summary(details.language) if details.language else None
     return ProjectDetailView(
         title=details.summary.name or DEFAULT_PROJECT_NAME,
         state_line=_STATE_LINES[details.phase],
@@ -207,6 +212,9 @@ def build_detail_view(
         delete_enabled=not busy,
         block=block,
         notice=state.notice,
+        language_headline=None if language is None else language.headline,
+        language_detail="" if language is None else language.detail,
+        language_warns=language is not None and language.warns,
     )
 
 

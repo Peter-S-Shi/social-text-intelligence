@@ -33,6 +33,7 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           STI_REQUIRE_QT: "1"
+          STI_REQUIRE_LANGID: "1"
         run: python -m pytest
       - name: Lint
         run: ruff check .

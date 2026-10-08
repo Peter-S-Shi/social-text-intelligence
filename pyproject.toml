@@ -29,6 +29,12 @@ emotion = [
   "torch>=2.13,<3",
   "transformers>=5.14,<6",
 ]
+# Local, offline language identification (BSD-3-Clause; the model ships inside the
+# package, so nothing is downloaded). Without it the language check reports
+# "unavailable" rather than guessing. See THIRD_PARTY_NOTICES.md.
+language = [
+  "py3langid>=0.4,<0.5",
+]
 web = [
   "flask>=3.1,<4",
 ]
@@ -38,9 +44,11 @@ web = [
 # see THIRD_PARTY_NOTICES.md. The pre-distribution LGPL compliance gate is still open.
 desktop = [
   "PySide6-Essentials>=6.11,<7",
+  "py3langid>=0.4,<0.5",
 ]
 dev = [
   "PySide6-Essentials>=6.11,<7",
+  "py3langid>=0.4,<0.5",
   "flask>=3.1,<4",
   "mypy>=1.10,<2",
   "pytest>=8,<9",

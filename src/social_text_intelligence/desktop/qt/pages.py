@@ -14,7 +14,7 @@ from ...application.model_provisioning import ModelsStatus
 from ..analysis import AnalysisPageState
 from ..gate import AnalysisAvailability
 from ..panel import ActionId, ActionView, build_analysis_block
-from .widgets import ActionRow, add_all, announce, frame, label
+from .widgets import ActionRow, LanguageBox, add_all, announce, frame, label
 
 
 class AnalysisBlockBox(QWidget):
@@ -89,8 +89,16 @@ class AnalyzePage(QWidget):
         self.result_title = label("Result", role="title")
         self.result_text = label()
         self.result_provenance = label(role="mono")
+        # The language check sits beside the labels, never inside them.
+        self.language_box = LanguageBox("analysis-language")
+        self.language_headline = self.language_box.headline
+        self.language_detail = self.language_box.detail
         add_all(
-            result_layout, self.result_title, self.result_text, self.result_provenance
+            result_layout,
+            self.result_title,
+            self.result_text,
+            self.language_box,
+            self.result_provenance,
         )
         self.error_box = frame("alert")
         self.error_box.setObjectName("analysis-error")
@@ -175,6 +183,11 @@ class AnalyzePage(QWidget):
                 f"Emotion: {result.emotion} ({result.emotion_confidence}){others}"
             )
             self.result_provenance.setText("\n".join(result.provenance))
+            self.language_box.show_language(
+                result.language_headline,
+                result.language_detail,
+                result.language_warns,
+            )
         error = state.error
         self.error_box.setVisible(error is not None)
         if error is not None:

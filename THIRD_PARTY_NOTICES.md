@@ -122,3 +122,30 @@ project's MIT License.
 Future milestones must update this file when adding a runtime dependency, model,
 or dataset. Each entry must identify its source, exact version or revision,
 license, purpose, and any required attribution.
+
+## Local language detection (M5.6)
+
+### py3langid
+
+- Package: `py3langid`, constrained to `>=0.4,<0.5` (0.4.0 was used for development and
+  tests).
+- Source: https://pypi.org/project/py3langid/ (a fork of `langid.py` by Marco Lui,
+  forked and maintained by Adrien Barbaresi).
+- License: BSD-3-Clause (the package's `LICENSE`; original `langid.py` code by Marco
+  Lui and Tim Baldwin's research, modifications by the fork's author). The licence
+  text must be preserved in any distribution.
+- Runtime dependency: `numpy>=2.0` (BSD-3-Clause), installed with it.
+- Purpose: deciding, locally and offline, which language a text is written in, so
+  the app can warn when the approved English models may not suit it. Nothing is
+  sent anywhere and no model is downloaded: the statistical model ships inside the
+  package as a compressed NumPy archive that is loaded without pickle.
+- Installed only through the `language`, `desktop`, or `dev` extra; not bundled in the
+  repository. If it is missing, the language check reports "unavailable".
+- Residual note: the package's published model is trained on public corpora
+  (Wikipedia article leads, Tatoeba sentences, CC100, GlotCC) that keep their own
+  terms. STI redistributes none of those corpora, and the package declares the
+  BSD-3-Clause licence for its code and bundled model. This is recorded rather than
+  cleared: re-check it before any packaged distribution.
+
+See [Language detection](docs/LANGUAGE_DETECTION.md) for the candidates considered, the
+selection evidence, and the behaviour contract.

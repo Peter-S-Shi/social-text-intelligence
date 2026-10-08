@@ -26,6 +26,7 @@ from ..application.insights_workflow import (
     SampleSizeLevel,
     outcome_report,
 )
+from ..application.language import describe_language, describe_summary
 from ..application.review_workflow import HumanReview
 from ..contracts import EmotionLabel, SentimentLabel
 from .insights import InsightsActivity, InsightsNotice, InsightsState
@@ -125,6 +126,7 @@ class GroupCardView:
     sample_line: str | None
     rows: tuple[MetricRowView, ...]
     review_line: str
+    language_line: str = ""
 
     @property
     def accessible_name(self) -> str:
@@ -157,6 +159,9 @@ class CaseView:
     ai_line: str
     human_heading: str
     human_line: str
+    language_headline: str = ""
+    language_detail: str = ""
+    language_warns: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -191,6 +196,11 @@ class InsightsView:
     export_enabled: bool
     unsaved: bool
     notice: InsightsNotice | None
+    # The language check over every analysed text in the project, as a caveat on
+    # every figure below. It changes no metric and no grouping.
+    language_headline: str | None = None
+    language_detail: str = ""
+    language_warns: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -247,6 +257,13 @@ def _card(summary: GroupMetricSummary, *, ai_view: bool) -> GroupCardView:
             else f"{summary.unreviewed_count} unreviewed · {summary.uncertain_count} "
             "uncertain. Eligibility is metric-specific."
         ),
+        language_line=(
+            f"⚠ {summary.language_attention_count} of "
+            f"{summary.filtered_successful_count} analysed texts here are not "
+            "confirmed as a supported language. They are still counted above."
+            if summary.language_attention_count
+            else ""
+        ),
     )
 
 
@@ -300,6 +317,7 @@ def _human_line(review: HumanReview | None) -> str:
 
 def _case(example: RepresentativeExample) -> CaseView:
     report = outcome_report(example.outcome)
+    language = describe_language(report.language)
     return CaseView(
         row_number=example.outcome.prepared.row_number,
         reason=f"Why shown: {example.reason}",
@@ -315,6 +333,9 @@ def _case(example: RepresentativeExample) -> CaseView:
         ),
         human_heading=HUMAN_CASE_HEADING,
         human_line=_human_line(example.review),
+        language_headline=language.headline,
+        language_detail=language.detail,
+        language_warns=language.warns,
     )
 
 
@@ -336,6 +357,7 @@ def build_insights_view(state: InsightsState) -> InsightsView | None:
     filters = selection.filters
     report = snapshot.provenance
     examples = state.examples
+    language = describe_summary(snapshot.language)
     return InsightsView(
         grouping_choices=tuple(
             (GROUPING_LABELS[g], g.value) for g in GroupingDimension
@@ -436,4 +458,7 @@ def build_insights_view(state: InsightsState) -> InsightsView | None:
         export_enabled=idle,
         unsaved=state.has_unsaved_changes,
         notice=state.notice,
+        language_headline=None if language is None else language.headline,
+        language_detail="" if language is None else language.detail,
+        language_warns=language is not None and language.warns,
     )

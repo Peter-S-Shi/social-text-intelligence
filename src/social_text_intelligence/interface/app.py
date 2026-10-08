@@ -12,6 +12,11 @@ from flask import Flask, Response, redirect, render_template, request, url_for
 from flask.typing import ResponseReturnValue
 from werkzeug.exceptions import RequestEntityTooLarge, SecurityError
 
+from ..application.language import (
+    describe_language,
+    describe_summary,
+    summarize_languages,
+)
 from ..application.projects import InMemoryProjectRepository
 from ..application.settings import AnalysisGateway, AppSettings, build_analysis_service
 from ..application.use_cases import (
@@ -109,6 +114,15 @@ def create_app(
     """Create the local app without loading either model."""
 
     app = Flask(__name__)
+    # The same wording the desktop shows for the language check.
+    app.jinja_env.globals["language_notice"] = describe_language
+    app.jinja_env.globals["language_summary_notice"] = lambda result: describe_summary(
+        summarize_languages(
+            outcome.report.language
+            for outcome in result.outcomes
+            if outcome.report is not None
+        )
+    )
     app.config.from_mapping(
         CACHE_DIR="model_cache",
         OFFLINE=False,

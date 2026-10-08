@@ -32,6 +32,7 @@ from ..services.insights import (
     available_group_values,
     build_group_metrics,
 )
+from ..services.language import LanguageSummary, summarize_languages
 from .project_workflow import ProjectBusyError, ProjectNotFoundError
 from .projects import BatchWorkspace, ProjectRepository, WorkspaceMutationConflict
 from .use_cases import INSIGHT_METRICS_BY_PERSPECTIVE, ApplicationUseCases
@@ -149,6 +150,8 @@ class InsightsSnapshot:
     association_values: tuple[tuple[str, tuple[str, ...]], ...]
     provenance: AnalysisReport
     error_message: str | None
+    # The language check over every analysed text in the project (not the view).
+    language: LanguageSummary
 
     def groups_for(self, grouping: GroupingDimension) -> tuple[str, ...]:
         return next(values for key, values in self.groupings if key is grouping)
@@ -315,6 +318,11 @@ class InsightsWorkflow:
             association_values=tuple(view.association_values.items()),
             provenance=view.first_report,
             error_message=view.error_message,
+            language=summarize_languages(
+                outcome.report.language
+                for outcome in view.successful_outcomes
+                if outcome.report is not None
+            ),
         )
 
 

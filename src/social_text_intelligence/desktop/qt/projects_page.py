@@ -32,7 +32,7 @@ from .insights_page import InsightsPage
 from .pages import AnalysisBlockBox
 from .platform import DesktopPlatform
 from .review_page import ReviewPage
-from .widgets import NoticeBox, add_all, announce, frame, label
+from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
 
 COLUMN_PLACEHOLDER = "Choose a column…"
 
@@ -181,6 +181,7 @@ class ProjectsPage(QWidget):
         self.state_line.setObjectName("project-state")
         self.facts = label(role="muted")
         self.facts.setObjectName("project-facts")
+        self.language_box = LanguageBox("project-language")
         self.column_box = frame("panel")
         self.column_box.setObjectName("column-step")
         column_layout = QVBoxLayout(self.column_box)
@@ -220,7 +221,9 @@ class ProjectsPage(QWidget):
         self.delete_button.clicked.connect(self._delete_current)
         detail.addWidget(self.back_button, 0, Qt.AlignmentFlag.AlignLeft)
         add_all(detail, self.detail_title_label, self.state_line)
-        add_all(detail, self.facts, self.column_box, self.detail_block)
+        add_all(
+            detail, self.facts, self.language_box, self.column_box, self.detail_block
+        )
         detail.addWidget(self.analyze_button, 0, Qt.AlignmentFlag.AlignLeft)
         detail.addWidget(self.progress)
         detail.addWidget(self.review_button, 0, Qt.AlignmentFlag.AlignLeft)
@@ -311,6 +314,9 @@ class ProjectsPage(QWidget):
         self.state_line.setText(view.state_line)
         self.facts.setText("\n".join(view.facts))
         self.facts.setVisible(bool(view.facts))
+        self.language_box.show_language(
+            view.language_headline, view.language_detail, view.language_warns
+        )
         self.back_button.setEnabled(not self._controller.state.busy)
 
         choosing = bool(view.column_choices)

@@ -12,11 +12,13 @@ from .contracts.inputs import NormalizedTextInput
 from .contracts.results import EmotionLabel, SentimentLabel
 from .foundation import PROJECT_STATUS
 from .providers.cardiff_sentiment import CardiffSentimentProvider
+from .providers.language_py3langid import Py3LangidDetector
 from .providers.samlowe_emotion import (
     DEFAULT_EMOTION_THRESHOLD,
     SamLoweEmotionProvider,
 )
 from .services.analysis import AnalysisService, SentimentAnalysisService
+from .services.language import describe_language
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -37,7 +39,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Analyze one English text with the licensed local sentiment model.",
     )
     sentiment.add_argument("text", help="One text to analyze locally.")
-    sentiment.add_argument("--language", default="en", help="BCP 47 language tag.")
+    sentiment.add_argument(
+        "--language",
+        default=None,
+        help="Optional BCP 47 tag you supply; a non-English tag is refused here.",
+    )
     sentiment.add_argument(
         "--cache-dir",
         default="model_cache",
@@ -53,7 +59,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Analyze sentiment and compact emotions for one English text locally.",
     )
     analyze.add_argument("text", help="One text to analyze locally.")
-    analyze.add_argument("--language", default="en", help="BCP 47 language tag.")
+    analyze.add_argument(
+        "--language",
+        default=None,
+        help=(
+            "Optional BCP 47 tag you supply. It is kept as supplied and is not used "
+            "to decide model support: the language is detected from the text."
+        ),
+    )
     analyze.add_argument(
         "--cache-dir",
         default="model_cache",
@@ -133,6 +146,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     cache_dir=cache_dir,
                     offline=args.offline,
                 ),
+                language_detector=Py3LangidDetector(),
             )
             analysis_report = analysis_service.analyze(record)
         except SocialTextIntelligenceError as error:
@@ -177,6 +191,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"sentiment={sentiment.provider.model_name}@{sentiment.provider.revision}; "
             f"emotion={emotion.provider.model_name}@{emotion.provider.revision}"
         )
+        language = describe_language(analysis_report.language)
+        print(f"{'Warning: ' if language.warns else ''}{language.headline}.")
+        print(language.detail)
         print(
             "Estimates only: emotions are not psychological diagnoses; review context."
         )

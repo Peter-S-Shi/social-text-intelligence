@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from ..application.language import describe_language
 from ..application.review_workflow import (
     MAX_REVIEW_NOTE_LENGTH,
     ReviewFilter,
@@ -93,6 +94,11 @@ class RecordView:
     context: tuple[str, ...]
     ai: AiRecordView
     human: HumanJudgmentView
+    # The language check: evidence about the text, shown beside (not inside) the AI
+    # labels and apart from the language the file supplied.
+    language_headline: str
+    language_detail: str
+    language_warns: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -204,15 +210,30 @@ def _human_view(state: ReviewState, record: ReviewRecord) -> HumanJudgmentView:
     )
 
 
-def _context(report: AnalysisReport) -> tuple[str, ...]:
-    source = report.record
+def _context(record: ReviewRecord) -> tuple[str, ...]:
+    source = record.report.record
     return (
-        f"Language: {source.language or 'not supplied'}",
+        f"Language supplied in the file: {record.supplied_language or 'not supplied'}",
         f"Source: {source.source_label or source.source_type.value}",
         f"Topic: {source.topic or 'not supplied'}",
         f"Community: {source.community or 'not supplied'}",
         "Timestamp: "
         + (source.timestamp.isoformat() if source.timestamp else "not supplied"),
+    )
+
+
+def _record_view(state: ReviewState, record: ReviewRecord) -> RecordView:
+    language = describe_language(record.report.language)
+    return RecordView(
+        row_number=record.row_number,
+        title=f"Row {record.row_number} · {record.report.record.record_id}",
+        text=record.report.record.text,
+        context=_context(record),
+        ai=_ai_view(record.report),
+        human=_human_view(state, record),
+        language_headline=language.headline,
+        language_detail=language.detail,
+        language_warns=language.warns,
     )
 
 
@@ -281,18 +302,7 @@ def build_review_view(state: ReviewState) -> ReviewView | None:
         failed_line=failed_line,
         agreement_lines=_agreement(snapshot.summary),
         agreement_note=AGREEMENT_NOTE,
-        record=(
-            None
-            if record is None
-            else RecordView(
-                row_number=record.row_number,
-                title=f"Row {record.row_number} · {record.report.record.record_id}",
-                text=record.report.record.text,
-                context=_context(record.report),
-                ai=_ai_view(record.report),
-                human=_human_view(state, record),
-            )
-        ),
+        record=None if record is None else _record_view(state, record),
         empty_line=NO_ROWS_LINE if record is None else "",
         previous_enabled=idle and snapshot.previous_row is not None,
         next_enabled=idle and snapshot.next_row is not None,

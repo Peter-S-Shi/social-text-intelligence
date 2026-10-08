@@ -281,8 +281,10 @@ row receives an explicit `model_input_too_long` error; no partial inference
 is run, other valid rows continue, and exports leave model scores and
 provenance blank for the failed row. Required and supported metadata fields
 are documented in [Contracts](docs/CONTRACTS.md). Duplicate supplied IDs,
-invalid metadata, empty text, unsupported languages, and provider failures
-remain row-level outcomes and do not abort the batch. Uploaded content is
+invalid metadata, empty text, and provider failures remain row-level outcomes
+and do not abort the batch. A text in a language the approved English models do
+not support is still analysed and carries a visible language warning (see
+[Language detection](docs/LANGUAGE_DETECTION.md)). Uploaded content is
 held only in bounded, expiring process memory; there is no database,
 automatic save, or upload history. Native emotion scores are an optional
 export. Use `sti-web --help` to configure the file-byte, row-count, and

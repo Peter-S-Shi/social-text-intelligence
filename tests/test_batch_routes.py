@@ -91,8 +91,10 @@ class BatchRouteTests(unittest.TestCase):
         self.assertIn(b"Sentiment distribution", results.data)
         self.assertIn(b"Compact activation rate", results.data)
         self.assertIn(b"rates do not sum to 100%", results.data)
-        self.assertIn(b"1 analyzed", results.data)
-        self.assertIn(b"2 failed", results.data)
+        # a supplied non-English tag no longer blocks analysis: the text is analysed
+        # and the language is judged from the text (see the export columns below)
+        self.assertIn(b"2 analyzed", results.data)
+        self.assertIn(b"1 failed", results.data)
         self.assertIn(b"Prepare Support Triage", results.data)
         batch_token = workspace_url.rsplit("/", 1)[-1]
         self.assertIn(
@@ -112,7 +114,9 @@ class BatchRouteTests(unittest.TestCase):
         self.assertNotIn(b"emotion_native_joy", compact.data)
         self.assertIn(b"emotion_native_joy", native.data)
         self.assertIn(b"empty_text", compact.data)
-        self.assertIn(b"unsupported_language", compact.data)
+        self.assertNotIn(b"unsupported_language", compact.data)
+        self.assertIn(b"detected_language", compact.data)
+        self.assertIn(b"language_status", compact.data)
 
         triage_home = self.client.get(f"/triage?batch_token={batch_token}")
         self.assertIn(

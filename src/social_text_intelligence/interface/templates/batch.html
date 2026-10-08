@@ -83,6 +83,8 @@
       <div class="section-heading" id="results"><div><h2>3. Results</h2><p>{{ workspace.result.aggregates.analyzed_count }} analyzed · {{ workspace.result.aggregates.failed_count }} failed</p></div>
         <div class="export-actions"><a class="button-link" href="{{ url_for('review_index', token=token) }}">Start Human Review</a><a class="button-link" href="{{ url_for('insights', token=token) }}">Open Insights</a><a class="button-link" href="{{ url_for('moderation.home', batch_token=token) }}">Prepare Moderation Training</a><a class="button-link" href="{{ url_for('triage.home', batch_token=token) }}">Prepare Support Triage</a><a class="button-link secondary" href="{{ url_for('batch_export', token=token) }}">Export normalized CSV</a><a class="button-link secondary" href="{{ url_for('batch_export', token=token, native=1) }}">Export CSV with native scores</a></div>
       </div>
+      {% set language = language_summary_notice(workspace.result) %}
+      {% if language %}<p class="{{ 'warning' if language.warns else 'privacy-note' }}"><strong>{{ language.headline }}.</strong> {{ language.detail }}</p>{% endif %}
       <p class="privacy-note">Exports are created only when selected and include the original text. Store them carefully.</p>
       <form class="filters" method="get" action="{{ url_for('batch_workspace', token=token) }}#results">
         <label>Status <select name="status"><option value="all">all</option><option value="ok" {% if status_filter == 'ok' %}selected{% endif %}>ok</option><option value="error" {% if status_filter == 'error' %}selected{% endif %}>error</option></select></label>

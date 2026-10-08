@@ -136,9 +136,8 @@ class ApplicationUseCases:
 
     def analyze_text(self, text: str, *, max_text_length: int) -> AnalysisReport:
         assert self.analysis_gateway is not None
-        record = NormalizedTextInput.from_text(
-            text, language="en", max_text_length=max_text_length
-        )
+        # No language is claimed for typed text; the language check judges the text.
+        record = NormalizedTextInput.from_text(text, max_text_length=max_text_length)
         return self.analysis_gateway.analyze(record)
 
     @staticmethod

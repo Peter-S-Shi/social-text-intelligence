@@ -9,6 +9,14 @@ from .errors import (
     ValidationError,
 )
 from .inputs import NormalizedTextInput, SourceType
+from .language import (
+    Detection,
+    DetectorInfo,
+    LanguageAssessment,
+    LanguageDetectorUnavailable,
+    LanguageReason,
+    LanguageStatus,
+)
 from .moderation import (
     AmbiguityLevel,
     CaseAttempt,
@@ -86,6 +94,12 @@ from .triage import (
 
 __all__ = [
     "AnalysisReport",
+    "Detection",
+    "DetectorInfo",
+    "LanguageAssessment",
+    "LanguageDetectorUnavailable",
+    "LanguageReason",
+    "LanguageStatus",
     "AmbiguityLevel",
     "CaseAttempt",
     "CaseDifficulty",

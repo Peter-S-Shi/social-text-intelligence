@@ -36,7 +36,7 @@ from ..review_view import (
     filters_from,
 )
 from .platform import DesktopPlatform
-from .widgets import NoticeBox, add_all, announce, frame, label
+from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
 
 PLACEHOLDER = "Choose a label…"
 EXPORT_FILE_NAME = "reviewed-results.csv"
@@ -380,6 +380,7 @@ class ReviewPage(QWidget):
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
         self.record_context = label(role="muted")
+        self.language_box = LanguageBox("record-language")
         self.ai = AiBlock()
         self.human = HumanBlock()
         self.human.changed.connect(
@@ -388,7 +389,13 @@ class ReviewPage(QWidget):
         columns = QHBoxLayout()
         columns.addWidget(self.ai, 1)
         columns.addWidget(self.human, 1)
-        add_all(record_layout, self.record_title, self.record_text, self.record_context)
+        add_all(
+            record_layout,
+            self.record_title,
+            self.record_text,
+            self.record_context,
+            self.language_box,
+        )
         record_layout.addLayout(columns)
 
         self.previous_button = self._button("review-previous", "Previous")
@@ -526,6 +533,9 @@ class ReviewPage(QWidget):
         self.record_text.setText(record.text)
         self.record_text.setAccessibleName(f"Record text: {record.text}")
         self.record_context.setText(" · ".join(record.context))
+        self.language_box.show_language(
+            record.language_headline, record.language_detail, record.language_warns
+        )
         self.ai.show_ai(record.ai)
         self.human.show_human(record.human, unsaved=view.unsaved)
         notice = view.notice
