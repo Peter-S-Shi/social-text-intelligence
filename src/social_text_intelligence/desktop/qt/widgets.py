@@ -26,6 +26,7 @@ from ..panel import (
     ReportKind,
     ReportView,
 )
+from ..projects import NoticeKind, ProjectsNotice
 
 _REPORT_PREFIX = {
     ReportKind.SUCCESS: "✓",
@@ -226,6 +227,25 @@ class ReportBox(QFrame):
 
     def clear(self) -> None:
         self._last = None
+
+
+def _report(notice: ProjectsNotice) -> ReportView:
+    kind = ReportKind.ERROR if notice.kind is NoticeKind.ERROR else ReportKind.INFO
+    return ReportView(kind, notice.title, notice.body, notice.code, ())
+
+
+class NoticeBox(ReportBox):
+    """The last notice (an error or a plain confirmation) in a project surface."""
+
+    def show_notice(self, notice: ProjectsNotice | None) -> bool:
+        """Show ``notice``; True when it is new (so the caller may move focus)."""
+
+        if notice is None:
+            self.setVisible(False)
+            self.clear()
+            return False
+        self.setVisible(True)
+        return self.show_report(_report(notice))
 
 
 class CardWidget(QFrame):

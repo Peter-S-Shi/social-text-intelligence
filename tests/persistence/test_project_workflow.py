@@ -5,6 +5,7 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -401,7 +402,7 @@ def test_a_project_analysed_elsewhere_after_the_ready_check_is_not_re_analysed(
     def analyse_and_review_elsewhere() -> None:
         assert other.analyze(project_ids[0]) is AnalysisRun.COMMITTED
         reviewer = ApplicationUseCases(other._repository, other_gateway)
-        filters = {
+        filters: dict[str, Any] = {
             "review_filter": "all",
             "sentiment_filter": "all",
             "emotion_filter": "all",

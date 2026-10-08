@@ -37,6 +37,7 @@ class Shell:
             DesktopPlatform(
                 pick_folder=self.platform.pick_folder,
                 pick_csv=self.platform.pick_csv,
+                pick_save_csv=self.platform.pick_save_csv,
                 open_folder=self.platform.open_folder,
                 confirm=self.platform.confirm,
             ),

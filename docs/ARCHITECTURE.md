@@ -291,12 +291,36 @@ source and also pins the Qt modules in use to `QtCore`, `QtGui`, and `QtWidgets`
   data files, with no secure-erasure claim and no claim about exported copies or
   operating-system backups. The file is read off the UI thread and only up to the
   CSV limit plus one byte.
+- `application/review_workflow.py` (not Qt): `ReviewWorkflow` is the review path a
+  presentation layer uses. It turns an analysed project into a read model
+  (`ReviewSnapshot`: the immutable `AnalysisReport` beside the stored
+  `HumanReview`, queue position, previous/next/next-unreviewed, and the existing
+  `ReviewSummary`), passes the human's `ReviewDraft` to the shared review use cases,
+  and exports through the existing reviewed-CSV rules. It re-implements none of the
+  review rules: validity of a judgment, which rows are reviewable, filters,
+  navigation, agreement, and spreadsheet-safe export stay in the review service.
+  A save names the review the user was looking at (`expected`). The comparison runs
+  inside the repository's atomic mutation (`ApplicationUseCases.save_review`,
+  `ReviewConflict`), so a judgment saved by another process after the user opened
+  the record is never silently replaced; the newer saved review is kept and shown.
+  The frozen Flask surface gets the same protection for the window between its read
+  and its write.
+- `review.py`, `review_view.py`: the Qt-free Review controller (one operation at a
+  time through the same job runner; the human's unsaved draft is kept apart from the
+  saved review; a failed save never drops the draft; a conflict reloads the stored
+  review) and its view models. The AI record and the human judgment are two blocks
+  with their own headings, status is a word plus an icon, and agreement is worded as
+  agreement, never accuracy. Export writes only to a path the user chose in a save
+  dialog, through a temporary file and a replace, with fixed messages that carry no
+  path and no record text.
 - `analysis.py`: the "Analyze one text" page controller; an earlier result stays on
   screen after a session block.
 - `qt/`: widgets that render the view models and route action ids back to the
   controller. The same panel serves the setup window and the Models window. The
   shell is deliberately minimal: a sidebar with persistent Models status, a
-  Projects page that lists existing projects, and Analyze one text.
+  Projects page (list, project detail, and the project's Review page), and Analyze
+  one text. The Review page is reached from an analysed project, not from the list,
+  and its AI block contains labels only, so no prediction can be edited.
 
 Flask remains a frozen compatibility surface and is not a desktop dependency. The
 desktop uses system font fallbacks; web fonts from the prototypes are not bundled.

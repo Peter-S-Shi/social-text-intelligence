@@ -15,6 +15,7 @@ from ..application.model_provisioning import (
 )
 from ..application.project_workflow import CsvLimits, ProjectWorkflow
 from ..application.projects import PersistentProjectRepository
+from ..application.review_workflow import ReviewWorkflow
 from ..application.settings import AnalysisGateway, AppSettings
 from ..application.use_cases import ApplicationUseCases
 from ..contracts import AnalysisReport
@@ -25,6 +26,7 @@ from .analysis import AnalysisPageController
 from .controller import JobRunner, ProvisioningController
 from .gate import AnalysisGate
 from .projects import ProjectsController
+from .review import ReviewController
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +37,7 @@ class DesktopServices:
     gate: AnalysisGate
     projects: PersistentProjectRepository
     workflow: ProjectWorkflow
+    reviews: ReviewWorkflow
     use_cases: ApplicationUseCases
 
 
@@ -59,6 +62,7 @@ def build_desktop_services(
         gate=gate,
         projects=projects,
         workflow=ProjectWorkflow(projects, gate, CsvLimits.from_settings(settings)),
+        reviews=ReviewWorkflow(projects),
         use_cases=ApplicationUseCases(projects, gate),
     )
 
@@ -92,3 +96,9 @@ def build_projects_controller(
         runner,
         max_file_bytes=services.settings.max_batch_bytes,
     )
+
+
+def build_review_controller(
+    services: DesktopServices, runner: JobRunner
+) -> ReviewController:
+    return ReviewController(services.reviews, runner)

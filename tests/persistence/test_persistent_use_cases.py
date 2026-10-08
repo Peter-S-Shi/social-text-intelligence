@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -17,7 +18,7 @@ from social_text_intelligence.infrastructure.sqlite_projects import (
 from social_text_intelligence.services.batch import BatchCancelled, BatchProgress
 
 LIMITS = {"max_bytes": 100_000, "max_rows": 50, "max_text_length": 500}
-FILTERS = {
+FILTERS: dict[str, Any] = {
     "review_filter": "all",
     "sentiment_filter": "all",
     "emotion_filter": "all",

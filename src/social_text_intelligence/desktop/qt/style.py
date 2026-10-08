@@ -41,6 +41,26 @@ QFrame[role="alert"] {{
 QFrame[role="notice"] {{
   background: {PAPER_RAISED}; border: 1px solid {GRAPHITE}; border-radius: 6px;
 }}
+QFrame[role="ai"] {{
+  background: {PAPER_RAISED}; border: 2px solid {GRAPHITE}; border-radius: 6px;
+}}
+QFrame[role="human"] {{
+  background: {PAPER_RAISED}; border: 2px solid {ULTRAMARINE}; border-radius: 6px;
+}}
+QFrame[role="ai"] QLabel, QFrame[role="human"] QLabel {{ background: transparent; }}
+QGroupBox {{
+  border: 1px solid {LINE}; border-radius: 4px; margin-top: 10px; padding: 8px;
+}}
+QGroupBox::title {{ subcontrol-origin: margin; left: 8px; padding: 0 4px; }}
+QRadioButton:focus, QCheckBox:focus, QComboBox:focus {{ border: 2px solid {FOCUS}; }}
+QRadioButton::indicator, QCheckBox::indicator {{
+  width: 14px; height: 14px; border: 2px solid {GRAPHITE}; background: {PAPER};
+}}
+QRadioButton::indicator {{ border-radius: 9px; }}
+QCheckBox::indicator {{ border-radius: 2px; }}
+QRadioButton::indicator:checked, QCheckBox::indicator:checked {{
+  background: {ULTRAMARINE}; border-color: {ULTRAMARINE};
+}}
 QFrame#sidebar {{ background: {GRAPHITE}; border: none; }}
 QFrame#sidebar QLabel {{ color: {PAPER}; }}
 QPushButton {{

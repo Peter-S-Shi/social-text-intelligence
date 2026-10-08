@@ -15,8 +15,7 @@ from PySide6.QtWidgets import (
 
 from ...application.model_provisioning import ModelsStatus
 from ..gate import AnalysisAvailability
-from ..panel import ReportKind, ReportView
-from ..projects import NoticeKind, ProjectsController, ProjectsNotice, ProjectsState
+from ..projects import ProjectsController, ProjectsState
 from ..projects_view import (
     IMPORT_LABEL,
     ProjectDetailView,
@@ -27,28 +26,13 @@ from ..projects_view import (
     delete_confirmation,
     row_view,
 )
+from ..review import ReviewController, ReviewState
 from .pages import AnalysisBlockBox
 from .platform import DesktopPlatform
-from .widgets import ReportBox, add_all, announce, frame, label
+from .review_page import ReviewPage
+from .widgets import NoticeBox, add_all, announce, frame, label
 
 COLUMN_PLACEHOLDER = "Choose a column…"
-
-
-def _report(notice: ProjectsNotice) -> ReportView:
-    kind = ReportKind.ERROR if notice.kind is NoticeKind.ERROR else ReportKind.INFO
-    return ReportView(kind, notice.title, notice.body, notice.code, ())
-
-
-class NoticeBox(ReportBox):
-    """The last notice (an error or a plain confirmation) in a project surface."""
-
-    def show_notice(self, notice: ProjectsNotice | None) -> None:
-        if notice is None:
-            self.setVisible(False)
-            self.clear()
-            return
-        self.setVisible(True)
-        self.show_report(_report(notice))
 
 
 class RowProgress(QWidget):
@@ -130,11 +114,14 @@ class ProjectsPage(QWidget):
     def __init__(
         self,
         controller: ProjectsController,
+        reviews: ReviewController,
         platform: DesktopPlatform,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._controller = controller
+        self._reviews = reviews
+        self._review_was_active = False
         self._platform = platform
         self._models = ModelsStatus(())
         self._availability = AnalysisAvailability.AVAILABLE
@@ -214,6 +201,11 @@ class ProjectsPage(QWidget):
         self.progress = RowProgress()
         self.progress.setVisible(False)
         self.progress.cancel_requested.connect(controller.cancel)
+        self.review_button = QPushButton("Review results")
+        self.review_button.setObjectName("project-review")
+        self.review_button.setProperty("primary", True)
+        self.review_button.setAccessibleName("Review this project's results")
+        self.review_button.clicked.connect(self._open_review)
         self.delete_button = QPushButton("Delete project…")
         self.delete_button.setObjectName("project-delete")
         self.delete_button.clicked.connect(self._delete_current)
@@ -222,11 +214,15 @@ class ProjectsPage(QWidget):
         add_all(detail, self.facts, self.column_box, self.detail_block)
         detail.addWidget(self.analyze_button, 0, Qt.AlignmentFlag.AlignLeft)
         detail.addWidget(self.progress)
+        detail.addWidget(self.review_button, 0, Qt.AlignmentFlag.AlignLeft)
         detail.addWidget(self.delete_button, 0, Qt.AlignmentFlag.AlignLeft)
         detail.addStretch(1)
         self.stack.addWidget(self.detail_page)
+        self.review_page = ReviewPage(reviews, platform)
+        self.stack.addWidget(self.review_page)
 
         controller.subscribe(self.show_state)
+        reviews.subscribe(self._on_review)
         self.show_state(controller.state)
 
     # -- inputs from the shell ----------------------------------------------
@@ -247,6 +243,9 @@ class ProjectsPage(QWidget):
 
     def show_state(self, state: ProjectsState) -> None:
         had_focus = self._has_focus()
+        if self._reviews.state.active:
+            self.stack.setCurrentWidget(self.review_page)
+            return
         self.notice.show_notice(state.notice)
         view = build_detail_view(
             state,
@@ -315,6 +314,8 @@ class ProjectsPage(QWidget):
         self.detail_block.show_block(self._models, self._availability)
         self.detail_block.setVisible(view.block is not None)
 
+        self.review_button.setVisible(view.show_review)
+        self.review_button.setEnabled(view.review_enabled)
         self.analyze_button.setVisible(view.show_analyze)
         self.analyze_button.setText(view.analyze_label)
         self.analyze_button.setAccessibleName(view.analyze_label)
@@ -336,6 +337,29 @@ class ProjectsPage(QWidget):
                 self.detail_title_label.setFocus()
         self.delete_button.setEnabled(view.delete_enabled)
         self.delete_button.setAccessibleName("Delete this project")
+
+    # -- review -------------------------------------------------------------
+
+    def _open_review(self) -> None:
+        current = self._controller.state.current
+        if current is not None:
+            self._reviews.open(current.summary.project_id)
+
+    def _on_review(self, state: ReviewState) -> None:
+        """Show the review while it is open; on leaving it, re-read the project."""
+
+        if state.active:
+            self._review_was_active = True
+            self.block.setVisible(False)
+            self.stack.setCurrentWidget(self.review_page)
+            return
+        if not self._review_was_active:
+            return
+        self._review_was_active = False
+        notice = state.notice
+        # the review changed the project, or the project may be gone
+        if not self._controller.reload_current(notice):
+            self.show_state(self._controller.state)
 
     # -- actions ------------------------------------------------------------
 
