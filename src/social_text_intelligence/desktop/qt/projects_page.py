@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 
 from ...application.model_provisioning import ModelsStatus
 from ..gate import AnalysisAvailability
+from ..insights import InsightsController, InsightsState
 from ..projects import ProjectsController, ProjectsState
 from ..projects_view import (
     IMPORT_LABEL,
@@ -27,6 +28,7 @@ from ..projects_view import (
     row_view,
 )
 from ..review import ReviewController, ReviewState
+from .insights_page import InsightsPage
 from .pages import AnalysisBlockBox
 from .platform import DesktopPlatform
 from .review_page import ReviewPage
@@ -115,13 +117,16 @@ class ProjectsPage(QWidget):
         self,
         controller: ProjectsController,
         reviews: ReviewController,
+        insights: InsightsController,
         platform: DesktopPlatform,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._controller = controller
         self._reviews = reviews
+        self._insights = insights
         self._review_was_active = False
+        self._insights_was_active = False
         self._platform = platform
         self._models = ModelsStatus(())
         self._availability = AnalysisAvailability.AVAILABLE
@@ -206,6 +211,10 @@ class ProjectsPage(QWidget):
         self.review_button.setProperty("primary", True)
         self.review_button.setAccessibleName("Review this project's results")
         self.review_button.clicked.connect(self._open_review)
+        self.insights_button = QPushButton("Insights")
+        self.insights_button.setObjectName("project-insights")
+        self.insights_button.setAccessibleName("Open this project's insights")
+        self.insights_button.clicked.connect(self._open_insights)
         self.delete_button = QPushButton("Delete project…")
         self.delete_button.setObjectName("project-delete")
         self.delete_button.clicked.connect(self._delete_current)
@@ -215,14 +224,19 @@ class ProjectsPage(QWidget):
         detail.addWidget(self.analyze_button, 0, Qt.AlignmentFlag.AlignLeft)
         detail.addWidget(self.progress)
         detail.addWidget(self.review_button, 0, Qt.AlignmentFlag.AlignLeft)
+        detail.addWidget(self.insights_button, 0, Qt.AlignmentFlag.AlignLeft)
         detail.addWidget(self.delete_button, 0, Qt.AlignmentFlag.AlignLeft)
         detail.addStretch(1)
         self.stack.addWidget(self.detail_page)
         self.review_page = ReviewPage(reviews, platform)
         self.stack.addWidget(self.review_page)
+        self.insights_page = InsightsPage(insights, platform)
+        self.insights_page.review_requested.connect(self._open_in_review)
+        self.stack.addWidget(self.insights_page)
 
         controller.subscribe(self.show_state)
         reviews.subscribe(self._on_review)
+        insights.subscribe(self._on_insights)
         self.show_state(controller.state)
 
     # -- inputs from the shell ----------------------------------------------
@@ -245,6 +259,9 @@ class ProjectsPage(QWidget):
         had_focus = self._has_focus()
         if self._reviews.state.active:
             self.stack.setCurrentWidget(self.review_page)
+            return
+        if self._insights.state.active:
+            self.stack.setCurrentWidget(self.insights_page)
             return
         self.notice.show_notice(state.notice)
         view = build_detail_view(
@@ -316,6 +333,8 @@ class ProjectsPage(QWidget):
 
         self.review_button.setVisible(view.show_review)
         self.review_button.setEnabled(view.review_enabled)
+        self.insights_button.setVisible(view.show_insights)
+        self.insights_button.setEnabled(view.insights_enabled)
         self.analyze_button.setVisible(view.show_analyze)
         self.analyze_button.setText(view.analyze_label)
         self.analyze_button.setAccessibleName(view.analyze_label)
@@ -360,6 +379,46 @@ class ProjectsPage(QWidget):
         # the review changed the project, or the project may be gone
         if not self._controller.reload_current(notice):
             self.show_state(self._controller.state)
+
+    # -- insights -----------------------------------------------------------
+
+    def _open_insights(self) -> None:
+        current = self._controller.state.current
+        if current is not None:
+            self._insights.open(current.summary.project_id)
+
+    def _on_insights(self, state: InsightsState) -> None:
+        """Show the insights while they are open; on leaving, re-read the project."""
+
+        if state.active:
+            self._insights_was_active = True
+            self.block.setVisible(False)
+            self.stack.setCurrentWidget(self.insights_page)
+            return
+        if not self._insights_was_active:
+            return
+        self._insights_was_active = False
+        if self._reviews.state.active:
+            return  # leaving for the review: it reloads the project when it closes
+        # the project may be gone, or the notice explains why we came back
+        if not self._controller.reload_current(state.notice):
+            self.show_state(self._controller.state)
+
+    def _open_in_review(self, row: int) -> None:
+        """Open a case in Review: the review opens first so the page never flashes."""
+
+        project_id = self._insights.state.project_id
+        if project_id is None:
+            return
+        if self._insights.state.has_unsaved_changes and not self._platform.confirm(
+            self,
+            "Unsaved note",
+            "You have a note that is not saved. Discard it and continue?",
+        ):
+            return
+        self._insights.discard_changes()
+        if self._reviews.open(project_id, row=row):
+            self._insights.close()
 
     # -- actions ------------------------------------------------------------
 

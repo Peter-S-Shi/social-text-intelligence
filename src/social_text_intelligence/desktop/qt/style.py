@@ -53,12 +53,13 @@ QGroupBox {{
 }}
 QGroupBox::title {{ subcontrol-origin: margin; left: 8px; padding: 0 4px; }}
 QRadioButton:focus, QCheckBox:focus, QComboBox:focus {{ border: 2px solid {FOCUS}; }}
-QRadioButton::indicator, QCheckBox::indicator {{
+QRadioButton::indicator, QCheckBox::indicator, QListView::indicator {{
   width: 14px; height: 14px; border: 2px solid {GRAPHITE}; background: {PAPER};
 }}
 QRadioButton::indicator {{ border-radius: 9px; }}
-QCheckBox::indicator {{ border-radius: 2px; }}
-QRadioButton::indicator:checked, QCheckBox::indicator:checked {{
+QCheckBox::indicator, QListView::indicator {{ border-radius: 2px; }}
+QRadioButton::indicator:checked, QCheckBox::indicator:checked,
+QListView::indicator:checked {{
   background: {ULTRAMARINE}; border-color: {ULTRAMARINE};
 }}
 QFrame#sidebar {{ background: {GRAPHITE}; border: none; }}

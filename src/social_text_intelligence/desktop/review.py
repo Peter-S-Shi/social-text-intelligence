@@ -8,8 +8,6 @@ errors into fixed notices that never contain record text, notes, or file paths.
 
 from __future__ import annotations
 
-import os
-import secrets
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from enum import StrEnum
@@ -31,12 +29,9 @@ from ..application.review_workflow import (
 )
 from ..contracts.errors import ProjectStorageError, ValidationError
 from .controller import JobRunner
+from .exporting import EXPORT_FAILED_BODY, EXPORT_FAILED_TITLE, write_atomic
 from .projects import NoticeKind, ProjectsNotice, notice_for
 
-EXPORT_FAILED_BODY = (
-    "The file could not be saved. Check that the location can be written to and "
-    "that the file is not open in another program. Nothing in the project changed."
-)
 EXPORT_SAVED_BODY = (
     "The reviewed CSV was saved where you chose. It contains the text of your "
     "records and your notes, so keep it as private as the original CSV."
@@ -117,19 +112,8 @@ _EXPORT_SAVED = ReviewNotice(
     NoticeKind.INFO, "export_saved", "Reviewed CSV saved", EXPORT_SAVED_BODY
 )
 _EXPORT_FAILED = ReviewNotice(
-    NoticeKind.ERROR, "export_failed", "The file was not saved", EXPORT_FAILED_BODY
+    NoticeKind.ERROR, "export_failed", EXPORT_FAILED_TITLE, EXPORT_FAILED_BODY
 )
-
-
-def write_atomic(path: Path, text: str) -> None:
-    """Write UTF-8 beside the target, then replace it: no half-written export."""
-
-    temporary = path.with_name(f".{path.name}.{secrets.token_hex(4)}.tmp")
-    try:
-        temporary.write_bytes(text.encode("utf-8"))
-        os.replace(temporary, path)
-    finally:
-        temporary.unlink(missing_ok=True)
 
 
 def review_notice_for(error: BaseException) -> ReviewNotice:
@@ -192,12 +176,18 @@ class ReviewController:
 
     # -- commands -----------------------------------------------------------
 
-    def open(self, project_id: str, filters: ReviewFilters | None = None) -> bool:
-        """Open the review for an analysed project (first record of the queue)."""
+    def open(
+        self,
+        project_id: str,
+        filters: ReviewFilters | None = None,
+        *,
+        row: int | None = None,
+    ) -> bool:
+        """Open the review of an analysed project (the first record, or ``row``)."""
 
         wanted = filters or ReviewFilters()
         return self._load(
-            lambda: self._workflow.open_review(project_id, wanted),
+            lambda: self._workflow.open_review(project_id, wanted, row=row),
             project_id=project_id,
             filters=wanted,
         )
