@@ -223,6 +223,17 @@ class ReviewController:
         if self._state.is_open and not self._state.busy:
             self._set(draft=draft)
 
+    def discard_changes(self) -> None:
+        """Drop the unsaved draft: the form shows the saved review again.
+
+        The record and position stay where they are, so leaving the page after a
+        confirmed discard cannot bring the draft back or let it be saved later.
+        """
+
+        record = self._state.snapshot.record if self._state.snapshot else None
+        if record is not None and not self._state.busy:
+            self._set(draft=ReviewDraft.from_review(record.review), notice=None)
+
     def save(self, advance: Advance = Advance.STAY) -> bool:
         return self._save(advance, accept=False)
 

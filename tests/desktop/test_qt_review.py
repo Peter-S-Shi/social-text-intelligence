@@ -309,9 +309,23 @@ def test_switching_pages_asks_before_dropping_an_unsaved_judgment(
     assert window.nav_buttons["Projects"].isChecked()
     assert review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
 
+    assert review.human.note.toPlainText() == ""
+    assert window.review.state.has_unsaved_changes  # the draft is still there
+    assert "leave this page" in shell.platform.confirmations[-1].lower()
+    assert "close" not in shell.platform.confirmations[-1].lower()
+
     shell.platform.confirmed = True
     window.nav_buttons["Analyze one text"].click()
     assert window.pages.currentWidget() is window.analyze_page
+    assert not window.review.state.has_unsaved_changes  # really discarded
+    assert window.review.state.is_open  # the review itself stays where it was
+
+    window.nav_buttons["Projects"].click()
+    assert window.pages.currentWidget() is window.projects_page
+    assert "Unreviewed" in text_of(review.human.status)
+    assert not review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
+    assert "Row 1" in text_of(review.record_title)  # same record, saved state only
+    assert not review.save_button.isEnabled()  # nothing left to save by accident
 
 
 def test_closing_the_window_asks_before_dropping_an_unsaved_judgment(
@@ -325,6 +339,7 @@ def test_closing_the_window_asks_before_dropping_an_unsaved_judgment(
     event = QCloseEvent()
     shell.window.closeEvent(event)
     assert not event.isAccepted()
+    assert "close" in shell.platform.confirmations[-1].lower()  # window-close wording
 
     shell.platform.confirmed = True
     event = QCloseEvent()

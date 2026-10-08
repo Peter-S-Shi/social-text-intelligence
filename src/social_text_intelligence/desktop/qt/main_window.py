@@ -39,6 +39,10 @@ from .widgets import announce, frame, label
 
 APP_TITLE = "Social Text Intelligence"
 PAGES = ("Projects", "Analyze one text")  # sidebar order = stacked page order
+LEAVE_PAGE_TEXT = (
+    "You have unsaved changes to a review. Leave this page and discard them?"
+)
+CLOSE_WINDOW_TEXT = "You have unsaved changes to a review. Close without saving them?"
 
 
 class MainWindow(QMainWindow):
@@ -145,9 +149,11 @@ class MainWindow(QMainWindow):
         """A sidebar click: never silently drop an unsaved review judgment."""
 
         leaving = PAGES[self.pages.currentIndex()] != name
-        if leaving and self._keep_unsaved_review():
+        if leaving and self._keep_unsaved_review(LEAVE_PAGE_TEXT):
             self.show_page(PAGES[self.pages.currentIndex()])  # re-check the button
             return
+        if leaving:
+            self.review.discard_changes()  # confirmed: it must not come back
         self.show_page(name)
 
     def show_page(self, name: str) -> None:
@@ -204,7 +210,7 @@ class MainWindow(QMainWindow):
 
         state = self.provisioning.state
         if self._idle():
-            if self._keep_unsaved_review():
+            if self._keep_unsaved_review(CLOSE_WINDOW_TEXT):
                 event.ignore()
                 return
             self.runner.wait_idle(5)
@@ -227,16 +233,12 @@ class MainWindow(QMainWindow):
         # the provisioning, analysis, and projects listeners all re-check on idle
         self.provisioning.when_idle(self._close_when_done)
 
-    def _keep_unsaved_review(self) -> bool:
-        """Ask before closing over an unsaved judgment; True means stay open."""
+    def _keep_unsaved_review(self, text: str) -> bool:
+        """Ask before dropping an unsaved judgment; True means stay where you are."""
 
         if not self.review.state.has_unsaved_changes:
             return False
-        return not self._platform.confirm(
-            self,
-            "Unsaved changes",
-            "You have unsaved changes to a review. Close without saving them?",
-        )
+        return not self._platform.confirm(self, "Unsaved changes", text)
 
     def _close_when_done(self) -> None:
         if not self._idle():

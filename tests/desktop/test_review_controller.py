@@ -371,3 +371,36 @@ def test_the_review_is_durable_across_a_fresh_controller(env: Env) -> None:
     review = snapshot_of(fresh.state).review
     assert review.is_reviewed and review.note == "durable"
     assert fresh.state.draft == ReviewDraft.from_review(review)
+
+
+def test_discarding_restores_the_saved_review_and_keeps_the_position(
+    env: Env,
+) -> None:
+    controller = opened(env)
+    controller.next()
+    controller.set_draft(judge_both("keep?"))
+    assert controller.state.has_unsaved_changes
+
+    controller.discard_changes()
+
+    state = controller.state
+    assert snapshot_of(state).row_number == 2  # still on the same record
+    assert state.draft == ReviewDraft.from_review(snapshot_of(state).review)
+    assert state.has_unsaved_changes is False
+    assert state.is_open and state.notice is None
+    assert not snapshot_of(state).review.is_reviewed  # nothing was saved
+
+
+def test_discarding_is_refused_while_busy(env: Env) -> None:
+    runner = ManualRunner()
+    controller = env.controller(runner)
+    controller.open(env.project_id)
+    runner.run_next()
+    controller.set_draft(ReviewDraft(note="x"))
+    controller.save()  # queued
+
+    controller.discard_changes()
+
+    assert controller.state.draft.note == "x"
+    runner.run_next()
+    assert snapshot_of(controller.state).review.note == "x"  # the save went through
