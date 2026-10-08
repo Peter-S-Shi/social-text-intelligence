@@ -408,17 +408,8 @@ class ProjectsPage(QWidget):
         """Open a case in Review: the review opens first so the page never flashes."""
 
         project_id = self._insights.state.project_id
-        if project_id is None:
-            return
-        if self._insights.state.has_unsaved_changes and not self._platform.confirm(
-            self,
-            "Unsaved note",
-            "You have a note that is not saved. Discard it and continue?",
-        ):
-            return
-        self._insights.discard_changes()
-        if self._reviews.open(project_id, row=row):
-            self._insights.close()
+        if project_id is not None and self._reviews.open(project_id, row=row):
+            self._insights.close()  # the note, if any, was confirmed as discarded
 
     # -- actions ------------------------------------------------------------
 

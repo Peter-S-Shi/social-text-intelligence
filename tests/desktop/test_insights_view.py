@@ -95,7 +95,8 @@ def test_a_group_card_shows_counts_with_denominators_and_the_definition(
     rows = {row.label: (row.count_text, row.percent_text) for row in card.rows}
     assert rows["Positive"] == ("4 / 12", "33.3%")
     assert rows["Negative"] == ("4 / 12", "33.3%")
-    assert "12 eligible of 13 group rows" in card.context_line
+    assert "12 eligible for this metric" in card.context_line
+    assert "group has 13 rows" in card.context_line
     assert "1 failed row assigned to this group" in card.failed_line
     assert card.sample_line is None  # 12 eligible rows: no warning
     assert "denominator is successful rows" in view.definition_line
@@ -330,3 +331,18 @@ def test_a_comparison_needs_two_groups_before_apply_is_offered(fx: Fixture) -> N
     assert not one_view.apply_enabled
     assert "two to four" in one_view.group_hint.lower()
     assert two_view.apply_enabled
+
+
+def test_the_export_note_says_which_view_is_exported(fx: Fixture) -> None:
+    from social_text_intelligence.desktop.insights_view import EXPORT_NOTE
+
+    assert "last shown" in EXPORT_NOTE
+
+
+def test_a_confidence_figure_is_not_presented_as_a_probability(fx: Fixture) -> None:
+    from social_text_intelligence.desktop.insights_view import CASES_NOTE
+
+    view = build_insights_view(fx.state(fx.insights.open_insights(fx.project_id)))
+
+    assert view is not None and "confidence 80.0%" in view.cases[0].ai_line
+    assert "not calibrated" in CASES_NOTE

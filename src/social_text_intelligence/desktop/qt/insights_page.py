@@ -101,7 +101,7 @@ def _clear_layout(layout: QVBoxLayout) -> None:
             widget.deleteLater()
 
 
-class CardWidget(QFrame):
+class GroupCardWidget(QFrame):
     def __init__(self, view: GroupCardView) -> None:
         super().__init__()
         self.setProperty("role", "card")
@@ -187,7 +187,6 @@ class InsightsPage(QWidget):
         self._syncing = False
         self._was_active = False
         self._signatures: dict[str, object] = {}
-        self._card_rows: dict[str, str] = {}
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -475,11 +474,9 @@ class InsightsPage(QWidget):
         self._fill_checks(self.group_list, view.group_choices)
         self.group_hint.setText(view.group_hint)
         notice = view.notice
-        message = (
-            notice.body
-            if notice is not None and self._is_view_field(notice.field)
-            else ""
-        )
+        message = view.error_message
+        if notice is not None and self._is_view_field(notice.field):
+            message = notice.body
         self.field_error.setText(f"✕ {message}" if message else "")
         self.field_error.setVisible(bool(message))
         for widget in (
@@ -538,7 +535,7 @@ class InsightsPage(QWidget):
             self._signatures["cards"] = signature
             _clear_layout(self.cards_box)
             for card in view.cards:
-                card_widget = CardWidget(card)
+                card_widget = GroupCardWidget(card)
                 self.cards_box.addWidget(card_widget)
                 card_widget.show()
 
@@ -624,7 +621,7 @@ class InsightsPage(QWidget):
             _clear_layout(self.cases_box)
             for case in view.cases:
                 case_widget = CaseWidget(case)
-                case_widget.review_requested.connect(self.review_requested.emit)
+                case_widget.review_requested.connect(self._open_case)
                 self.cases_box.addWidget(case_widget)
                 case_widget.show()
 
@@ -725,7 +722,7 @@ class InsightsPage(QWidget):
     def _note_draft(self) -> NoteDraft:
         return NoteDraft(
             association=ContextAssociation(str(self.association_combo.currentData())),
-            association_value=self.value_combo.currentText().strip(),
+            association_value=self.value_combo.currentText(),
             phrase=self.phrase_edit.text(),
             explanation=self.explanation_edit.toPlainText(),
             context_importance=self.importance_edit.toPlainText(),
@@ -764,6 +761,14 @@ class InsightsPage(QWidget):
     def _back(self) -> None:
         if self._confirmed_discard():
             self._controller.close()
+
+    def _open_case(self, row: int) -> None:
+        """Open a case in Review, unless something is running or the note is unsaved."""
+
+        if self._controller.state.busy:
+            return
+        if self._confirmed_discard():
+            self.review_requested.emit(row)
 
     def _delete_note(self, note_id: str) -> None:
         if self._platform.confirm(

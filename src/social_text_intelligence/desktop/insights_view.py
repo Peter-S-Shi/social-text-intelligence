@@ -41,15 +41,18 @@ LIMITATIONS = (
 CASES_NOTE = (
     "Cases are picked by the rule shown, to help you find records to read. They are "
     "not representative of every person, record, or community, and a rule does not "
-    "diagnose sarcasm, intent, or culture."
+    "diagnose sarcasm, intent, or culture. Confidence figures are the model's own "
+    "scores, not calibrated probabilities."
 )
 NOTES_NOTE = (
     "Notes are written by you. They stay apart from AI predictions, review labels, "
     "scores, and agreement, and they never reclassify a record."
 )
 EXPORT_NOTE = (
-    "Nothing is written until you choose a file. The export can contain record text "
-    "when you include supporting records, and it always contains your notes."
+    "The export contains the view last shown (after Show this view), not control "
+    "changes you have not applied. Nothing is written until you choose a file. It "
+    "can contain record text when you include supporting records, and it always "
+    "contains your notes."
 )
 
 GROUPING_LABELS = {
@@ -147,7 +150,6 @@ class NoteView:
 @dataclass(frozen=True, slots=True)
 class CaseView:
     row_number: int
-    record_id: str
     reason: str
     title: str
     text: str
@@ -228,8 +230,9 @@ def _card(summary: GroupMetricSummary, *, ai_view: bool) -> GroupCardView:
     return GroupCardView(
         heading=summary.group,
         context_line=(
-            f"{summary.eligible_count} eligible of {summary.total_count} group rows · "
-            f"{_plural(summary.successful_count, 'successful analysis row')}"
+            f"{summary.eligible_count} eligible for this metric · group has "
+            f"{_plural(summary.total_count, 'row')} "
+            f"({summary.successful_count} analysed successfully)"
         ),
         failed_line=(
             f"{_plural(summary.failed_count, 'failed row')} assigned to this group · "
@@ -299,7 +302,6 @@ def _case(example: RepresentativeExample) -> CaseView:
     report = outcome_report(example.outcome)
     return CaseView(
         row_number=example.outcome.prepared.row_number,
-        record_id=example.outcome.prepared.identity,
         reason=f"Why shown: {example.reason}",
         title=f"Row {example.outcome.prepared.row_number} · "
         f"{example.outcome.prepared.identity}",
@@ -307,9 +309,9 @@ def _case(example: RepresentativeExample) -> CaseView:
         ai_heading=AI_CASE_HEADING,
         ai_line=(
             f"Sentiment {_words(report.sentiment.label.value)} "
-            f"({report.sentiment.confidence * 100:.1f}%) · Emotion "
+            f"(confidence {report.sentiment.confidence * 100:.1f}%) · Emotion "
             f"{_words(report.emotion.dominant_emotion.value)} "
-            f"({report.emotion.confidence * 100:.1f}%)"
+            f"(confidence {report.emotion.confidence * 100:.1f}%)"
         ),
         human_heading=HUMAN_CASE_HEADING,
         human_line=_human_line(example.review),

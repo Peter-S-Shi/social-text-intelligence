@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import io
 import os
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, cast
 
@@ -34,6 +35,7 @@ from social_text_intelligence.application.review_workflow import (  # noqa: E402
     ReviewWorkflow,
 )
 from social_text_intelligence.contracts import EmotionLabel  # noqa: E402
+from social_text_intelligence.desktop.insights import InsightsActivity  # noqa: E402
 from social_text_intelligence.infrastructure.app_data import (  # noqa: E402
     AppDataLocations,
 )
@@ -158,7 +160,8 @@ def test_opening_shows_the_default_view_with_denominators_and_warnings(
     assert insights.tabs.tabText(1) == "Notes and cases"
     (card,) = cards(insights)
     assert card.startswith("billing")
-    assert "7 eligible of 8 group rows" in card
+    assert "7 eligible for this metric" in card
+    assert "group has 8 rows" in card
     assert "Small sample" in card
     assert "denominator is successful rows" in text_of(insights.definition)
     assert "Agreement is not accuracy".lower() in text_of(insights.limitations).lower()
@@ -221,7 +224,7 @@ def test_the_metric_choices_follow_the_perspective(
     assert before[0] == "ai_sentiment" and after[0] == "human_sentiment"
     insights.apply_button.click()
     (card,) = cards(insights)
-    assert "0 eligible of 8 group rows" in card  # nothing reviewed yet
+    assert "0 eligible for this metric" in card  # nothing reviewed yet
     assert "Insufficient sample" in card
 
 
@@ -381,7 +384,7 @@ def test_review_changes_show_up_in_the_human_view(
     choose(insights.perspective_combo, "human")
     insights.apply_button.click()
 
-    assert "1 eligible of 13 group rows" in cards(insights)[0]
+    assert "1 eligible for this metric" in cards(insights)[0]
     assert "11 unreviewed" in " ".join(
         label.text()
         for label in insights.cards_box.itemAt(0)
@@ -530,3 +533,51 @@ def test_the_insights_controls_are_keyboard_operable_and_named(
         named = control.accessibleName() or getattr(control, "text", lambda: "")()
         assert named, (type(control).__name__, control.objectName())
     assert insights.tabs.accessibleName() == "Insight views"
+
+
+def test_a_space_typed_in_the_note_value_is_kept(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    insights = start_insights(shell)
+    insights.tabs.setCurrentIndex(1)
+
+    insights.value_combo.setEditText("my ")
+
+    assert insights.value_combo.currentText() == "my "  # typing is not rewritten
+    assert shell.window.insights.state.note_draft.association_value == "my "
+
+
+def test_a_case_cannot_open_in_review_while_the_insights_are_busy(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    insights = start_insights(shell)
+    insights.tabs.setCurrentIndex(1)
+    insights.select_button.click()
+    page = shell.window.projects_page
+    controller = shell.window.insights
+    open_button = insights.cases_box.itemAt(0).widget().findChildren(QPushButton)[0]
+    idle = controller.state
+    # a running operation (an export, say) holds the insights surface
+    controller._state = replace(idle, activity=InsightsActivity.EXPORTING)
+
+    open_button.click()
+
+    assert page.stack.currentWidget() is page.insights_page
+    assert not shell.window.review.state.active
+    controller._state = idle
+
+
+def test_a_degraded_view_message_is_shown(make_shell: Any, tmp_path: Path) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    insights = start_insights(shell)
+    state = shell.window.insights.state
+    assert state.snapshot is not None
+
+    insights.show_state(
+        replace(state, snapshot=replace(state.snapshot, error_message="A fallback."))
+    )
+
+    assert insights.field_error.isVisibleTo(insights)
+    assert "A fallback." in text_of(insights.field_error)

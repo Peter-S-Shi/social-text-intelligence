@@ -373,3 +373,53 @@ def test_the_view_and_notes_are_durable_across_a_fresh_controller(env: Env) -> N
     assert fresh.state.controls is not None
     assert fresh.state.controls.groups == ("shipping",)
     assert [n.phrase for n in snap(fresh.state).notes] == ["running late"]
+
+
+class FailingRefresh(InsightsWorkflow):
+    """Opens once, then cannot refresh: the write has already happened."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.opened = 0
+
+    def open_insights(self, *args: Any, **kwargs: Any) -> Any:
+        self.opened += 1
+        if self.opened > 1:
+            raise ProjectStorageError(
+                code="storage_failed", message="The project could not be read."
+            )
+        return super().open_insights(*args, **kwargs)
+
+
+def test_a_note_saved_before_a_failed_refresh_is_not_kept_as_a_draft(env: Env) -> None:
+    repository = SqliteProjectRepository(AppDataLocations(env.root))
+    controller = env.controller(workflow=FailingRefresh(repository))
+    controller.open(env.project_id)
+    controller.set_note_draft(note())
+
+    controller.add_note()
+
+    state = controller.state
+    assert state.note_draft == NoteDraft()  # it is saved: a retry would repeat it
+    assert state.notice is not None and state.notice.code == "note_saved_not_shown"
+    assert [n.phrase for n in env.workflow().open_insights(env.project_id).notes] == [
+        "running late"
+    ]
+
+
+def test_a_removal_before_a_failed_refresh_says_so(env: Env) -> None:
+    controller = opened(env)
+    controller.set_note_draft(note())
+    controller.add_note()
+    (stored,) = snap(controller.state).notes
+    repository = SqliteProjectRepository(AppDataLocations(env.root))
+    failing = FailingRefresh(repository)
+    failing.opened = 1  # the next refresh fails
+    broken = env.controller(workflow=failing)
+    broken._state = controller.state
+
+    broken.remove_note(stored.note_id)
+
+    notice = broken.state.notice
+    assert notice is not None and notice.code == "note_saved_not_shown"
+    assert env.workflow().open_insights(env.project_id).notes == ()

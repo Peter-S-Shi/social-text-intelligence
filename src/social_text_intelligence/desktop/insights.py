@@ -107,6 +107,13 @@ _NOTE_ADDED = InsightsNotice(
 _NOTE_REMOVED = InsightsNotice(
     NoticeKind.INFO, "note_removed", "Note deleted", "The note was deleted."
 )
+_NOTE_SAVED_NOT_SHOWN = InsightsNotice(
+    NoticeKind.INFO,
+    "note_saved_not_shown",
+    "Saved, but not refreshed",
+    "The change was saved, but this page could not be refreshed. Leave Insights "
+    "and open it again to see the current notes.",
+)
 _EXPORT_SAVED = InsightsNotice(
     NoticeKind.INFO, "export_saved", "Insights CSV saved", EXPORT_SAVED_BODY
 )
@@ -134,6 +141,16 @@ def insights_notice_for(error: BaseException) -> InsightsNotice:
     return InsightsNotice(shared.kind, shared.code, shared.title, shared.body)
 
 
+_CLOSED: dict[str, Any] = {
+    "project_id": None,
+    "snapshot": None,
+    "controls": None,
+    "examples": ExampleControls(),
+    "note_draft": NoteDraft(),
+    "notice": None,
+}
+
+
 class InsightsController:
     def __init__(
         self,
@@ -147,7 +164,6 @@ class InsightsController:
         self._write_file = write_file
         self._state = InsightsState()
         self._listeners: list[Listener] = []
-        self._idle_callbacks: list[Callable[[], None]] = []
 
     @property
     def state(self) -> InsightsState:
@@ -155,12 +171,6 @@ class InsightsController:
 
     def subscribe(self, listener: Listener) -> None:
         self._listeners.append(listener)
-
-    def when_idle(self, callback: Callable[[], None]) -> None:
-        if self._state.busy:
-            self._idle_callbacks.append(callback)
-        else:
-            callback()
 
     # -- opening and closing ------------------------------------------------
 
@@ -193,14 +203,7 @@ class InsightsController:
 
         if self._state.busy:
             return False
-        self._set(
-            project_id=None,
-            snapshot=None,
-            controls=None,
-            examples=ExampleControls(),
-            note_draft=NoteDraft(),
-            notice=None,
-        )
+        self._set(**_CLOSED)
         return True
 
     def discard_changes(self) -> None:
@@ -305,19 +308,19 @@ class InsightsController:
         snapshot = self._state.snapshot
         if project_id is None or snapshot is None:
             return False
-        examples, comparison = self._state.examples, snapshot.comparison
+        reload = self._reloader(project_id, snapshot)
 
-        def work() -> InsightsSnapshot:
-            self._workflow.add_note(project_id, draft)
-            return self._workflow.open_insights(
-                project_id, examples=examples, comparison=comparison
-            )
+        def work() -> InsightsSnapshot | None:
+            self._workflow.add_note(project_id, draft)  # a failure here saved nothing
+            return self._refreshed_after_write(reload)
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
                 self._failed(outcome)
-                return
-            self._end(snapshot=outcome, note_draft=NoteDraft(), notice=_NOTE_ADDED)
+            elif outcome is None:  # saved: keeping the draft would repeat the note
+                self._end(note_draft=NoteDraft(), notice=_NOTE_SAVED_NOT_SHOWN)
+            else:
+                self._end(snapshot=outcome, note_draft=NoteDraft(), notice=_NOTE_ADDED)
 
         return self._start(InsightsActivity.ADDING_NOTE, work, done)
 
@@ -325,19 +328,19 @@ class InsightsController:
         project_id, snapshot = self._state.project_id, self._state.snapshot
         if project_id is None or snapshot is None:
             return False
-        examples, comparison = self._state.examples, snapshot.comparison
+        reload = self._reloader(project_id, snapshot)
 
-        def work() -> InsightsSnapshot:
+        def work() -> InsightsSnapshot | None:
             self._workflow.remove_note(project_id, note_id)
-            return self._workflow.open_insights(
-                project_id, examples=examples, comparison=comparison
-            )
+            return self._refreshed_after_write(reload)
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
                 self._failed(outcome, resync_on="note_not_found")
-                return
-            self._end(snapshot=outcome, notice=_NOTE_REMOVED)
+            elif outcome is None:
+                self._end(notice=_NOTE_SAVED_NOT_SHOWN)
+            else:
+                self._end(snapshot=outcome, notice=_NOTE_REMOVED)
 
         return self._start(InsightsActivity.REMOVING_NOTE, work, done)
 
@@ -375,6 +378,27 @@ class InsightsController:
 
     # -- internals ----------------------------------------------------------
 
+    def _reloader(
+        self, project_id: str, snapshot: InsightsSnapshot
+    ) -> Callable[[], InsightsSnapshot]:
+        """Reload the saved view with the current case rule and comparison mode."""
+
+        examples, comparison = self._state.examples, snapshot.comparison
+        return lambda: self._workflow.open_insights(
+            project_id, examples=examples, comparison=comparison
+        )
+
+    @staticmethod
+    def _refreshed_after_write(
+        reload: Callable[[], InsightsSnapshot],
+    ) -> InsightsSnapshot | None:
+        """Refresh after a saved change; None if only the refresh failed."""
+
+        try:
+            return reload()
+        except Exception:
+            return None
+
     def _edit(self, **changes: Any) -> None:
         controls = self._state.controls
         if controls is not None and not self._state.busy:
@@ -384,7 +408,6 @@ class InsightsController:
         project_id, snapshot = self._state.project_id, self._state.snapshot
         if project_id is None or snapshot is None:
             return False
-        examples, comparison = self._state.examples, snapshot.comparison
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
@@ -392,13 +415,7 @@ class InsightsController:
                 return
             self._end(snapshot=outcome, notice=None)
 
-        return self._start(
-            activity,
-            lambda: self._workflow.open_insights(
-                project_id, examples=examples, comparison=comparison
-            ),
-            done,
-        )
+        return self._start(activity, self._reloader(project_id, snapshot), done)
 
     def _failed(self, error: BaseException, *, resync_on: str | None = None) -> None:
         """Show the error. Where the stored state is the truth (a note that is already
@@ -406,14 +423,7 @@ class InsightsController:
 
         notice = insights_notice_for(error)
         if isinstance(error, ProjectNotFoundError | InsightsUnavailableError):
-            self._end(
-                project_id=None,
-                snapshot=None,
-                controls=None,
-                examples=ExampleControls(),
-                note_draft=NoteDraft(),
-                notice=notice,
-            )
+            self._end(**{**_CLOSED, "notice": notice})
             return
         project_id, snapshot = self._state.project_id, self._state.snapshot
         stale = (
@@ -424,28 +434,15 @@ class InsightsController:
         if not stale or project_id is None or snapshot is None:
             self._end(notice=notice)  # validation, busy, storage: keep the work
             return
-        examples, comparison = self._state.examples, snapshot.comparison
 
         def done(outcome: Any) -> None:
             if isinstance(outcome, BaseException):
-                self._end(
-                    project_id=None,
-                    snapshot=None,
-                    controls=None,
-                    examples=ExampleControls(),
-                    note_draft=NoteDraft(),
-                    notice=insights_notice_for(outcome),
-                )
+                self._end(**{**_CLOSED, "notice": insights_notice_for(outcome)})
                 return
             self._end(snapshot=outcome, notice=notice)
 
         self._set(activity=InsightsActivity.LOADING, notice=notice)
-        self._runner.run(
-            lambda: self._workflow.open_insights(
-                project_id, examples=examples, comparison=comparison
-            ),
-            done,
-        )
+        self._runner.run(self._reloader(project_id, snapshot), done)
 
     def _start(
         self,
@@ -462,9 +459,6 @@ class InsightsController:
 
     def _end(self, **changes: Any) -> None:
         self._set(activity=InsightsActivity.IDLE, **changes)
-        callbacks, self._idle_callbacks = self._idle_callbacks, []
-        for callback in callbacks:
-            callback()
 
     def _set(self, **changes: Any) -> None:
         self._state = replace(self._state, **changes)
