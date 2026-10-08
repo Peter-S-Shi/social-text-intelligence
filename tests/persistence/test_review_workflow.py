@@ -426,3 +426,29 @@ def test_the_reviewed_export_keeps_the_existing_schema_and_protects_formulas(
     assert "emotion_native_" not in plain.splitlines()[0]
     assert "emotion_native_" in native.splitlines()[0]
     assert flow.export_csv(project_id) == plain  # an export changes nothing
+
+
+def test_the_agreement_summary_is_available_without_opening_a_record(
+    tmp_path: Path,
+) -> None:
+    project_id = analysed(tmp_path, rows=3)
+    flow = reviews(tmp_path)
+    first = flow.open_review(project_id)
+    flow.save(project_id, 1, correct_both(), expected=current(first))
+
+    summary = reviews(tmp_path).agreement(project_id)
+
+    assert summary.progress.reviewable_records == 3
+    assert summary.progress.reviewed == 1
+    assert summary.sentiment.definitive_count == 1
+    assert summary == flow.open_review(project_id).summary  # the same summary
+
+
+def test_agreement_needs_an_analysed_project(tmp_path: Path) -> None:
+    flow = ProjectWorkflow(repository(tmp_path), ScriptedGateway(), LIMITS)
+    ready = flow.import_csv(csv_text(2), name="P").summary.project_id
+
+    with pytest.raises(ReviewUnavailableError):
+        reviews(tmp_path).agreement(ready)
+    with pytest.raises(ProjectNotFoundError):
+        reviews(tmp_path).agreement("no-such-project")
