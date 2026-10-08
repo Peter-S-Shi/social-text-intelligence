@@ -49,6 +49,9 @@ STALE_CURRENT_PHRASES = (
     "| Current lifecycle phase | **V2 Persistent Project Foundation**",
     "the next V2 milestone has not been scoped",
     "The next V2 milestone has not been scoped",
+    "M6 — Full UI Integration / Polish is the next lifecycle phase",
+    "M6 — Full UI Integration / Polish is the next lifecycle phase and has not begun",
+    "### M6 — Full UI Integration / Polish (next, not begun)",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -80,7 +83,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature milestone status | Milestones 1–10 complete |" in status
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
-    assert "| Current lifecycle phase | **V2 Functional Development** — " in status
+    assert "| Current lifecycle phase | **V2 Native UI Integration** — " in status
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
     assert (
         "**M5.0 — Model Provisioner Function Contract & Foundation, M5.1 — "
@@ -89,8 +92,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "Review and Reviewed Export, M5.5 — Native Insights, Context Notes, "
         "and Representative Cases, and M5.6 — Language Detection and "
         "Unsupported-Language Warning are complete on `main`; the M5 "
-        "Functional Exit is PASS; M6 — Full UI Integration / Polish is the "
-        "next lifecycle phase.**"
+        "Functional Exit is PASS; M6 — Full UI Integration / Polish is "
+        "complete on `main`.**"
         in status
     )
     assert (
@@ -104,7 +107,11 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
     assert "| M5 Functional Exit audit | **PASS (2026-10-08)**" in status
     assert (
-        "| M6 — Full UI Integration / Polish | **NEXT lifecycle phase — not begun.**"
+        "| M6 — Full UI Integration / Polish | **COMPLETE"
+        in status
+    )
+    assert (
+        "| Next required action | Scope and approve the next V2 milestone."
         in status
     )
     assert (
@@ -153,9 +160,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
     assert (
-        "**Current phase: V2 Functional Development (M5) is complete (Functional "
-        "Exit PASS); the next lifecycle phase is M6 — Full UI Integration / "
-        "Polish.**" in roadmap
+        "**Current phase: V2 Native UI Integration (M6) is complete; "
+        "the next action is to scope the next V2 milestone.**" in roadmap
     )
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
@@ -163,6 +169,16 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "**Status: PASS.**" in roadmap
     assert roadmap.count("**Status: PASS — 2026-08-14.**") == 2
     assert roadmap.count("**Status: Not started.**") == 0
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert (
+        "> **Current lifecycle phase: V2 Native UI Integration — M6 complete**"
+        in readme
+    )
+    assert (
+        "integration and polish) is complete on `main`; the next action is to scope"
+        in readme
+    )
 
 
 def test_source_of_truth_responsibilities_are_explicit() -> None:

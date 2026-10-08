@@ -9,7 +9,7 @@ contains Moderation Training and Support Triage workflows; they are retired
 from the V2 product surface but remain documented here as the unchanged V1
 baseline.
 
-> **Current lifecycle phase: V2 Functional Development** (V2 Product
+> **Current lifecycle phase: V2 Native UI Integration — M6 complete** (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
 > [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md),
@@ -21,8 +21,9 @@ baseline.
 > desktop shell and provisioning UI), M5.3 (the native project workflow), M5.4
 > (native human review and reviewed export), M5.5 (native insights, context
 > notes, and representative cases), and M5.6 (language detection and an
-> unsupported-language warning) are complete on `main`, and M6 (full UI
-> integration and polish) is the next lifecycle phase. V2 is not
+> unsupported-language warning) are complete on `main`. M6 (full native UI
+> integration and polish) is complete on `main`; the next action is to scope
+> the next V2 milestone. V2 is not
 > release-ready: hardening, the formal accessibility acceptance, the
 > LGPL gate, and packaging come later. See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
