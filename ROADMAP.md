@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: V2 Functional Development (M5) is complete (Functional Exit PASS); the next lifecycle phase is M6 — Full UI Integration / Polish.** V2 reopens the project from
+**Current phase: V2 Native UI Integration (M6) is complete; the next action is to scope the next V2 milestone.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -43,7 +43,7 @@ Workflow), M5.4 (Native Human Review and Reviewed Export), M5.5 (Native
 Insights, Context Notes, and Representative Cases), and M5.6 (Language
 Detection and Unsupported-Language Warning) are complete on `main`, and the M5
 Functional Exit audit is PASS (recorded in [Project Status](PROJECT_STATUS.md)).
-M6 — Full UI Integration / Polish is the next lifecycle phase.**
+M6 — Full UI Integration / Polish is complete on `main`.**
 The UI/IA Gate fixed the project-centred
 IA and strict feature boundary, retired Moderation Training and Support Triage
 from the V2 product surface (V1 `0.10.0` and history preserve them), and
@@ -54,7 +54,7 @@ implementation, batch progress and cancellation, and the frozen Flask surface
 re-pointed at the shared use cases; seams S1–S4, S6, S7). M4 (durable local
 project repository) delivered one SQLite file per project behind that port, an
 injectable app-data resolver defaulting to Windows LocalAppData, lossless
-round-tripping, schema versioning, and WAL-aware deletion; no UI uses it yet.
+round-tripping, schema versioning, and WAL-aware deletion; the M5.3 desktop uses it.
 M5.0 fixed the model-provisioning product contract
 ([Model Provisioning Contract](docs/MODEL_PROVISIONING.md)) and delivered its
 UI-neutral foundation: typed readiness, progress, and recovery; explicit,
@@ -77,25 +77,25 @@ representative cases. M5.6 added the last gate-approved V2 addition, language
 detection with an unsupported-language warning (V2-3). The M5 Functional Exit
 audit then passed: V2-1 to V2-4 are implemented behind stable application
 contracts and reachable in the native desktop. Several V1 batch, score, and
-agreement detail views are not yet presented natively; they are recorded in
-Project Status as M6 inputs. Product hardening, the formal accessibility
+agreement detail views were recorded in Project Status as M6 inputs and are now
+presented natively. Product hardening, the formal accessibility
 acceptance, the representative-domain evaluation, the pre-distribution LGPL
 gate, packaging, and release work remain separate later gates. V2 is not
 release-ready. The package version stays `0.10.0`.
 
-### M6 — Full UI Integration / Polish (next, not begun)
+### M6 — Full UI Integration / Polish (complete)
 
-Bounded to integrating the existing, already-approved behaviour that the native
-desktop does not yet present (listed in [Project Status](PROJECT_STATUS.md)
-as the Functional Exit inputs) over the existing use cases; interaction
-consistency across pages; visual polish within the fixed project-centred IA
-and the separation of the AI record from the human judgment; and
-accessibility-oriented UI improvements. It invents no product
-functionality. Product hardening, the formal accessibility acceptance, the
-representative-domain evaluation, the LGPL compliance gate, packaging, and
-release-candidate or distribution work are separate gates after M6, each with
-its own scope. M6's boundary and acceptance checks are defined when it
-starts.
+M6 integrates the previously deferred V1 score breakdowns, per-row validation
+and failure reasons, Results filters and export, and Agreement detail over the
+existing use cases. It also closes the native layout and focus gaps within the
+fixed project-centred IA and the visual separation of the immutable AI record
+from human judgment. The [F-ID acceptance record](docs/V2_M6_ACCEPTANCE.md)
+and [Windows Qt visual evidence](manual-qa/m6-visual-evidence/README.md) cover
+the exact milestone boundary. It adds no new metrics or product concepts.
+The next required action is to scope the next V2 milestone; product hardening,
+formal accessibility acceptance, representative-domain evaluation, LGPL
+compliance, packaging, and release-candidate or distribution work are separate
+later gates, each requiring its own scope. V2 is not release-ready.
 
 ## V1 final lifecycle phase (historical)
 
@@ -322,7 +322,7 @@ them; the authoritative record is section 11 of the
 
 | Former V1-deferred item | V2 disposition |
 | --- | --- |
-| Local persistence | **Promoted to committed V2 scope** as persistent local projects; storage direction decided at the Architecture Gate (one SQLite file per project, kept until manually deleted); implemented at the repository layer by M4 — V2 Persistent Project Foundation (complete on `main`); desktop exposure belongs to later milestones |
+| Local persistence | **Promoted to committed V2 scope** as persistent local projects; storage direction decided at the Architecture Gate (one SQLite file per project, kept until manually deleted); implemented at the repository layer by M4 — V2 Persistent Project Foundation and exposed in the desktop by M5.3 (both complete on `main`) |
 | French or multilingual capability | **Conditional** on a future licence-and-evaluation spike; V2 itself requires only language detection and an unsupported-language warning |
 | Transcript and long-form analysis | **Evidence-gated**, not committed |
 | Local theme discovery and optional local LLM provider (raised in V2 discovery) | **Evidence-gated**, not committed |

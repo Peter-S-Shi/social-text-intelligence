@@ -5,18 +5,17 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (
+    QBoxLayout,
     QButtonGroup,
     QCheckBox,
-    QComboBox,
     QFrame,
     QGroupBox,
     QHBoxLayout,
     QPlainTextEdit,
     QPushButton,
     QRadioButton,
-    QScrollArea,
-    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -35,8 +34,17 @@ from ..review_view import (
     build_review_view,
     filters_from,
 )
+from .components import (
+    Card,
+    Combo,
+    FlowRow,
+    LabeledControl,
+    Page,
+    PageHeader,
+    ScorePanel,
+)
 from .platform import DesktopPlatform
-from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
+from .widgets import LanguageBox, NoticeBox, add_all, announce, label
 
 PLACEHOLDER = "Choose a label…"
 EXPORT_FILE_NAME = "reviewed-results.csv"
@@ -52,10 +60,6 @@ def _lines(items: tuple[str, ...]) -> str:
     return "\n".join(items)
 
 
-def _inline(items: tuple[str, ...]) -> str:
-    return "  ·  ".join(items)
-
-
 class AiBlock(QFrame):
     """Read-only by construction: only labels, never an input widget."""
 
@@ -64,34 +68,26 @@ class AiBlock(QFrame):
         self.setProperty("role", "ai")
         self.setObjectName("ai-record")
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 12, 16, 14)
+        layout.setSpacing(8)
         self.heading = label(role="title")
         self.sentiment = label()
-        self.sentiment_scores = label(role="mono")
         self.emotion = label()
         self.secondary = label()
-        self.emotion_scores = label(role="mono")
-        self.native_toggle = QToolButton()
-        self.native_toggle.setText("Inspect all model-native emotion scores")
-        self.native_toggle.setCheckable(True)
-        self.native_toggle.setObjectName("native-toggle")
-        self.native = label(role="mono")
-        self.native.setVisible(False)
-        self.native_toggle.toggled.connect(self.native.setVisible)
+        self.scores = ScorePanel()
+        self.native_toggle = self.scores.native_toggle
+        self.native = self.scores.native
         self.provenance = label(role="mono")
-        add_all(layout, self.heading, self.sentiment, self.sentiment_scores)
-        add_all(layout, self.emotion, self.secondary, self.emotion_scores)
-        layout.addWidget(self.native_toggle, 0, Qt.AlignmentFlag.AlignLeft)
-        add_all(layout, self.native, self.provenance)
+        add_all(layout, self.heading, self.sentiment, self.emotion, self.secondary)
+        add_all(layout, self.scores, self.provenance)
         layout.addStretch(1)
 
     def show_ai(self, view: AiRecordView) -> None:
         self.heading.setText(view.heading)
         self.sentiment.setText(f"Sentiment: {view.sentiment_line}")
-        self.sentiment_scores.setText(_inline(view.sentiment_scores))
         self.emotion.setText(f"Emotion: {view.emotion_line}")
         self.secondary.setText(view.secondary_line)
-        self.emotion_scores.setText(_inline(view.emotion_scores))
-        self.native.setText(_inline(view.native_scores))
+        self.scores.show_scores(view.scores)
         self.provenance.setText(_lines(view.provenance))
         self.setAccessibleName(view.accessible_name)
 
@@ -184,8 +180,8 @@ class HumanBlock(QFrame):
         row.addStretch(1)
         layout.addLayout(row)
 
-    def _combo(self, name: str, accessible: str, values: list[str]) -> QComboBox:
-        combo = QComboBox()
+    def _combo(self, name: str, accessible: str, values: list[str]) -> Combo:
+        combo = Combo()
         combo.setObjectName(name)
         combo.setAccessibleName(accessible)
         combo.addItem(PLACEHOLDER, None)
@@ -254,9 +250,7 @@ class HumanBlock(QFrame):
                 button.group().setExclusive(True)
 
     @staticmethod
-    def _set_combo(
-        combo: QComboBox, chosen: SentimentLabel | EmotionLabel | None
-    ) -> None:
+    def _set_combo(combo: Combo, chosen: SentimentLabel | EmotionLabel | None) -> None:
         index = 0 if chosen is None else combo.findData(chosen.value)
         if combo.currentIndex() != index:
             combo.setCurrentIndex(index)
@@ -288,7 +282,9 @@ class HumanBlock(QFrame):
         return self.sentiment_radios[ReviewJudgment.ACCEPT]
 
 
-class ReviewPage(QWidget):
+class ReviewPage(Page):
+    agreement_requested = Signal()
+
     def __init__(
         self,
         controller: ReviewController,
@@ -301,24 +297,18 @@ class ReviewPage(QWidget):
         self._shown_row: int | None = None
         self._was_active = False
         self._filters_signature: object = None
+        self._focus_before_busy: QWidget | None = None
 
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        self.scroller = scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        body = QWidget()
-        scroll.setWidget(body)
-        outer.addWidget(scroll)
-        layout = QVBoxLayout(body)
-
-        self.back_button = QPushButton("← Project")
-        self.back_button.setObjectName("review-back")
-        self.back_button.setAccessibleName("Back to the project")
-        self.back_button.clicked.connect(self._back)
-        self.title = label("Review", role="headline")
+        self.header = PageHeader("Review")
+        self.title = self.header.title
         self.title.setObjectName("review-title")
-        self.title.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.position = self.header.subtitle
+        self.position.setObjectName("review-position")
+        self.agreement_button = QPushButton("View agreement")
+        self.agreement_button.setObjectName("review-agreement")
+        self.agreement_button.setAccessibleName("View agreement with the AI")
+        self.agreement_button.clicked.connect(self.agreement_requested.emit)
+        self.header.add_action(self.agreement_button)
         self.notice = NoticeBox()
         self.notice.setVisible(False)
 
@@ -327,34 +317,20 @@ class ReviewPage(QWidget):
         self.emotion_filter = self._filter(
             "filter-emotion", "AI dominant emotion filter"
         )
-        filters = QHBoxLayout()
+        filters = FlowRow()
         for caption, combo in (
             ("Review state", self.status_filter),
             ("AI sentiment", self.sentiment_filter),
             ("AI dominant emotion", self.emotion_filter),
         ):
-            filters.addWidget(label(caption, role="muted", wrap=False))
-            filters.addWidget(combo)
-        filters.addStretch(1)
-
-        self.position = label()
-        self.position.setObjectName("review-position")
+            filters.add(LabeledControl(caption, combo))
         self.progress = label()
         self.progress.setObjectName("review-progress")
         self.failed = label(role="muted")
         self.failed.setObjectName("review-failed")
-        self.agreement_box = frame("panel")
-        self.agreement_box.setObjectName("review-agreement")
-        agreement_layout = QVBoxLayout(self.agreement_box)
-        self.agreement_heading = label("Agreement with the AI", role="title")
-        self.agreement_lines = label()
-        self.agreement_note = label(role="muted")
-        add_all(
-            agreement_layout,
-            self.agreement_heading,
-            self.agreement_lines,
-            self.agreement_note,
-        )
+        self.toolbar = Card()
+        self.toolbar.layout_.addWidget(filters)
+        add_all(self.toolbar.layout_, self.progress, self.failed)
 
         self.native_box = QCheckBox(NATIVE_LABEL)
         self.native_box.setObjectName("export-native")
@@ -362,16 +338,17 @@ class ReviewPage(QWidget):
         self.export_button.setObjectName("review-export")
         self.export_button.setAccessibleName("Export reviewed CSV")
         self.export_button.clicked.connect(self._export)
-        export_row = QHBoxLayout()
-        export_row.addWidget(self.export_button)
-        export_row.addWidget(self.native_box)
-        export_row.addStretch(1)
+        export_row = FlowRow()
+        export_row.add(self.export_button)
+        export_row.add(self.native_box)
 
         self.empty = label()
         self.empty.setObjectName("review-empty")
         self.record_box = QWidget()
         record_layout = QVBoxLayout(self.record_box)
         record_layout.setContentsMargins(0, 0, 0, 0)
+        record_layout.setSpacing(16)
+        self.record_card = Card()
         self.record_title = label(role="title")
         self.record_title.setObjectName("record-title")
         self.record_text = label()
@@ -379,24 +356,25 @@ class ReviewPage(QWidget):
         self.record_text.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
-        self.record_context = label(role="muted")
+        self.record_context = label(role="mono")
         self.language_box = LanguageBox("record-language")
+        add_all(
+            self.record_card.layout_,
+            self.record_title,
+            self.record_text,
+            self.record_context,
+        )
         self.ai = AiBlock()
         self.human = HumanBlock()
         self.human.changed.connect(
             lambda: self._controller.set_draft(self.human.draft())
         )
-        columns = QHBoxLayout()
-        columns.addWidget(self.ai, 1)
-        columns.addWidget(self.human, 1)
-        add_all(
-            record_layout,
-            self.record_title,
-            self.record_text,
-            self.record_context,
-            self.language_box,
-        )
-        record_layout.addLayout(columns)
+        self.columns = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+        self.columns.setSpacing(16)
+        self.columns.addWidget(self.ai, 1, Qt.AlignmentFlag.AlignTop)
+        self.columns.addWidget(self.human, 1, Qt.AlignmentFlag.AlignTop)
+        add_all(record_layout, self.record_card, self.language_box)
+        record_layout.addLayout(self.columns)
 
         self.previous_button = self._button("review-previous", "Previous")
         self.next_button = self._button("review-next", "Next")
@@ -407,26 +385,21 @@ class ReviewPage(QWidget):
         self.save_button = self._button("review-save", "Save")
         self.save_next_button = self._button("review-save-next", "Save and next")
         self.save_next_button.setProperty("primary", True)
-        actions = QHBoxLayout()
+        actions = FlowRow()
         for button in (
             self.previous_button,
             self.next_button,
             self.next_unreviewed_button,
-            self.accept_button,
-            self.save_button,
-            self.save_next_button,
         ):
-            actions.addWidget(button)
-        actions.addStretch(1)
-        record_layout.addLayout(actions)
+            actions.add(button)
+        for button in (self.accept_button, self.save_button, self.save_next_button):
+            actions.add(button)
+        record_layout.addWidget(actions)
 
-        layout.addWidget(self.back_button, 0, Qt.AlignmentFlag.AlignLeft)
-        add_all(layout, self.title, self.notice)
-        layout.addLayout(filters)
-        add_all(layout, self.position, self.progress, self.failed)
-        add_all(layout, self.empty, self.record_box, self.agreement_box)
-        layout.addLayout(export_row)
-        layout.addStretch(1)
+        add_all(self.body, self.header, self.notice, self.toolbar)
+        add_all(self.body, self.empty, self.record_box)
+        self.body.addWidget(export_row)
+        self.body.addStretch(1)
 
         self.previous_button.clicked.connect(
             lambda: self._guarded(self._controller.previous)
@@ -447,11 +420,21 @@ class ReviewPage(QWidget):
         controller.subscribe(self.show_state)
         self.show_state(controller.state)
 
+    def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
+        super().resizeEvent(event)
+        direction = (
+            QBoxLayout.Direction.TopToBottom
+            if self.width() < 780
+            else QBoxLayout.Direction.LeftToRight
+        )
+        if self.columns.direction() != direction:
+            self.columns.setDirection(direction)
+
     # -- construction helpers -------------------------------------------------
 
     @staticmethod
-    def _filter(name: str, accessible: str) -> QComboBox:
-        combo = QComboBox()
+    def _filter(name: str, accessible: str) -> Combo:
+        combo = Combo()
         combo.setObjectName(name)
         combo.setAccessibleName(accessible)
         return combo
@@ -467,11 +450,15 @@ class ReviewPage(QWidget):
 
     def show_state(self, state: ReviewState) -> None:
         had_focus = self._has_focus()
+        if state.busy and had_focus and self._focus_before_busy is None:
+            self._focus_before_busy = self.window().focusWidget()
+        restore_focus = self._focus_before_busy if not state.busy else None
         is_new = self.notice.show_notice(state.notice)
         view = build_review_view(state)
         if view is None:
             self._was_active = False
             self._shown_row = None
+            self._focus_before_busy = None
             return
         self._show_header(view)
         self._show_filters(view)
@@ -482,7 +469,24 @@ class ReviewPage(QWidget):
         if record is not None:
             self._show_record(record, view)
         self._show_buttons(view)
-        self._place_focus(record, had_focus=had_focus, notice_is_new=is_new, view=view)
+        if state.busy:
+            return
+        self._focus_before_busy = None
+        changed = record is not None and record.row_number != self._shown_row
+        self._place_focus(
+            record,
+            had_focus=had_focus or restore_focus is not None,
+            notice_is_new=is_new,
+            view=view,
+        )
+        if (
+            restore_focus is not None
+            and not changed
+            and not is_new
+            and restore_focus.isEnabled()
+            and restore_focus.isVisible()
+        ):
+            restore_focus.setFocus()
 
     def _has_focus(self) -> bool:
         focused = self.window().focusWidget()
@@ -493,8 +497,6 @@ class ReviewPage(QWidget):
         self.progress.setText(view.progress_line)
         self.failed.setText(view.failed_line)
         self.failed.setVisible(bool(view.failed_line))
-        self.agreement_lines.setText("\n".join(view.agreement_lines))
-        self.agreement_note.setText(view.agreement_note)
         self.export_button.setEnabled(view.controls_enabled)
         self.native_box.setEnabled(view.controls_enabled)
 
@@ -556,7 +558,7 @@ class ReviewPage(QWidget):
         self.accept_button.setEnabled(view.accept_both_enabled)
         self.save_button.setEnabled(view.save_enabled)
         self.save_next_button.setEnabled(view.save_enabled)
-        self.back_button.setEnabled(view.controls_enabled)
+        self.agreement_button.setEnabled(view.controls_enabled)
 
     def _place_focus(
         self,
@@ -611,10 +613,6 @@ class ReviewPage(QWidget):
             self._controller.set_filters(wanted)
         else:
             self.show_state(self._controller.state)  # put the filters back
-
-    def _back(self) -> None:
-        if self._confirmed_discard():
-            self._controller.close()
 
     def _export(self) -> None:
         if self._controller.state.has_unsaved_changes and not self._platform.confirm(

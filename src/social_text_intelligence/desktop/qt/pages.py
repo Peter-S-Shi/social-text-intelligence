@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QHBoxLayout,
     QPlainTextEdit,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -14,6 +16,7 @@ from ...application.model_provisioning import ModelsStatus
 from ..analysis import AnalysisPageState
 from ..gate import AnalysisAvailability
 from ..panel import ActionId, ActionView, build_analysis_block
+from .components import Card, Page, PageHeader, ScorePanel
 from .widgets import ActionRow, LanguageBox, add_all, announce, frame, label
 
 
@@ -58,15 +61,19 @@ class AnalysisBlockBox(QWidget):
         self.box.setAccessibleName(self.description)
 
 
-class AnalyzePage(QWidget):
+class AnalyzePage(Page):
     open_models = Signal()
     verify_requested = Signal()
     analyze_requested = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        layout = QVBoxLayout(self)
-        self.heading = label("Analyze one text", role="headline")
+        self.header = PageHeader("Analyze one text")
+        self.heading = self.header.title
+        self.header.set_subtitle(
+            "Not saved: nothing is written to disk, and the text stays on this "
+            "computer."
+        )
         self.block = AnalysisBlockBox()
         self.block.triggered.connect(lambda _: self.open_models.emit())
         self.editor = QPlainTextEdit()
@@ -75,29 +82,42 @@ class AnalyzePage(QWidget):
         self.editor.setPlaceholderText(
             "Paste one text to analyse. It stays on this computer."
         )
+        self.editor.setMinimumHeight(140)
         self.analyze_button = QPushButton("Analyze")
         self.analyze_button.setObjectName("analyze-button")
         self.analyze_button.setProperty("primary", True)
+        self.analyze_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.analyze_button.clicked.connect(
             lambda: self.analyze_requested.emit(self.editor.toPlainText())
         )
         self.progress_note = label(role="muted")
         self.progress_note.setObjectName("analysis-running")
-        self.result_box = frame("panel")
+
+        self.input_card = Card("TEXT")
+        self.input_card.add(self.editor)
+        actions = QHBoxLayout()
+        actions.addWidget(self.analyze_button, 0)
+        actions.addWidget(self.progress_note, 1)
+        self.input_card.layout_.addLayout(actions)
+
+        self.result_box = Card("RESULT")
         self.result_box.setObjectName("analysis-result")
-        result_layout = QVBoxLayout(self.result_box)
-        self.result_title = label("Result", role="title")
-        self.result_text = label()
+        self.result_title = self.result_box.eyebrow
+        self.result_text = label(role="title")
+        self.result_text.setObjectName("result-text")
         self.result_provenance = label(role="mono")
         # The language check sits beside the labels, never inside them.
         self.language_box = LanguageBox("analysis-language")
         self.language_headline = self.language_box.headline
         self.language_detail = self.language_box.detail
+        self.scores = ScorePanel()
         add_all(
-            result_layout,
-            self.result_title,
+            self.result_box.layout_,
             self.result_text,
             self.language_box,
+            self.scores,
             self.result_provenance,
         )
         self.error_box = frame("alert")
@@ -108,17 +128,9 @@ class AnalyzePage(QWidget):
         self.error_actions = ActionRow()
         self.error_actions.triggered.connect(self._error_action)
         add_all(error_layout, self.error_title, self.error_body, self.error_actions)
-        add_all(
-            layout,
-            self.heading,
-            self.block,
-            self.editor,
-            self.progress_note,
-            self.result_box,
-            self.error_box,
-        )
-        layout.addWidget(self.analyze_button, 0, Qt.AlignmentFlag.AlignLeft)
-        layout.addStretch(1)
+        add_all(self.body, self.header, self.block, self.input_card)
+        add_all(self.body, self.result_box, self.error_box)
+        self.body.addStretch(1)
         self.result_box.setVisible(False)
         self.error_box.setVisible(False)
         self.progress_note.setVisible(False)
@@ -188,6 +200,7 @@ class AnalyzePage(QWidget):
                 result.language_detail,
                 result.language_warns,
             )
+            self.scores.show_scores(result.scores)
         error = state.error
         self.error_box.setVisible(error is not None)
         if error is not None:

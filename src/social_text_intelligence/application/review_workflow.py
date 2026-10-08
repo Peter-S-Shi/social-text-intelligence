@@ -16,6 +16,8 @@ from ..contracts import AnalysisReport, EmotionLabel, SentimentLabel
 from ..contracts.errors import SocialTextIntelligenceError
 from ..services.review import (
     MAX_REVIEW_NOTE_LENGTH,
+    MIN_CONFIDENCE_COMPARISON_REVIEWS,
+    ConfidenceBand,
     HumanReview,
     ReviewCase,
     ReviewFilter,
@@ -232,6 +234,13 @@ class ReviewWorkflow:
             advance,
         )
 
+    def agreement(self, project_id: str) -> ReviewSummary:
+        """The project's agreement summary, whatever record is open (or none)."""
+
+        workspace = self._analysed(project_id)
+        assert workspace.result is not None and workspace.reviews is not None
+        return summarize_reviews(workspace.result, workspace.reviews)
+
     def export_csv(self, project_id: str, *, include_native: bool = False) -> str:
         """The reviewed CSV exactly as the shared export defines it."""
 
@@ -343,7 +352,9 @@ class ReviewWorkflow:
 
 __all__ = [
     "MAX_REVIEW_NOTE_LENGTH",
+    "MIN_CONFIDENCE_COMPARISON_REVIEWS",
     "Advance",
+    "ConfidenceBand",
     "HumanReview",
     "ReviewConflictError",
     "ReviewDraft",

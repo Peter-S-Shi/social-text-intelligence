@@ -36,6 +36,8 @@ class ProvisioningPanel(QWidget):
         body = QWidget()
         scroll.setWidget(body)
         self._layout = QVBoxLayout(body)
+        self._layout.setContentsMargins(24, 20, 24, 20)
+        self._layout.setSpacing(14)
         self.headline = label(role="headline")
         self.headline.setObjectName("panel-headline")
         self.subline = label(role="muted")

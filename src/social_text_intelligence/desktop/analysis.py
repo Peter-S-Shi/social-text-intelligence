@@ -18,6 +18,7 @@ from ..contracts.errors import AnalysisSetupError, ModelsNotReadyError, Provider
 from . import copy
 from .controller import JobRunner
 from .gate import AnalysisSessionBlockedError
+from .scores import ScoreSetView, build_scores
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +32,7 @@ class ResultView:
     language_headline: str
     language_detail: str
     language_warns: bool
+    scores: ScoreSetView
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +74,7 @@ def result_view(report: AnalysisReport) -> ResultView:
         language_headline=language.headline,
         language_detail=language.detail,
         language_warns=language.warns,
+        scores=build_scores(report),
     )
 
 

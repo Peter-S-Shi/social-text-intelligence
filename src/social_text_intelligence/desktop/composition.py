@@ -16,6 +16,7 @@ from ..application.model_provisioning import (
 )
 from ..application.project_workflow import CsvLimits, ProjectWorkflow
 from ..application.projects import PersistentProjectRepository
+from ..application.results_workflow import ResultsWorkflow
 from ..application.review_workflow import ReviewWorkflow
 from ..application.settings import AnalysisGateway, AppSettings
 from ..application.use_cases import ApplicationUseCases
@@ -23,11 +24,13 @@ from ..contracts import AnalysisReport
 from ..infrastructure.app_data import AppDataLocations
 from ..infrastructure.model_store import local_model_provisioner
 from ..infrastructure.sqlite_projects import SqliteProjectRepository
+from .agreement import AgreementController
 from .analysis import AnalysisPageController
 from .controller import JobRunner, ProvisioningController
 from .gate import AnalysisGate
 from .insights import InsightsController
 from .projects import ProjectsController
+from .results import ResultsController
 from .review import ReviewController
 
 
@@ -40,6 +43,7 @@ class DesktopServices:
     projects: PersistentProjectRepository
     workflow: ProjectWorkflow
     reviews: ReviewWorkflow
+    results: ResultsWorkflow
     insights: InsightsWorkflow
     use_cases: ApplicationUseCases
 
@@ -66,6 +70,7 @@ def build_desktop_services(
         projects=projects,
         workflow=ProjectWorkflow(projects, gate, CsvLimits.from_settings(settings)),
         reviews=ReviewWorkflow(projects),
+        results=ResultsWorkflow(projects),
         insights=InsightsWorkflow(projects),
         use_cases=ApplicationUseCases(projects, gate),
     )
@@ -112,3 +117,15 @@ def build_insights_controller(
     services: DesktopServices, runner: JobRunner
 ) -> InsightsController:
     return InsightsController(services.insights, runner)
+
+
+def build_results_controller(
+    services: DesktopServices, runner: JobRunner
+) -> ResultsController:
+    return ResultsController(services.results, runner)
+
+
+def build_agreement_controller(
+    services: DesktopServices, runner: JobRunner
+) -> AgreementController:
+    return AgreementController(services.reviews, runner)

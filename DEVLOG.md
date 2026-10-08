@@ -1,5 +1,35 @@
 # Development Log
 
+## V2 Native UI Integration — M6 Full UI Integration / Polish — complete
+
+M6 presents the existing V1 score breakdowns, per-row import and analysis
+reasons, filtered Results with normalized export, and Agreement detail in the
+native project-centred desktop. The [F-ID acceptance record](docs/V2_M6_ACCEPTANCE.md)
+maps every retained feature to tests and scenes; Moderation Training and Support
+Triage remain outside the V2 desktop under U4.
+
+The final layout pass found that Review forced horizontal scrolling in a 900px
+window. Its fixed two-column cards, action row, export row, and long native-score
+control set a combined minimum width larger than the viewport. Review now stacks
+the AI and human cards at narrow widths, wraps actions and export controls, and
+keeps the wide layout when space returns. A Qt regression checks both widths.
+
+Record navigation briefly disables the focused control while loading; Qt moved
+focus to the sidebar, leaving the next record without keyboard focus. Review now
+remembers focus across that busy interval, moves to the first human judgment on
+a new record, and focuses the erroneous field after validation failure. A Qt
+regression drives both paths. The capture script's no-match scene was also
+corrected to show an actual empty result.
+
+The actual Windows Qt scene set was regenerated at normal and 150% scaling:
+[88 synthetic screenshots](manual-qa/m6-visual-evidence/README.md) cover narrow
+windows, progress and cancellation, partial Review, Agreement, Insights,
+export, focus, and unsaved-change states. Local full regression passed (966
+tests, 4 opt-in model/network tests skipped); Ruff, strict MyPy, compileall,
+and pip check passed. Independent Spec and Standards reviews passed after a
+visual-evidence timing correction. This does not close formal accessibility,
+model evaluation, hardening, LGPL, packaging, or release gates.
+
 ## V2 Functional Development — M5.6 Language Detection and Unsupported-Language Warning — complete; M5 Functional Exit PASS
 
 M5.6 delivered V2-3: a local check of each analysed text's language, and a warning
@@ -47,8 +77,9 @@ agreement confusion and confidence bands); they are M6 integration inputs. The
 classification of those as presentation, not missing capability, is a judgement the
 owner can overturn at the M6 boundary.
 
-**Next:** M6, Full UI Integration / Polish, once its boundary is defined. V2 is not
-release-ready.
+At the M5 exit, the next planned work was M6 Full UI Integration / Polish. The
+M6 section above records its later completion; V2 remains short of release
+readiness.
 
 ## V2 Functional Development — M5.5 Native Insights, Context Notes, and Representative Cases — complete
 

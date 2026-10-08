@@ -177,11 +177,18 @@ def test_the_project_page_shows_the_language_summary_after_analysis(
 
     page.analyze_button.click()
 
+    # analysis finishes on the Results page, which carries the project's language line
+    box = page.results_page.language_box
+    assert page.stack.currentWidget() is page.results_page
+    assert box.isVisibleTo(page)
+    assert box.property("role") == "notice"
+    assert "3 of 5" in box.headline.text()
+    assert "French (fr) 2" in box.detail.text()
+    assert "Language check" in box.accessibleName()
+    # and the import page keeps the same summary beside the project facts
+    shell.window.nav_buttons["Import & validation"].click()
     assert page.language_box.isVisibleTo(page)
-    assert page.language_box.property("role") == "notice"
     assert "3 of 5" in page.language_box.headline.text()
-    assert "French (fr) 2" in page.language_box.detail.text()
-    assert "Language check" in page.language_box.accessibleName()
 
 
 # -- the review record --------------------------------------------------------------
@@ -251,7 +258,7 @@ def _review_page(make_shell: Any, tmp_path: Any, row: int) -> Any:
     shell.platform.csv_file = path
     shell.button(page, "Import CSV…").click()
     page.analyze_button.click()
-    page.review_button.click()
+    shell.window.nav_buttons["Review"].click()
     review = page.review_page
     while "Row " + str(row) not in review.record_title.text():
         review.next_button.click()
@@ -380,7 +387,7 @@ def _insights_page(make_shell: Any, tmp_path: Any) -> Any:
     shell.platform.csv_file = path
     shell.button(page, "Import CSV…").click()
     page.analyze_button.click()
-    page.insights_button.click()
+    shell.window.nav_buttons["Insights · compare"].click()
     insights = page.insights_page
     grouping: QComboBox = insights.grouping_combo
     grouping.setCurrentIndex(grouping.findData("language"))

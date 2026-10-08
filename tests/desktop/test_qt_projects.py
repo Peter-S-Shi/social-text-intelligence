@@ -79,7 +79,8 @@ def test_importing_a_csv_creates_a_project_and_opens_it(
 ) -> None:
     shell = make_shell(FakeProvisioning(current=READY))
     page = shell.window.projects_page
-    assert "No projects yet" in text_of(page.summary)
+    assert page.empty_list.isVisibleTo(page)
+    assert "No projects yet" in text_of(page.empty_list.title)
 
     import_csv(shell, csv_file(tmp_path, "Support tickets.csv", csv_text(4)))
 
@@ -90,9 +91,13 @@ def test_importing_a_csv_creates_a_project_and_opens_it(
     assert text_of(page.analyze_button) == "Analyze 4 rows"
     assert not page.column_box.isVisibleTo(page)
 
-    shell.button(page, "← Projects").click()
+    assert shell.window.nav_buttons["Import & validation"].isChecked()
+    assert text_of(shell.window.project_title) == "Support tickets"
+
+    shell.window.nav_buttons["Projects"].click()
     assert page.stack.currentWidget() is page.list_page
     assert "1 project(s)" in text_of(page.summary)
+    assert not shell.window.project_area.isVisibleTo(shell.window)
 
 
 def test_a_csv_without_a_text_column_shows_a_real_selection_step(
@@ -130,7 +135,7 @@ def test_an_invalid_csv_shows_a_safe_notice_and_creates_nothing(
     assert page.notice.isVisibleTo(page)
     assert "The CSV file is empty." in text_of(page.notice.body)
     assert page.notice.code.text() == "empty_file"
-    assert "No projects yet" in text_of(page.summary)
+    assert page.empty_list.isVisibleTo(page)
 
     import_csv(shell, csv_file(tmp_path, "huge.csv", b"x" * 3_000_000))
     assert page.notice.code.text() == "file_too_large"
@@ -146,7 +151,8 @@ def test_analysis_shows_row_progress_then_the_result(
         runner.run_next()
     page = shell.window.projects_page
     import_csv(shell, csv_file(tmp_path, "p.csv", csv_text(4)))
-    runner.run_next()
+    runner.run_next()  # the import
+    runner.run_next()  # the validation detail of the new project
     assert page.analyze_button.isEnabled()
 
     page.analyze_button.click()
@@ -166,6 +172,7 @@ def test_analysis_shows_row_progress_then_the_result(
     assert "Analysed 4 rows" in text_of(page.facts)
     assert "Sentiment:" in text_of(page.facts)
     assert not page.analyze_button.isVisibleTo(page)
+    assert page.section.value == "results"  # the analysis finished: show the results
 
 
 def test_cancel_keeps_the_project_unanalysed_and_it_can_run_again(
@@ -229,7 +236,7 @@ def test_delete_asks_first_uses_conservative_wording_and_removes_the_files(
     shell = make_shell(FakeProvisioning(current=READY), platform=platform)
     page = shell.window.projects_page
     import_csv(shell, csv_file(tmp_path, "p.csv", csv_text(2)))
-    shell.button(page, "← Projects").click()
+    shell.window.nav_buttons["Projects"].click()
     platform.confirmed = False
 
     shell.button(page, "Delete…").click()
@@ -244,7 +251,7 @@ def test_delete_asks_first_uses_conservative_wording_and_removes_the_files(
     shell.button(page, "Delete…").click()
 
     assert not list((tmp_path / "projects").glob("*"))
-    assert "No projects yet" in text_of(page.summary)
+    assert page.empty_list.isVisibleTo(page)
     assert "Project deleted" in text_of(page.notice.title)
     assert "application's data files" in text_of(page.notice.body)
 
@@ -278,7 +285,7 @@ def test_unreadable_entries_are_listed_safely_and_can_be_deleted(
     ]
 
     shell.button(page, "Delete…").click()
-    assert "No projects yet" in text_of(page.summary)
+    assert page.empty_list.isVisibleTo(page)
 
 
 def test_projects_stay_usable_when_models_are_not_ready_but_analysis_is_off(
@@ -335,7 +342,8 @@ def test_text_analysis_waits_while_a_project_batch_runs(
     while runner.jobs:
         runner.run_next()
     import_csv(shell, csv_file(tmp_path, "p.csv", csv_text(3)))
-    runner.run_next()
+    runner.run_next()  # the import
+    runner.run_next()  # the validation detail of the new project
     shell.window.show_page("Analyze one text")
     analyze_page = shell.window.analyze_page
     assert analyze_page.analyze_button.isEnabled()
@@ -356,7 +364,8 @@ def test_closing_during_a_project_analysis_cancels_it_and_closes_after(
     while runner.jobs:
         runner.run_next()
     import_csv(shell, csv_file(tmp_path, "p.csv", csv_text(3)))
-    runner.run_next()
+    runner.run_next()  # the import
+    runner.run_next()  # the validation detail of the new project
     shell.window.projects_page.analyze_button.click()
 
     event = QCloseEvent()
