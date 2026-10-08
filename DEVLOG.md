@@ -1,5 +1,19 @@
 # Development Log
 
+## V2 Pre-Release Feasibility — M7 Pre-Release Feasibility & Risk Gate — conditional
+
+M7 built the current desktop with PyInstaller (onedir) and ran it, without producing
+an installer. The frozen build completed direct and batch analysis with both pinned
+models, matching the unfrozen run, and recovered from a damaged weight file as the
+contract requires. A first default build silently omitted PyTorch because the
+providers import it dynamically, so the spec names those imports. Concurrency probes
+with separate processes showed the revision-guarded commit keeps data intact;
+the weaknesses are wasted duplicate analysis, a generic model-import error, and one
+unexplained transient result that M8 should stress. The LGPL preflight found no
+GPL-only Qt module, and found that the bundle carries no LGPL text, notice or source
+offer. The exit is CONDITIONAL; see the
+[M7 record](docs/V2_M7_FEASIBILITY_GATE.md). No product code changed.
+
 ## V2 Native UI Integration — M6 Full UI Integration / Polish — complete
 
 M6 presents the existing V1 score breakdowns, per-row import and analysis

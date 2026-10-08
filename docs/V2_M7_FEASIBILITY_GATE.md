@@ -37,7 +37,7 @@ Every claim carries one evidence tag.
 | Item | Value |
 | --- | --- |
 | Base | `origin/main` at `86c4c3c` (PR #48, M6) |
-| Tooling head tested | `14f6f2f` on branch `milestone/m7-pre-release-feasibility-risk-gate` (only `tools/m7/` added; `src/` and `tests/` identical to the base) |
+| Tooling head tested | `14f6f2f` on branch `milestone/m7-pre-release-feasibility-risk-gate` (only `tools/m7/` added; `src/` and `tests/` identical to the base; the closing governance commit later adjusts one lifecycle-wording test) |
 | OS and hardware | Windows 11 Home 10.0.26200; Intel Core i7-12700H; 15.7 GB RAM; local SSD |
 | Python | 3.12.14 in the project `.venv`, whose base interpreter is a vendored runtime, not a python.org install (see C6) |
 | Key packages | PySide6-Essentials and shiboken6 6.11.2 (Qt 6.11.2), torch 2.13.0, transformers 5.14.1, tokenizers 0.22.2, safetensors 0.8.0, numpy 2.5.1, py3langid 0.4.0, PyInstaller 6.22.3, pyinstaller-hooks-contrib 2026.8 |
