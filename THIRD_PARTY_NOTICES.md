@@ -134,7 +134,10 @@ license, purpose, and any required attribution.
 - License: BSD-3-Clause (the package's `LICENSE`; original `langid.py` code by Marco
   Lui and Tim Baldwin's research, modifications by the fork's author). The licence
   text must be preserved in any distribution.
-- Runtime dependency: `numpy>=2.0` (BSD-3-Clause), installed with it. The version is
+- Runtime dependency: `numpy>=2.0`, installed with it. NumPy 2.5.1's metadata declares
+  `BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0` (the main licence plus bundled
+  components; the licence files ship in the wheel and must travel with any
+  distribution that includes NumPy). The version is
   left to the resolver (NumPy 2.5+ requires Python 3.12 or later, so Python 3.11
   resolves to 2.4.x). STI imports NumPy nowhere; MyPy is told to skip NumPy's stubs
   (see `[tool.mypy]` in `pyproject.toml`), which is not a version restriction.

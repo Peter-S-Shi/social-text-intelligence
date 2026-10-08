@@ -301,8 +301,14 @@ def language_signal(assessment: LanguageAssessment, separator: str = "|") -> str
     cells = language_export_cells(assessment)
     return separator.join(
         str(cells[key])
-        for key in ("language_status", "detected_language", "language_score")
-    ) + f"{separator}{cells['language_detector']}"
+        for key in (
+            "language_status",
+            "detected_language",
+            "language_score",
+            "language_reason",
+            "language_detector",
+        )
+    )
 
 
 def language_short(assessment: LanguageAssessment) -> str:

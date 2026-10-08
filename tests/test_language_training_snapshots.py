@@ -173,3 +173,20 @@ def test_a_record_with_no_check_has_an_honest_signal_not_an_empty_one() -> None:
     assert snapshot is not None
     assert snapshot.language_signal.startswith("not_assessed||")
     assert snapshot.language_caveat == ""  # legacy: nothing assumed, no warning
+
+
+def test_the_packed_signal_keeps_why_a_check_was_not_assessed() -> None:
+    from social_text_intelligence.contracts import LanguageAssessment, LanguageReason
+    from social_text_intelligence.services.language import language_signal
+
+    old = language_signal(LanguageAssessment.not_assessed(LanguageReason.NOT_RUN))
+    failed = language_signal(
+        LanguageAssessment.not_assessed(LanguageReason.DETECTOR_FAILED)
+    )
+    missing = language_signal(
+        LanguageAssessment.not_assessed(LanguageReason.DETECTOR_UNAVAILABLE)
+    )
+
+    assert len({old, failed, missing}) == 3  # an audit can tell them apart
+    assert "detector_failed" in failed and "detector_unavailable" in missing
+    assert "not_run" in old

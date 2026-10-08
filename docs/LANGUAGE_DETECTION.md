@@ -98,7 +98,9 @@ case). The frozen Flask surface and the `sti analyze` command show the same word
 
 Moderation Training and Support Triage freeze the language evidence into the record
 snapshot they already freeze beside the AI signals, show its caveat where those signals
-are shown, and add a `language_signal` column to their opt-in signals export; the
+are shown, and add a `language_signal` column to their opt-in signals export (status,
+detected language, score, reason, and detector in one cell, so a failed check is not
+mistaken for a pre-M5.6 result); the
 `language` in their trusted metadata is the supplied value only. Exports that carry
 model evidence (normalized batch CSV, reviewed CSV, insights CSV with records) carry `detected_language`, `language_status`, `language_score`,
 `language_reason`, and `language_detector` as columns **separate from** the supplied
@@ -122,7 +124,8 @@ Requirements: deterministic, local and offline, no model download at runtime, Py
 
 `py3langid` (a maintained fork of `langid.py`) ships its statistical model inside the
 package as an LZMA-compressed NumPy archive loaded with `allow_pickle=False`. There is
-no network access and nothing to provision. It depends on `numpy >= 2.0` (BSD-3-Clause), which
+no network access and nothing to provision. It depends on `numpy >= 2.0` (BSD-3-Clause, with the bundled-component licences listed in
+`THIRD_PARTY_NOTICES.md`), which
 is installed with it; STI does not import NumPy itself. Its published model is trained
 on public corpora (Wikipedia, Tatoeba, CC100, GlotCC); those corpora keep their own
 terms, STI redistributes none of them, and the package declares BSD-3-Clause for the
@@ -168,5 +171,6 @@ persistence. `services/language.py` holds the policy, the notice wording, the su
 and the export columns. `AnalysisService` is the one place detection joins an analysis,
 so direct analysis, persistent batch projects, the CLI and the frozen web surface share
 the same semantics. Qt never calls the detector; it renders view models built from the
-application-layer wording. Sentiment and emotion providers are never given supplied
-metadata.
+application-layer wording. Sentiment and emotion providers are never given the supplied
+`language` tag (the analysis service removes it before they run); the record's other
+fields, such as topic or community, are unchanged and no provider reads them.
