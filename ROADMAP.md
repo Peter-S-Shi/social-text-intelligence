@@ -37,10 +37,10 @@ and the UI/IA Gate (decisions in [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md),
 2026-10-07) are all PASS. The V2 Application Foundation milestone (M3) and the
 V2 Persistent Project Foundation milestone (M4) are complete on `main`. **M5 —
 V2 Functional Development is active: M5.0 (Model Provisioner Function Contract &
-Foundation), M5.1 (Model Provisioning UI/UX Design, Human Gate PASS), and M5.2
-(Native Desktop Shell + Model Provisioning UI) are complete, and M5.3 (Native
-Project Workflow) is the next development sub-milestone of the continuous Loop
-Engineering phase.**
+Foundation), M5.1 (Model Provisioning UI/UX Design, Human Gate PASS), M5.2
+(Native Desktop Shell + Model Provisioning UI), and M5.3 (Native Project
+Workflow) are complete, and M5.4 (Native Human Review and Reviewed Export) is the
+next development sub-milestone of the continuous Loop Engineering phase.**
 The UI/IA Gate fixed the project-centred
 IA and strict feature boundary, retired Moderation Training and Support Triage
 from the V2 product surface (V1 `0.10.0` and history preserve them), and
@@ -65,10 +65,12 @@ contract, recorded in this closeout. M5.2 delivered the minimal native PySide6 d
 (`sti-desktop`) with the full provisioning experience, wired to the M5.0
 contracts, and implemented H2 as one analysis gate. Qt licensing is tracked
 (LGPL-3.0 route, Core/Gui/Widgets only) and the pre-distribution LGPL gate
-has not passed. M5.3 gives the desktop a project workflow: CSV import into a
-persistent project, batch analysis with progress and cancellation, and open
-and delete. Language detection, review and insights in the desktop, and
-packaging are later M5.x sub-milestones that each need their own scoping. The package version stays `0.10.0`.
+has not passed. M5.3 gave the desktop a project workflow: CSV import into a
+persistent project, batch analysis with row progress and cancellation that
+commits nothing partial, and open and delete. M5.4 adds human review and the
+reviewed export so a user can record judgments and take the result out.
+Insights and notes, language detection, and packaging are later M5.x
+sub-milestones that each need their own scoping. The package version stays `0.10.0`.
 
 ## V1 final lifecycle phase (historical)
 

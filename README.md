@@ -17,9 +17,10 @@ baseline.
 > foundation (M3) and persistent project foundation (M4) milestones are complete
 > on `main`. M5 is active: M5.0, the
 > [model provisioning contract](docs/MODEL_PROVISIONING.md) and its UI-neutral
-> foundation, M5.1 (provisioning UI/UX design), and M5.2 (the minimal native
-> desktop shell and provisioning UI) are complete, and M5.3 (the native project
-> workflow) is next. See [Project Status](PROJECT_STATUS.md).
+> foundation, M5.1 (provisioning UI/UX design), M5.2 (the minimal native
+> desktop shell and provisioning UI), and M5.3 (the native project workflow)
+> are complete, and M5.4 (native human review and reviewed export) is next. See
+> [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
 > Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,
