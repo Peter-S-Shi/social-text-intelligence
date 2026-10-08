@@ -9,7 +9,7 @@ stale-write protection explicit: every save names the review the user was lookin
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, replace
 from enum import StrEnum
 
 from ..contracts import AnalysisReport, EmotionLabel, SentimentLabel
@@ -17,9 +17,14 @@ from ..contracts.errors import SocialTextIntelligenceError
 from ..services.review import (
     MAX_REVIEW_NOTE_LENGTH,
     HumanReview,
+    ReviewCase,
     ReviewFilter,
     ReviewJudgment,
+    ReviewNavigation,
     ReviewSummary,
+    filter_review_cases,
+    review_cases,
+    review_navigation,
     summarize_reviews,
 )
 from .project_workflow import ProjectBusyError, ProjectNotFoundError
@@ -83,7 +88,7 @@ class ReviewDraft:
     emotion_judgment: ReviewJudgment | None = None
     human_dominant_emotion: EmotionLabel | None = None
     human_secondary_emotions: tuple[EmotionLabel, ...] = ()
-    note: str = field(default="")
+    note: str = ""
 
     @classmethod
     def from_review(cls, review: HumanReview) -> ReviewDraft:
@@ -134,6 +139,7 @@ class ReviewSnapshot:
     next_row: int | None
     next_unreviewed_row: int | None
     summary: ReviewSummary
+    saved: ReviewRecord | None = None  # the record just saved, if this follows a save
 
 
 class ReviewWorkflow:
@@ -172,6 +178,7 @@ class ReviewWorkflow:
             raise ReviewUnavailableError
         report = details.current.outcome.report
         assert report is not None
+        navigation = self._navigation(workspace, details.current, filters)
         return ReviewSnapshot(
             project_id=project_id,
             filters=filters,
@@ -183,9 +190,9 @@ class ReviewWorkflow:
             position=details.position,
             queue_total=details.queue_total,
             filtered_count=details.filtered_count,
-            previous_row=details.navigation.previous_row,
-            next_row=details.navigation.next_row,
-            next_unreviewed_row=details.navigation.next_unreviewed_row,
+            previous_row=navigation.previous_row,
+            next_row=navigation.next_row,
+            next_unreviewed_row=navigation.next_unreviewed_row,
             summary=details.summary,
         )
 
@@ -229,6 +236,42 @@ class ReviewWorkflow:
         )
 
     # -- internals ----------------------------------------------------------
+
+    @staticmethod
+    def _navigation(
+        workspace: BatchWorkspace, current: ReviewCase, filters: ReviewFilters
+    ) -> ReviewNavigation:
+        """Previous and next around ``current``, even if it no longer matches.
+
+        A record the person just saved can drop out of the active filter (for
+        example "unreviewed"). Counting it as part of the queue keeps Next on the
+        record after it, instead of wrapping back to the first match.
+        """
+
+        assert workspace.result is not None and workspace.reviews is not None
+        review_filter, sentiment_filter, emotion_filter = filters.as_values()
+        matching = {
+            case.review.record_id
+            for case in filter_review_cases(
+                workspace.result,
+                workspace.reviews,
+                review_filter=review_filter,
+                sentiment_filter=sentiment_filter,
+                emotion_filter=emotion_filter,
+            )
+        }
+        matching.add(current.review.record_id)
+        queue = tuple(
+            case
+            for case in review_cases(workspace.result, workspace.reviews)
+            if case.review.record_id in matching
+        )
+        return review_navigation(
+            workspace.result,
+            workspace.reviews,
+            current_record_id=current.review.record_id,
+            filtered_cases=queue,
+        )
 
     def _analysed(self, project_id: str) -> BatchWorkspace:
         workspace = self._repository.get(project_id)
@@ -287,9 +330,11 @@ class ReviewWorkflow:
         if target is None:
             self._analysed(project_id)  # missing or not analysed: say which
             raise ReviewUnavailableError
-        return self.open_review(
-            project_id, filters, row=target if advance is Advance.NEXT else row
-        )
+        shown = self.open_review(project_id, filters, row=row)
+        saved = shown.record
+        if advance is Advance.NEXT and shown.next_row is not None:
+            shown = self.open_review(project_id, filters, row=shown.next_row)
+        return replace(shown, saved=saved)
 
 
 __all__ = [

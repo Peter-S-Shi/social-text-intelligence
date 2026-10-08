@@ -19,7 +19,6 @@ from social_text_intelligence.application.review_workflow import (
     ReviewSnapshot,
     ReviewWorkflow,
 )
-from social_text_intelligence.contracts import EmotionLabel, SentimentLabel
 from social_text_intelligence.desktop.review import ReviewActivity, ReviewState
 from social_text_intelligence.desktop.review_view import (
     AGREEMENT_NOTE,
@@ -126,8 +125,6 @@ def test_correction_fields_appear_only_for_a_correct_judgment(tmp_path: Path) ->
     assert correcting is not None and correcting.record is not None
     assert correcting.record.human.sentiment_label_visible
     assert correcting.record.human.emotion_labels_visible
-    assert correcting.record.human.sentiment_choices == tuple(SentimentLabel)
-    assert correcting.record.human.emotion_choices == tuple(EmotionLabel)
 
 
 def test_progress_and_agreement_use_honest_wording(tmp_path: Path) -> None:
@@ -174,7 +171,7 @@ def test_buttons_follow_the_queue_and_the_busy_state(tmp_path: Path) -> None:
     assert idle.accept_both_enabled
     assert not idle.save_enabled  # nothing to save yet
     assert busy is not None
-    assert not (busy.next_enabled or busy.accept_both_enabled or busy.export_enabled)
+    assert not (busy.next_enabled or busy.accept_both_enabled or busy.controls_enabled)
 
 
 def test_save_needs_a_change_and_the_note_counter_warns_before_the_limit(

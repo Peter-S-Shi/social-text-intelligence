@@ -115,7 +115,7 @@ class MainWindow(QMainWindow):
         )
 
         for name, button in self.nav_buttons.items():
-            button.clicked.connect(lambda _=False, page=name: self.show_page(page))
+            button.clicked.connect(lambda _=False, page=name: self._open_page(page))
         self.models_button.clicked.connect(self.ui.show_models)
         self.projects_page.open_models.connect(self.ui.show_models)
         self.analyze_page.open_models.connect(self.ui.show_models)
@@ -140,6 +140,15 @@ class MainWindow(QMainWindow):
             self.ui.show_setup()
 
     # -- rendering ----------------------------------------------------------
+
+    def _open_page(self, name: str) -> None:
+        """A sidebar click: never silently drop an unsaved review judgment."""
+
+        leaving = PAGES[self.pages.currentIndex()] != name
+        if leaving and self._keep_unsaved_review():
+            self.show_page(PAGES[self.pages.currentIndex()])  # re-check the button
+            return
+        self.show_page(name)
 
     def show_page(self, name: str) -> None:
         self.pages.setCurrentIndex(PAGES.index(name))

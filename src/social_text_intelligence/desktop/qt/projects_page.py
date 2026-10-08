@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
 
 from ...application.model_provisioning import ModelsStatus
 from ..gate import AnalysisAvailability
-from ..projects import ProjectsController, ProjectsNotice, ProjectsState
+from ..projects import ProjectsController, ProjectsState
 from ..projects_view import (
     IMPORT_LABEL,
     ProjectDetailView,
@@ -356,14 +356,7 @@ class ProjectsPage(QWidget):
         if not self._review_was_active:
             return
         self._review_was_active = False
-        notice = None
-        if state.notice is not None:
-            notice = ProjectsNotice(
-                state.notice.kind,
-                state.notice.code,
-                state.notice.title,
-                state.notice.body,
-            )
+        notice = state.notice
         # the review changed the project, or the project may be gone
         if not self._controller.reload_current(notice):
             self.show_state(self._controller.state)

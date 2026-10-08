@@ -290,6 +290,45 @@ def test_advancing_follows_the_filtered_queue(tmp_path: Path) -> None:
     assert after.summary.progress.reviewed == 1
 
 
+def test_save_and_next_under_a_filter_continues_from_the_current_position(
+    tmp_path: Path,
+) -> None:
+    project_id = analysed(tmp_path, rows=4)
+    flow = reviews(tmp_path)
+    unreviewed = ReviewFilters(status=ReviewFilter.UNREVIEWED)
+
+    after = flow.accept_both(
+        project_id,
+        3,
+        "",
+        expected=current(flow.open_review(project_id, unreviewed, row=3)),
+        filters=unreviewed,
+        advance=Advance.NEXT,
+    )
+
+    assert after.record is not None and after.record.row_number == 4  # not row 1
+
+
+def test_staying_on_a_saved_row_keeps_its_place_in_the_filtered_queue(
+    tmp_path: Path,
+) -> None:
+    project_id = analysed(tmp_path, rows=4)
+    flow = reviews(tmp_path)
+    unreviewed = ReviewFilters(status=ReviewFilter.UNREVIEWED)
+
+    stayed = flow.accept_both(
+        project_id,
+        2,
+        "",
+        expected=current(flow.open_review(project_id, unreviewed, row=2)),
+        filters=unreviewed,
+    )
+
+    assert stayed.record is not None and stayed.record.row_number == 2
+    assert (stayed.previous_row, stayed.next_row) == (1, 3)  # around row 2, not wrapped
+    assert stayed.filtered_count == 3  # the saved row no longer matches the filter
+
+
 def test_next_unreviewed_wraps_and_skips_reviewed_rows(tmp_path: Path) -> None:
     project_id = analysed(tmp_path, rows=3)
     flow = reviews(tmp_path)

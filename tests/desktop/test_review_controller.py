@@ -153,6 +153,25 @@ def test_accept_both_saves_a_complete_review_and_can_advance(env: Env) -> None:
     assert first.sentiment_judgment is ACCEPT
 
 
+def test_advancing_still_confirms_what_was_saved(env: Env) -> None:
+    controller = opened(env)
+    controller.set_draft(judge_both())
+
+    controller.save(Advance.NEXT)
+
+    state = controller.state
+    assert snapshot_of(state).row_number == 2
+    assert state.notice is not None and state.notice.code == "review_saved_next"
+    assert "next record" in state.notice.body
+
+    controller.set_draft(ReviewDraft(sentiment_judgment=ACCEPT))
+    controller.save(Advance.NEXT)
+
+    notice = controller.state.notice
+    assert notice is not None and notice.code == "review_saved_partial_next"
+    assert "both" in notice.body  # the previous record is still only partly reviewed
+
+
 def test_an_invalid_draft_shows_the_field_message_and_keeps_the_draft(
     env: Env,
 ) -> None:
@@ -200,7 +219,7 @@ def test_navigation_moves_through_the_queue_and_next_unreviewed_wraps(
     env: Env,
 ) -> None:
     controller = opened(env)
-    assert controller.can_previous is False and controller.can_next is True
+    assert controller.previous() is False  # nothing before the first record
 
     controller.next()
     assert snapshot_of(controller.state).row_number == 2
@@ -210,7 +229,6 @@ def test_navigation_moves_through_the_queue_and_next_unreviewed_wraps(
     assert snapshot_of(controller.state).row_number == 3
     controller.next_unreviewed()
     assert snapshot_of(controller.state).row_number == 1  # wrapped past reviewed row 2
-    assert controller.can_next_unreviewed is True
     controller.previous()  # nothing before row 1
     assert snapshot_of(controller.state).row_number == 1
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QButtonGroup,
@@ -471,7 +473,7 @@ class ReviewPage(QWidget):
         self.empty.setVisible(record is None)
         self.record_box.setVisible(record is not None)
         if record is not None:
-            self._show_record(record, state, view)
+            self._show_record(record, view)
         self._show_buttons(view)
         self._place_focus(record, had_focus=had_focus, notice_is_new=is_new, view=view)
 
@@ -486,8 +488,8 @@ class ReviewPage(QWidget):
         self.failed.setVisible(bool(view.failed_line))
         self.agreement_lines.setText("\n".join(view.agreement_lines))
         self.agreement_note.setText(view.agreement_note)
-        self.export_button.setEnabled(view.export_enabled)
-        self.native_box.setEnabled(view.export_enabled)
+        self.export_button.setEnabled(view.controls_enabled)
+        self.native_box.setEnabled(view.controls_enabled)
 
     def _show_filters(self, view: ReviewView) -> None:
         signature = (
@@ -507,26 +509,19 @@ class ReviewPage(QWidget):
                 for text, value in choices:
                     combo.addItem(text, value)
                 combo.blockSignals(False)
+        status, sentiment, emotion = view.filters.as_values()
         wanted = (
-            (self.status_filter, view.filters.status.value),
-            (
-                self.sentiment_filter,
-                view.filters.sentiment.value if view.filters.sentiment else "all",
-            ),
-            (
-                self.emotion_filter,
-                view.filters.emotion.value if view.filters.emotion else "all",
-            ),
+            (self.status_filter, status),
+            (self.sentiment_filter, sentiment),
+            (self.emotion_filter, emotion),
         )
         for combo, value in wanted:
             combo.blockSignals(True)
             combo.setCurrentIndex(max(combo.findData(value), 0))
             combo.blockSignals(False)
-            combo.setEnabled(view.filters_enabled)
+            combo.setEnabled(view.controls_enabled)
 
-    def _show_record(
-        self, record: RecordView, state: ReviewState, view: ReviewView
-    ) -> None:
+    def _show_record(self, record: RecordView, view: ReviewView) -> None:
         self.record_title.setText(record.title)
         self.record_text.setText(record.text)
         self.record_text.setAccessibleName(f"Record text: {record.text}")
@@ -542,7 +537,7 @@ class ReviewPage(QWidget):
             self.human.emotion_box,
             self.human.note,
         ):
-            widget.setEnabled(view.editing_enabled)
+            widget.setEnabled(view.controls_enabled)
 
     def _show_buttons(self, view: ReviewView) -> None:
         self.previous_button.setEnabled(view.previous_enabled)
@@ -550,8 +545,8 @@ class ReviewPage(QWidget):
         self.next_unreviewed_button.setEnabled(view.next_unreviewed_enabled)
         self.accept_button.setEnabled(view.accept_both_enabled)
         self.save_button.setEnabled(view.save_enabled)
-        self.save_next_button.setEnabled(view.save_next_enabled)
-        self.back_button.setEnabled(view.editing_enabled)
+        self.save_next_button.setEnabled(view.save_enabled)
+        self.back_button.setEnabled(view.controls_enabled)
 
     def _place_focus(
         self,
@@ -590,9 +585,8 @@ class ReviewPage(QWidget):
             return True
         return self._platform.confirm(self, DISCARD_TITLE, DISCARD_TEXT)
 
-    def _guarded(self, action: object) -> None:
+    def _guarded(self, action: Callable[[], bool]) -> None:
         if self._confirmed_discard():
-            assert callable(action)
             action()
         else:
             self.show_state(self._controller.state)

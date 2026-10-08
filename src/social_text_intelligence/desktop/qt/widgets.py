@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Protocol
-
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
 from PySide6.QtGui import QAccessible, QAccessibleEvent
 from PySide6.QtWidgets import (
@@ -28,7 +26,7 @@ from ..panel import (
     ReportKind,
     ReportView,
 )
-from ..projects import NoticeKind
+from ..projects import NoticeKind, ProjectsNotice
 
 _REPORT_PREFIX = {
     ReportKind.SUCCESS: "✓",
@@ -231,18 +229,7 @@ class ReportBox(QFrame):
         self._last = None
 
 
-class _NoticeLike(Protocol):
-    @property
-    def kind(self) -> NoticeKind: ...
-    @property
-    def title(self) -> str: ...
-    @property
-    def body(self) -> str: ...
-    @property
-    def code(self) -> str: ...
-
-
-def _report(notice: _NoticeLike) -> ReportView:
+def _report(notice: ProjectsNotice) -> ReportView:
     kind = ReportKind.ERROR if notice.kind is NoticeKind.ERROR else ReportKind.INFO
     return ReportView(kind, notice.title, notice.body, notice.code, ())
 
@@ -250,7 +237,7 @@ def _report(notice: _NoticeLike) -> ReportView:
 class NoticeBox(ReportBox):
     """The last notice (an error or a plain confirmation) in a project surface."""
 
-    def show_notice(self, notice: _NoticeLike | None) -> bool:
+    def show_notice(self, notice: ProjectsNotice | None) -> bool:
         """Show ``notice``; True when it is new (so the caller may move focus)."""
 
         if notice is None:

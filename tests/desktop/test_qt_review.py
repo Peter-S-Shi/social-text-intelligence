@@ -295,6 +295,25 @@ def test_unsaved_changes_are_confirmed_before_they_are_discarded(
     assert not review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
 
 
+def test_switching_pages_asks_before_dropping_an_unsaved_judgment(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    pick(review, "uncertain", "sentiment")
+    window = shell.window
+
+    shell.platform.confirmed = False
+    window.nav_buttons["Analyze one text"].click()
+    assert window.pages.currentWidget() is window.projects_page  # stayed
+    assert window.nav_buttons["Projects"].isChecked()
+    assert review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
+
+    shell.platform.confirmed = True
+    window.nav_buttons["Analyze one text"].click()
+    assert window.pages.currentWidget() is window.analyze_page
+
+
 def test_closing_the_window_asks_before_dropping_an_unsaved_judgment(
     make_shell: Any, tmp_path: Path
 ) -> None:

@@ -77,11 +77,8 @@ class HumanJudgmentView:
     human_secondary_emotions: tuple[EmotionLabel, ...]
     note: str
     sentiment_label_visible: bool
-    sentiment_choices: tuple[SentimentLabel, ...]
     emotion_labels_visible: bool
-    emotion_choices: tuple[EmotionLabel, ...]
     note_counter: str
-    note_limit: int
 
     @property
     def status(self) -> str:
@@ -112,10 +109,7 @@ class ReviewView:
     next_unreviewed_enabled: bool
     accept_both_enabled: bool
     save_enabled: bool
-    save_next_enabled: bool
-    export_enabled: bool
-    filters_enabled: bool
-    editing_enabled: bool
+    controls_enabled: bool  # false while an operation runs
     unsaved: bool
     status_filter_choices: tuple[tuple[str, str], ...]
     sentiment_filter_choices: tuple[tuple[str, str], ...]
@@ -205,11 +199,8 @@ def _human_view(state: ReviewState, record: ReviewRecord) -> HumanJudgmentView:
         human_secondary_emotions=draft.human_secondary_emotions,
         note=draft.note,
         sentiment_label_visible=draft.sentiment_judgment is ReviewJudgment.CORRECT,
-        sentiment_choices=tuple(SentimentLabel),
         emotion_labels_visible=draft.emotion_judgment is ReviewJudgment.CORRECT,
-        emotion_choices=tuple(EmotionLabel),
         note_counter=_counter(draft.note),
-        note_limit=MAX_REVIEW_NOTE_LENGTH,
     )
 
 
@@ -308,10 +299,7 @@ def build_review_view(state: ReviewState) -> ReviewView | None:
         next_unreviewed_enabled=idle and snapshot.next_unreviewed_row is not None,
         accept_both_enabled=idle and record is not None,
         save_enabled=idle and record is not None and changed,
-        save_next_enabled=idle and record is not None and changed,
-        export_enabled=idle,
-        filters_enabled=idle,
-        editing_enabled=idle,
+        controls_enabled=idle,
         unsaved=changed,
         status_filter_choices=tuple((label, f.value) for label, f in STATUS_FILTERS),
         sentiment_filter_choices=_choices(

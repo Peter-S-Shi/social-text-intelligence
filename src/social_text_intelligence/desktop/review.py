@@ -31,7 +31,7 @@ from ..application.review_workflow import (
 )
 from ..contracts.errors import ProjectStorageError, ValidationError
 from .controller import JobRunner
-from .projects import NoticeKind, notice_for
+from .projects import NoticeKind, ProjectsNotice, notice_for
 
 EXPORT_FAILED_BODY = (
     "The file could not be saved. Check that the location can be written to and "
@@ -51,12 +51,10 @@ class ReviewActivity(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
-class ReviewNotice:
-    kind: NoticeKind
-    code: str
-    title: str
-    body: str
-    field: str | None = None  # the form field a validation message belongs to
+class ReviewNotice(ProjectsNotice):
+    """A project notice that may also name the form field it belongs to."""
+
+    field: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,6 +99,19 @@ _SAVED_PARTIAL = ReviewNotice(
     "Partly reviewed",
     "Saved. A record counts as reviewed once both sentiment and emotion have a "
     "judgment.",
+)
+_SAVED_NEXT = ReviewNotice(
+    NoticeKind.INFO,
+    "review_saved_next",
+    "Review saved",
+    "Your judgment was saved. The next record is shown.",
+)
+_SAVED_PARTIAL_NEXT = ReviewNotice(
+    NoticeKind.INFO,
+    "review_saved_partial_next",
+    "Partly reviewed",
+    "The previous record was saved, but it counts as reviewed only once both "
+    "sentiment and emotion have a judgment. The next record is shown.",
 )
 _EXPORT_SAVED = ReviewNotice(
     NoticeKind.INFO, "export_saved", "Reviewed CSV saved", EXPORT_SAVED_BODY
@@ -179,20 +190,6 @@ class ReviewController:
         else:
             callback()
 
-    # -- navigation availability -------------------------------------------
-
-    @property
-    def can_previous(self) -> bool:
-        return self._navigable(lambda s: s.previous_row)
-
-    @property
-    def can_next(self) -> bool:
-        return self._navigable(lambda s: s.next_row)
-
-    @property
-    def can_next_unreviewed(self) -> bool:
-        return self._navigable(lambda s: s.next_unreviewed_row)
-
     # -- commands -----------------------------------------------------------
 
     def open(self, project_id: str, filters: ReviewFilters | None = None) -> bool:
@@ -268,16 +265,7 @@ class ReviewController:
         )
         return True
 
-    def dismiss_notice(self) -> None:
-        self._set(notice=None)
-
     # -- internals ----------------------------------------------------------
-
-    def _navigable(self, row: Callable[[ReviewSnapshot], int | None]) -> bool:
-        snapshot = self._state.snapshot
-        return (
-            snapshot is not None and not self._state.busy and row(snapshot) is not None
-        )
 
     def _go(self, row: Callable[[ReviewSnapshot], int | None]) -> bool:
         snapshot, project_id = self._state.snapshot, self._state.project_id
@@ -340,20 +328,21 @@ class ReviewController:
             if isinstance(outcome, BaseException):
                 self._failed(outcome)
                 return
-            saved = (
-                outcome.record is not None
-                and advance is Advance.STAY
-                and outcome.record.review.is_reviewed
-            )
-            partial = (
-                outcome.record is not None
-                and advance is Advance.STAY
-                and not outcome.record.review.is_reviewed
-            )
-            notice = _SAVED if saved else _SAVED_PARTIAL if partial else None
-            self._end(**self._shown(outcome), notice=notice)
+            self._end(**self._shown(outcome), notice=self._saved_notice(outcome))
 
         return self._start(ReviewActivity.SAVING, work, done)
+
+    @staticmethod
+    def _saved_notice(outcome: ReviewSnapshot) -> ReviewNotice | None:
+        """What was saved, said truthfully, whether or not the view moved on."""
+
+        saved, shown = outcome.saved, outcome.record
+        if saved is None:
+            return None
+        moved = shown is not None and shown.row_number != saved.row_number
+        if saved.review.is_reviewed:
+            return _SAVED_NEXT if moved else _SAVED
+        return _SAVED_PARTIAL_NEXT if moved else _SAVED_PARTIAL
 
     def _shown(self, snapshot: ReviewSnapshot) -> dict[str, Any]:
         record = snapshot.record
@@ -387,7 +376,7 @@ class ReviewController:
             self._end(notice=notice)  # validation, busy, storage: keep the draft
             return
         project_id, filters = self._state.project_id, self._state.filters
-        row = snapshot.record.row_number if snapshot and snapshot.record else None
+        row = snapshot.record.row_number if snapshot.record else None
         if project_id is None:
             self._end(notice=notice)
             return
