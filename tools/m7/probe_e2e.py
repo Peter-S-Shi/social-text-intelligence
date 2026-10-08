@@ -150,6 +150,10 @@ def main() -> int:
     parser.add_argument("--recovery", action="store_true")
     parser.add_argument("--net", action="store_true")
     args = parser.parse_args()
+    if Path(args.root).resolve() == Path(args.models_src).resolve():
+        parser.error(
+            "--root must differ from --models-src (a file under --root is damaged)"
+        )
 
     report: dict[str, object] = {"frozen": bool(getattr(sys, "frozen", False))}
     steps: dict[str, float] = {}

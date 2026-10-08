@@ -209,6 +209,9 @@ def main() -> int:
     parser.add_argument("--only", default="")
     parser.add_argument("--rows", type=int, default=300)
     args = parser.parse_args()
+    root, source = Path(args.root).resolve(), Path(args.models_src).resolve()
+    if root == source or source in root.parents or root in source.parents:
+        parser.error("--root and --models-src must not contain one another")
     return worker(args) if args.worker else orchestrate(args)
 
 

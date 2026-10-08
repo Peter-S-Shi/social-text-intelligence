@@ -16,6 +16,12 @@ classification at merge.
 
 ## 1. How to read this record
 
+Raw outputs (JSON reports and build logs) lived in an ignored local folder and are
+not committed. Figures marked MEASURED come from those reports or from console
+transcripts of the commands in section 12; the launch-time, Defender, zip-size,
+byte-identity and DLL-closure figures come from console transcripts only and were
+not saved as files. Re-run section 12 to regenerate them.
+
 Every claim carries one evidence tag.
 
 | Tag | Meaning |
@@ -163,8 +169,7 @@ the frozen UI by hand, and long inputs.
 Observations for M8 to confirm, not defects asserted here:
 
 - The quick status stayed `ready` for both models after the one-byte corruption; only
-  the explicit full Verify detected it. That matches the documented "quick, read-only"
-  status, but it means analysis can start on damaged weights if nobody runs Verify.
+  the explicit full Verify detected it. That matches the port's own description of `status()` as "quick and read-only" (`application/model_provisioning.py`, INFERRED from the source), but it means analysis can start on damaged weights if nobody runs Verify.
 - The probe's summary showed `failed_rows = 1` for the one empty row that import had
   already rejected as invalid. Whether a rejected row should also count as an
   analysis failure is a presentation question to confirm against the M6 acceptance
@@ -187,12 +192,12 @@ reboot) was **not** measured because it needs privileges this session lacks.
 | Deflate-compressed copy (proxy for an installer payload) | 267 MiB with zip level 6 (Historical spike figure: 308 MB for a similar build) |
 | Models | Not bundled: 1,004,464,932 bytes (0.94 GiB) fetched or imported separately |
 | Build time | 336 s on an idle machine (413 s when sharing the CPU) |
-| Window shown (real executable) | 0.93 to 1.67 s over ten launches; the probe's own window construction took 0.5 to 1.0 s after Qt loaded |
-| Memory with the window up, models not loaded | 163 to 166 MB working set, 89 to 93 MB private (real executable); the probe measured 83 to 129 MB working set |
+| Window shown (real executable) | 0.93 to 1.67 s over ten launches; the probe's own window construction took 0.5 to 1.04 s after Qt loaded |
+| Memory with the window up, models not loaded | 163 to 166 MB working set, 89 to 93 MB private (real executable); the probe measured 83 MB in one run and about 129 MB in two others, a difference I did not explain |
 | PyTorch loaded before the first analysis? | No: the window and project list never import torch or transformers |
 | First inference (both models, cold) | 6.6 to 7.6 s frozen; 11.1 s unfrozen |
 | Warm single text | 0.07 s |
-| Batch of 200 rows, both models | 9.4 to 16.7 s across runs (about 47 to 84 ms per row); the spread follows load on the machine, so treat it as a range |
+| Batch of 200 rows, both models | Frozen final build, three runs: 15.8 to 16.7 s. An earlier frozen build (build 3) took 9.4 s and the first one 10.9 s; unfrozen took 17.3 s. About 47 to 84 ms per row overall. The spread is unexplained (machine load is a hypothesis, not tested), so treat it as a range |
 | Memory after both models loaded | peak working set 1,212 to 1,260 MB; private bytes 2,049 to 2,118 MB |
 | Dependency loading | `flask` never loaded; the Qt modules loaded were `QtCore`, `QtGui`, `QtWidgets` |
 
@@ -213,10 +218,10 @@ OS processes against one disposable root. Every project used 300 synthetic rows.
 
 | Scenario | Result (MEASURED) |
 | --- | --- |
-| Two instances analyse the same project (offset by 3 s) | Nine of ten runs: one `committed`, the other `stale`, final state `analyzed` with 300 rows, no error, no corruption. The stale instance spends its full inference time for nothing. One run (an earlier, since-corrected probe version, run while a build was using the CPU) reported both instances `stale` and then "project no longer available" although the project file existed and later read as analysed. It was **not reproduced** in nine reruns (3 on the corrected probe plus 6 stress runs) and is **unexplained** |
-| One instance deletes a project while another analyses it | Delete succeeded; the analyser ended `stale`; no file was resurrected |
+| Two instances analyse the same project (offset by 3 s) | In the ten runs whose reports were kept: one `committed`, the other `stale`, final state `analyzed` with 300 rows, no error, no corruption. The stale instance spends its whole inference time for nothing (28 to 72 s per instance across those runs). One further earlier run (an earlier version of the probe, while a build was using the CPU) reported both instances `stale` and then "project no longer available" although the project file existed and later read as analysed. **Its report file was overwritten and is not retained**; the figure rests on my console transcript. It was not reproduced in any of the ten kept runs and is **unexplained** |
+| One instance deletes a project while another analyses it | Delete succeeded; the analyser ended `stale`; in the kept clean run no project file existed afterwards (`files_after_delete` and `files_after_analyser` both empty) |
 | Hard kill of an instance mid-analysis | The project reopened as `ready` and unanalysed, re-analysis `committed`, final state `analyzed`; no leftover sidecar files were listed |
-| Two instances import the same models folder into one directory | One finished `completed`; the other failed with the generic `storage_failed` code (the failing side varied between runs); a later re-import completed and models were ready. Nothing corrupt was left |
+| Two instances import the same models folder into one directory | One finished `completed`; the other failed with the generic `storage_failed` code (in the two kept runs the first-started instance failed; in an earlier run whose report was not kept, the second one did, so the loser is not predictable); a later re-import completed and models were ready. Nothing corrupt was left |
 | Two copies of the desktop executable | Both ran side by side; no single-instance guard exists |
 
 Reading: the revision-guarded commit in `sqlite_projects.py` does what its docstring
@@ -331,7 +336,8 @@ python tools/m7/probe_e2e.py --root _local/m7/run_unfrozen/root --models-src mod
 # concurrency scenarios A (two analyses), B (delete), C (kill), E (model import)
 PYTHONPATH=src python tools/m7/probe_concurrency.py --root _local/m7/conc/root --models-src model_cache --only A,B,C,E --out _local/m7/conc/report.json
 
-# DLL closure proxy and byte-identity of the Qt files
+# DLL closure proxy (needs `pip install pefile`); the Qt byte-identity check compared
+# the bundled PySide6 files with the installed wheel by SHA-256 (not scripted)
 python tools/m7/dll_closure.py _local/m7/dist/sti-m7
 ```
 
