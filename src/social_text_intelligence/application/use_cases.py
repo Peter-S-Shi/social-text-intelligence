@@ -48,7 +48,7 @@ from ..services import (
     update_review,
 )
 from ..services.batch import BatchCancelled, BatchOutcome, BatchProgress
-from ..services.review import ReviewNavigation
+from ..services.review import HumanReview, ReviewNavigation
 from .projects import BatchWorkspace, ProjectRepository, WorkspaceMutationConflict
 from .settings import AnalysisGateway
 
@@ -70,6 +70,10 @@ INSIGHT_METRICS_BY_PERSPECTIVE = {
         InsightMetric.REVIEW_COVERAGE,
     ),
 }
+
+
+class ReviewConflict(WorkspaceMutationConflict):
+    """The record's human review changed since the caller last looked at it."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -318,7 +322,17 @@ class ApplicationUseCases:
         review_filter: str,
         sentiment_filter: str,
         emotion_filter: str,
+        expected: HumanReview | None = None,
     ) -> int | None:
+        """Save one human review; raise ``ReviewConflict`` if it changed meanwhile.
+
+        ``expected`` is the review the caller was looking at. Without it, the review
+        read here is the baseline, which still protects the window between the read
+        and the atomic write. The comparison runs on the current stored state inside
+        the repository's atomic mutation, so another process's newer judgment is
+        never replaced by a stale one.
+        """
+
         workspace = self.projects.get(token)
         if workspace is None:
             return None
@@ -332,9 +346,15 @@ class ApplicationUseCases:
         if details is None:
             return None
         record_id = details.current.review.record_id
+        baseline = expected if expected is not None else details.current.review
 
         def change(current: BatchWorkspace) -> BatchWorkspace:
             assert current.result is not None and current.reviews is not None
+            if current.reviews.for_record(record_id) != baseline:
+                raise ReviewConflict(
+                    "This record's review was changed elsewhere. Reload it before "
+                    "saving; the newer saved review was kept."
+                )
             if action == "accept_both":
                 updated = accept_both(
                     current.result,

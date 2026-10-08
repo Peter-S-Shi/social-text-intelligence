@@ -49,6 +49,8 @@ class FakePlatform:
     def __init__(self) -> None:
         self.folder: Path | None = None
         self.csv_file: Path | None = None
+        self.save_target: Path | None = None
+        self.save_requests: list[str] = []
         self.opened: list[Path] = []
         self.confirmed = True
         self.confirmations: list[str] = []
@@ -58,6 +60,10 @@ class FakePlatform:
 
     def pick_csv(self, parent: Any) -> Path | None:
         return self.csv_file
+
+    def pick_save_csv(self, parent: Any, suggested: str) -> Path | None:
+        self.save_requests.append(suggested)
+        return self.save_target
 
     def open_folder(self, path: Path) -> bool:
         self.opened.append(path)

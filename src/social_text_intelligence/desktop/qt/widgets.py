@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Protocol
+
 from PySide6.QtCore import QPoint, QRect, QSize, Qt, Signal
 from PySide6.QtGui import QAccessible, QAccessibleEvent
 from PySide6.QtWidgets import (
@@ -26,6 +28,7 @@ from ..panel import (
     ReportKind,
     ReportView,
 )
+from ..projects import NoticeKind
 
 _REPORT_PREFIX = {
     ReportKind.SUCCESS: "✓",
@@ -226,6 +229,36 @@ class ReportBox(QFrame):
 
     def clear(self) -> None:
         self._last = None
+
+
+class _NoticeLike(Protocol):
+    @property
+    def kind(self) -> NoticeKind: ...
+    @property
+    def title(self) -> str: ...
+    @property
+    def body(self) -> str: ...
+    @property
+    def code(self) -> str: ...
+
+
+def _report(notice: _NoticeLike) -> ReportView:
+    kind = ReportKind.ERROR if notice.kind is NoticeKind.ERROR else ReportKind.INFO
+    return ReportView(kind, notice.title, notice.body, notice.code, ())
+
+
+class NoticeBox(ReportBox):
+    """The last notice (an error or a plain confirmation) in a project surface."""
+
+    def show_notice(self, notice: _NoticeLike | None) -> bool:
+        """Show ``notice``; True when it is new (so the caller may move focus)."""
+
+        if notice is None:
+            self.setVisible(False)
+            self.clear()
+            return False
+        self.setVisible(True)
+        return self.show_report(_report(notice))
 
 
 class CardWidget(QFrame):

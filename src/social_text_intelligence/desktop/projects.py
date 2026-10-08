@@ -327,6 +327,32 @@ class ProjectsController:
 
         return self._start(ProjectsActivity.DELETING, work, done)
 
+    def reload_current(self, notice: ProjectsNotice | None = None) -> bool:
+        """Re-read the open project (for example after leaving its review).
+
+        A ``notice`` explaining why the caller came back stays visible; if the
+        project is gone, the usual resync replaces it with the reason.
+        """
+
+        current = self._state.current
+        if current is None or self._state.busy:
+            return False
+        project_id = current.summary.project_id
+
+        def done(outcome: Any) -> None:
+            if isinstance(outcome, BaseException):
+                self._failed(outcome, project_id)
+                return
+            self._end(current=outcome)
+
+        self._set(notice=notice)
+        return self._start(
+            ProjectsActivity.OPENING,
+            lambda: self._workflow.open_project(project_id),
+            done,
+            keep_notice=True,
+        )
+
     def close_project(self) -> None:
         if not self._state.busy:
             self._set(current=None, notice=None)

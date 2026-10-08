@@ -20,6 +20,7 @@ from ..composition import (
     build_analysis_controller,
     build_projects_controller,
     build_provisioning_controller,
+    build_review_controller,
 )
 from ..controller import (
     Activity,
@@ -29,6 +30,7 @@ from ..controller import (
 )
 from ..panel import build_sidebar_status
 from ..projects import ProjectsActivity, ProjectsState
+from ..review import ReviewController, ReviewState
 from .pages import AnalyzePage
 from .platform import DesktopPlatform
 from .projects_page import ProjectsPage
@@ -58,7 +60,9 @@ class MainWindow(QMainWindow):
             services, runner
         )
         self.projects = build_projects_controller(services, runner)
+        self.review: ReviewController = build_review_controller(services, runner)
         platform = platform or DesktopPlatform()
+        self._platform = platform
         self._closing = False
 
         root = QWidget()
@@ -95,7 +99,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.sidebar)
 
         self.pages = QStackedWidget()
-        self.projects_page = ProjectsPage(self.projects, platform)
+        self.projects_page = ProjectsPage(self.projects, self.review, platform)
         self.analyze_page = AnalyzePage()
         self.pages.addWidget(self.projects_page)
         self.pages.addWidget(self.analyze_page)
@@ -121,6 +125,7 @@ class MainWindow(QMainWindow):
         self.provisioning.subscribe(self._on_provisioning)
         self.analysis.subscribe(self._on_analysis)
         self.projects.subscribe(self._on_projects)
+        self.review.subscribe(self._on_review)
         self._last_announced = ""
         self.show_page(PAGES[0])
 
@@ -169,6 +174,10 @@ class MainWindow(QMainWindow):
         if self._closing and not state.busy:
             self._close_when_done()
 
+    def _on_review(self, state: ReviewState) -> None:
+        if self._closing and not state.busy:
+            self._close_when_done()
+
     def _on_analysis(self, state: AnalysisPageState) -> None:
         self.analyze_page.render_analysis(state)
         self._on_provisioning(self.provisioning.state)
@@ -186,6 +195,9 @@ class MainWindow(QMainWindow):
 
         state = self.provisioning.state
         if self._idle():
+            if self._keep_unsaved_review():
+                event.ignore()
+                return
             self.runner.wait_idle(5)
             event.accept()
             return
@@ -206,6 +218,17 @@ class MainWindow(QMainWindow):
         # the provisioning, analysis, and projects listeners all re-check on idle
         self.provisioning.when_idle(self._close_when_done)
 
+    def _keep_unsaved_review(self) -> bool:
+        """Ask before closing over an unsaved judgment; True means stay open."""
+
+        if not self.review.state.has_unsaved_changes:
+            return False
+        return not self._platform.confirm(
+            self,
+            "Unsaved changes",
+            "You have unsaved changes to a review. Close without saving them?",
+        )
+
     def _close_when_done(self) -> None:
         if not self._idle():
             return  # the next idle notification tries again
@@ -217,4 +240,5 @@ class MainWindow(QMainWindow):
             self.provisioning.state.busy
             or self.analysis.state.running
             or self.projects.state.busy
+            or self.review.state.busy
         )
