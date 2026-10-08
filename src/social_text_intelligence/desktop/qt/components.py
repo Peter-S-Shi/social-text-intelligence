@@ -173,7 +173,7 @@ class EmptyState(QFrame):
 
 
 class FlowRow(QWidget):
-    """Controls in a row that wraps onto more lines instead of forcing the page wider."""
+    """Wrap controls onto more lines instead of forcing the page wider."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -429,7 +429,7 @@ class ScorePanel(QWidget):
         self.rule = label(role="muted")
         self.rule.setObjectName("emotion-rule")
         self.native_toggle = QToolButton()
-        self.native_toggle.setText("Inspect all model-native emotion scores")
+        self.native_toggle.setText("Show model-native emotion scores")
         self.native_toggle.setCheckable(True)
         self.native_toggle.setObjectName("native-toggle")
         self.native = BarGrid("quiet")
@@ -447,7 +447,10 @@ class ScorePanel(QWidget):
         self.rule.setText(scores.emotion_rule)
         self.native.set_rows(score_rows(scores.native))
         self.native_toggle.setText(
-            f"Inspect all {len(scores.native)} model-native emotion scores"
+            f"Show {len(scores.native)} model-native emotion scores"
+        )
+        self.native_toggle.setAccessibleName(
+            f"Show all {len(scores.native)} model-native emotion scores"
         )
         self.sentiment.setAccessibleName("Sentiment scores")
         self.emotion.setAccessibleName("Compact emotion scores")

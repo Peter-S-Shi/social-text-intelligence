@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (
+    QBoxLayout,
     QButtonGroup,
     QCheckBox,
     QFrame,
@@ -295,6 +297,7 @@ class ReviewPage(Page):
         self._shown_row: int | None = None
         self._was_active = False
         self._filters_signature: object = None
+        self._focus_before_busy: QWidget | None = None
 
         self.header = PageHeader("Review")
         self.title = self.header.title
@@ -335,10 +338,9 @@ class ReviewPage(Page):
         self.export_button.setObjectName("review-export")
         self.export_button.setAccessibleName("Export reviewed CSV")
         self.export_button.clicked.connect(self._export)
-        export_row = QHBoxLayout()
-        export_row.addWidget(self.export_button)
-        export_row.addWidget(self.native_box)
-        export_row.addStretch(1)
+        export_row = FlowRow()
+        export_row.add(self.export_button)
+        export_row.add(self.native_box)
 
         self.empty = label()
         self.empty.setObjectName("review-empty")
@@ -367,12 +369,12 @@ class ReviewPage(Page):
         self.human.changed.connect(
             lambda: self._controller.set_draft(self.human.draft())
         )
-        columns = QHBoxLayout()
-        columns.setSpacing(16)
-        columns.addWidget(self.ai, 1, Qt.AlignmentFlag.AlignTop)
-        columns.addWidget(self.human, 1, Qt.AlignmentFlag.AlignTop)
+        self.columns = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+        self.columns.setSpacing(16)
+        self.columns.addWidget(self.ai, 1, Qt.AlignmentFlag.AlignTop)
+        self.columns.addWidget(self.human, 1, Qt.AlignmentFlag.AlignTop)
         add_all(record_layout, self.record_card, self.language_box)
-        record_layout.addLayout(columns)
+        record_layout.addLayout(self.columns)
 
         self.previous_button = self._button("review-previous", "Previous")
         self.next_button = self._button("review-next", "Next")
@@ -383,22 +385,20 @@ class ReviewPage(Page):
         self.save_button = self._button("review-save", "Save")
         self.save_next_button = self._button("review-save-next", "Save and next")
         self.save_next_button.setProperty("primary", True)
-        actions = QHBoxLayout()
-        actions.setSpacing(8)
+        actions = FlowRow()
         for button in (
             self.previous_button,
             self.next_button,
             self.next_unreviewed_button,
         ):
-            actions.addWidget(button)
-        actions.addStretch(1)
+            actions.add(button)
         for button in (self.accept_button, self.save_button, self.save_next_button):
-            actions.addWidget(button)
-        record_layout.addLayout(actions)
+            actions.add(button)
+        record_layout.addWidget(actions)
 
         add_all(self.body, self.header, self.notice, self.toolbar)
         add_all(self.body, self.empty, self.record_box)
-        self.body.addLayout(export_row)
+        self.body.addWidget(export_row)
         self.body.addStretch(1)
 
         self.previous_button.clicked.connect(
@@ -420,6 +420,16 @@ class ReviewPage(Page):
         controller.subscribe(self.show_state)
         self.show_state(controller.state)
 
+    def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
+        super().resizeEvent(event)
+        direction = (
+            QBoxLayout.Direction.TopToBottom
+            if self.width() < 780
+            else QBoxLayout.Direction.LeftToRight
+        )
+        if self.columns.direction() != direction:
+            self.columns.setDirection(direction)
+
     # -- construction helpers -------------------------------------------------
 
     @staticmethod
@@ -440,11 +450,15 @@ class ReviewPage(Page):
 
     def show_state(self, state: ReviewState) -> None:
         had_focus = self._has_focus()
+        if state.busy and had_focus and self._focus_before_busy is None:
+            self._focus_before_busy = self.window().focusWidget()
+        restore_focus = self._focus_before_busy if not state.busy else None
         is_new = self.notice.show_notice(state.notice)
         view = build_review_view(state)
         if view is None:
             self._was_active = False
             self._shown_row = None
+            self._focus_before_busy = None
             return
         self._show_header(view)
         self._show_filters(view)
@@ -455,7 +469,24 @@ class ReviewPage(Page):
         if record is not None:
             self._show_record(record, view)
         self._show_buttons(view)
-        self._place_focus(record, had_focus=had_focus, notice_is_new=is_new, view=view)
+        if state.busy:
+            return
+        self._focus_before_busy = None
+        changed = record is not None and record.row_number != self._shown_row
+        self._place_focus(
+            record,
+            had_focus=had_focus or restore_focus is not None,
+            notice_is_new=is_new,
+            view=view,
+        )
+        if (
+            restore_focus is not None
+            and not changed
+            and not is_new
+            and restore_focus.isEnabled()
+            and restore_focus.isVisible()
+        ):
+            restore_focus.setFocus()
 
     def _has_focus(self) -> bool:
         focused = self.window().focusWidget()

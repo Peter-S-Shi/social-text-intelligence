@@ -31,7 +31,7 @@ AGREEMENT_NOTE = (
 AI_HEADING = "AI record (read-only, not editable)"
 HUMAN_HEADING = "Your judgment"
 EXPORT_LABEL = "Export reviewed CSV…"
-NATIVE_LABEL = "Include model-native emotion scores in the export"
+NATIVE_LABEL = "Include native emotion scores in export"
 NO_ROWS_LINE = (
     "No rows were analysed successfully, so there is nothing to review in this project."
 )

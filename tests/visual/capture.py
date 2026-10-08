@@ -22,19 +22,14 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))  # tests/ (desktop.fakes, persistence.*)
 sys.path.insert(0, str(HERE.parents[1] / "src"))
 
-from PySide6.QtCore import QCoreApplication  # noqa: E402
-from PySide6.QtWidgets import QApplication, QWidget  # noqa: E402
-from visual.synthetic import (  # noqa: E402
-    SyntheticEmotion,
-    SyntheticSentiment,
-    feedback_csv,
-)
-
 from desktop.fakes import (  # noqa: E402
     FakeProvisioning,
     ImmediateRunner,
     status,
 )
+from PySide6.QtCore import QCoreApplication  # noqa: E402
+from PySide6.QtWidgets import QApplication, QWidget  # noqa: E402
+
 from social_text_intelligence.application.insights_workflow import (  # noqa: E402
     InsightPerspective,
 )
@@ -68,6 +63,11 @@ from social_text_intelligence.providers.language_py3langid import (  # noqa: E40
     Py3LangidDetector,
 )
 from social_text_intelligence.services import AnalysisService  # noqa: E402
+from visual.synthetic import (  # noqa: E402
+    SyntheticEmotion,
+    SyntheticSentiment,
+    feedback_csv,
+)
 
 WIDTH, HEIGHT = 1280, 860
 
@@ -320,10 +320,18 @@ def scene_results(out: Path) -> None:
     page.status_filter.buttons["error"].click()
     run.shot("06-results-not-analysed")
     page.clear_button.click()
-    page.sentiment_filter.setCurrentIndex(page.sentiment_filter.findData("negative"))
-    page._filters_changed()
-    page.emotion_filter.setCurrentIndex(page.emotion_filter.findData("joy"))
-    page._filters_changed()
+    for sentiment in ("negative", "positive", "neutral"):
+        page.sentiment_filter.setCurrentIndex(
+            page.sentiment_filter.findData(sentiment)
+        )
+        for emotion in ("joy", "anger", "gratitude", "fear", "disgust"):
+            page.emotion_filter.setCurrentIndex(page.emotion_filter.findData(emotion))
+            page._filters_changed()
+            if page.table.rowCount() == 0:
+                break
+        if page.table.rowCount() == 0:
+            break
+    assert page.table.rowCount() == 0
     run.shot("07-results-no-match")
 
 
@@ -365,7 +373,9 @@ def scene_agreement(out: Path) -> None:
     run.nav(Section.AGREEMENT)
     run.clear_focus()
     run.shot("13-agreement-below-thresholds")
-    run.review_rows(range(4, 31), ["accept", "accept", "correct", "accept", "uncertain"])
+    run.review_rows(
+        range(4, 31), ["accept", "accept", "correct", "accept", "uncertain"]
+    )
     run.nav(Section.RESULTS)
     run.nav(Section.AGREEMENT)
     run.clear_focus()

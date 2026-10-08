@@ -18,7 +18,7 @@ from persistence.workflow_samples import (  # noqa: E402
     ScriptedGateway,
     csv_text,
 )
-from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtCore import QCoreApplication, QPoint, Qt  # noqa: E402
 from PySide6.QtGui import QCloseEvent  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QCheckBox,
@@ -483,6 +483,52 @@ def test_the_review_form_is_keyboard_operable_and_named(
     # the AI values are announced as one named, read-only record
     assert "AI record" in review.ai.accessibleName()
     assert "Your judgment" in review.human.accessibleName()
+
+
+def test_review_at_minimum_window_width_shows_both_records_without_horizontal_scroll(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+
+    shell.window.resize(900, 620)
+    QCoreApplication.processEvents()
+
+    assert review.scroller.horizontalScrollBar().maximum() == 0
+    assert review.ai.isVisibleTo(review)
+    assert review.human.isVisibleTo(review)
+    assert review.human.mapTo(review, QPoint()).y() > review.ai.mapTo(
+        review, QPoint()
+    ).y()
+
+    shell.window.resize(1280, 860)
+    QCoreApplication.processEvents()
+    assert review.scroller.horizontalScrollBar().maximum() == 0
+    assert review.human.mapTo(review, QPoint()).y() == review.ai.mapTo(
+        review, QPoint()
+    ).y()
+
+
+def test_review_focus_follows_record_and_field_error(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    review.next_button.setFocus()
+    review.next_button.click()
+    QCoreApplication.processEvents()
+    assert "Row 2" in text_of(review.record_title)
+    assert shell.window.focusWidget() is review.human.first_field()
+
+    pick(review, "accept", "sentiment")
+    pick(review, "correct", "emotion")
+    choose(review.human.dominant_combo, "joy")
+    review.human.secondary_boxes[EmotionLabel.JOY].setChecked(True)
+    review.save_button.click()
+    QCoreApplication.processEvents()
+
+    assert review.notice.code.text() == "dominant_repeated"
+    assert shell.window.focusWidget() is review.human.secondary_boxes[EmotionLabel.JOY]
 
 
 def test_provisioning_and_project_analysis_still_work_beside_review(
