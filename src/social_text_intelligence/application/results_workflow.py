@@ -15,7 +15,7 @@ from enum import StrEnum
 from ..contracts import EmotionLabel, SentimentLabel
 from ..contracts.errors import SocialTextIntelligenceError
 from ..contracts.language import LanguageAssessment
-from ..services.batch import BatchAggregates, BatchOutcome
+from ..services.batch import ActivationRate, BatchAggregates, BatchOutcome
 from ..services.language import LanguageSummary, summarize_result
 from .project_workflow import ProjectNotFoundError
 from .projects import BatchWorkspace, ProjectRepository
@@ -91,6 +91,8 @@ class ResultRow:
     language: LanguageAssessment | None = None
     error_code: str | None = None
     error_message: str | None = None
+    # True for a row the CSV preparation rejected: it never reached the models.
+    rejected_at_import: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +115,7 @@ def _row(outcome: BatchOutcome) -> ResultRow:
             status=outcome.status,
             error_code=outcome.error_code,
             error_message=outcome.error_message,
+            rejected_at_import=prepared.record is None,
         )
     return ResultRow(
         row_number=prepared.row_number,
@@ -223,6 +226,8 @@ class ResultsWorkflow:
 
 
 __all__ = [
+    "ActivationRate",
+    "BatchAggregates",
     "ResultRow",
     "ResultsFilters",
     "ResultsSnapshot",

@@ -136,6 +136,9 @@ def test_every_row_keeps_its_place_status_and_reason(tmp_path: Path) -> None:
     assert failed.sentiment is None and failed.dominant_emotion is None
     assert (invalid.status, invalid.record_id) == ("error", "r26")
     assert invalid.error_code and invalid.error_message
+    # a rejected row never reached the models; a failed one did
+    assert (invalid.rejected_at_import, failed.rejected_at_import) == (True, False)
+    assert first.rejected_at_import is False
 
 
 def test_the_status_filter_keeps_only_that_status(tmp_path: Path) -> None:

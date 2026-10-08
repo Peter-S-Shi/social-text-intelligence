@@ -16,6 +16,8 @@ from ..contracts import AnalysisReport, EmotionLabel, SentimentLabel
 from ..contracts.errors import SocialTextIntelligenceError
 from ..services.review import (
     MAX_REVIEW_NOTE_LENGTH,
+    MIN_CONFIDENCE_COMPARISON_REVIEWS,
+    ConfidenceBand,
     HumanReview,
     ReviewCase,
     ReviewFilter,
@@ -350,7 +352,9 @@ class ReviewWorkflow:
 
 __all__ = [
     "MAX_REVIEW_NOTE_LENGTH",
+    "MIN_CONFIDENCE_COMPARISON_REVIEWS",
     "Advance",
+    "ConfidenceBand",
     "HumanReview",
     "ReviewConflictError",
     "ReviewDraft",
