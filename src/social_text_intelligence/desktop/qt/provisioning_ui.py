@@ -104,6 +104,8 @@ class FolderDialog(QDialog):
         self.status_label.setText(view.status_line)
         for widget in self._row_labels:
             self.rows_box.removeWidget(widget)
+            widget.hide()
+            widget.setParent(None)
             widget.deleteLater()
         self._row_labels = []
         for row in view.rows:

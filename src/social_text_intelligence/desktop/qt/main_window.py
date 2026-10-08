@@ -18,6 +18,7 @@ from ..analysis import AnalysisPageController, AnalysisPageState
 from ..composition import (
     DesktopServices,
     build_analysis_controller,
+    build_projects_controller,
     build_provisioning_controller,
 )
 from ..controller import (
@@ -27,8 +28,10 @@ from ..controller import (
     ProvisioningController,
 )
 from ..panel import build_sidebar_status
-from .pages import AnalyzePage, ProjectsPage
+from ..projects import ProjectsActivity, ProjectsState
+from .pages import AnalyzePage
 from .platform import DesktopPlatform
+from .projects_page import ProjectsPage
 from .provisioning_ui import ProvisioningUi
 from .widgets import announce, frame, label
 
@@ -54,6 +57,8 @@ class MainWindow(QMainWindow):
         self.analysis: AnalysisPageController = build_analysis_controller(
             services, runner
         )
+        self.projects = build_projects_controller(services, runner)
+        platform = platform or DesktopPlatform()
         self._closing = False
 
         root = QWidget()
@@ -90,7 +95,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.sidebar)
 
         self.pages = QStackedWidget()
-        self.projects_page = ProjectsPage(services.projects.list_projects, runner)
+        self.projects_page = ProjectsPage(self.projects, platform)
         self.analyze_page = AnalyzePage()
         self.pages.addWidget(self.projects_page)
         self.pages.addWidget(self.analyze_page)
@@ -100,7 +105,7 @@ class MainWindow(QMainWindow):
             self.provisioning,
             services.gate,
             lambda: services.provisioning.models_root,
-            platform or DesktopPlatform(),
+            platform,
             self,
             lambda text: self.statusBar().showMessage(text, 8000),
         )
@@ -115,6 +120,7 @@ class MainWindow(QMainWindow):
 
         self.provisioning.subscribe(self._on_provisioning)
         self.analysis.subscribe(self._on_analysis)
+        self.projects.subscribe(self._on_projects)
         self._last_announced = ""
         self.show_page(PAGES[0])
 
@@ -124,7 +130,7 @@ class MainWindow(QMainWindow):
         """Quick status at launch; show the setup window unless models are ready."""
 
         self.provisioning.refresh()
-        self.projects_page.refresh()
+        self.projects.refresh()
         if not self.provisioning.state.status.ready:
             self.ui.show_setup()
 
@@ -148,10 +154,24 @@ class MainWindow(QMainWindow):
             self.models_meter.setValue(int(view.meter * 1000))
             self.models_meter.setAccessibleName(view.accessible_name)
         self.analyze_page.render_availability(state.status, availability)
-        self.projects_page.render_availability(state.status, availability)
+        self.projects_page.show_availability(
+            state.status,
+            availability,
+            other_analysis_running=self.analysis.state.running,
+        )
+
+    def _on_projects(self, state: ProjectsState) -> None:
+        # one analysis at a time: text analysis waits while a project batch runs
+        batch = state.activity is ProjectsActivity.ANALYZING
+        self.analyze_page.set_external_busy(batch)
+        # the gate can change without a provisioning event (H2 mid-batch)
+        self._on_provisioning(self.provisioning.state)
+        if self._closing and not state.busy:
+            self._close_when_done()
 
     def _on_analysis(self, state: AnalysisPageState) -> None:
         self.analyze_page.render_analysis(state)
+        self._on_provisioning(self.provisioning.state)
         if self._closing and not state.running:
             self._close_when_done()
 
@@ -165,7 +185,7 @@ class MainWindow(QMainWindow):
         """Stop a stoppable operation and close when idle; Verify cannot be stopped."""
 
         state = self.provisioning.state
-        if not state.busy and not self.analysis.state.running:
+        if self._idle():
             self.runner.wait_idle(5)
             event.accept()
             return
@@ -175,6 +195,8 @@ class MainWindow(QMainWindow):
         self._closing = True
         if self.provisioning.can_stop:
             self.provisioning.stop()
+        if self.projects.can_cancel:
+            self.projects.cancel()  # nothing is saved from a cancelled run
         self.statusBar().showMessage(
             "Finishing the current operation before closing…"
             if state.activity is not Activity.VERIFYING
@@ -182,9 +204,17 @@ class MainWindow(QMainWindow):
             "it finishes."
         )
         self.provisioning.when_idle(self._close_when_done)
+        self.projects.when_idle(self._close_when_done)
 
     def _close_when_done(self) -> None:
-        if self.provisioning.state.busy or self.analysis.state.running:
+        if not self._idle():
             return  # the next idle notification tries again
         self._closing = False
         self.close()
+
+    def _idle(self) -> bool:
+        return not (
+            self.provisioning.state.busy
+            or self.analysis.state.running
+            or self.projects.state.busy
+        )

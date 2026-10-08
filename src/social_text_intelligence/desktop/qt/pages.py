@@ -1,10 +1,6 @@
-"""The two pages the provisioning experience needs as context: Projects and Analyze."""
+"""The Analyze one text page and the shared analysis-block notice."""
 
 from __future__ import annotations
-
-from collections.abc import Callable
-from datetime import datetime
-from typing import cast
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -15,9 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from ...application.model_provisioning import ModelsStatus
-from ...application.projects import ProjectStatus, ProjectSummary
 from ..analysis import AnalysisPageState
-from ..controller import JobRunner
 from ..gate import AnalysisAvailability
 from ..panel import ActionId, ActionView, build_analysis_block
 from .widgets import ActionRow, add_all, announce, frame, label
@@ -122,12 +116,25 @@ class AnalyzePage(QWidget):
         self.progress_note.setVisible(False)
         self._availability = AnalysisAvailability.AVAILABLE
         self._running = False
+        self._external_busy = False
 
     def _error_action(self, action: ActionView) -> None:
         if action.action is ActionId.VERIFY:
             self.verify_requested.emit()
         else:
             self.open_models.emit()
+
+    def set_external_busy(self, busy: bool) -> None:
+        """A project analysis is running; one analysis at a time."""
+
+        self._external_busy = busy
+        self.progress_note.setVisible(self._running or busy)
+        if busy and not self._running:
+            self.progress_note.setText(
+                "A project analysis is running. Analyze one text is available when "
+                "it finishes."
+            )
+        self._refresh_button()
 
     def render_availability(
         self, status: ModelsStatus, availability: AnalysisAvailability
@@ -138,7 +145,9 @@ class AnalyzePage(QWidget):
 
     def _refresh_button(self) -> None:
         available = self._availability is AnalysisAvailability.AVAILABLE
-        self.analyze_button.setEnabled(available and not self._running)
+        self.analyze_button.setEnabled(
+            available and not self._running and not self._external_busy
+        )
         # the reason is always visible; this links it for assistive technology
         self.analyze_button.setAccessibleDescription(
             "" if available else self.block.description
@@ -179,83 +188,3 @@ class AnalyzePage(QWidget):
             self.error_actions.set_actions(tuple(actions))
             announce(self.error_box, f"{error.title}. {error.body}", assertive=True)
         self._refresh_button()
-
-
-def _when(value: datetime | None) -> str:
-    return value.astimezone().strftime("%Y-%m-%d %H:%M") if value else "unknown"
-
-
-class ProjectsPage(QWidget):
-    open_models = Signal()
-
-    def __init__(
-        self,
-        list_projects: Callable[[], tuple[ProjectSummary, ...]],
-        runner: JobRunner,
-        parent: QWidget | None = None,
-    ) -> None:
-        super().__init__(parent)
-        self._list = list_projects
-        self._runner = runner
-        layout = QVBoxLayout(self)
-        self.heading = label("Projects", role="headline")
-        self.block = AnalysisBlockBox(quiet=True)
-        self.block.triggered.connect(lambda _: self.open_models.emit())
-        self.summary = label()
-        self.summary.setObjectName("projects-summary")
-        self.items = QVBoxLayout()
-        self.note = label(
-            "Importing a CSV and analysing a project arrive in a later milestone. "
-            "Existing projects stay on this computer until you delete them.",
-            role="muted",
-        )
-        add_all(layout, self.heading, self.block, self.summary)
-        layout.addLayout(self.items)
-        layout.addWidget(self.note)
-        layout.addStretch(1)
-        self._item_widgets: list[QWidget] = []
-
-    def render_availability(
-        self, status: ModelsStatus, availability: AnalysisAvailability
-    ) -> None:
-        self.block.show_block(status, availability)
-
-    def show_projects(self, projects: tuple[ProjectSummary, ...]) -> None:
-        for widget in self._item_widgets:
-            self.items.removeWidget(widget)
-            widget.deleteLater()
-        self._item_widgets = []
-        if not projects:
-            self.summary.setText("No projects yet.")
-            return
-        self.summary.setText(f"{len(projects)} project(s) on this computer.")
-        for project in projects:
-            box = frame("card")
-            inner = QVBoxLayout(box)
-            if project.status is ProjectStatus.OK:
-                name = project.name or "Untitled project"
-                text = f"Updated {_when(project.updated_at)}"
-            elif project.status is ProjectStatus.UNSUPPORTED_VERSION:
-                name = "Project from a newer version"
-                text = "This version of the app cannot open it."
-            else:
-                name = "Unreadable project"
-                text = "This project file cannot be read."
-            inner.addWidget(label(name, role="title"))
-            inner.addWidget(label(text, role="muted"))
-            box.setAccessibleName(f"{name}. {text}")
-            self.items.addWidget(box)
-            box.show()
-            self._item_widgets.append(box)
-
-    def refresh(self) -> None:
-        """List projects off the UI thread; a failure shows a fixed line."""
-
-        self._runner.run(self._list, self._listed)
-
-    def _listed(self, outcome: object) -> None:
-        if isinstance(outcome, BaseException):
-            self.show_projects(())
-            self.summary.setText("The project list could not be read.")
-        else:
-            self.show_projects(cast(tuple[ProjectSummary, ...], outcome))

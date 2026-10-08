@@ -137,14 +137,12 @@ class ApplicationUseCases:
         )
         return self.analysis_gateway.analyze(record)
 
-    def upload_batch(
-        self,
-        content: bytes,
-        *,
-        max_bytes: int,
-        max_rows: int,
-        max_text_length: int,
-    ) -> str:
+    @staticmethod
+    def prepare_upload(
+        content: bytes, *, max_bytes: int, max_rows: int, max_text_length: int
+    ) -> BatchWorkspace:
+        """Validate a CSV into a workspace (the ``text`` fast path, else pending)."""
+
         pending = inspect_csv_upload(content, max_bytes=max_bytes)
         if "text" in pending.headers:
             preview = prepare_csv_batch(
@@ -153,8 +151,25 @@ class ApplicationUseCases:
                 max_rows=max_rows,
                 max_text_length=max_text_length,
             )
-            return self.projects.create(BatchWorkspace(preview=preview))
-        return self.projects.create(BatchWorkspace(pending=pending))
+            return BatchWorkspace(preview=preview)
+        return BatchWorkspace(pending=pending)
+
+    def upload_batch(
+        self,
+        content: bytes,
+        *,
+        max_bytes: int,
+        max_rows: int,
+        max_text_length: int,
+    ) -> str:
+        return self.projects.create(
+            self.prepare_upload(
+                content,
+                max_bytes=max_bytes,
+                max_rows=max_rows,
+                max_text_length=max_text_length,
+            )
+        )
 
     def select_batch_column(
         self, token: str, column: str, *, max_rows: int, max_text_length: int

@@ -70,7 +70,32 @@ class ModelProvisioningError(SocialTextIntelligenceError):
         self.message = message
 
 
-class ModelsNotReadyError(SocialTextIntelligenceError):
+class AnalysisUnavailableError(SocialTextIntelligenceError):
+    """Analysis cannot run right now for any input (setup or a session rule).
+
+    A batch re-raises it instead of recording it as a row failure, so nothing is
+    committed and the analysis lease is released.
+    """
+
+
+SESSION_BLOCK_MESSAGE = (
+    "Analysis is off until you restart the app. A model check found damaged "
+    "files after analysis had started in this session, and repairing the files "
+    "does not turn analysis back on here. Close and reopen the app to check the "
+    "models again and load them fresh."
+)
+
+
+class AnalysisSessionBlockedError(AnalysisUnavailableError):
+    """Analysis was requested after a mid-session corruption finding (H2)."""
+
+    def __init__(self) -> None:
+        super().__init__(SESSION_BLOCK_MESSAGE)
+        self.code = "analysis_session_blocked"
+        self.message = SESSION_BLOCK_MESSAGE
+
+
+class ModelsNotReadyError(AnalysisUnavailableError):
     """Analysis was requested while a required local model is not ready."""
 
     def __init__(self, not_ready: tuple[str, ...]) -> None:
