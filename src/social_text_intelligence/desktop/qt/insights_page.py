@@ -5,7 +5,6 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLineEdit,
@@ -42,6 +41,7 @@ from ..insights_view import (
     NoteView,
     build_insights_view,
 )
+from .components import BarGrid, Card, Combo, SplitRow
 from .platform import DesktopPlatform
 from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
 
@@ -71,14 +71,14 @@ VIEW_FIELD_WIDGETS = {
 }
 
 
-def _combo(name: str, accessible: str) -> QComboBox:
-    combo = QComboBox()
+def _combo(name: str, accessible: str) -> Combo:
+    combo = Combo()
     combo.setObjectName(name)
     combo.setAccessibleName(accessible)
     return combo
 
 
-def _fill(combo: QComboBox, choices: tuple[tuple[str, str], ...], value: str) -> None:
+def _fill(combo: Combo, choices: tuple[tuple[str, str], ...], value: str) -> None:
     """Set a combo's items and selection without sending change signals."""
 
     combo.blockSignals(True)
@@ -107,16 +107,28 @@ class GroupCardWidget(QFrame):
         self.setProperty("role", "card")
         self.setAccessibleName(view.accessible_name)
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 12, 16, 14)
+        layout.setSpacing(8)
         layout.addWidget(label(view.heading, role="title"))
         add_all(layout, label(view.context_line), label(view.failed_line, role="muted"))
         if view.sample_line:
             warning = label(f"◆ {view.sample_line}")
             warning.setObjectName("sample-warning")
             layout.addWidget(warning)
-        for row in view.rows:
-            line = label(f"{row.label}: {row.count_text} · {row.percent_text}")
-            line.setObjectName("metric-row")
-            layout.addWidget(line)
+        bars = BarGrid(view.tone if view.rows and view.rows[0].emphasized else "quiet")
+        bars.setObjectName("metric-bars")
+        bars.set_rows(
+            [
+                (
+                    row.label,
+                    row.fraction if row.emphasized else 0.0,
+                    f"{row.count_text} · {row.percent_text}",
+                    "",
+                )
+                for row in view.rows
+            ]
+        )
+        layout.addWidget(bars)
         if view.review_line:
             layout.addWidget(label(view.review_line, role="muted"))
         if view.language_line:
@@ -206,12 +218,10 @@ class InsightsPage(QWidget):
         scroll.setWidget(body)
         outer.addWidget(scroll)
         layout = QVBoxLayout(body)
+        layout.setContentsMargins(28, 22, 28, 28)
+        layout.setSpacing(16)
 
-        self.back_button = QPushButton("← Project")
-        self.back_button.setObjectName("insights-back")
-        self.back_button.setAccessibleName("Back to the project")
-        self.back_button.clicked.connect(self._back)
-        self.title = label("Insights", role="headline")
+        self.title = label("Insights · compare", role="headline")
         self.title.setObjectName("insights-title")
         self.title.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.notice = NoticeBox()
@@ -223,9 +233,8 @@ class InsightsPage(QWidget):
         self.tabs.addTab("Group insights")
         self.tabs.addTab("Notes and cases")
         self._pages = (self._build_view_tab(), self._build_notes_tab())
-        layout.addWidget(self.back_button, 0, Qt.AlignmentFlag.AlignLeft)
         add_all(layout, self.title, self.notice)
-        layout.addWidget(self.tabs, 0, Qt.AlignmentFlag.AlignLeft)
+        self.tabs.setVisible(False)  # the sidebar chooses the view; kept for the API
         for page in self._pages:
             layout.addWidget(page)
         layout.addStretch(1)
@@ -240,8 +249,11 @@ class InsightsPage(QWidget):
     def _build_view_tab(self) -> QWidget:
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(0, 0, 0, 0)
         controls = frame("panel")
         controls_layout = QVBoxLayout(controls)
+        controls_layout.setContentsMargins(16, 14, 16, 16)
+        controls_layout.setSpacing(6)
         self.grouping_combo = _combo("grouping", "Trusted grouping")
         self.perspective_combo = _combo("perspective", "Perspective")
         self.metric_combo = _combo("metric", "Metric")
@@ -278,10 +290,8 @@ class InsightsPage(QWidget):
             ("From date", self.date_from_edit),
             ("To date", self.date_to_edit),
         ):
-            row = QHBoxLayout()
-            row.addWidget(label(caption, role="muted", wrap=False))
-            row.addWidget(widget, 1)
-            controls_layout.addLayout(row)
+            controls_layout.addWidget(label(caption, role="muted"))
+            controls_layout.addWidget(widget)
         add_all(controls_layout, self.compare_box, self.group_list, self.group_hint)
         add_all(controls_layout, self.field_error)
         controls_layout.addWidget(self.apply_button, 0, Qt.AlignmentFlag.AlignLeft)
@@ -306,13 +316,22 @@ class InsightsPage(QWidget):
         export_row.addWidget(self.export_button)
         export_row.addStretch(1)
 
-        add_all(layout, controls, self.language_box)
-        add_all(layout, self.filters_line, self.definition, self.caution)
-        layout.addLayout(self.cards_box)
-        add_all(layout, self.limitations, self.provenance)
-        add_all(layout, self.records_box, self.native_box)
-        layout.addLayout(export_row)
-        layout.addWidget(label(EXPORT_NOTE, role="muted"))
+        main = QWidget()
+        main_layout = QVBoxLayout(main)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(14)
+        add_all(main_layout, self.language_box)
+        add_all(main_layout, self.filters_line, self.definition, self.caution)
+        self.cards_box.setSpacing(14)
+        main_layout.addLayout(self.cards_box)
+        add_all(main_layout, self.limitations, self.provenance)
+        export_card = Card("EXPORT")
+        add_all(export_card.layout_, self.records_box, self.native_box)
+        export_card.layout_.addLayout(export_row)
+        export_card.add(label(EXPORT_NOTE, role="muted"))
+        main_layout.addWidget(export_card)
+        main_layout.addStretch(1)
+        layout.addWidget(SplitRow(controls, main, side_width=330))
 
         self.grouping_combo.activated.connect(self._grouping_changed)
         self.perspective_combo.activated.connect(self._perspective_changed)
@@ -439,11 +458,20 @@ class InsightsPage(QWidget):
         self.select_button.clicked.connect(lambda: self._controller.select_cases())
         return tab
 
+    def show_view(self, index: int) -> None:
+        """Show the group view (0) or the notes and cases (1)."""
+
+        self.tabs.setCurrentIndex(index)
+
     def _show_tab(self, *_: object) -> None:
         """Show the chosen page; the other one takes no space."""
 
+        current = self.tabs.currentIndex()
         for index, page in enumerate(self._pages):
-            page.setVisible(index == self.tabs.currentIndex())
+            page.setVisible(index == current)
+        self.title.setText(
+            "Insights · compare" if current == 0 else "Insights · notes & cases"
+        )
 
     # -- rendering ------------------------------------------------------------
 
@@ -771,10 +799,6 @@ class InsightsPage(QWidget):
         if not self._controller.state.has_unsaved_changes:
             return True
         return self._platform.confirm(self, DISCARD_TITLE, DISCARD_TEXT)
-
-    def _back(self) -> None:
-        if self._confirmed_discard():
-            self._controller.close()
 
     def _open_case(self, row: int) -> None:
         """Open a case in Review, unless something is running or the note is unsaved."""

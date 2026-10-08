@@ -116,6 +116,8 @@ class MetricRowView:
     label: str
     count_text: str
     percent_text: str
+    fraction: float = 0.0  # the rate, for a bar; the written text carries the value
+    emphasized: bool = True  # False when the sample is too small to stress a rate
 
 
 @dataclass(frozen=True, slots=True)
@@ -127,6 +129,7 @@ class GroupCardView:
     rows: tuple[MetricRowView, ...]
     review_line: str
     language_line: str = ""
+    tone: str = "ai"  # "ai" for the model's labels, "human" for the person's
 
     @property
     def accessible_name(self) -> str:
@@ -234,6 +237,8 @@ def _card(summary: GroupMetricSummary, *, ai_view: bool) -> GroupCardView:
             f"{value.rate * 100:.1f}%"
             if sample.emphasize_percentages
             else "Percentage de-emphasized",
+            value.rate,
+            sample.emphasize_percentages,
         )
         for value in summary.values
     )
@@ -264,6 +269,7 @@ def _card(summary: GroupMetricSummary, *, ai_view: bool) -> GroupCardView:
             if summary.language_attention_count
             else ""
         ),
+        tone="ai" if ai_view else "human",
     )
 
 

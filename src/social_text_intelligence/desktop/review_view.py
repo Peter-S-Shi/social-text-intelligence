@@ -18,10 +18,10 @@ from ..application.review_workflow import (
     ReviewJudgment,
     ReviewRecord,
     ReviewSnapshot,
-    ReviewSummary,
 )
 from ..contracts import AnalysisReport, EmotionLabel, SentimentLabel
 from .review import ReviewActivity, ReviewNotice, ReviewState
+from .scores import ScoreSetView, build_scores
 
 AGREEMENT_NOTE = (
     "Agreement shows how often your judgment matched the AI's label. It is not "
@@ -54,11 +54,9 @@ JUDGMENT_WORDS = (
 class AiRecordView:
     heading: str
     sentiment_line: str
-    sentiment_scores: tuple[str, ...]
     emotion_line: str
     secondary_line: str
-    emotion_scores: tuple[str, ...]
-    native_scores: tuple[str, ...]
+    scores: ScoreSetView
     provenance: tuple[str, ...]
 
     @property
@@ -106,8 +104,6 @@ class ReviewView:
     position_line: str
     progress_line: str
     failed_line: str
-    agreement_lines: tuple[str, ...]
-    agreement_note: str
     record: RecordView | None
     empty_line: str
     previous_enabled: bool
@@ -134,14 +130,6 @@ def filters_from(status: str, sentiment: str, emotion: str) -> ReviewFilters:
     )
 
 
-def _percent(part: int, whole: int) -> str:
-    return f"{part / whole * 100:.1f}%" if whole else "n/a"
-
-
-def _scores(items: tuple[tuple[str, float], ...]) -> tuple[str, ...]:
-    return tuple(f"{label}: {score:.3f}" for label, score in items)
-
-
 def _ai_view(report: AnalysisReport) -> AiRecordView:
     sentiment, emotion = report.sentiment, report.emotion
     secondary = ", ".join(label.value for label in emotion.secondary_emotions)
@@ -151,20 +139,12 @@ def _ai_view(report: AnalysisReport) -> AiRecordView:
             f"{sentiment.label.value.capitalize()} · confidence "
             f"{sentiment.confidence * 100:.1f}%"
         ),
-        sentiment_scores=_scores(
-            tuple((item.label.value, item.score) for item in sentiment.scores)
-        ),
         emotion_line=(
             f"{emotion.dominant_emotion.value.capitalize()} · confidence "
             f"{emotion.confidence * 100:.1f}% · threshold ≥ {emotion.threshold:.2f}"
         ),
         secondary_line=f"Secondary emotions: {secondary or 'none'}",
-        emotion_scores=_scores(
-            tuple((item.label.value, item.score) for item in emotion.scores)
-        ),
-        native_scores=_scores(
-            tuple((item.label, item.score) for item in emotion.native_scores)
-        ),
+        scores=build_scores(report),
         provenance=(
             f"Sentiment model: {sentiment.provider.model_name}@"
             f"{sentiment.provider.revision}",
@@ -237,23 +217,6 @@ def _record_view(state: ReviewState, record: ReviewRecord) -> RecordView:
     )
 
 
-def _agreement(summary: ReviewSummary) -> tuple[str, ...]:
-    sentiment, emotion = summary.sentiment, summary.emotion
-    if sentiment.definitive_count == 0 and emotion.definitive_count == 0:
-        return ("No reviews yet that can be compared with the AI.",)
-    return (
-        f"Sentiment: you agreed with the AI on {sentiment.agreement_count} of "
-        f"{sentiment.definitive_count} definitive reviews "
-        f"({_percent(sentiment.agreement_count, sentiment.definitive_count)}).",
-        f"Dominant emotion: agreed on {emotion.dominant_agreement_count} of "
-        f"{emotion.definitive_count} "
-        f"({_percent(emotion.dominant_agreement_count, emotion.definitive_count)}). "
-        f"Exact emotion set: agreed on {emotion.set_agreement_count} of "
-        f"{emotion.definitive_count} "
-        f"({_percent(emotion.set_agreement_count, emotion.definitive_count)}).",
-    )
-
-
 def _progress(snapshot: ReviewSnapshot) -> tuple[str, str]:
     progress = snapshot.summary.progress
     line = (
@@ -300,8 +263,6 @@ def build_review_view(state: ReviewState) -> ReviewView | None:
         position_line=_position(snapshot),
         progress_line=progress_line,
         failed_line=failed_line,
-        agreement_lines=_agreement(snapshot.summary),
-        agreement_note=AGREEMENT_NOTE,
         record=None if record is None else _record_view(state, record),
         empty_line=NO_ROWS_LINE if record is None else "",
         previous_enabled=idle and snapshot.previous_row is not None,

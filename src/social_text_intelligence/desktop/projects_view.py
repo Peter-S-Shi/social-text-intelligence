@@ -103,10 +103,6 @@ class ProjectDetailView:
     column_choices: tuple[str, ...]
     choose_enabled: bool
     show_analyze: bool
-    show_review: bool
-    review_enabled: bool
-    show_insights: bool
-    insights_enabled: bool
     analyze_label: str
     analyze_enabled: bool
     progress: ProjectProgressView | None
@@ -182,8 +178,6 @@ def build_detail_view(
     if details is None:
         return None
     ready = details.phase is ProjectPhase.READY
-    # a project in which every row failed has nothing to review
-    analyzed = details.phase is ProjectPhase.ANALYZED and bool(details.analyzed_rows)
     block = build_analysis_block(models, availability) if ready else None
     busy = state.busy
     language = describe_summary(details.language) if details.language else None
@@ -196,10 +190,6 @@ def build_detail_view(
         ),
         choose_enabled=not busy,
         show_analyze=ready,
-        show_review=analyzed,
-        review_enabled=analyzed and not busy,
-        show_insights=analyzed,
-        insights_enabled=analyzed and not busy,
         analyze_label=f"Analyze {details.valid_rows} rows",
         analyze_enabled=(
             ready
