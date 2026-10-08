@@ -231,6 +231,90 @@ def test_a_row_opens_in_review_by_button_or_enter_and_a_failed_row_does_not(
     assert shell.window.nav_buttons["Review"].isChecked()
 
 
+def test_filter_keeps_the_same_selected_record_after_its_position_changes(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = opened(make_shell, tmp_path)
+    page = shell.window.projects_page
+    results = page.results_page
+    results.table.selectRow(4)  # r5 is the first negative record
+
+    results.sentiment_filter.setCurrentIndex(
+        results.sentiment_filter.findData("negative")
+    )
+    results.sentiment_filter.activated.emit(results.sentiment_filter.currentIndex())
+
+    assert results.table.currentRow() == 0
+    assert cell(results.table, results.table.currentRow(), 1) == "r5"
+    assert results.review_button.isEnabled()
+    results.review_button.click()
+    assert page.stack.currentWidget() is page.review_page
+    assert "Row 5" in text_of(page.review_page.record_title)
+
+
+def test_filter_keeps_a_selected_record_when_its_position_is_unchanged(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = opened(make_shell, tmp_path)
+    page = shell.window.projects_page
+    results = page.results_page
+    results.table.selectRow(1)  # r2 remains the second analysed row
+
+    results.status_filter.buttons["ok"].click()
+
+    assert results.table.currentRow() == 1
+    assert cell(results.table, 1, 1) == "r2"
+    results.review_button.click()
+    assert "Row 2" in text_of(page.review_page.record_title)
+
+
+def test_filter_clears_selection_when_the_record_is_no_longer_shown(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = opened(make_shell, tmp_path)
+    page = shell.window.projects_page
+    results = page.results_page
+    results.table.selectRow(0)  # r1 is positive
+
+    results.sentiment_filter.setCurrentIndex(
+        results.sentiment_filter.findData("negative")
+    )
+    results.sentiment_filter.activated.emit(results.sentiment_filter.currentIndex())
+
+    assert results.table.rowCount() == 7
+    assert not results.table.selectionModel().selectedRows()
+    assert results.table.currentRow() == -1
+    assert not results.review_button.isEnabled()
+    results.review_button.click()
+    assert page.stack.currentWidget() is page.results_page
+
+
+def test_selection_does_not_carry_into_another_project(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = opened(make_shell, tmp_path)
+    page = shell.window.projects_page
+    results = page.results_page
+    results.table.selectRow(4)
+    assert results.review_button.isEnabled()
+
+    shell.window.nav_buttons["Projects"].click()
+    other_csv = tmp_path / "other.csv"
+    other_csv.write_bytes(insights_csv())
+    shell.platform.csv_file = other_csv
+    shell.button(page, "Import CSV…").click()
+    page.analyze_button.click()
+
+    assert page.stack.currentWidget() is results
+    assert results.table.rowCount() == 26
+    assert not results.table.selectionModel().selectedRows()
+    assert results.table.currentRow() == -1
+    assert not results.review_button.isEnabled()
+    results.table.selectRow(5)
+    results.review_button.click()
+    assert "Row 6" in text_of(page.review_page.record_title)
+
+
 def test_export_asks_where_and_writes_nothing_when_cancelled(
     make_shell: Any, tmp_path: Path
 ) -> None:

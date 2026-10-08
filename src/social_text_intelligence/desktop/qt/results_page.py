@@ -77,6 +77,7 @@ class ResultsPage(Page):
         self._controller = controller
         self._platform = platform
         self._rows: tuple[TableRowView, ...] = ()
+        self._shown_project_id: str | None = None
         self._syncing = False
 
         self.header = PageHeader("Results")
@@ -215,6 +216,10 @@ class ResultsPage(Page):
             widget.setVisible(analysed)
         self.empty.setVisible(not analysed)
         if view is None:
+            self.table.selectionModel().clear()
+            self._rows = ()
+            self._shown_project_id = state.project_id
+            self._sync_buttons()
             self._show_empty(state)
             return
         self._syncing = True
@@ -270,8 +275,14 @@ class ResultsPage(Page):
         self.shown_line.setText(view.shown_line)
         self.table_empty.setText(view.empty_line)
         self.table_empty.setVisible(bool(view.empty_line))
+        selected = self.table.selectionModel().selectedRows()
+        selected_record_row = None
+        if self._shown_project_id == self._controller.state.project_id and selected:
+            index = selected[0].row()
+            if 0 <= index < len(self._rows):
+                selected_record_row = self._rows[index].row
         self._rows = view.rows
-        previous = self.table.currentRow()
+        self._shown_project_id = self._controller.state.project_id
         self.table.set_rows(
             [
                 (
@@ -287,8 +298,11 @@ class ResultsPage(Page):
             ],
             failed=[not row.can_review for row in view.rows],
         )
-        if self._rows and 0 <= previous < len(self._rows):
-            self.table.selectRow(previous)
+        self.table.selectionModel().clear()
+        for index, row in enumerate(self._rows):
+            if row.row == selected_record_row:
+                self.table.selectRow(index)
+                break
         self.export_button.setEnabled(view.export_enabled)
         self.native_box.setEnabled(view.export_enabled)
         self.native_box.setText(view.native_label)
