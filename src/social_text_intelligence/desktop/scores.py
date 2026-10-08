@@ -65,8 +65,9 @@ def build_scores(report: AnalysisReport) -> ScoreSetView:
         for item in emotion.scores
     )
     rule = (
-        f"A compact emotion is active at or above {emotion.threshold:.2f}. The "
-        "dominant emotion is the highest active one; the others active are secondary."
+        "A compact emotion is active at or above the threshold "
+        f"({emotion.threshold:.2f}). The dominant emotion is the highest active one; "
+        "the others active are secondary."
     )
     fell_back = emotion.dominant_emotion is EmotionLabel.NEUTRAL and not any(
         item.label is not EmotionLabel.NEUTRAL and item.score >= emotion.threshold

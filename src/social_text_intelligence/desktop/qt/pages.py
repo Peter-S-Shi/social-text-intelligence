@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPlainTextEdit,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -84,6 +85,9 @@ class AnalyzePage(Page):
         self.analyze_button = QPushButton("Analyze")
         self.analyze_button.setObjectName("analyze-button")
         self.analyze_button.setProperty("primary", True)
+        self.analyze_button.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.analyze_button.clicked.connect(
             lambda: self.analyze_requested.emit(self.editor.toPlainText())
         )

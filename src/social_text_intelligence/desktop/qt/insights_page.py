@@ -348,8 +348,11 @@ class InsightsPage(QWidget):
     def _build_notes_tab(self) -> QWidget:
         tab = QWidget()
         layout = QVBoxLayout(tab)
+        layout.setContentsMargins(0, 0, 0, 0)
         form = frame("human")
         form_layout = QVBoxLayout(form)
+        form_layout.setContentsMargins(16, 14, 16, 16)
+        form_layout.setSpacing(6)
         form_layout.addWidget(
             label("Add a context note (written by you)", role="title")
         )
@@ -435,12 +438,21 @@ class InsightsPage(QWidget):
         self.cases_empty = label()
         self.cases_empty.setObjectName("cases-empty")
 
-        layout.addWidget(form)
-        layout.addWidget(label("Your context notes", role="title"))
-        add_all(layout, self.no_notes)
-        layout.addLayout(self.notes_box)
-        add_all(layout, cases_panel, label(CASES_NOTE, role="muted"), self.cases_empty)
-        layout.addLayout(self.cases_box)
+        main = QWidget()
+        main_layout = QVBoxLayout(main)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(14)
+        main_layout.addWidget(label("Your context notes", role="title"))
+        add_all(main_layout, self.no_notes)
+        self.notes_box.setSpacing(12)
+        main_layout.addLayout(self.notes_box)
+        add_all(
+            main_layout, cases_panel, label(CASES_NOTE, role="muted"), self.cases_empty
+        )
+        self.cases_box.setSpacing(14)
+        main_layout.addLayout(self.cases_box)
+        main_layout.addStretch(1)
+        layout.addWidget(SplitRow(form, main, side_width=360))
 
         self.association_combo.activated.connect(self._association_changed)
         self.value_combo.currentTextChanged.connect(self._note_changed)
