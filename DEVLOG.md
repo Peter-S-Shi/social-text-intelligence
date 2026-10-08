@@ -29,6 +29,10 @@ Decisions worth keeping:
   write never leaves a half-written file, and the message carries no path.
 - Unsaved changes are confirmed before anything that would drop them: navigation,
   filters, leaving the page, switching sidebar pages, and closing the window.
+  Confirming the sidebar prompt must also discard: an external review found that
+  the first version only switched the page, so the draft came back on return. The
+  controller now has an explicit `discard_changes()` that restores the saved review
+  and keeps the position.
 
 Process notes: Qt's `clicked(bool)` was first taken as the `advance` argument by
 a bound method, so saved notices silently disappeared; the buttons now use
