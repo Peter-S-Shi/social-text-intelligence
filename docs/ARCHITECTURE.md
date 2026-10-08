@@ -237,6 +237,52 @@ failure to a fixed code. Nothing in either module logs, and errors carry no
 paths, URLs, or server text. Batch analysis treats `ModelsNotReadyError` as a
 whole-run setup failure, so the lease is cancelled and nothing is committed.
 
+## V2 desktop layer (M5.2)
+
+`desktop/` is the native PySide6 / Qt Widgets shell. Only `desktop/qt/` imports
+Qt; every other module in `desktop/` is Qt-free and unit-tested without a display.
+Dependencies point inward: `desktop` imports `application` and `contracts`, and the
+composition root (`desktop/composition.py`, with the entry point `qt/app.py`) is the
+only place that imports `infrastructure`. The desktop layer never imports SQLite,
+Transformers, PyTorch, an HTTP client, or Flask, and nothing in the inner layers
+imports `desktop`. `tests/desktop/test_boundaries.py` enforces these rules from the
+source and also pins the Qt modules in use to `QtCore`, `QtGui`, and `QtWidgets`
+(imported-module audit; see `THIRD_PARTY_NOTICES.md`).
+
+- `controller.py`: `ProvisioningController` owns one operation at a time and routes
+  Download, Stop, Discard, folder inspect and import, and Verify to the
+  `ModelProvisioning` port. It holds no provisioning rules of its own: results,
+  error codes, and the fresh status come from the port.
+- **Threading.** Every long call (`download`, `import_folder`, `verify`,
+  `inspect_folder`, `discard_partial_downloads`, analysis, and the project listing)
+  runs through one `JobRunner`. `qt/runner.py` runs work on a worker thread and
+  returns results through a single queued signal to a `QObject` slot on the UI
+  thread, so a widget is never touched from a worker (the deadlock found in
+  Architecture spike A). Progress is coalesced: the worker keeps the latest value
+  and posts at most one pending UI update. Stop sets a thread-safe flag; Verify is
+  not cancellable, so no Stop is offered for it. Closing the window stops a
+  stoppable operation and waits; it refuses to close while Verify runs.
+- `gate.py`: `AnalysisGate` wraps the analysis gateway so every analysis entry point
+  passes one gate. It implements owner decision H2: if an explicit Verify confirms
+  damage after the analysis service has loaded, all further analysis is blocked for
+  the rest of the process; repairing the files does not lift it, and a restart
+  re-checks readiness and loads the verified models fresh. Nothing is unloaded or
+  reloaded in-process. A finding made before the service loaded is not a session
+  block: readiness alone decides, so repairing makes analysis available again.
+- `panel.py`, `copy.py`, `formatting.py`: pure view models and wording. The panel
+  states map to the M5.1 design (chips pair an icon with a word, the backend's
+  fixed error messages are shown verbatim with a title, a code, and recovery
+  actions, and the two flagged messages are replaced by code).
+- `analysis.py`: the "Analyze one text" page controller; an earlier result stays on
+  screen after a session block.
+- `qt/`: widgets that render the view models and route action ids back to the
+  controller. The same panel serves the setup window and the Models window. The
+  shell is deliberately minimal: a sidebar with persistent Models status, a
+  Projects page that lists existing projects, and Analyze one text.
+
+Flask remains a frozen compatibility surface and is not a desktop dependency. The
+desktop uses system font fallbacks; web fonts from the prototypes are not bundled.
+
 ## Intended layers
 
 Future milestones should preserve these boundaries:

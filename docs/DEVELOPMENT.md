@@ -31,6 +31,21 @@ python -m pip check
 The default suite does not require model downloads. GitHub Actions runs the
 test, lint, type-check, and compile suite without downloading model weights.
 
+## Desktop shell tests
+
+The `dev` extra installs PySide6-Essentials, so the Qt smoke tests under
+`tests/desktop/` run headless (the suite sets `QT_QPA_PLATFORM=offscreen` when it
+is unset). Without Qt installed they skip. Set `STI_REQUIRE_QT=1` to make a Qt
+import failure an error instead, as CI does after installing the Qt runtime
+libraries on Ubuntu (`libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+libglib2.0-0`). Run the shell itself with `sti-desktop` after
+`python -m pip install -e ".[desktop,sentiment,emotion]"`.
+
+The presentation logic (controller, view models, analysis gate) is Qt-free and is
+tested against a fake `ModelProvisioning`; a smaller set of tests drives the real
+provisioner with a synthetic manifest and an in-memory transport. None of them
+touch the network or real model weights.
+
 ## Optional real-model validation
 
 To validate the approved immutable revision locally:

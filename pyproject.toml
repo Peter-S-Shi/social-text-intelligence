@@ -32,7 +32,15 @@ emotion = [
 web = [
   "flask>=3.1,<4",
 ]
+# Native desktop shell. The app imports only the Qt Core, Gui, and Widgets modules
+# (a test enforces this); PySide6-Essentials carries more than those, so the
+# imported set, not the wheel, is what the licence audit tracks. Qt is LGPL-3.0:
+# see THIRD_PARTY_NOTICES.md. The pre-distribution LGPL compliance gate is still open.
+desktop = [
+  "PySide6-Essentials>=6.11,<7",
+]
 dev = [
+  "PySide6-Essentials>=6.11,<7",
   "flask>=3.1,<4",
   "mypy>=1.10,<2",
   "pytest>=8,<9",
@@ -42,6 +50,9 @@ dev = [
 [project.scripts]
 sti = "social_text_intelligence.cli:main"
 sti-web = "social_text_intelligence.interface.app:main"
+
+[project.gui-scripts]
+sti-desktop = "social_text_intelligence.desktop.qt.app:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

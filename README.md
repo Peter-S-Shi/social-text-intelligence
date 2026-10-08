@@ -17,9 +17,9 @@ baseline.
 > foundation (M3) and persistent project foundation (M4) milestones are complete
 > on `main`. M5 is active: M5.0, the
 > [model provisioning contract](docs/MODEL_PROVISIONING.md) and its UI-neutral
-> foundation, and M5.1 (provisioning UI/UX design) are complete, and M5.2 (the
-> minimal desktop shell and provisioning UI) is next. See
-> [Project Status](PROJECT_STATUS.md).
+> foundation, M5.1 (provisioning UI/UX design), and M5.2 (the minimal native
+> desktop shell and provisioning UI) are complete, and M5.3 (the native project
+> workflow) is next. See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
 > Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,
@@ -191,6 +191,22 @@ revisions are cached. On Windows, after the environment and both models are
 installed, double-click `start_social_text_intelligence.bat` in the project
 folder to start the same offline, loopback-only server and open the browser
 automatically.
+
+Run the native desktop shell (development preview, Windows only for now):
+
+```text
+python -m pip install -e ".[desktop,sentiment,emotion]"
+sti-desktop
+```
+
+On launch the shell checks the two approved models and opens a setup window if
+either is missing. Nothing downloads until you press a button that states its
+size; you can also import a models folder you already have, which is checked
+read-only before anything is copied. The sidebar always shows the Models status.
+This milestone ships only the provisioning experience plus a minimal Projects
+list and Analyze one text (which needs the `sentiment` and `emotion` extras
+installed above); importing CSV files into projects arrives later. The
+desktop shell uses Qt (LGPL-3.0); see [Third-party notices](THIRD_PARTY_NOTICES.md).
 
 Run the dependency-free test suite:
 
