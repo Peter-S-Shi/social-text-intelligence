@@ -73,7 +73,7 @@ def text_of(widget: Any) -> str:
 def analysed_shell(
     make_shell: Any, tmp_path: Path, rows: int = 4, gateway: Any = None
 ) -> Shell:
-    shell = make_shell(FakeProvisioning(current=READY), gateway=gateway)
+    shell: Shell = make_shell(FakeProvisioning(current=READY), gateway=gateway)
     folder = tmp_path / "csv"
     folder.mkdir(exist_ok=True)
     path = folder / "tickets.csv"
@@ -462,7 +462,7 @@ def test_the_review_form_is_keyboard_operable_and_named(
     assert controls
     for control in controls:
         assert control.focusPolicy() != Qt.FocusPolicy.NoFocus, control.objectName()
-        assert control.accessibleName() or control.text(), control.objectName()  # type: ignore[attr-defined]
+        assert control.accessibleName() or control.text(), control.objectName()
     # the AI values are announced as one named, read-only record
     assert "AI record" in review.ai.accessibleName()
     assert "Your judgment" in review.human.accessibleName()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from functools import cache
+from typing import Any
 
 from social_text_intelligence.application.projects import (
     BatchWorkspace,
@@ -130,7 +131,7 @@ def rich_workspace() -> BatchWorkspace:
         RICH_CSV.encode(), max_bytes=100_000, max_rows=50, max_text_length=500
     )
     assert use_cases.analyze_workspace(token) is True
-    common = {
+    common: dict[str, Any] = {
         "review_filter": "all",
         "sentiment_filter": "all",
         "emotion_filter": "all",

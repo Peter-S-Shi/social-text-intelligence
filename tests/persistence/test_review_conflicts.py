@@ -40,7 +40,7 @@ class RacingRepository(SqliteProjectRepository):
 
     def __init__(self, root: Path) -> None:
         super().__init__(AppDataLocations(root))
-        self.before_mutate: Callable[[], None] | None = None
+        self.before_mutate: Callable[[], object] | None = None
 
     def mutate(
         self,

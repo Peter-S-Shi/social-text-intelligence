@@ -45,9 +45,16 @@ def snapshot_of(root: Path, rows: int = 4) -> tuple[ReviewWorkflow, str]:
     return ReviewWorkflow(repository), project_id
 
 
-def state_for(snapshot: ReviewSnapshot, **changes: object) -> ReviewState:
-    base = ReviewState(project_id=snapshot.project_id, snapshot=snapshot)
-    return replace(base, **changes)
+def state_for(
+    snapshot: ReviewSnapshot,
+    *,
+    draft: ReviewDraft | None = None,
+    activity: ReviewActivity = ReviewActivity.IDLE,
+) -> ReviewState:
+    base = ReviewState(
+        project_id=snapshot.project_id, snapshot=snapshot, activity=activity
+    )
+    return base if draft is None else replace(base, draft=draft)
 
 
 def test_the_ai_record_and_the_human_judgment_are_separate_labelled_blocks(
