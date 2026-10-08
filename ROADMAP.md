@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: V2 Functional Development (M5).** V2 reopens the project from
+**Current phase: V2 Functional Development (M5) is complete (Functional Exit PASS); the next lifecycle phase is M6 — Full UI Integration / Polish.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -36,13 +36,14 @@ and unchanged. The Product Scope Gate (decisions in
 and the UI/IA Gate (decisions in [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md),
 2026-10-07) are all PASS. The V2 Application Foundation milestone (M3) and the
 V2 Persistent Project Foundation milestone (M4) are complete on `main`. **M5 —
-V2 Functional Development is active: M5.0 (Model Provisioner Function Contract &
+V2 Functional Development is complete: M5.0 (Model Provisioner Function Contract &
 Foundation), M5.1 (Model Provisioning UI/UX Design, Human Gate PASS), M5.2
 (Native Desktop Shell + Model Provisioning UI), M5.3 (Native Project
-Workflow), M5.4 (Native Human Review and Reviewed Export), and M5.5 (Native
-Insights, Context Notes, and Representative Cases) are complete, and M5.6
-(Language Detection and Unsupported-Language Warning) is the next development
-sub-milestone of the continuous Loop Engineering phase.**
+Workflow), M5.4 (Native Human Review and Reviewed Export), M5.5 (Native
+Insights, Context Notes, and Representative Cases), and M5.6 (Language
+Detection and Unsupported-Language Warning) are complete on `main`, and the M5
+Functional Exit audit is PASS (recorded in [Project Status](PROJECT_STATUS.md)).
+M6 — Full UI Integration / Polish is the next lifecycle phase.**
 The UI/IA Gate fixed the project-centred
 IA and strict feature boundary, retired Moderation Training and Support Triage
 from the V2 product surface (V1 `0.10.0` and history preserve them), and
@@ -72,10 +73,29 @@ persistent project, batch analysis with row progress and cancellation that
 commits nothing partial, and open and delete. M5.4 added human review beside the
 immutable AI record, stale-write protection for saved judgments, and the
 reviewed export. M5.5 added the native insights, context notes, and
-representative cases. M5.6 adds the one remaining approved V2 feature, language
-detection with an unsupported-language warning (V2-3); packaging, the formal
-accessibility audit, and the pre-distribution LGPL gate remain after it and
-each need their own scoping. The package version stays `0.10.0`.
+representative cases. M5.6 added the last gate-approved V2 addition, language
+detection with an unsupported-language warning (V2-3). The M5 Functional Exit
+audit then passed: V2-1 to V2-4 are implemented behind stable application
+contracts and reachable in the native desktop. Several V1 batch, score, and
+agreement detail views are not yet presented natively; they are recorded in
+Project Status as M6 inputs. Product hardening, the formal accessibility
+acceptance, the representative-domain evaluation, the pre-distribution LGPL
+gate, packaging, and release work remain separate later gates. V2 is not
+release-ready. The package version stays `0.10.0`.
+
+### M6 — Full UI Integration / Polish (next, not begun)
+
+Bounded to integrating the existing, already-approved behaviour that the native
+desktop does not yet present (listed in [Project Status](PROJECT_STATUS.md)
+as the Functional Exit inputs) over the existing use cases; interaction
+consistency across pages; visual polish within the fixed project-centred IA
+and the separation of the AI record from the human judgment; and
+accessibility-oriented UI improvements. It invents no product
+functionality. Product hardening, the formal accessibility acceptance, the
+representative-domain evaluation, the LGPL compliance gate, packaging, and
+release-candidate or distribution work are separate gates after M6, each with
+its own scope. M6's boundary and acceptance checks are defined when it
+starts.
 
 ## V1 final lifecycle phase (historical)
 
