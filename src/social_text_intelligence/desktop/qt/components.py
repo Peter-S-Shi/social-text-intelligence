@@ -360,7 +360,8 @@ class BarGrid(QWidget):
         self.meters = []
         for index, (name, fraction, text, note) in enumerate(rows):
             meter = BarMeter(fraction, self._tone)
-            meter.setAccessibleName(f"{name}: {text}")
+            spoken = f"{name}: {text}" + (f", {note}" if note else "")
+            meter.setAccessibleName(spoken)
             self.meters.append(meter)
             written = f"{text}  {note}" if note else text
             value = label(written, role="mono", wrap=False)

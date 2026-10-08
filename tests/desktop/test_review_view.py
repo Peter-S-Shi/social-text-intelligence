@@ -134,7 +134,7 @@ def test_correction_fields_appear_only_for_a_correct_judgment(tmp_path: Path) ->
     assert correcting.record.human.emotion_labels_visible
 
 
-def test_progress_and_agreement_use_honest_wording(tmp_path: Path) -> None:
+def test_progress_uses_honest_wording(tmp_path: Path) -> None:
     flow, project_id = snapshot_of(tmp_path, rows=4)
     snapshot = flow.open_review(project_id)
     assert snapshot.record is not None
@@ -146,23 +146,9 @@ def test_progress_and_agreement_use_honest_wording(tmp_path: Path) -> None:
     assert "1 of 4 reviewed" in view.progress_line
     assert "3 unreviewed" in view.progress_line
     assert "Record 1 of 4" in view.position_line
-    agreement = " ".join(view.agreement_lines)
-    assert "Sentiment" in agreement and "emotion" in agreement.lower()
-    assert "accuracy" not in agreement.lower()
+    # agreement itself lives on its own page (see test_agreement_view)
     assert "not accuracy" in AGREEMENT_NOTE.lower()
-    for forbidden in ("calibrat", "model quality", "performance"):
-        assert forbidden not in (agreement + AGREEMENT_NOTE).lower()
-
-
-def test_agreement_is_withheld_until_there_is_something_to_compare(
-    tmp_path: Path,
-) -> None:
-    flow, project_id = snapshot_of(tmp_path)
-
-    view = build_review_view(state_for(flow.open_review(project_id)))
-
-    assert view is not None
-    assert "no reviews yet" in " ".join(view.agreement_lines).lower()
+    assert not hasattr(view, "agreement_lines")
 
 
 def test_buttons_follow_the_queue_and_the_busy_state(tmp_path: Path) -> None:

@@ -86,7 +86,7 @@ def analysed_shell(make_shell: Any, tmp_path: Path) -> Shell:
 
 def start_insights(shell: Shell) -> Any:
     page = shell.window.projects_page
-    page.insights_button.click()
+    shell.window.nav_buttons["Insights · compare"].click()
     assert page.stack.currentWidget() is page.insights_page
     return page.insights_page
 
@@ -133,7 +133,7 @@ def fill_note(page: Any, **fields: str) -> None:
     page.importance_edit.setPlainText(values["importance"])
 
 
-def test_the_insights_button_appears_only_for_an_analysed_project(
+def test_the_insight_pages_are_offered_only_for_an_analysed_project(
     make_shell: Any, tmp_path: Path
 ) -> None:
     shell: Shell = make_shell(FakeProvisioning(current=READY))
@@ -142,11 +142,15 @@ def test_the_insights_button_appears_only_for_an_analysed_project(
     shell.platform.csv_file = path
     page = shell.window.projects_page
     shell.button(page, "Import CSV…").click()
-    assert not page.insights_button.isVisibleTo(page)  # ready, not analysed yet
+    nav = shell.window.nav_buttons
+    for name in ("Insights · compare", "Insights · notes & cases"):
+        assert not nav[name].isEnabled()  # ready, not analysed yet
+        assert "Analyze the project first" in nav[name].toolTip()
 
     page.analyze_button.click()
 
-    assert page.insights_button.isVisibleTo(page) and page.insights_button.isEnabled()
+    assert nav["Insights · compare"].isEnabled()
+    assert nav["Insights · notes & cases"].isEnabled()
 
 
 def test_opening_shows_the_default_view_with_denominators_and_warnings(
@@ -155,7 +159,7 @@ def test_opening_shows_the_default_view_with_denominators_and_warnings(
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
 
-    assert text_of(insights.title) == "Insights"
+    assert text_of(insights.title) == "Insights · compare"
     assert insights.tabs.tabText(0) == "Group insights"
     assert insights.tabs.tabText(1) == "Notes and cases"
     (card,) = cards(insights)
@@ -253,7 +257,7 @@ def test_a_context_note_is_added_listed_as_human_text_and_deleted(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     assert insights.no_notes.isVisibleTo(insights)
 
     fill_note(insights)
@@ -291,7 +295,7 @@ def test_an_invalid_note_shows_the_field_message_and_keeps_the_draft(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     fill_note(insights, value="not a topic")
 
     insights.add_note_button.click()
@@ -307,7 +311,7 @@ def test_cases_show_why_they_were_chosen_with_ai_and_human_apart(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
 
     choose(insights.mode_combo, "highest_ai_score")
     choose(insights.example_emotion_combo, EmotionLabel.ANGER.value)
@@ -332,7 +336,7 @@ def test_cases_show_why_they_were_chosen_with_ai_and_human_apart(
 def test_a_case_opens_in_review_at_its_row(make_shell: Any, tmp_path: Path) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     choose(insights.mode_combo, "highest_ai_score")
     insights.select_button.click()
     page = shell.window.projects_page
@@ -350,7 +354,7 @@ def test_opening_a_case_in_review_asks_before_dropping_an_unsaved_note(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     choose(insights.mode_combo, "highest_ai_score")
     insights.select_button.click()
     fill_note(insights)
@@ -374,9 +378,9 @@ def test_review_changes_show_up_in_the_human_view(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     page = shell.window.projects_page
-    page.review_button.click()
+    shell.window.nav_buttons["Review"].click()
     page.review_page.accept_button.click()  # r1 reviewed
-    page.review_page.back_button.click()
+    shell.window.nav_buttons["Insights · compare"].click()
 
     insights = start_insights(shell)
     choose(insights.grouping_combo, "topic")
@@ -441,7 +445,7 @@ def test_an_unsaved_note_is_confirmed_before_leaving_and_really_discarded(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     fill_note(insights)
     window = shell.window
 
@@ -465,7 +469,7 @@ def test_closing_the_window_asks_before_dropping_an_unsaved_note(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     fill_note(insights)
 
     shell.platform.confirmed = False
@@ -485,16 +489,16 @@ def test_viewing_noting_and_exporting_never_change_results_or_reviews(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     page = shell.window.projects_page
-    page.review_button.click()
+    shell.window.nav_buttons["Review"].click()
     page.review_page.accept_button.click()
-    page.review_page.back_button.click()
+    shell.window.nav_buttons["Insights · compare"].click()
     before = stored(tmp_path, shell.window.projects.state.current.summary.project_id)  # type: ignore[union-attr]
     insights = start_insights(shell)
 
     insights.compare_box.setChecked(True)
     check_only(insights.group_list, "shipping", "billing")
     insights.apply_button.click()
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     fill_note(insights)
     insights.add_note_button.click()
     shell.platform.save_target = tmp_path / "i.csv"
@@ -516,7 +520,7 @@ def test_the_insights_controls_are_keyboard_operable_and_named(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     controls: list[Any] = [
         *insights.findChildren(QPushButton),
         *insights.findChildren(QCheckBox),
@@ -540,7 +544,7 @@ def test_a_space_typed_in_the_note_value_is_kept(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
 
     insights.value_combo.setEditText("my ")
 
@@ -553,7 +557,7 @@ def test_a_case_cannot_open_in_review_while_the_insights_are_busy(
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
     insights = start_insights(shell)
-    insights.tabs.setCurrentIndex(1)
+    shell.window.nav_buttons["Insights · notes & cases"].click()
     insights.select_button.click()
     page = shell.window.projects_page
     controller = shell.window.insights

@@ -87,7 +87,7 @@ def analysed_shell(
 
 def start_review(shell: Shell) -> Any:
     page = shell.window.projects_page
-    page.review_button.click()
+    shell.window.nav_buttons["Review"].click()
     assert page.stack.currentWidget() is page.review_page
     return page.review_page
 
@@ -112,7 +112,7 @@ def reload_in_fresh_shell(make_shell: Any, tmp_path: Path) -> Any:
     return start_review(shell)
 
 
-def test_the_review_button_appears_only_for_an_analysed_project(
+def test_the_review_page_is_offered_only_for_an_analysed_project(
     make_shell: Any, tmp_path: Path
 ) -> None:
     shell = make_shell(FakeProvisioning(current=READY))
@@ -121,11 +121,13 @@ def test_the_review_button_appears_only_for_an_analysed_project(
     shell.platform.csv_file = path
     page = shell.window.projects_page
     shell.button(page, "Import CSV…").click()
-    assert not page.review_button.isVisibleTo(page)  # ready, not analysed yet
+    nav = shell.window.nav_buttons["Review"]
+    assert not nav.isEnabled()  # ready, not analysed yet
+    assert "Analyze the project first" in nav.toolTip()
 
     page.analyze_button.click()
 
-    assert page.review_button.isVisibleTo(page) and page.review_button.isEnabled()
+    assert nav.isEnabled() and nav.badge == "2"
 
 
 def test_the_ai_record_is_read_only_and_apart_from_the_human_judgment(
@@ -306,7 +308,7 @@ def test_switching_pages_asks_before_dropping_an_unsaved_judgment(
     shell.platform.confirmed = False
     window.nav_buttons["Analyze one text"].click()
     assert window.pages.currentWidget() is window.projects_page  # stayed
-    assert window.nav_buttons["Projects"].isChecked()
+    assert window.nav_buttons["Review"].isChecked()
     assert review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
 
     assert review.human.note.toPlainText() == ""
@@ -320,7 +322,7 @@ def test_switching_pages_asks_before_dropping_an_unsaved_judgment(
     assert not window.review.state.has_unsaved_changes  # really discarded
     assert window.review.state.is_open  # the review itself stays where it was
 
-    window.nav_buttons["Projects"].click()
+    window.nav_buttons["Review"].click()
     assert window.pages.currentWidget() is window.projects_page
     assert "Unreviewed" in text_of(review.human.status)
     assert not review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
@@ -442,7 +444,7 @@ def test_a_failed_export_is_a_fixed_safe_message(
     assert review.export_button.isEnabled()  # and the review is still usable
 
 
-def test_leaving_the_review_returns_to_the_project_and_it_reopens_durably(
+def test_leaving_the_review_for_another_page_keeps_the_saved_review_and_reopens_it(
     make_shell: Any, tmp_path: Path
 ) -> None:
     shell = analysed_shell(make_shell, tmp_path)
@@ -450,11 +452,11 @@ def test_leaving_the_review_returns_to_the_project_and_it_reopens_durably(
     review = start_review(shell)
     review.accept_button.click()
 
-    review.back_button.click()
+    shell.window.nav_buttons["Import & validation"].click()
 
     assert page.stack.currentWidget() is page.detail_page
     assert "Analysed 4 rows" in text_of(page.facts)
-    page.review_button.click()
+    shell.window.nav_buttons["Review"].click()
     assert "Reviewed" in text_of(page.review_page.human.status)
     assert "1 of 4 reviewed" in text_of(page.review_page.progress)
 
@@ -493,4 +495,4 @@ def test_provisioning_and_project_analysis_still_work_beside_review(
     shell.window.show_page("Projects")
     assert shell.window.projects_page.stack.currentWidget() is (
         shell.window.projects_page.review_page
-    )
+    )  # the open project's page is where the person left it
