@@ -538,6 +538,65 @@ def test_applying_a_view_keeps_notes_and_reviews_added_elsewhere(
     assert kept.record is not None and kept.record.review.is_reviewed
 
 
+def correct_to_positive(root: Path, project_id: str, row: int) -> None:
+    review(
+        root,
+        project_id,
+        row,
+        ReviewDraft(
+            sentiment_judgment=CORRECT,
+            human_sentiment=SentimentLabel.POSITIVE,
+            emotion_judgment=CORRECT,
+            human_dominant_emotion=EmotionLabel.JOY,
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("perspective", "metric", "expected"),
+    [
+        (
+            InsightPerspective.AGREEMENT,
+            InsightMetric.SENTIMENT_DISAGREEMENT,
+            {"disagreement": (1, 1), "agreement": (0, 1)},
+        ),
+        (
+            InsightPerspective.HUMAN,
+            InsightMetric.HUMAN_SENTIMENT,
+            {"positive": (1, 1)},
+        ),
+    ],
+)
+def test_a_view_applied_while_a_review_is_saved_elsewhere_is_one_current_state(
+    tmp_path: Path,
+    perspective: InsightPerspective,
+    metric: InsightMetric,
+    expected: dict[str, tuple[int, int]],
+) -> None:
+    project_id = analysed(tmp_path)  # nothing is reviewed yet
+    mine = RacingRepository(tmp_path)
+
+    def elsewhere() -> None:
+        correct_to_positive(tmp_path, project_id, 5)  # changes the metric population
+        insights(tmp_path).add_note(project_id, note(phrase="theirs"))
+
+    mine.before_mutate = elsewhere
+
+    snapshot = InsightsWorkflow(mine).apply(
+        project_id,
+        controls(perspective=perspective, metric=metric),
+        ExampleControls(mode=ExampleMode.HUMAN_CORRECTED),
+    )
+
+    (shipping,) = snapshot.summaries
+    assert expected.items() <= counts(shipping).items()  # includes the newer review
+    assert shipping.eligible_count == 1
+    assert shipping.unreviewed_count == 11
+    assert rows_of(snapshot) == [5]  # the examples come from the same state
+    assert [n.phrase for n in snapshot.notes] == ["theirs"]
+    assert snapshot.summaries == insights(tmp_path).open_insights(project_id).summaries
+
+
 # -- representative cases -----------------------------------------------------
 
 
