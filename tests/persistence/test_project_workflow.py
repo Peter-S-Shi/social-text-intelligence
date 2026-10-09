@@ -216,7 +216,32 @@ def test_row_failures_are_recorded_but_do_not_fail_the_run(tmp_path: Path) -> No
 
     assert flow.analyze(project_id) is AnalysisRun.COMMITTED
     done = flow.open_project(project_id)
-    assert (done.analyzed_rows, done.failed_rows) == (2, 1)
+    # the row rejected at import never reached analysis, so it is not an analysis
+    # failure: analysed + failed accounts for the valid rows, rejected rows apart
+    assert (done.analyzed_rows, done.failed_rows) == (2, 0)
+    assert done.invalid_rows == 1
+    assert done.analyzed_rows + done.failed_rows == done.valid_rows
+
+
+def test_rejected_and_analysis_failed_rows_are_counted_apart(tmp_path: Path) -> None:
+    csv = (
+        b"record_id,text\nr1,A fine synthetic message.\nr2,   \n"
+        b"r3,Another fine one.\nr4,A third fine one.\n"
+    )
+
+    def fail_second_valid_row(call: int) -> None:
+        if call == 2:
+            raise RuntimeError(SENTINEL)
+
+    flow = workflow(tmp_path, ScriptedGateway(fail_second_valid_row))
+    project_id = flow.import_csv(csv, name="P").summary.project_id
+
+    assert flow.analyze(project_id) is AnalysisRun.COMMITTED
+    done = flow.open_project(project_id)
+
+    assert (done.row_count, done.valid_rows, done.invalid_rows) == (4, 3, 1)
+    assert (done.analyzed_rows, done.failed_rows) == (2, 1)  # r3 failed; r2 rejected
+    assert done.analyzed_rows + done.failed_rows == done.valid_rows
 
 
 def test_deleting_removes_the_project_files_and_the_listing(tmp_path: Path) -> None:

@@ -197,7 +197,7 @@ def test_an_analysed_project_shows_counts_and_cannot_be_re_analysed() -> None:
     )
     view = build_detail_view(ProjectsState(current=done), AVAILABLE, status())
     assert view is not None and not view.show_analyze
-    assert "Analysed 3 rows · 1 rows failed" in view.facts
+    assert "Analysed 3 rows · 1 row failed" in view.facts
     assert "Sentiment: Positive 2 · Negative 1 · Neutral 0" in view.facts
     assert view.block is None  # nothing is blocked: there is nothing left to analyse
 

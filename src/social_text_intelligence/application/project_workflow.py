@@ -112,6 +112,7 @@ class ProjectDetails:
     valid_rows: int = 0
     invalid_rows: int = 0
     analyzed_rows: int | None = None
+    # Valid rows whose analysis failed (not the rows rejected at import).
     failed_rows: int | None = None
     sentiment_counts: tuple[tuple[str, int], ...] = ()
     # How the analysed texts fared in the language check (None until analysed).
@@ -143,7 +144,9 @@ def describe(summary: ProjectSummary, workspace: BatchWorkspace) -> ProjectDetai
         ready,
         phase=ProjectPhase.ANALYZED,
         analyzed_rows=aggregates.analyzed_count,
-        failed_rows=aggregates.failed_count,
+        # Rows rejected at import never reached analysis: they are counted as
+        # invalid_rows, not as analysis failures, so analysed + failed == valid.
+        failed_rows=aggregates.failed_count - preview.invalid_count,
         sentiment_counts=tuple(
             (label.value, count) for label, count in aggregates.sentiment_counts
         ),
