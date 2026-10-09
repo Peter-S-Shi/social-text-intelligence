@@ -80,3 +80,6 @@ Desktop.ini
 
 # Local development instructions supplied outside the public repository
 prompts/
+
+# Local experiment output (M7 probes and frozen builds)
+_local/

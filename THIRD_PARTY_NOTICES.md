@@ -89,7 +89,9 @@ dataset. Its sentiment subset and applicable platform terms are recorded in the
   not use.
 - Purpose: the native desktop shell and the model-provisioning windows.
 - Installed only through the `desktop` or `dev` extra; it is not bundled in the
-  repository, and no installer or frozen build exists yet.
+  repository, and no installer exists. M7 made local, undistributed PyInstaller
+  feasibility builds only; see the [M7 record](docs/V2_M7_FEASIBILITY_GATE.md) for
+  the LGPL preflight and its open items.
 - Qt modules imported by the application: `QtCore`, `QtGui`, and `QtWidgets`,
   and nothing else. The installed wheel carries more Qt modules than these, so
   the audit tracks the imported set: `tests/desktop/test_boundaries.py` fails if

@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: V2 Native UI Integration (M6) is complete; the next action is to scope the next V2 milestone.** V2 reopens the project from
+**Current phase: V2 Native UI Integration (M6) is complete; M7 — Pre-Release Feasibility & Risk Gate is complete with a formally accepted CONDITIONAL exit, M8 has not started, and the next action is to scope M8.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -82,6 +82,20 @@ presented natively. Product hardening, the formal accessibility
 acceptance, the representative-domain evaluation, the pre-distribution LGPL
 gate, packaging, and release work remain separate later gates. V2 is not
 release-ready. The package version stays `0.10.0`.
+
+### M7 — Pre-Release Feasibility & Risk Gate (complete, CONDITIONAL exit accepted)
+
+M7 tests whether the Windows-first PySide6 desktop has a viable path to packaging
+and distribution. The [evidence record](docs/V2_M7_FEASIBILITY_GATE.md) found no
+blocking risk: a PyInstaller onedir build ran both pinned models end to end, and no
+binding decision needs reopening. The exit is CONDITIONAL because clean-machine
+proof, the LGPL deliverables and some evidence gaps remain. M7 added experiment
+tooling only; no installer exists and V2 is not release-ready. The sequence stays:
+M8 Product Hardening (with an early owner-led exploratory trial), M9 Evidence and
+Formal Acceptance (owner-operated Scenario-Based UAT and a local HTML acceptance
+companion), M10 production packaging, final LGPL compliance, installer and release
+candidate verification. M8 has not started; the next action is to scope it. The
+CONDITIONAL exit is preserved: its open risks are carried to M8 and M10.
 
 ### M6 — Full UI Integration / Polish (complete)
 
