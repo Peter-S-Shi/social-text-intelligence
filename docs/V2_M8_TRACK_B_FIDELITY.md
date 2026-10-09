@@ -275,3 +275,29 @@ The reference pictures stay on the sidecar commit (section 1).
 | Closeout review | Independent Standards and Spec reviews ran as separate passes; their findings were repaired (see the PR). Pending until then, this line would read "pending" |
 | Status files | `PROJECT_STATUS.md`, `ROADMAP.md`, `README.md` and `DEVLOG.md` carry the M8 Track B row in the governance commit that follows CI |
 | Implementation head, governance head, CI | in the PR description and the Track B validation row of `PROJECT_STATUS.md` |
+
+## 11. Round 2: owner instruction to close P3, I4 and R3 (slice ledger)
+
+After Track A merged (PR #50, `origin/main` `1a48d25`), the owner asked for higher
+fidelity and for the three items that Round 1 left UNRESOLVED to be built within
+these constraints: existing project data only; bounded read models; no schema change,
+no new persisted summary, no new analytics; no network; text truncated and never kept
+whole in a view model; nothing logged; exports unchanged; UI thread never blocked.
+Track A's wording stays coherent: rows rejected at import are `invalid_rows`, analysis
+failures are `failed_rows`, and analysed + failed = valid (A6).
+
+Slices, each test-first. The seam named is where the failing test is written before
+the code:
+
+| Slice | What | Seam of the failing test |
+| --- | --- | --- |
+| P3a | Per-project counts in the project list (rows, rejected, analysed, reviewed, corrected) as a read-time summary: a handful of `COUNT(*)` queries inside the listing's existing read transaction, no text, no JSON, no full workspace load; computed in the same worker-thread listing the app already runs | `tests/persistence/test_project_listing_counts.py` (real SQLite repository: import, analyse, review, list) |
+| P3b | List view model: row line, review progress, review state (not analysed / in review / fully reviewed) and the filter tabs with counts | `tests/desktop/test_projects_view.py` (Qt-free) |
+| P3c | Project list widgets: progress meter and text per row, state tabs filtering the list, Open still opens by project id, accessible names | `tests/desktop/test_qt_projects.py` (real clicks) |
+| I4 | Import validation: a read model of every row (row, id, a 100-character excerpt, ready or rejected with its reason), the table with All / Rejected tabs, scrolling inside a bounded height | `tests/persistence/test_results_workflow.py`, `tests/desktop/test_results_view.py`, `tests/desktop/test_qt_projects.py` |
+| R3 | Results: a truncated read-only TEXT column from the same bounded excerpt | `tests/persistence/test_results_workflow.py`, `tests/desktop/test_results_view.py`, `tests/desktop/test_qt_results.py` |
+
+Existing tests that encoded the old "read models never hold record text" boundary
+(`SENTINEL not in ...`) are revised deliberately, not weakened by accident: the text
+may appear only as a bounded excerpt in the row read models and the table, and must
+still be absent from every notice, error and export-independent surface.
