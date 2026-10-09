@@ -464,9 +464,11 @@ class SegmentedFilter(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.setProperty("role", "segtrack")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._layout = QHBoxLayout(self)
-        self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(0)
+        self._layout.setContentsMargins(3, 3, 3, 3)
+        self._layout.setSpacing(2)
         self._group = QButtonGroup(self)
         self._group.setExclusive(True)
         self._buttons: dict[str, QPushButton] = {}
@@ -670,11 +672,11 @@ class NavButton(QPushButton):
         if not self._badge:
             return
         painter = QPainter(self)
-        colour = QColor(style.SIDEBAR_MUTED if self.isEnabled() else "#A39E90")
+        colour = QColor(style.MUTED if self.isEnabled() else "#7A7E85")
         painter.setPen(colour)
         painter.setFont(self.font())
         painter.drawText(
-            self.rect().adjusted(0, 0, -14, 0),
+            self.rect().adjusted(0, 0, -24, 0),
             int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter),
             self._badge,
         )

@@ -58,7 +58,7 @@ from .pages import AnalyzePage
 from .platform import DesktopPlatform
 from .projects_page import ProjectsPage
 from .provisioning_ui import ProvisioningUi
-from .widgets import announce, frame, label
+from .widgets import add_all, announce, frame, label
 
 APP_TITLE = "Social Text Intelligence"
 SIDEBAR_WIDTH = 264
@@ -166,9 +166,19 @@ class MainWindow(QMainWindow):
         side = QVBoxLayout(sidebar)
         side.setContentsMargins(0, 18, 0, 14)
         side.setSpacing(2)
-        title = label(APP_TITLE, role="title")
-        title.setContentsMargins(16, 0, 16, 8)
+        title = label(APP_TITLE, role="brand")
+        title.setContentsMargins(18, 0, 16, 10)
         side.addWidget(title)
+        self.no_project = QWidget()
+        idle = QVBoxLayout(self.no_project)
+        idle.setContentsMargins(0, 0, 0, 0)
+        idle.setSpacing(0)
+        idle_title = label("No project open", role="project")
+        idle_title.setContentsMargins(18, 6, 16, 0)
+        idle_hint = label("open one from Projects", role="mono")
+        idle_hint.setContentsMargins(18, 0, 16, 8)
+        add_all(idle, rule(), idle_title, idle_hint)
+        side.addWidget(self.no_project)
 
         self.project_area = QWidget()
         project = QVBoxLayout(self.project_area)
@@ -176,13 +186,13 @@ class MainWindow(QMainWindow):
         project.setSpacing(2)
         project.addWidget(rule())
         eyebrow = label("PROJECT", role="eyebrow", wrap=False)
-        eyebrow.setContentsMargins(16, 10, 16, 0)
-        self.project_title = label(role="title")
+        eyebrow.setContentsMargins(18, 10, 16, 0)
+        self.project_title = label(role="project")
         self.project_title.setObjectName("sidebar-project-title")
-        self.project_title.setContentsMargins(16, 2, 16, 0)
+        self.project_title.setContentsMargins(18, 2, 16, 0)
         self.project_facts = label(role="mono")
         self.project_facts.setObjectName("sidebar-project-facts")
-        self.project_facts.setContentsMargins(16, 0, 16, 6)
+        self.project_facts.setContentsMargins(18, 0, 16, 6)
         add = project.addWidget
         add(eyebrow)
         add(self.project_title)
@@ -193,7 +203,7 @@ class MainWindow(QMainWindow):
 
         side.addWidget(rule())
         start = label("START", role="eyebrow", wrap=False)
-        start.setContentsMargins(16, 10, 16, 0)
+        start.setContentsMargins(18, 10, 16, 0)
         side.addWidget(start)
         for section in START_SECTIONS:
             side.addWidget(self._nav_button(section))
@@ -318,6 +328,7 @@ class MainWindow(QMainWindow):
     def _apply_navigation(self, nav: NavView) -> None:
         self._navigation = nav
         self.project_area.setVisible(nav.project_title is not None)
+        self.no_project.setVisible(nav.project_title is None)
         self.project_title.setText(nav.project_title or "")
         self.project_facts.setText(nav.project_facts)
         self.project_facts.setVisible(bool(nav.project_facts))
