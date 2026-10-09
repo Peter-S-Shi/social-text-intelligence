@@ -457,3 +457,78 @@ def test_the_sidebar_says_when_no_project_is_open(
 
     assert window.project_area.isVisibleTo(window)
     assert not window.no_project.isVisibleTo(window)
+
+
+def two_projects(shell: Shell, tmp_path: Path) -> None:
+    """One analysed and part reviewed ("Reviewed"), one only imported ("Fresh")."""
+
+    page = shell.window.projects_page
+    import_csv(shell, csv_file(tmp_path, "Reviewed.csv", csv_text(4)))
+    page.analyze_button.click()
+    shell.window.nav_buttons["Review"].click()
+    page.review_page.accept_button.click()
+    shell.window.nav_buttons["Projects"].click()
+    import_csv(shell, csv_file(tmp_path, "Fresh.csv", csv_text(3)))
+    shell.window.nav_buttons["Projects"].click()
+
+
+def row_for(page: Any, title: str) -> Any:
+    return next(r for r in page._rows if title in r.accessibleName())
+
+
+def test_the_project_list_shows_each_projects_size_and_review_progress(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+
+    reviewed = row_for(page, "Reviewed")
+    fresh = row_for(page, "Fresh")
+
+    assert "4 rows" in text_of(reviewed.rows_label)
+    assert text_of(reviewed.review_label) == "1 / 4 reviewed"
+    assert reviewed.meter.fraction == 0.25
+    assert "1 / 4 reviewed" in reviewed.accessibleName()
+    assert "3 rows" in text_of(fresh.rows_label)
+    assert text_of(fresh.review_label) == "Not analysed yet"
+    assert fresh.meter.fraction == 0.0
+
+
+def test_the_review_tabs_filter_the_list_and_open_still_opens_the_right_project(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+    tabs = page.review_tabs.buttons
+    assert "All" in tabs["all"].text() and "2" in tabs["all"].text()
+    assert "1" in tabs["in_review"].text() and "1" in tabs["not_analysed"].text()
+
+    tabs["in_review"].click()
+    assert [("Reviewed" in r.accessibleName()) for r in page._rows] == [True]
+    assert "1 of 2" in text_of(page.summary)
+
+    tabs["not_analysed"].click()
+    assert [("Fresh" in r.accessibleName()) for r in page._rows] == [True]
+    page._rows[0].open_button.click()  # opens by project identity, not list position
+    assert text_of(page.detail_title_label) == "Fresh"
+
+    shell.window.nav_buttons["Projects"].click()
+    assert tabs["not_analysed"].isChecked()  # the chosen tab is kept on return
+    tabs["all"].click()
+    assert len(page._rows) == 2
+
+
+def test_a_filter_with_no_match_shows_a_plain_message(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+
+    page.review_tabs.buttons["fully_reviewed"].click()
+
+    assert page._rows == []
+    assert "No projects match" in text_of(page.summary)
+    assert page.review_tabs.buttons["all"].isEnabled()

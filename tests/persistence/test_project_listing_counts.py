@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import Any
+
+import pytest
 
 from social_text_intelligence.application.project_workflow import (
     CsvLimits,
@@ -87,22 +90,21 @@ def test_counts_follow_analysis_and_review(tmp_path: Path) -> None:
     assert summary.corrected_rows == 1
 
 
-def test_listing_reads_counts_without_loading_any_record_text(tmp_path: Path) -> None:
+def test_listing_reads_counts_without_loading_any_record_text(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     flow = ProjectWorkflow(repository(tmp_path), ScriptedGateway(), LIMITS)
     flow.import_csv(CSV, name="P")
     statements: list[str] = []
     original = sqlite3.connect
 
-    def spying_connect(*args: object, **kwargs: object) -> sqlite3.Connection:
-        connection = original(*args, **kwargs)  # type: ignore[arg-type]
+    def spying_connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
+        connection: sqlite3.Connection = original(*args, **kwargs)
         connection.set_trace_callback(statements.append)
         return connection
 
-    sqlite3.connect = spying_connect  # type: ignore[assignment]
-    try:
-        repository(tmp_path).list_projects()
-    finally:
-        sqlite3.connect = original  # type: ignore[assignment]
+    monkeypatch.setattr(sqlite3, "connect", spying_connect)
+    repository(tmp_path).list_projects()
 
     text_columns = ("input_values_json", "record_json", "report_json", "note")
     selects = [s for s in statements if s.lstrip().upper().startswith("SELECT")]

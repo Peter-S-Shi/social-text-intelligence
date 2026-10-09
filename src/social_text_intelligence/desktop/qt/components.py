@@ -50,6 +50,7 @@ TONES = {
     "human": style.ULTRAMARINE,
     "failure": style.VERMILION,
     "quiet": style.LINE_STRONG,
+    "ink": style.INK,
 }
 
 

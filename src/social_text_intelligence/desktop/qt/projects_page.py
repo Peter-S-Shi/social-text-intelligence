@@ -9,6 +9,7 @@ rule: each page renders a controller's state.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QProgressBar,
@@ -44,6 +45,7 @@ from ..results_view import build_validation_view
 from ..review import ReviewController, ReviewState
 from .agreement_page import AgreementPage
 from .components import (
+    BarMeter,
     Card,
     Combo,
     DataTable,
@@ -52,7 +54,9 @@ from .components import (
     FlowRow,
     Page,
     PageHeader,
+    SegmentedFilter,
     SplitRow,
+    ViewportWatcher,
     chip,
     rule,
 )
@@ -64,6 +68,9 @@ from .review_page import ReviewPage
 from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
 
 COLUMN_PLACEHOLDER = "Choose a column…"
+COMPACT_ROWS_BELOW = (
+    760  # page width under which a project's progress sits under its name
+)
 PROBLEM_COLUMNS = (("Row", 60), ("Record ID", 140), ("Reason", 200))
 
 
@@ -105,7 +112,7 @@ class RowProgress(QWidget):
 
 
 class ProjectRowWidget(QWidget):
-    """One project line inside the list card: name and date, then Open and Delete."""
+    """One project line: name, size, review progress, then Open and Delete."""
 
     open_requested = Signal(str)
     delete_requested = Signal(str)
@@ -120,19 +127,40 @@ class ProjectRowWidget(QWidget):
     ) -> None:
         super().__init__(parent)
         self.setProperty("role", "plain")
+        self.setAccessibleName(row.accessible_name)
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
         box = QWidget()
         box.setProperty("role", "plain")
-        box.setAccessibleName(row.accessible_name)
-        inner = QHBoxLayout(box)
-        inner.setContentsMargins(18, 14, 18, 14)
-        text = QVBoxLayout()
-        text.setSpacing(2)
-        text.addWidget(label(row.title, role="title"))
-        text.addWidget(label(row.subtitle, role="subtitle"))
-        inner.addLayout(text, 1)
+        self._inner = QHBoxLayout(box)
+        self._inner.setContentsMargins(18, 14, 18, 14)
+        self._inner.setSpacing(18)
+        self._text = QVBoxLayout()
+        self._text.setSpacing(2)
+        self._text.addWidget(label(row.title, role="title"))
+        self._text.addWidget(label(row.subtitle, role="subtitle"))
+        self.rows_label = label(row.rows_line, role="mono")
+        self.rows_label.setObjectName("project-rows")
+        self.rows_label.setVisible(bool(row.rows_line))
+        self._text.addWidget(self.rows_label)
+        self._inner.addLayout(self._text, 1)
+        # the review progress: a thin meter and the words that carry its numbers
+        self.progress = QWidget()
+        self.progress.setProperty("role", "plain")
+        self.progress.setFixedWidth(200)
+        progress = QVBoxLayout(self.progress)
+        progress.setContentsMargins(0, 0, 0, 0)
+        progress.setSpacing(2)
+        self.meter = BarMeter(row.review_fraction, "ink")
+        self.meter.setObjectName("project-meter")
+        self.meter.setAccessibleName(row.review_line)
+        self.review_label = label(row.review_line, role="mono", wrap=False)
+        self.review_label.setObjectName("project-review")
+        progress.addWidget(self.meter)
+        progress.addWidget(self.review_label)
+        self.progress.setVisible(bool(row.review_line))
+        self._compact: bool | None = None
         self.open_button = QPushButton("Open")
         self.open_button.setAccessibleName(f"Open {row.title}")
         self.open_button.setEnabled(enabled and row.can_open)
@@ -149,11 +177,31 @@ class ProjectRowWidget(QWidget):
         self.delete_button.clicked.connect(
             lambda: self.delete_requested.emit(row.project_id)
         )
-        inner.addWidget(self.open_button, 0, Qt.AlignmentFlag.AlignVCenter)
-        inner.addWidget(self.delete_button, 0, Qt.AlignmentFlag.AlignVCenter)
+        self._buttons = QHBoxLayout()
+        self._buttons.setSpacing(8)
+        self._buttons.addWidget(self.open_button, 0, Qt.AlignmentFlag.AlignVCenter)
+        self._buttons.addWidget(self.delete_button, 0, Qt.AlignmentFlag.AlignVCenter)
+        self._inner.addLayout(self._buttons)
         outer.addWidget(box)
         self.rule = rule()
         outer.addWidget(self.rule)
+        self.set_compact(False)
+
+    def set_compact(self, compact: bool) -> None:
+        """Wide: progress between the name and the buttons. Narrow: under the name."""
+
+        if compact == self._compact:
+            return
+        self._compact = compact
+        self._inner.removeWidget(self.progress)
+        self._text.removeWidget(self.progress)
+        if compact:
+            self.progress.setFixedWidth(16_777_215)
+            self.progress.setMinimumWidth(0)
+            self._text.addWidget(self.progress)
+        else:
+            self.progress.setFixedWidth(200)
+            self._inner.insertWidget(1, self.progress, 0, Qt.AlignmentFlag.AlignVCenter)
 
 
 class ProjectsPage(QWidget):
@@ -182,6 +230,7 @@ class ProjectsPage(QWidget):
         self._availability = AnalysisAvailability.AVAILABLE
         self._other_analysis_running = False
         self._row_signature: object = None
+        self._review_filter = "all"
         self._rows: list[ProjectRowWidget] = []
         self._detail_title = ""
         self._section = Section.PROJECTS
@@ -238,6 +287,9 @@ class ProjectsPage(QWidget):
         reviews.subscribe(self._on_review)
         insights.subscribe(self._on_insights)
         agreement.subscribe(self._on_agreement)
+        self._list_watcher = ViewportWatcher(
+            self, self._reflow_rows, area=self.list_page.scroller
+        )
         self.show_state(controller.state)
 
     # -- construction -------------------------------------------------------
@@ -260,6 +312,11 @@ class ProjectsPage(QWidget):
         self.header.add_action(self.import_button)
         self.summary = self.header.subtitle
         self.summary.setObjectName("projects-summary")
+        self.review_tabs = SegmentedFilter(noun="projects")
+        self.review_tabs.setObjectName("projects-review-tabs")
+        self.review_tabs.setAccessibleName("Review state filter")
+        self.review_tabs.selected.connect(self._review_filter_chosen)
+        self.review_tabs.setVisible(False)
         self.rows_card = frame("card")
         self.rows_card.setObjectName("projects-card")
         self.rows_box = QVBoxLayout(self.rows_card)
@@ -276,7 +333,8 @@ class ProjectsPage(QWidget):
             "stays on this computer until you delete it.",
             role="muted",
         )
-        add_all(self.list_page.body, self.header, self.rows_card)
+        add_all(self.list_page.body, self.header, self.review_tabs)
+        self.list_page.body.addWidget(self.rows_card)
         add_all(self.list_page.body, self.empty_list, self.note)
         self.list_page.body.addStretch(1)
         self.stack.addWidget(self.list_page)
@@ -406,6 +464,28 @@ class ProjectsPage(QWidget):
         )
         table.fit_rows(1)
         return table
+
+    # -- the project list ---------------------------------------------------
+
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._list_watcher.attach()
+        self._reflow_rows()
+
+    def _compact_rows(self) -> bool:
+        """Under the width where name, progress and buttons share one line."""
+
+        return self._list_watcher.available() < COMPACT_ROWS_BELOW
+
+    def _reflow_rows(self) -> None:
+        compact = self._compact_rows()
+        for row in self._rows:
+            row.set_compact(compact)
+
+    def _review_filter_chosen(self, value: str) -> None:
+        self._review_filter = value
+        self._row_signature = None
+        self._show_list(self._controller.state)
 
     # -- inputs from the shell ----------------------------------------------
 
@@ -569,13 +649,17 @@ class ProjectsPage(QWidget):
         return focused is not None and self.isAncestorOf(focused)
 
     def _show_list(self, state: ProjectsState) -> None:
-        view = build_list_view(state)
-        self.header.set_subtitle(view.summary if view.rows else "")
+        view = build_list_view(state, self._review_filter)
+        listed_any = bool(view.tabs)
+        self.header.set_subtitle(view.summary if view.rows or listed_any else "")
         self.import_button.setEnabled(view.import_enabled)
-        empty = not view.rows and state.listed and not state.list_failed
+        empty = not listed_any and state.listed and not state.list_failed
         self.empty_list.setVisible(empty)
+        self.review_tabs.setVisible(listed_any)
+        if listed_any:
+            self.review_tabs.set_options(view.tabs, view.selected_filter)
         self.rows_card.setVisible(bool(view.rows))
-        self.note.setVisible(bool(view.rows))
+        self.note.setVisible(listed_any)
         if not view.rows and not empty:
             self.header.set_subtitle(view.summary)
         signature = (view.rows, view.row_actions_enabled)
@@ -594,6 +678,7 @@ class ProjectsPage(QWidget):
             )
             widget.open_requested.connect(self._controller.open_project)
             widget.delete_requested.connect(self._delete)
+            widget.set_compact(self._compact_rows())
             self.rows_box.addWidget(widget)
             widget.show()
             self._rows.append(widget)
