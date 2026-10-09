@@ -551,12 +551,12 @@ def test_the_queue_lists_the_records_and_opens_one_by_its_row(
     review = start_review(shell)
 
     assert review.queue.count() == 4
-    assert review.queue.selected_row() == 1
+    assert review.queue.open_row() == 1
     review.queue.row_chosen.emit(3)
     QCoreApplication.processEvents()
 
     assert "Row 3" in text_of(review.record_title)
-    assert review.queue.selected_row() == 3  # the selection follows the record
+    assert review.queue.open_row() == 3  # the selection follows the record
     assert "3 / 4" in text_of(review.queue_pane.position)
 
 
@@ -574,7 +574,7 @@ def test_choosing_a_queue_line_with_a_real_click_opens_that_record(
     )
 
     assert "Row 2" in text_of(review.record_title)
-    assert review.queue.selected_row() == 2
+    assert review.queue.open_row() == 2
 
 
 def test_the_queue_asks_before_dropping_an_unsaved_judgment(
@@ -587,13 +587,13 @@ def test_the_queue_asks_before_dropping_an_unsaved_judgment(
     shell.platform.confirmed = False
     review.queue.row_chosen.emit(2)
     assert "Row 1" in text_of(review.record_title)  # stayed
-    assert review.queue.selected_row() == 1  # and the list did not move on
+    assert review.queue.open_row() == 1  # and the list did not move on
     assert review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
 
     shell.platform.confirmed = True
     review.queue.row_chosen.emit(2)
     assert "Row 2" in text_of(review.record_title)
-    assert review.queue.selected_row() == 2
+    assert review.queue.open_row() == 2
 
 
 def test_the_review_state_tabs_carry_counts_and_filter_the_queue(
@@ -625,5 +625,37 @@ def test_a_saved_record_stays_selected_after_it_leaves_the_filter(
     review.accept_button.click()  # saved, and now outside "Unreviewed"
 
     assert "Row 1" in text_of(review.record_title)
-    assert review.queue.selected_row() == 1
+    assert review.queue.open_row() == 1
     assert review.queue.count() == 4  # the open record does not vanish from the queue
+
+
+def test_the_queue_keyboard_moves_a_cursor_and_enter_or_space_opens_a_line(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    from social_text_intelligence.desktop.qt.review_page import QueueDelegate
+
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    shell.window.resize(1280, 860)
+    QCoreApplication.processEvents()
+    review.queue.setFocus()
+
+    QTest.keyClick(review.queue, Qt.Key.Key_Down)
+    QTest.keyClick(review.queue, Qt.Key.Key_Down)
+    assert "Row 1" in text_of(review.record_title)  # moving a cursor opens nothing
+    assert review.queue.open_row() == 1
+    assert review.queue.currentRow() == 2
+
+    QTest.keyClick(review.queue, Qt.Key.Key_Return)
+    assert "Row 3" in text_of(review.record_title)
+    opened = [
+        bool(review.queue.item(i).data(QueueDelegate.ROLE_OPEN)) for i in range(4)
+    ]
+    assert opened == [False, False, True, False]  # exactly one line is the open one
+
+    review.queue.setFocus()
+    QTest.keyClick(review.queue, Qt.Key.Key_Up)
+    QTest.keyClick(review.queue, Qt.Key.Key_Space)
+    assert "Row 2" in text_of(review.record_title)
+    assert review.queue.open_row() == 2
+    assert review.queue.horizontalScrollBar().maximum() == 0

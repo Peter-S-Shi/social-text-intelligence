@@ -17,6 +17,7 @@ the prototype's scripted numbers; see ``docs/V2_M8_TRACK_B_FIDELITY.md``.
 
 from __future__ import annotations
 
+import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -44,7 +45,16 @@ from social_text_intelligence.services.review import ReviewFilter  # noqa: E402
 from visual.capture import Run, settle  # noqa: E402
 from visual.synthetic import checkout_csv, support_inbox_csv  # noqa: E402
 
-SIZE = (1358, 803)
+
+def _size() -> tuple[int, int]:
+    """``STI_CAPTURE_SIZE=900x620`` renders the narrow-window variant instead."""
+
+    raw = os.environ.get("STI_CAPTURE_SIZE", "1358x803")
+    width, _, height = raw.partition("x")
+    return int(width), int(height)
+
+
+SIZE = _size()
 REVIEW_PATTERN = ["accept", "accept", "correct", "accept", "uncertain"]
 EXAMPLE_TEXT = (
     "The new update finally fixed the login bug, but the app still crashes "

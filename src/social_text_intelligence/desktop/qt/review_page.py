@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QRect, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QResizeEvent
+from PySide6.QtGui import QColor, QFont, QKeyEvent, QPainter, QPen, QResizeEvent
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QBoxLayout,
@@ -86,6 +86,7 @@ class QueueDelegate(QStyledItemDelegate):
     ROLE_ID = int(Qt.ItemDataRole.UserRole) + 1
     ROLE_TEXT = int(Qt.ItemDataRole.UserRole) + 2
     ROLE_DONE = int(Qt.ItemDataRole.UserRole) + 3
+    ROLE_OPEN = int(Qt.ItemDataRole.UserRole) + 4
 
     def sizeHint(  # noqa: N802 (Qt override)
         self, option: QStyleOptionViewItem, index: QModelIndex | QPersistentModelIndex
@@ -99,16 +100,21 @@ class QueueDelegate(QStyledItemDelegate):
         index: QModelIndex | QPersistentModelIndex,
     ) -> None:
         painter.save()
-        selected = bool(option.state & QStyle.StateFlag.State_Selected)
+        # the open record is tinted and barred; the keyboard cursor is a ring
+        is_open = bool(index.data(self.ROLE_OPEN))
+        cursor = bool(option.state & QStyle.StateFlag.State_HasFocus)
         rect: QRect = option.rect
         painter.fillRect(
             rect,
-            QColor(style.ULTRAMARINE_TINT if selected else style.PAPER_RAISED),
+            QColor(style.ULTRAMARINE_TINT if is_open else style.PAPER_RAISED),
         )
-        if selected:
+        if is_open:
             painter.fillRect(QRect(rect.x(), rect.y(), 3, rect.height()), style.INK)
         painter.setPen(QColor(style.LINE))
         painter.drawLine(rect.bottomLeft(), rect.bottomRight())
+        if cursor:
+            painter.setPen(QPen(QColor(style.FOCUS), 2))
+            painter.drawRect(rect.adjusted(2, 2, -2, -3))
         left = rect.x() + 12
         right = rect.right() - 10
         mono = QFont(option.font)
@@ -154,12 +160,16 @@ class QueueList(QListWidget):
         self.setObjectName("review-queue")
         self.setAccessibleName("Review queue")
         self.setItemDelegate(QueueDelegate(self))
-        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        # no selection of its own: the open record is drawn from its identity, and
+        # the arrow keys only move a cursor until Enter or Space opens that line
+        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.setTextElideMode(Qt.TextElideMode.ElideRight)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self._signature: object = None
+        self._open_row: int | None = None
         self.itemClicked.connect(self._chosen)
         self.itemActivated.connect(self._chosen)
 
@@ -184,23 +194,29 @@ class QueueList(QListWidget):
                     )
                     item.setToolTip(entry.excerpt)
                     self.addItem(item)
-            self.clearSelection()
+            self._open_row = selected_row
             for index in range(self.count()):
                 item = self.item(index)
-                if (
-                    item is not None
-                    and item.data(Qt.ItemDataRole.UserRole) == selected_row
-                ):
-                    self.setCurrentItem(item)
+                if item is None:
+                    continue
+                is_open = item.data(Qt.ItemDataRole.UserRole) == selected_row
+                item.setData(QueueDelegate.ROLE_OPEN, is_open)
+                if is_open:
+                    self.setCurrentItem(item)  # the cursor starts on the open line
                     self.scrollToItem(item)
-                    break
         finally:
             self.blockSignals(False)
 
-    def selected_row(self) -> int | None:
-        item = self.currentItem()
-        value = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
-        return int(value) if value is not None else None
+    def open_row(self) -> int | None:
+        """The row of the record that is open (not the keyboard cursor)."""
+
+        return self._open_row
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802 (Qt override)
+        if event.key() == Qt.Key.Key_Space and self.currentItem() is not None:
+            self._chosen(self.currentItem())
+            return
+        super().keyPressEvent(event)
 
     def _chosen(self, item: QListWidgetItem) -> None:
         value = item.data(Qt.ItemDataRole.UserRole)
