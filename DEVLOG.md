@@ -1,5 +1,27 @@
 # Development Log
 
+## V2 Product Hardening & UI Fidelity — M8 Track B Native UI fidelity alignment — implementation complete, owner review pending
+
+Track B compared the nine Round 3 reference screens with the real Windows Qt app,
+captured Before and After from the real platform plugin with an unmapped
+`QWidget.grab()` (exact reference geometry, nothing else on the desktop to capture),
+and closed the visible gaps in two rounds. Round 1: a light sidebar and near-black
+actions, a Review queue beside peer AI and human cards, two-pane Analyze one text,
+metadata chips on Import, big sentiment counts on Results, numbered Insights controls
+with side-by-side group cards and a hero statement on the first-run window. A strict
+reflow test checks every page at 900 px against the headless platform's wider fonts,
+which exposed width locks the Windows captures had hidden. Round 2, after Track A
+merged: per-project row counts and review progress in the project list (six small
+read-time `COUNT(*)` queries, no text, no schema change), review-state tabs, a full
+row preview on Import and a read-only TEXT column on Results, both built from a
+bounded 100-character excerpt so no whole text enters a view model, and the nine
+compact scores drawn as columns. Independent reviews found a wrong queue counter
+under a filter, invisible focus rings on filled controls and unescaped text in
+tooltips, all repaired test-first. System fonts stay; the OFL facts for the reference
+fonts are recorded for the owner. Subjective design fidelity and the exploratory
+trial are PENDING OWNER, so M8 is not complete. See the
+[Track B record](docs/V2_M8_TRACK_B_FIDELITY.md).
+
 ## V2 Product Hardening — M8 Track A Technical Product Hardening — complete (M8 in progress)
 
 Track A turned the open M7 observations into bounded fixes and measurements, with no

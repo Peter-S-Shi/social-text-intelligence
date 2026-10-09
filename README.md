@@ -26,7 +26,7 @@ baseline.
 > integration and polish) is complete on `main`. M7 (pre-release feasibility and
 > risk gate) is complete with a formally accepted CONDITIONAL exit and its open
 > risks carry to M8 and M10; M8 is in progress (Track A technical hardening is
-> complete; Track B UI fidelity is pending owner visual review; M8 is not complete). V2 is not
+> complete; Track B UI fidelity is implemented and awaits the owner's visual review and exploratory trial, PENDING OWNER; M8 is not complete). V2 is not
 > release-ready: hardening, the formal accessibility acceptance, the
 > LGPL gate, and packaging come later. See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
