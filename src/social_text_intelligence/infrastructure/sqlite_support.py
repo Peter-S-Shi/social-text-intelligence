@@ -6,6 +6,7 @@ Nothing here logs, and failures are translated into fixed, content-free messages
 from __future__ import annotations
 
 import contextlib
+import errno
 import functools
 import os
 import re
@@ -86,21 +87,72 @@ def valid_project_id(token: str) -> str | None:
     return token if PROJECT_ID_PATTERN.fullmatch(token) else None
 
 
-def _storage_failure(*, busy: bool = False, text: bool = False) -> ProjectStorageError:
-    if text:
-        return ProjectStorageError(
-            code="unsupported_text",
-            message="The workspace contains text that cannot be stored.",
-        )
-    if busy:
-        return ProjectStorageError(
-            code="project_busy",
-            message="The project is in use by another operation; try again.",
-        )
-    return ProjectStorageError(
-        code="storage_failure",
-        message="The project storage could not complete the operation.",
-    )
+_FAILURES = {
+    "unsupported_text": "The workspace contains text that cannot be stored.",
+    "project_busy": "The project is in use by another operation; try again.",
+    "storage_full": (
+        "There is not enough free disk space to save this project. Free some "
+        "disk space and try again. Nothing was changed."
+    ),
+    "storage_read_only": (
+        "This project's file or folder cannot be written. It may be marked "
+        "read-only, or another program may be holding it open. Clear the "
+        "read-only setting or close that program, then try again. Nothing was "
+        "changed."
+    ),
+    "storage_locked": (
+        "This project's file could not be opened. Another program (a backup, "
+        "sync or antivirus tool, or another copy of this app) may be using it, "
+        "or access may be denied. Close it or wait a moment, then try again. "
+        "Nothing was changed."
+    ),
+    "storage_failure": (
+        "The project storage could not complete the operation. Check free disk "
+        "space and the data folder's permissions, then try again."
+    ),
+}
+
+# SQLite primary result codes (the low byte of an extended code).
+_SQLITE_BUSY, _SQLITE_LOCKED, _SQLITE_READONLY = 5, 6, 8
+_SQLITE_FULL, _SQLITE_CANTOPEN = 13, 14
+_WIN_SHARING_VIOLATION, _WIN_LOCK_VIOLATION = 32, 33
+_WIN_DISK_FULL, _WIN_HANDLE_DISK_FULL = 112, 39
+
+
+def _failure(code: str) -> ProjectStorageError:
+    return ProjectStorageError(code=code, message=_FAILURES[code])
+
+
+def _classify_sqlite(error: sqlite3.Error) -> str:
+    primary = getattr(error, "sqlite_errorcode", None)
+    text = str(error).lower()
+    if primary is not None:
+        primary &= 0xFF
+    if primary == _SQLITE_FULL or "disk is full" in text:
+        return "storage_full"
+    if primary == _SQLITE_READONLY or "readonly database" in text:
+        return "storage_read_only"
+    if primary in {_SQLITE_BUSY, _SQLITE_LOCKED} or "locked" in text:
+        return "project_busy"
+    if primary == _SQLITE_CANTOPEN or "unable to open database" in text:
+        return "storage_locked"
+    return "storage_failure"
+
+
+def _classify_os(error: OSError) -> str:
+    if error.errno == errno.ENOSPC or getattr(error, "winerror", None) in {
+        _WIN_DISK_FULL,
+        _WIN_HANDLE_DISK_FULL,
+    }:
+        return "storage_full"
+    if error.errno in {errno.EROFS, errno.EACCES, errno.EPERM}:
+        return "storage_read_only"
+    if getattr(error, "winerror", None) in {
+        _WIN_SHARING_VIOLATION,
+        _WIN_LOCK_VIOLATION,
+    }:
+        return "storage_locked"
+    return "storage_failure"
 
 
 def storage_guarded(function: Callable[_P, _R]) -> Callable[_P, _R]:
@@ -108,23 +160,25 @@ def storage_guarded(function: Callable[_P, _R]) -> Callable[_P, _R]:
 
     The new error is raised after the ``except`` block has finished, so it carries
     no ``__context__`` or ``__cause__``: the original failure (a Unicode error, for
-    instance, holds the offending text) is not reachable from it.
+    instance, holds the offending text) is not reachable from it. Disk-full,
+    read-only, in-use and busy faults each get their own code and a fixed message
+    that says what to do; the raw error text is never shown.
     """
 
     @functools.wraps(function)
     def guarded(*args: _P.args, **kwargs: _P.kwargs) -> _R:
-        failure: ProjectStorageError
+        code: str
         try:
             return function(*args, **kwargs)
         except ProjectStorageError:
             raise
         except sqlite3.Error as error:
-            failure = _storage_failure(busy="locked" in str(error).lower())
+            code = _classify_sqlite(error)
         except UnicodeEncodeError:
-            failure = _storage_failure(text=True)
-        except OSError:
-            failure = _storage_failure()
-        raise failure
+            code = "unsupported_text"
+        except OSError as error:
+            code = _classify_os(error)
+        raise _failure(code)
 
     return guarded
 

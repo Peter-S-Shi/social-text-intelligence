@@ -53,6 +53,10 @@ _PROVISIONING_MESSAGES = {
         "The models folder could not be read or written. Free disk space or "
         "check permissions, then try again."
     ),
+    "storage_full": (
+        "There is not enough free disk space for the models. Free some disk "
+        "space and try again; finished files and a partial download are kept."
+    ),
     "source_unreadable": "The chosen folder could not be read.",
     "provisioning_in_progress": (
         "Another model download or import is already running."

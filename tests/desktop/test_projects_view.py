@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import pytest
+
 from social_text_intelligence.application.model_provisioning import Readiness
 from social_text_intelligence.application.project_workflow import (
     ProjectDetails,
@@ -13,12 +15,14 @@ from social_text_intelligence.application.projects import (
     ProjectStatus,
     ProjectSummary,
 )
+from social_text_intelligence.contracts.errors import ProjectStorageError
 from social_text_intelligence.desktop.gate import AnalysisAvailability
 from social_text_intelligence.desktop.projects import (
     NoticeKind,
     ProjectsActivity,
     ProjectsNotice,
     ProjectsState,
+    notice_for,
 )
 from social_text_intelligence.desktop.projects_view import (
     build_detail_view,
@@ -223,3 +227,23 @@ def test_delete_wording_is_conservative() -> None:
     assert "backups are not affected" in text
     for forbidden in ("securely", "erase", "wipe", "shred", "permanently"):
         assert forbidden not in text.lower()
+
+
+@pytest.mark.parametrize(
+    ("code", "title"),
+    [
+        ("storage_full", "Not enough disk space"),
+        ("storage_read_only", "The project can't be saved"),
+        ("storage_locked", "The project file is in use"),
+    ],
+)
+def test_storage_faults_keep_their_code_and_fixed_message_in_the_notice(
+    code: str, title: str
+) -> None:
+    error = ProjectStorageError(code=code, message="Fixed advice. Nothing was changed.")
+
+    notice = notice_for(error)
+
+    assert (notice.code, notice.title) == (code, title)
+    assert notice.body == "Fixed advice. Nothing was changed."
+    assert notice.kind is NoticeKind.ERROR

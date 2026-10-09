@@ -160,7 +160,8 @@ class SqliteProjectRepository:
             code="delete_failed",
             message=(
                 "Some of this project's files could not be removed. Close "
-                "other programs using them and delete the project again."
+                "other programs using them, make sure they are not marked "
+                "read-only, and delete the project again."
             ),
         )
 

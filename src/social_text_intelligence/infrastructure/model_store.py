@@ -10,6 +10,7 @@ reads those markers but never hashes and never writes. Nothing here logs.
 from __future__ import annotations
 
 import contextlib
+import errno
 import hashlib
 import os
 import threading
@@ -59,6 +60,7 @@ _FINDING_PRIORITY = (
     FolderFinding.NOT_FOUND,
 )
 _HASH_CHUNK = 1024 * 1024
+_WIN_DISK_FULL, _WIN_HANDLE_DISK_FULL = 112, 39
 
 
 def snapshots_dir(root: Path, spec: ModelSpec) -> Path:
@@ -369,8 +371,8 @@ class LocalModelProvisioner:
             if error.code != "network_unavailable":
                 _remove(part)
             raise ModelProvisioningError(error.code) from None
-        except OSError:
-            raise ModelProvisioningError("storage_failed") from None
+        except OSError as error:
+            raise _storage_error(error) from None
 
     def _locate(
         self, folder: Path
@@ -441,8 +443,8 @@ class LocalModelProvisioner:
         try:
             marker.parent.mkdir(parents=True, exist_ok=True)
             marker.touch()
-        except OSError:
-            raise ModelProvisioningError("storage_failed") from None
+        except OSError as error:
+            raise _storage_error(error) from None
 
     def _accept(self, spec: ModelSpec, item: ModelFile) -> None:
         """The installed file has just been hash-verified: clear any finding."""
@@ -562,8 +564,8 @@ def _copy_verified(
     try:
         staged.parent.mkdir(parents=True, exist_ok=True)
         output = staged.open("wb")
-    except OSError:
-        raise ModelProvisioningError("storage_failed") from None
+    except OSError as error:
+        raise _storage_error(error) from None
     with output:
         try:
             handle = source.open("rb")
@@ -583,8 +585,8 @@ def _copy_verified(
                 digest.update(chunk)
                 try:
                     output.write(chunk)
-                except OSError:
-                    raise ModelProvisioningError("storage_failed") from None
+                except OSError as error:
+                    raise _storage_error(error) from None
                 progress.report(ProvisioningPhase.COPYING, item, copied)
                 if cancelled():
                     raise _Cancelled()
@@ -643,8 +645,18 @@ def _install(part: Path, target: Path) -> None:
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
         os.replace(part, target)
-    except OSError:
-        raise ModelProvisioningError("storage_failed") from None
+    except OSError as error:
+        raise _storage_error(error) from None
+
+
+def _storage_error(error: OSError) -> ModelProvisioningError:
+    """A full disk gets its own code; every other write failure stays generic."""
+
+    full = error.errno == errno.ENOSPC or getattr(error, "winerror", None) in {
+        _WIN_DISK_FULL,
+        _WIN_HANDLE_DISK_FULL,
+    }
+    return ModelProvisioningError("storage_full" if full else "storage_failed")
 
 
 def _remove(path: Path) -> None:
