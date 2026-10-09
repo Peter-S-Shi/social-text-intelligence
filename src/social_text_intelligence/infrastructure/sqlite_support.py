@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import contextlib
 import functools
+import os
 import re
 import sqlite3
+import stat
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
@@ -42,6 +44,33 @@ def touches_symlink(path: Path) -> bool:
     return path.is_symlink() or any(
         path.with_name(path.name + suffix).is_symlink() for suffix in SIDECAR_SUFFIXES
     )
+
+
+def is_regular_file(path: Path) -> bool:
+    """True for a regular file, False only when the path is definitely absent.
+
+    Any other failure to look at the file (a sharing violation or access-denied
+    while a scanner, sync client or another instance has it open) is raised, never
+    turned into "no such file": a project that exists must not read as missing.
+    ``Path.is_file`` cannot be used because Python 3.13 and later swallow every
+    ``OSError`` there, while earlier versions swallow only a few."""
+
+    try:
+        return stat.S_ISREG(os.stat(path).st_mode)
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+
+
+def entry_may_exist(path: Path) -> bool:
+    """False only when ``path`` is definitely absent or neither a file nor a link."""
+
+    try:
+        mode = os.lstat(path).st_mode
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+    except OSError:
+        return True  # unknown: keep it listed rather than let the project vanish
+    return stat.S_ISREG(mode) or stat.S_ISLNK(mode)
 
 
 def managed_project_id(file_name: str) -> str | None:

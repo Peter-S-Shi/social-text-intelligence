@@ -220,6 +220,7 @@ def test_row_failures_are_recorded_but_do_not_fail_the_run(tmp_path: Path) -> No
     # failure: analysed + failed accounts for the valid rows, rejected rows apart
     assert (done.analyzed_rows, done.failed_rows) == (2, 0)
     assert done.invalid_rows == 1
+    assert done.analyzed_rows is not None and done.failed_rows is not None
     assert done.analyzed_rows + done.failed_rows == done.valid_rows
 
 
@@ -241,6 +242,7 @@ def test_rejected_and_analysis_failed_rows_are_counted_apart(tmp_path: Path) -> 
 
     assert (done.row_count, done.valid_rows, done.invalid_rows) == (4, 3, 1)
     assert (done.analyzed_rows, done.failed_rows) == (2, 1)  # r3 failed; r2 rejected
+    assert done.analyzed_rows is not None and done.failed_rows is not None
     assert done.analyzed_rows + done.failed_rows == done.valid_rows
 
 

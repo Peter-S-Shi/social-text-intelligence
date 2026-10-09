@@ -118,7 +118,7 @@ class SqliteProjectRepository:
         path = self._path(project_id)
         # A symlink with a managed name is never opened: it could lead to a
         # project (or any database) outside the projects directory.
-        if support.touches_symlink(path) or not path.is_file():
+        if support.touches_symlink(path) or not support.is_regular_file(path):
             yield None
             return
         connection = support.connect(path)
@@ -139,7 +139,7 @@ class SqliteProjectRepository:
             (project_id, path)
             for path in sorted(directory.iterdir())
             if (project_id := support.managed_project_id(path.name)) is not None
-            and (path.is_file() or path.is_symlink())
+            and support.entry_may_exist(path)
         ]
 
     def _artifacts(self, project_id: str) -> tuple[Path, ...]:
@@ -206,10 +206,17 @@ class SqliteProjectRepository:
         while True:
             project_id = secrets.token_hex(16)
             path = self._path(project_id)
+            # Held until the project is complete, so another window listing the
+            # folder meanwhile does not take the half-written file for a damaged one.
+            hold = self._hold_project(project_id, "try again")
             try:
                 path.touch(exist_ok=False)
             except FileExistsError:
+                hold.release()
                 continue
+            except BaseException:
+                hold.release()
+                raise
             break
         try:
             connection = support.connect(path)
@@ -238,13 +245,17 @@ class SqliteProjectRepository:
         except BaseException:
             self._remove_files(project_id)
             raise
+        finally:
+            hold.release()
 
+    @support.storage_guarded
     def list_projects(self) -> tuple[ProjectSummary, ...]:
         directory = self._locations.projects_dir
         if not directory.is_dir():
             return ()
         project_ids = sorted({found for found, _ in self._managed_files()})
-        summaries = [self._list_entry(project_id) for project_id in project_ids]
+        listed = (self._list_entry(project_id) for project_id in project_ids)
+        summaries = [item for item in listed if item is not None]
         epoch = datetime.min.replace(tzinfo=UTC)
         return tuple(
             sorted(
@@ -257,9 +268,13 @@ class SqliteProjectRepository:
             )
         )
 
-    def _list_entry(self, project_id: str) -> ProjectSummary:
+    def _list_entry(self, project_id: str) -> ProjectSummary | None:
+        status: ProjectStatus
         try:
-            return self._read_summary(project_id)
+            summary = self._read_summary(project_id)
+            if summary.status is not ProjectStatus.UNREADABLE:
+                return summary
+            status = summary.status
         except ProjectStorageError as error:
             status = (
                 ProjectStatus.UNSUPPORTED_VERSION
@@ -268,7 +283,19 @@ class SqliteProjectRepository:
             )
         except (ValueError, TypeError):
             status = ProjectStatus.UNREADABLE
+        if status is ProjectStatus.UNREADABLE and self._held_elsewhere(project_id):
+            return None  # being created in another window: not a damaged project
         return ProjectSummary(project_id, status)
+
+    def _held_elsewhere(self, project_id: str) -> bool:
+        try:
+            hold = self._process_locks.try_acquire(project_scope(project_id))
+        except OSError:
+            return False
+        if hold is None:
+            return True
+        hold.release()
+        return False
 
     @support.storage_guarded
     def _read_summary(self, project_id: str) -> ProjectSummary:
