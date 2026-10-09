@@ -57,6 +57,11 @@ _PROVISIONING_MESSAGES = {
     "provisioning_in_progress": (
         "Another model download or import is already running."
     ),
+    "provisioning_elsewhere": (
+        "Another window of this app is already changing the models folder. "
+        "Wait for it to finish there, or close that window, then try again. "
+        "Nothing was changed here."
+    ),
 }
 
 

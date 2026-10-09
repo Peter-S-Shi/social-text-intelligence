@@ -20,6 +20,7 @@ from .projects import (
     BatchWorkspace,
     PersistentProjectRepository,
     ProjectBusy,
+    ProjectBusyElsewhere,
     ProjectSummary,
     WorkspaceMutationConflict,
 )
@@ -30,16 +31,26 @@ DEFAULT_PROJECT_NAME = "Untitled project"
 
 
 class ProjectBusyError(SocialTextIntelligenceError):
-    """The project is held by a running analysis."""
+    """The project is held by a running analysis (here, or in another window)."""
 
-    def __init__(self) -> None:
+    def __init__(self, *, elsewhere: bool = False) -> None:
         message = (
-            "This project is busy with an analysis. Wait for it to finish, or "
+            "This project is in use in another window of the app, for example "
+            "being analysed there. Wait for it to finish there, or close that "
+            "window, then try again. Nothing was changed."
+            if elsewhere
+            else "This project is busy with an analysis. Wait for it to finish, or "
             "cancel it first."
         )
         super().__init__(message)
         self.code = "project_busy"
         self.message = message
+
+
+def busy_error(error: BaseException) -> ProjectBusyError:
+    """The user-facing busy error for a repository hold (local or another window)."""
+
+    return ProjectBusyError(elsewhere=isinstance(error, ProjectBusyElsewhere))
 
 
 class ProjectChangedError(SocialTextIntelligenceError):
@@ -219,8 +230,8 @@ class ProjectWorkflow:
             )
         except BatchCancelled:
             return AnalysisRun.CANCELLED
-        except ProjectBusy:
-            raise ProjectBusyError from None
+        except ProjectBusy as error:
+            raise busy_error(error) from None
         if committed is None:
             if self._repository.get(project_id) is None:
                 raise ProjectNotFoundError
@@ -232,8 +243,8 @@ class ProjectWorkflow:
 
         try:
             return self._repository.delete(project_id)
-        except ProjectBusy:
-            raise ProjectBusyError from None
+        except ProjectBusy as error:
+            raise busy_error(error) from None
 
     def _summary(self, project_id: str) -> ProjectSummary | None:
         for summary in self._repository.list_projects():
@@ -253,5 +264,6 @@ __all__ = [
     "ProjectNotFoundError",
     "ProjectPhase",
     "ProjectWorkflow",
+    "busy_error",
     "describe",
 ]

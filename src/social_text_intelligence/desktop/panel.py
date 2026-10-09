@@ -365,6 +365,11 @@ def _recovery(report: OperationReport) -> tuple[ActionView, ...]:
         )
     if code == "provisioning_in_progress":
         return (ActionView(ActionId.DISMISS, "OK", primary=True),)
+    if code == "provisioning_elsewhere":
+        return (
+            ActionView(ActionId.RETRY, "Try again", primary=True),
+            ActionView(ActionId.DISMISS, "OK"),
+        )
     return (ActionView(ActionId.RETRY, "Try again", primary=True),)
 
 

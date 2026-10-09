@@ -246,6 +246,11 @@ def test_stopping_shows_a_stopping_note_and_no_second_stop() -> None:
             "Another model operation is running",
             ["OK"],
         ),
+        (
+            "provisioning_elsewhere",
+            "Another window is changing the models folder",
+            ["Try again", "OK"],
+        ),
     ],
 )
 def test_failures_show_title_fixed_message_code_and_recovery(

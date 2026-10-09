@@ -13,6 +13,7 @@ from ..contracts.errors import ProjectStorageError
 APP_DIRECTORY_NAME = "SocialTextIntelligence"
 PROJECTS_DIRECTORY_NAME = "projects"
 MODELS_DIRECTORY_NAME = "models"
+LOCKS_DIRECTORY_NAME = "locks"
 
 # FOLDERID_LocalAppData: per-user and non-roaming, so project text never syncs.
 _LOCAL_APP_DATA_FOLDER_ID = "{F1B32785-6FBA-4FCF-9D55-7B8E7F157091}"
@@ -31,6 +32,12 @@ class AppDataLocations:
     @property
     def models_dir(self) -> Path:
         return self.root / MODELS_DIRECTORY_NAME
+
+    @property
+    def locks_dir(self) -> Path:
+        """Cross-process lock files (see ``process_locks``)."""
+
+        return self.root / LOCKS_DIRECTORY_NAME
 
     def ensure_projects_dir(self) -> Path:
         self.projects_dir.mkdir(parents=True, exist_ok=True)

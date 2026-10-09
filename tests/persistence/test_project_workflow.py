@@ -311,17 +311,40 @@ def test_no_error_text_carries_csv_content_or_paths(tmp_path: Path) -> None:
     assert SENTINEL not in joined and str(tmp_path) not in joined
 
 
-def test_a_project_deleted_by_another_process_mid_analysis_is_not_resurrected(
+def test_another_instance_cannot_delete_a_project_mid_analysis(
     tmp_path: Path,
 ) -> None:
     other = workflow(tmp_path)  # a second process over the same folder
     ids: list[str] = []
+    refused: list[ProjectBusyError] = []
 
     def delete_elsewhere(n: int) -> None:
         if n == 2:
-            assert other.delete_project(ids[0]) is True
+            with pytest.raises(ProjectBusyError) as busy:
+                other.delete_project(ids[0])
+            refused.append(busy.value)
 
     flow = workflow(tmp_path, ScriptedGateway(delete_elsewhere))
+    ids.append(flow.import_csv(csv_text(4), name="P").summary.project_id)
+
+    outcome = flow.analyze(ids[0])
+
+    assert outcome is AnalysisRun.COMMITTED  # the analysis was not wasted
+    assert "another window" in refused[0].message
+    assert flow.open_project(ids[0]).analyzed_rows == 4
+
+
+def test_a_project_file_removed_mid_analysis_is_not_resurrected(
+    tmp_path: Path,
+) -> None:
+    ids: list[str] = []
+
+    def remove_file_elsewhere(n: int) -> None:
+        if n == 2:  # outside the app's own delete, e.g. by hand or a clean-up tool
+            for path in (tmp_path / "projects").glob(f"{ids[0]}*"):
+                path.unlink()
+
+    flow = workflow(tmp_path, ScriptedGateway(remove_file_elsewhere))
     ids.append(flow.import_csv(csv_text(4), name="P").summary.project_id)
 
     outcome = flow.analyze(ids[0])

@@ -21,10 +21,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from ..application.exclusion import ProcessLock, ProcessLocks, project_scope
 from ..application.projects import (
     BatchAnalysisLease,
     BatchWorkspace,
     ProjectBusy,
+    ProjectBusyElsewhere,
     ProjectStatus,
     ProjectSummary,
 )
@@ -34,6 +36,7 @@ from . import project_schema as schema
 from . import sqlite_support as support
 from . import workspace_store as store
 from .app_data import AppDataLocations
+from .process_locks import FileProcessLocks
 
 DEFAULT_PROJECT_NAME = "Untitled project"
 MAX_PROJECT_NAME_LENGTH = 120
@@ -43,6 +46,9 @@ MAX_PROJECT_NAME_LENGTH = 120
 class _Lease:
     analysis_id: str
     revision: int
+    # Cross-process hold on the project: released with the lease, or by the OS if
+    # this process dies, so a killed analysis never blocks a project.
+    hold: ProcessLock
 
 
 def _clean_name(name: str) -> str:
@@ -84,9 +90,13 @@ class SqliteProjectRepository:
         locations: AppDataLocations,
         *,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        process_locks: ProcessLocks | None = None,
     ) -> None:
         self._locations = locations
         self._clock = clock
+        self._process_locks: ProcessLocks = process_locks or FileProcessLocks(
+            locations.locks_dir
+        )
         self._leases: dict[str, _Lease] = {}
         self._lock = threading.Lock()
 
@@ -163,6 +173,25 @@ class SqliteProjectRepository:
                 failed = True
         if failed and strict:
             raise self._delete_failed()
+
+    # --- cross-process exclusion --------------------------------------------------
+
+    def _hold_project(self, project_id: str, action: str) -> ProcessLock:
+        """Take the project's cross-process hold, or say another window has it."""
+
+        hold = self._process_locks.try_acquire(project_scope(project_id))
+        if hold is None:
+            raise ProjectBusyElsewhere(
+                f"This project is in use in another window of the app. Wait for "
+                f"it to finish there, or close that window, then {action}. "
+                "Nothing was changed."
+            )
+        return hold
+
+    def _drop_lease(self, project_id: str) -> None:
+        lease = self._leases.pop(project_id, None)
+        if lease is not None:
+            lease.hold.release()
 
     # --- create / list ------------------------------------------------------------
 
@@ -323,13 +352,19 @@ class SqliteProjectRepository:
                     "This project is already being analyzed. Wait for the "
                     "active analysis to finish before trying again."
                 )
-            with self._open(project_id) as connection:
-                if connection is None:
-                    return None
-                with support.transaction(connection, write=False):
-                    workspace, revision = store.load_workspace(connection)
+            hold = self._hold_project(project_id, "analyse it")
+            try:
+                with self._open(project_id) as connection:
+                    if connection is None:
+                        hold.discard()
+                        return None
+                    with support.transaction(connection, write=False):
+                        workspace, revision = store.load_workspace(connection)
+            except BaseException:
+                hold.release()
+                raise
             analysis_id = secrets.token_urlsafe(24)
-            self._leases[project_id] = _Lease(analysis_id, revision)
+            self._leases[project_id] = _Lease(analysis_id, revision, hold)
             return BatchAnalysisLease(
                 token=project_id, analysis_id=analysis_id, workspace=workspace
             )
@@ -347,12 +382,12 @@ class SqliteProjectRepository:
             encoded = store.encode_workspace(workspace)
             with self._open(lease.token) as connection:
                 if connection is None:
-                    del self._leases[lease.token]
+                    self._drop_lease(lease.token)
                     return False
                 with support.transaction(connection, write=True):
                     current, revision = store.load_workspace(connection)
                     if revision != held.revision:
-                        del self._leases[lease.token]
+                        self._drop_lease(lease.token)
                         return False
                     store.write_workspace(connection, current, workspace, encoded)
                     store.record_commit(
@@ -362,7 +397,7 @@ class SqliteProjectRepository:
                         workspace=workspace,
                     )
                 support.checkpoint(connection)
-            del self._leases[lease.token]
+            self._drop_lease(lease.token)
             return True
 
     def cancel_analysis(self, lease: BatchAnalysisLease) -> bool:
@@ -372,7 +407,7 @@ class SqliteProjectRepository:
             held = self._leases.get(lease.token)
             if held is None or held.analysis_id != lease.analysis_id:
                 return False
-            del self._leases[lease.token]
+            self._drop_lease(lease.token)
             return True
 
     # --- deletion -----------------------------------------------------------------
@@ -390,19 +425,29 @@ class SqliteProjectRepository:
                     "This project is being analyzed and cannot be deleted "
                     "until the active analysis finishes."
                 )
-            artifacts = self._artifacts(project_id)
-            if not artifacts:
-                return False
-            for link in artifacts:
-                if link.is_symlink():  # remove links first; never purge through them
-                    try:
-                        link.unlink()
-                    except OSError:
-                        # Stop before touching the real files so a retry can still
-                        # purge them; they cannot be purged while a link remains.
-                        raise self._delete_failed() from None
-            for candidate in self._artifacts(project_id):
-                if candidate.suffix in {".sqlite3", ".bak"}:
-                    support.purge_database(candidate)
-            self._remove_files(project_id, strict=True)
-            return True
+            hold = self._hold_project(project_id, "delete it")
+            try:
+                removed = self._delete_held(project_id)
+            except BaseException:
+                hold.release()
+                raise
+            hold.discard()  # the project is gone: forget its lock file too
+            return removed
+
+    def _delete_held(self, project_id: str) -> bool:
+        artifacts = self._artifacts(project_id)
+        if not artifacts:
+            return False
+        for link in artifacts:
+            if link.is_symlink():  # remove links first; never purge through them
+                try:
+                    link.unlink()
+                except OSError:
+                    # Stop before touching the real files so a retry can still
+                    # purge them; they cannot be purged while a link remains.
+                    raise self._delete_failed() from None
+        for candidate in self._artifacts(project_id):
+            if candidate.suffix in {".sqlite3", ".bak"}:
+                support.purge_database(candidate)
+        self._remove_files(project_id, strict=True)
+        return True
