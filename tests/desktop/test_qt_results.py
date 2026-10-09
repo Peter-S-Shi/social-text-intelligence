@@ -501,6 +501,6 @@ def test_a_large_import_previews_every_row_without_growing_the_page(
     assert table.rowCount() == 300
     assert max(len(cell(table, r, 2)) for r in range(300)) <= 100
     assert (
-        table.maximumHeight() <= 12 * table.verticalHeader().defaultSectionSize() + 60
+        table.maximumHeight() <= 16 * table.verticalHeader().defaultSectionSize() + 60
     )
     assert table.verticalScrollBar().maximum() > 0

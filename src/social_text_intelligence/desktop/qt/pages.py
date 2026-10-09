@@ -158,7 +158,7 @@ class AnalyzePage(Page):
         self.language_box = LanguageBox("analysis-language", compact=True)
         self.language_headline = self.language_box.headline
         self.language_detail = self.language_box.detail
-        self.scores = ScorePanel()
+        self.scores = ScorePanel(columns=True)
         self.result_box.layout_.addLayout(verdicts)
         add_all(
             self.result_box.layout_,

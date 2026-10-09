@@ -22,6 +22,7 @@ from social_text_intelligence.application.model_provisioning import (  # noqa: E
     Readiness,
 )
 from social_text_intelligence.desktop.navigation import Section  # noqa: E402
+from social_text_intelligence.desktop.qt.components import ColumnChart  # noqa: E402
 
 from .fakes import FakeProvisioning, ManualRunner, status  # noqa: E402
 from .qt_support import Shell  # noqa: E402
@@ -268,7 +269,8 @@ def test_analyze_shows_the_three_sentiment_scores_and_nine_compact_emotion_score
 
     scores = page.scores
     assert len(scores.sentiment.meters) == 3
-    assert len(scores.emotion.meters) == 9
+    assert isinstance(scores.emotion, ColumnChart)  # drawn as columns here
+    assert len(scores.emotion.rows) == 9
     names = [m.accessibleName() for m in scores.sentiment.meters]
     assert all(": 0." in n for n in names)  # each is written with its score
     assert "highest" in " ".join(names)
@@ -368,3 +370,27 @@ def test_the_first_run_window_states_what_is_needed_and_the_models_window_does_n
     chip = shell.setup.panel.cards["sentiment"].chip
     assert chip.property("chip") is True and chip.property("tone") == "neutral"
     assert "Not installed" in text_of(chip)
+
+
+def test_the_analyze_page_draws_the_nine_compact_scores_as_columns_with_their_numbers(
+    make_shell: Any,
+) -> None:
+    shell: Shell = make_shell(FakeProvisioning(current=READY))
+    shell.window.nav_buttons["Analyze one text"].click()
+    page = shell.window.analyze_page
+    page.editor.setPlainText("A synthetic joyful sentence.")
+
+    page.analyze_button.click()
+
+    chart = page.scores.emotion
+    assert isinstance(chart, ColumnChart)
+    assert len(chart.rows) == 9
+    name = chart.accessibleName()
+    assert name.startswith("Compact emotion scores")
+    for row in chart.rows:  # every column's exact score is in the spoken name too
+        assert f"{row.label} {row.text}" in name
+    assert "threshold 0.50" in name
+    assert 0.0 < chart.threshold <= 1.0
+    # the review page keeps the compact horizontal bars in its narrow card
+    review = shell.window.projects_page.review_page
+    assert hasattr(review.ai.scores.emotion, "meters")

@@ -11,6 +11,7 @@ from collections.abc import Callable, Sequence
 from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import (
     QColor,
+    QFont,
     QKeyEvent,
     QPainter,
     QPaintEvent,
@@ -619,6 +620,99 @@ def score_rows(rows: Sequence[ScoreRow]) -> list[tuple[str, float, str, str]]:
     return [(row.label, row.fraction, row.text, row.note) for row in rows]
 
 
+class ColumnChart(QWidget):
+    """The compact emotion scores as columns with their numbers, a dashed threshold.
+
+    Every column's exact score is drawn above it and its name below, and the whole
+    chart is also named in full for assistive technology, so the picture adds
+    nothing that is not written. The dominant column is dark, a secondary one is
+    slate, the rest are pale.
+    """
+
+    HEIGHT = 190
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._rows: tuple[ScoreRow, ...] = ()
+        self._threshold = 0.5
+        self.setMinimumHeight(self.HEIGHT)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+
+    @property
+    def rows(self) -> tuple[ScoreRow, ...]:
+        return self._rows
+
+    @property
+    def threshold(self) -> float:
+        return self._threshold
+
+    def set_rows(self, rows: Sequence[ScoreRow], threshold: float) -> None:
+        self._rows = tuple(rows)
+        self._threshold = threshold
+        spoken = ", ".join(
+            f"{row.label} {row.text}" + (f" {row.note}" if row.note else "")
+            for row in self._rows
+        )
+        self.setAccessibleName(
+            f"Compact emotion scores, threshold {threshold:.2f}: {spoken}"
+        )
+        self.update()
+
+    def sizeHint(self) -> QSize:  # noqa: N802 (Qt override)
+        return QSize(420, self.HEIGHT)
+
+    def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802 (Qt override)
+        if not self._rows:
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        top, bottom = 22.0, 22.0
+        plot = QRectF(0.0, top, float(self.width()), self.height() - top - bottom)
+        slot = plot.width() / len(self._rows)
+        mono = QFont(self.font())
+        mono.setFamilies(["Consolas", "Courier New"])
+        mono.setPointSizeF(8.0)
+        painter.setFont(mono)
+        # the baseline and the dashed threshold
+        painter.setPen(QPen(QColor(style.LINE_STRONG), 1))
+        painter.drawLine(
+            QPointF(0, plot.bottom()), QPointF(plot.right(), plot.bottom())
+        )
+        line_y = plot.bottom() - plot.height() * self._threshold
+        painter.setPen(QPen(QColor(style.CAUTION_LINE), 1, Qt.PenStyle.DashLine))
+        painter.drawLine(QPointF(0, line_y), QPointF(plot.right(), line_y))
+        for index, row in enumerate(self._rows):
+            left = plot.left() + index * slot
+            width = max(slot - 10.0, 6.0)
+            height = max(plot.height() * row.fraction, 2.0)
+            bar = QRectF(left + 5.0, plot.bottom() - height, width, height)
+            colour = (
+                style.INK
+                if row.note == "dominant"
+                else style.GRAPHITE_SOFT
+                if row.note == "secondary"
+                else "#AEB6C2"
+            )
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(colour))
+            painter.drawRoundedRect(bar, 2, 2)
+            painter.setPen(QColor(style.INK if row.note else style.MUTED))
+            painter.drawText(
+                QRectF(left, bar.top() - 16.0, slot, 14.0),
+                int(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom),
+                row.text,
+            )
+            painter.setPen(QColor(style.MUTED))
+            name = painter.fontMetrics().elidedText(
+                row.label.lower(), Qt.TextElideMode.ElideRight, int(slot) - 2
+            )
+            painter.drawText(
+                QRectF(left, plot.bottom() + 4.0, slot, 14.0),
+                int(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop),
+                name,
+            )
+
+
 class ScorePanel(QWidget):
     """The score breakdown of one model result: sentiment, compact emotions, native.
 
@@ -626,7 +720,7 @@ class ScorePanel(QWidget):
     scores are one deliberate click away, as in V1, so they never crowd the page.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, *, columns: bool = False) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -635,7 +729,10 @@ class ScorePanel(QWidget):
         self.sentiment = BarGrid("ai")
         self.sentiment.setObjectName("sentiment-scores")
         self.emotion_heading = label("Compact emotion scores", role="eyebrow")
-        self.emotion = BarGrid("ai")
+        # a wide result card draws columns; a narrow one keeps the bar rows
+        self.emotion: BarGrid | ColumnChart = (
+            ColumnChart() if columns else BarGrid("ai")
+        )
         self.emotion.setObjectName("emotion-scores")
         self.rule = label(role="muted")
         self.rule.setObjectName("emotion-rule")
@@ -664,7 +761,10 @@ class ScorePanel(QWidget):
 
     def show_scores(self, scores: ScoreSetView) -> None:
         self.sentiment.set_rows(score_rows(scores.sentiment))
-        self.emotion.set_rows(score_rows(scores.emotion))
+        if isinstance(self.emotion, ColumnChart):
+            self.emotion.set_rows(scores.emotion, scores.threshold)
+        else:
+            self.emotion.set_rows(score_rows(scores.emotion))
         self.rule.setText(scores.emotion_rule)
         self.rule_box.setProperty("role", "caution" if scores.fallback else "quiet")
         margin = 12 if scores.fallback else 0
@@ -679,7 +779,8 @@ class ScorePanel(QWidget):
             f"Show all {len(scores.native)} model-native emotion scores"
         )
         self.sentiment.setAccessibleName("Sentiment scores")
-        self.emotion.setAccessibleName("Compact emotion scores")
+        if not isinstance(self.emotion, ColumnChart):
+            self.emotion.setAccessibleName("Compact emotion scores")
         self.native.setAccessibleName("Model-native emotion scores")
 
 
@@ -933,6 +1034,7 @@ __all__ = [
     "BarMeter",
     "Card",
     "Combo",
+    "ColumnChart",
     "ConfusionGrid",
     "DataTable",
     "EmptyState",

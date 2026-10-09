@@ -32,6 +32,7 @@ class ScoreSetView:
     emotion_rule: str
     native: tuple[ScoreRow, ...]
     fallback: bool = False  # Neutral was chosen by the threshold fallback
+    threshold: float = 0.5  # the activation threshold the compact scores use
 
 
 def _name(value: str) -> str:
@@ -86,4 +87,5 @@ def build_scores(report: AnalysisReport) -> ScoreSetView:
         emotion_rule=rule,
         native=tuple(_row(item.label, item.score) for item in emotion.native_scores),
         fallback=fell_back,
+        threshold=emotion.threshold,
     )

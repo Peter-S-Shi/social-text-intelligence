@@ -835,7 +835,7 @@ class ProjectsPage(QWidget):
             failed=[item.rejected for item in shown_rows],
             names=[item.accessible_name for item in shown_rows],
         )
-        self.preview_table.fit_rows(len(shown_rows), cap=12)
+        self.preview_table.fit_rows(len(shown_rows), cap=16)
         self.failures_table.set_rows(
             [(str(p.row), p.record_id, p.reason) for p in view.failures]
         )
