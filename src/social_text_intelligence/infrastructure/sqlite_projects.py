@@ -73,12 +73,44 @@ def _summary(connection: sqlite3.Connection) -> ProjectSummary:
     project_id, name, created_at, updated_at = connection.execute(
         "SELECT project_id, name, created_at, updated_at FROM project"
     ).fetchone()
+    counts = _counts(connection)
     return ProjectSummary(
         project_id=project_id,
         status=ProjectStatus.OK,
         name=name,
         created_at=datetime.fromisoformat(created_at),
         updated_at=datetime.fromisoformat(updated_at),
+        row_count=counts[0],
+        rejected_rows=counts[1],
+        analysed_rows=counts[2],
+        reviewed_rows=counts[3],
+        corrected_rows=counts[4],
+    )
+
+
+def _counts(connection: sqlite3.Connection) -> tuple[int, int, int, int, int]:
+    """Per-project counts for the list: five ``COUNT`` queries over small columns.
+
+    Only identity, status and judgment columns are touched, never the text, the
+    report or the note, and nothing is decoded, so listing stays cheap and leaves
+    the stored workspace alone.
+    """
+
+    def count(sql: str) -> int:
+        return int(connection.execute(sql).fetchone()[0])
+
+    return (
+        count("SELECT COUNT(*) FROM prepared_row"),
+        count("SELECT COUNT(*) FROM prepared_row WHERE error_code IS NOT NULL"),
+        count("SELECT COUNT(*) FROM analysis_outcome WHERE status = 'ok'"),
+        count(
+            "SELECT COUNT(*) FROM human_review "
+            "WHERE sentiment_judgment IS NOT NULL AND emotion_judgment IS NOT NULL"
+        ),
+        count(
+            "SELECT COUNT(*) FROM human_review "
+            "WHERE sentiment_judgment = 'correct' OR emotion_judgment = 'correct'"
+        ),
     )
 
 

@@ -80,6 +80,14 @@ class ProjectSummary:
     name: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    # Read-time counts for the project list (``None`` where the repository keeps
+    # none). They are counted from stored rows when listing, never persisted, and
+    # never read from any text column.
+    row_count: int | None = None  # every data row of the imported CSV
+    rejected_rows: int | None = None  # rows the CSV preparation rejected
+    analysed_rows: int | None = None  # rows with an AI result
+    reviewed_rows: int | None = None  # rows judged in both dimensions
+    corrected_rows: int | None = None  # rows where the human corrected the AI
 
 
 class PersistentProjectRepository(ProjectRepository, Protocol):
