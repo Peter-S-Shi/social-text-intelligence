@@ -25,6 +25,10 @@ class ProjectBusy(RuntimeError):
     """The project is held by a running analysis (still a ``RuntimeError``)."""
 
 
+class ProjectBusyElsewhere(ProjectBusy):
+    """Another instance of the application (another process) holds the project."""
+
+
 @dataclass(frozen=True, slots=True)
 class BatchWorkspace:
     pending: PendingBatchUpload | None = None
@@ -235,6 +239,7 @@ __all__ = [
     "InMemoryProjectRepository",
     "PersistentProjectRepository",
     "ProjectBusy",
+    "ProjectBusyElsewhere",
     "ProjectRepository",
     "ProjectStatus",
     "ProjectSummary",

@@ -1,5 +1,20 @@
 # Development Log
 
+## V2 Product Hardening — M8 Track A Technical Product Hardening — complete (M8 in progress)
+
+Track A turned the open M7 observations into bounded fixes and measurements, with no
+new feature. Two application instances are now excluded where it matters, by OS-level
+file locks that vanish with their process: one project's analysis, commit and delete,
+and every models-folder operation; the loser gets an actionable message instead of a
+generic storage error or minutes of wasted inference. The unreplicated "project not
+available" event did not reproduce in 128 stress rounds, but two adjacent listing
+hazards were found and fixed. Disk-full, read-only and in-use faults now report
+accurately with no partial commit. The project summary no longer counts import-rejected
+rows as analysis failures. The cost of re-hashing the weights and a native-crash band
+under a low memory limit are measured and left to the owner. See the
+[Track A ledger](docs/V2_M8_TRACK_A_LEDGER.md). Track B (UI fidelity) and the owner
+review are pending, so M8 is not complete.
+
 ## V2 Pre-Release Feasibility — M7 Pre-Release Feasibility & Risk Gate — conditional
 
 M7 built the current desktop with PyInstaller (onedir) and ran it, without producing

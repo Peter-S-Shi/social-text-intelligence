@@ -31,8 +31,10 @@ ERROR_TITLES = {
     "download_rejected": "The download was refused",
     "checksum_mismatch": "A file failed its checksum and was discarded",
     "storage_failed": "The models folder could not be read or written",
+    "storage_full": "There is not enough free disk space",
     "source_unreadable": "Couldn't read that folder",
     "provisioning_in_progress": "Another model operation is running",
+    "provisioning_elsewhere": "Another window is changing the models folder",
     "model_load_failed": "The model files could not be loaded",
     "unexpected_error": "The operation did not finish",
 }
