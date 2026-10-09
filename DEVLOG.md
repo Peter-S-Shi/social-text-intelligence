@@ -1,5 +1,39 @@
 # Development Log
 
+## V2 Product Hardening & UI Fidelity — M8 Track B Native UI fidelity alignment — implementation complete, owner review pending
+
+Track B compared the nine Round 3 reference screens with the real Windows Qt app,
+captured Before and After from the real platform plugin with an unmapped
+`QWidget.grab()` (exact reference geometry, nothing else on the desktop to capture),
+and closed the visible structural gaps: a light sidebar and near-black primary
+actions, a Review queue beside peer AI and human cards, two-pane Analyze one text,
+figures and recognised-metadata chips on Import, big sentiment counts on Results,
+numbered Insights controls with side-by-side group cards, and a hero statement on
+the first-run window. The queue needed one read-only application read model, the
+existing filtered queue. A strict reflow test now checks every page at 900 px
+against the headless platform's wider fonts, which exposed width locks (a split
+row and a page header that could not stack once their minimum width exceeded the
+viewport) that the Windows captures had hidden. Three decisions are left to the
+owner and recorded as UNRESOLVED: per-project row counts and review progress, and
+record text in the import preview and results table. Subjective design fidelity and
+the exploratory trial are PENDING OWNER, so M8 is not complete. See the
+[Track B record](docs/V2_M8_TRACK_B_FIDELITY.md).
+
+## V2 Product Hardening — M8 Track A Technical Product Hardening — complete (M8 in progress)
+
+Track A turned the open M7 observations into bounded fixes and measurements, with no
+new feature. Two application instances are now excluded where it matters, by OS-level
+file locks that vanish with their process: one project's analysis, commit and delete,
+and every models-folder operation; the loser gets an actionable message instead of a
+generic storage error or minutes of wasted inference. The unreplicated "project not
+available" event did not reproduce in 128 stress rounds, but two adjacent listing
+hazards were found and fixed. Disk-full, read-only and in-use faults now report
+accurately with no partial commit. The project summary no longer counts import-rejected
+rows as analysis failures. The cost of re-hashing the weights and a native-crash band
+under a low memory limit are measured and left to the owner. See the
+Track A ledger (`docs/V2_M8_TRACK_A_LEDGER.md`, in PR #50). Track B (UI fidelity, below) is
+implemented and the owner review is pending, so M8 is not complete.
+
 ## V2 Pre-Release Feasibility — M7 Pre-Release Feasibility & Risk Gate — conditional
 
 M7 built the current desktop with PyInstaller (onedir) and ran it, without producing

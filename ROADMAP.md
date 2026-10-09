@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: V2 Native UI Integration (M6) is complete; M7 — Pre-Release Feasibility & Risk Gate is complete with a formally accepted CONDITIONAL exit, M8 has not started, and the next action is to scope M8.** V2 reopens the project from
+**Current phase: V2 Native UI Integration (M6) is complete; M7 — Pre-Release Feasibility & Risk Gate is complete with a formally accepted CONDITIONAL exit, and M8 — Product Hardening & UI Fidelity is IN PROGRESS (Track A technical hardening complete; Track B UI fidelity implemented, owner visual review and exploratory trial PENDING OWNER; M8 is not complete).** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -94,8 +94,12 @@ tooling only; no installer exists and V2 is not release-ready. The sequence stay
 M8 Product Hardening (with an early owner-led exploratory trial), M9 Evidence and
 Formal Acceptance (owner-operated Scenario-Based UAT and a local HTML acceptance
 companion), M10 production packaging, final LGPL compliance, installer and release
-candidate verification. M8 has not started; the next action is to scope it. The
-CONDITIONAL exit is preserved: its open risks are carried to M8 and M10.
+candidate verification. M8 is in progress: Track A technical hardening is complete
+(ledger `docs/V2_M8_TRACK_A_LEDGER.md`, in PR #50), Track B UI fidelity is implemented ([record](docs/V2_M8_TRACK_B_FIDELITY.md))
+and awaits the owner's visual review and exploratory trial (PENDING OWNER),
+and M8 is not complete; M9 and M10 have not started. The CONDITIONAL
+exit is preserved: its open risks close only where the ledger shows affirmative
+evidence, and the rest stay open for M8 Track B, the owner, or M10.
 
 ### M6 — Full UI Integration / Polish (complete)
 

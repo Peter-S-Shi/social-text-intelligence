@@ -120,8 +120,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "with a formally accepted CONDITIONAL exit" in status
     )
     assert (
-        "| Next required action | Scope M8 — Product Hardening from the "
-        "carried M7 inputs"
+        "| Next required action | M8 is IN PROGRESS: Track A (technical "
+        "hardening, PR #50) is complete"
         in status
     )
     assert (
@@ -172,8 +172,11 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert (
         "**Current phase: V2 Native UI Integration (M6) is complete; M7 — "
         "Pre-Release Feasibility & Risk Gate is complete with a formally "
-        "accepted CONDITIONAL exit, M8 has not started, and the next action "
-        "is to scope M8.**" in roadmap
+        "accepted CONDITIONAL exit, and M8 — Product Hardening & UI Fidelity "
+        "is IN PROGRESS (Track A technical hardening complete; Track B UI "
+        "fidelity implemented, owner visual review and exploratory trial "
+        "PENDING OWNER; M8 is not complete).**"
+        in roadmap
     )
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
@@ -187,7 +190,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "> **Current lifecycle phase: V2 Pre-Release Feasibility — M7 "
         "complete (CONDITIONAL)**" in readme
     )
-    assert "M8 has not started and the next action is to scope" in readme
+    assert "M8 is in progress (Track A technical hardening is" in readme
     assert "formally accepted CONDITIONAL exit" in readme
 
 
