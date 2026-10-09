@@ -63,14 +63,14 @@ class PanelDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setAccessibleName(title)
-        self.setMinimumSize(940 if hero else 640, 560)
+        self.setMinimumSize(1000 if hero else 640, 560)
         layout = QVBoxLayout(self)
         self.panel = ProvisioningPanel()
         if hero:
             split = QHBoxLayout()
             split.setSpacing(0)
-            split.addWidget(self._hero(), 4)
-            split.addWidget(self.panel, 7)
+            split.addWidget(self._hero(), 5)
+            split.addWidget(self.panel, 6)
             layout.addLayout(split, 1)
         else:
             layout.addWidget(self.panel, 1)

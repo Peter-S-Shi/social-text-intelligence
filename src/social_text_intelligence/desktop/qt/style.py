@@ -119,7 +119,7 @@ QLabel[role="title"] {{ font-family: {SERIF}; font-size: {SIZE_TITLE}; }}
 QLabel[role="figure"] {{ font-family: {SERIF}; font-size: {SIZE_FIGURE}; }}
 QLabel[role="display"] {{ font-family: {SERIF}; font-size: {SIZE_DISPLAY}; }}
 QLabel[role="numeral"] {{ font-family: {SERIF}; font-size: 20pt; color: {LINE_STRONG}; }}
-QLabel[role="display"][size="hero"] {{ font-size: 25pt; }}
+QLabel[role="display"][size="hero"] {{ font-size: 23pt; }}
 QWidget#setup-hero {{ background: {PAPER}; border-right: 1px solid {LINE}; }}
 QLabel[role="word"] {{ font-family: {SERIF}; font-size: {SIZE_WORD}; }}
 QLabel[quote="true"] {{ font-family: {SERIF}; font-size: {SIZE_QUOTE}; }}
