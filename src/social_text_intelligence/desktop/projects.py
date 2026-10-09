@@ -116,6 +116,14 @@ _SAVED_BEFORE_CANCEL = ProjectsNotice(
 )
 
 
+# Faults the person can fix outside the app; the repository's fixed message says how.
+STORAGE_FAULT_TITLES = {
+    "storage_full": "Not enough disk space",
+    "storage_read_only": "The project can't be saved",
+    "storage_locked": "The project file is in use",
+}
+
+
 def read_limited(path: Path, max_bytes: int) -> bytes:
     """Read at most ``max_bytes + 1`` bytes, so a huge file is never loaded whole."""
 
@@ -159,6 +167,10 @@ def notice_for(error: BaseException) -> ProjectsNotice:
             "project_not_found": "The project is gone",
         }
         return ProjectsNotice(kind, error.code, titles[error.code], error.message)
+    if isinstance(error, ProjectStorageError) and error.code in STORAGE_FAULT_TITLES:
+        return ProjectsNotice(
+            kind, error.code, STORAGE_FAULT_TITLES[error.code], error.message
+        )
     if isinstance(error, ProjectStorageError):
         code = (
             "unsupported_project"

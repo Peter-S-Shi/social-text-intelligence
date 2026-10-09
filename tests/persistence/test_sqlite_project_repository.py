@@ -765,7 +765,9 @@ def test_a_crash_during_analysis_leaves_a_usable_project(tmp_path: Path) -> None
     token = repository.create(original)
     lease = repository.begin_analysis(token)
     assert lease is not None
-    # The process dies here: no completion, no cancellation, no result written.
+    # The process dies here: no completion, no cancellation, no result written. The
+    # OS drops the process's file lock (a real kill is exercised in cross_process).
+    repository._leases[token].hold.release()
 
     restarted = new_repository(tmp_path)
     assert restarted.get(token) == original

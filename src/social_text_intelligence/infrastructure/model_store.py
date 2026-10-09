@@ -14,9 +14,11 @@ import hashlib
 import os
 import threading
 from collections.abc import Callable, Iterator, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from typing import BinaryIO
 
+from ..application.exclusion import MODELS_SCOPE, ProcessLocks
 from ..application.model_provisioning import (
     APPROVED_MODELS,
     CancelCheck,
@@ -42,6 +44,8 @@ from .model_download import (
     UrllibDownloadTransport,
     pinned_file_url,
 )
+from .os_errors import is_disk_full
+from .process_locks import FileProcessLocks
 
 STAGING_DIRECTORY_NAME = ".sti-staging"
 VERIFICATION_DIRECTORY_NAME = ".sti-verification"
@@ -134,11 +138,44 @@ class LocalModelProvisioner:
         models_root: Path,
         transport: DownloadTransport,
         manifest: Sequence[ModelSpec] = APPROVED_MODELS,
+        process_locks: ProcessLocks | None = None,
     ) -> None:
         self._root = models_root
         self._transport = transport
         self._manifest = tuple(manifest)
         self._busy = threading.Lock()
+        # Cross-process exclusion for every operation that changes the folder;
+        # None keeps the exclusion in-process only (tests, embedding).
+        self._process_locks = process_locks
+
+    @contextmanager
+    def _exclusive(self) -> Iterator[None]:
+        """Hold the in-process flag and the cross-process models lock together.
+
+        Both are tried, never waited on. A second operation in this process is
+        ``provisioning_in_progress``; one in another process (another window of the
+        app) is ``provisioning_elsewhere``. The OS drops the second kind with its
+        process, so a crashed window never leaves the folder locked.
+        """
+
+        if not self._busy.acquire(blocking=False):
+            raise ModelProvisioningError("provisioning_in_progress")
+        try:
+            held = None
+            if self._process_locks is not None:
+                try:
+                    held = self._process_locks.try_acquire(MODELS_SCOPE)
+                except OSError:
+                    raise ModelProvisioningError("storage_failed") from None
+                if held is None:
+                    raise ModelProvisioningError("provisioning_elsewhere")
+            try:
+                yield
+            finally:
+                if held is not None:
+                    held.release()
+        finally:
+            self._busy.release()
 
     @property
     def models_root(self) -> Path:
@@ -160,9 +197,7 @@ class LocalModelProvisioner:
             sum(spec.total_bytes for spec in self._manifest),
             verifying_advances=True,
         )
-        if not self._busy.acquire(blocking=False):
-            raise ModelProvisioningError("provisioning_in_progress")
-        try:
+        with self._exclusive():
             for spec in self._manifest:
                 progress.start_model(spec)
                 for item in spec.files:
@@ -178,8 +213,6 @@ class LocalModelProvisioner:
                         else:
                             self._mark_corrupt(spec, item)
                     progress.finish_file(item)
-        finally:
-            self._busy.release()
         return self.status()
 
     def discard_partial_downloads(
@@ -188,14 +221,10 @@ class LocalModelProvisioner:
         if keys is None:
             keys = tuple(spec.key for spec in self._manifest)
         specs = self._select(keys)
-        if not self._busy.acquire(blocking=False):
-            raise ModelProvisioningError("provisioning_in_progress")
-        try:
+        with self._exclusive():
             for spec in specs:
                 for item in spec.files:
                     _remove(self._part_path(spec, item))
-        finally:
-            self._busy.release()
         return self.status()
 
     def download(
@@ -253,27 +282,21 @@ class LocalModelProvisioner:
     ) -> ProvisioningResult:
         """Run one exclusive download or import, model by model, file by file."""
 
-        if not self._busy.acquire(blocking=False):
-            return self._result(
-                ProvisioningOutcome.FAILED,
-                ModelProvisioningError("provisioning_in_progress"),
-            )
         progress = _Progress(on_progress, sum(spec.total_bytes for spec in specs))
         is_cancelled = cancelled or (lambda: False)
         try:
-            for spec in specs:
-                progress.start_model(spec)
-                for item in spec.files:
-                    if is_cancelled():
-                        raise _Cancelled()
-                    provision_file(spec, item, progress, is_cancelled)
-                    progress.finish_file(item)
+            with self._exclusive():
+                for spec in specs:
+                    progress.start_model(spec)
+                    for item in spec.files:
+                        if is_cancelled():
+                            raise _Cancelled()
+                        provision_file(spec, item, progress, is_cancelled)
+                        progress.finish_file(item)
         except _Cancelled:
             return self._result(ProvisioningOutcome.CANCELLED)
         except ModelProvisioningError as error:
             return self._result(ProvisioningOutcome.FAILED, error)
-        finally:
-            self._busy.release()
         return self._result(ProvisioningOutcome.COMPLETED)
 
     def _result(
@@ -347,8 +370,8 @@ class LocalModelProvisioner:
             if error.code != "network_unavailable":
                 _remove(part)
             raise ModelProvisioningError(error.code) from None
-        except OSError:
-            raise ModelProvisioningError("storage_failed") from None
+        except OSError as error:
+            raise _storage_error(error) from None
 
     def _locate(
         self, folder: Path
@@ -419,8 +442,8 @@ class LocalModelProvisioner:
         try:
             marker.parent.mkdir(parents=True, exist_ok=True)
             marker.touch()
-        except OSError:
-            raise ModelProvisioningError("storage_failed") from None
+        except OSError as error:
+            raise _storage_error(error) from None
 
     def _accept(self, spec: ModelSpec, item: ModelFile) -> None:
         """The installed file has just been hash-verified: clear any finding."""
@@ -486,7 +509,9 @@ def local_model_provisioner(locations: AppDataLocations) -> LocalModelProvisione
     """Production wiring: the per-user models folder and the HTTPS transport."""
 
     return LocalModelProvisioner(
-        models_root=locations.models_dir, transport=UrllibDownloadTransport()
+        models_root=locations.models_dir,
+        transport=UrllibDownloadTransport(),
+        process_locks=FileProcessLocks(locations.locks_dir),
     )
 
 
@@ -538,8 +563,8 @@ def _copy_verified(
     try:
         staged.parent.mkdir(parents=True, exist_ok=True)
         output = staged.open("wb")
-    except OSError:
-        raise ModelProvisioningError("storage_failed") from None
+    except OSError as error:
+        raise _storage_error(error) from None
     with output:
         try:
             handle = source.open("rb")
@@ -559,8 +584,8 @@ def _copy_verified(
                 digest.update(chunk)
                 try:
                     output.write(chunk)
-                except OSError:
-                    raise ModelProvisioningError("storage_failed") from None
+                except OSError as error:
+                    raise _storage_error(error) from None
                 progress.report(ProvisioningPhase.COPYING, item, copied)
                 if cancelled():
                     raise _Cancelled()
@@ -619,8 +644,15 @@ def _install(part: Path, target: Path) -> None:
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
         os.replace(part, target)
-    except OSError:
-        raise ModelProvisioningError("storage_failed") from None
+    except OSError as error:
+        raise _storage_error(error) from None
+
+
+def _storage_error(error: OSError) -> ModelProvisioningError:
+    """A full disk gets its own code; every other write failure stays generic."""
+
+    full = is_disk_full(error)
+    return ModelProvisioningError("storage_full" if full else "storage_failed")
 
 
 def _remove(path: Path) -> None:

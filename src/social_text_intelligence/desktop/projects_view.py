@@ -154,7 +154,8 @@ def _facts(details: ProjectDetails) -> tuple[str, ...]:
     if details.phase is ProjectPhase.ANALYZED:
         done = f"Analysed {details.analyzed_rows} rows"
         if details.failed_rows:
-            done += f" · {details.failed_rows} rows failed"
+            noun = "row" if details.failed_rows == 1 else "rows"
+            done += f" · {details.failed_rows} {noun} failed"
         facts.append(done)
         counts = " · ".join(
             f"{label.title()} {count}" for label, count in details.sentiment_counts

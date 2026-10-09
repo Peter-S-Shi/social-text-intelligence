@@ -242,9 +242,19 @@ def test_stopping_shows_a_stopping_note_and_no_second_stop() -> None:
             ["Try again", "Open models folder"],
         ),
         (
+            "storage_full",
+            "There is not enough free disk space",
+            ["Try again", "Open models folder"],
+        ),
+        (
             "provisioning_in_progress",
             "Another model operation is running",
             ["OK"],
+        ),
+        (
+            "provisioning_elsewhere",
+            "Another window is changing the models folder",
+            ["Try again", "OK"],
         ),
     ],
 )

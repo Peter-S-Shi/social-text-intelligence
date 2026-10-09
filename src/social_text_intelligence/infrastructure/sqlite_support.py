@@ -6,15 +6,19 @@ Nothing here logs, and failures are translated into fixed, content-free messages
 from __future__ import annotations
 
 import contextlib
+import errno
 import functools
+import os
 import re
 import sqlite3
+import stat
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import ParamSpec, TypeVar
 
 from ..contracts.errors import ProjectStorageError
+from .os_errors import is_disk_full
 
 PROJECT_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
 # Every file name this store creates for a project: the database, a migration
@@ -44,6 +48,33 @@ def touches_symlink(path: Path) -> bool:
     )
 
 
+def is_regular_file(path: Path) -> bool:
+    """True for a regular file, False only when the path is definitely absent.
+
+    Any other failure to look at the file (a sharing violation or access-denied
+    while a scanner, sync client or another instance has it open) is raised, never
+    turned into "no such file": a project that exists must not read as missing.
+    ``Path.is_file`` cannot be used because Python 3.13 and later swallow every
+    ``OSError`` there, while earlier versions swallow only a few."""
+
+    try:
+        return stat.S_ISREG(os.stat(path).st_mode)
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+
+
+def entry_may_exist(path: Path) -> bool:
+    """False only when ``path`` is definitely absent or neither a file nor a link."""
+
+    try:
+        mode = os.lstat(path).st_mode
+    except (FileNotFoundError, NotADirectoryError):
+        return False
+    except OSError:
+        return True  # unknown: keep it listed rather than let the project vanish
+    return stat.S_ISREG(mode) or stat.S_ISLNK(mode)
+
+
 def managed_project_id(file_name: str) -> str | None:
     """Return the project id a store-created file name belongs to, else None."""
 
@@ -57,21 +88,70 @@ def valid_project_id(token: str) -> str | None:
     return token if PROJECT_ID_PATTERN.fullmatch(token) else None
 
 
-def _storage_failure(*, busy: bool = False, text: bool = False) -> ProjectStorageError:
-    if text:
-        return ProjectStorageError(
-            code="unsupported_text",
-            message="The workspace contains text that cannot be stored.",
-        )
-    if busy:
-        return ProjectStorageError(
-            code="project_busy",
-            message="The project is in use by another operation; try again.",
-        )
-    return ProjectStorageError(
-        code="storage_failure",
-        message="The project storage could not complete the operation.",
-    )
+_FAILURES = {
+    "unsupported_text": "The workspace contains text that cannot be stored.",
+    "project_busy": "The project is in use by another operation; try again.",
+    "storage_full": (
+        "There is not enough free disk space to save this project. Free some "
+        "disk space and try again. Nothing was changed."
+    ),
+    "storage_read_only": (
+        "This project's file or folder cannot be written. It may be marked "
+        "read-only, access may be denied, or another program may be holding it "
+        "open. Clear the read-only setting or close that program, then try "
+        "again. Nothing was changed."
+    ),
+    "storage_locked": (
+        "This project's file could not be opened. Another program (a backup, "
+        "sync or antivirus tool, or another copy of this app) may be using it, "
+        "or access may be denied. Close it or wait a moment, then try again. "
+        "Nothing was changed."
+    ),
+    "storage_failure": (
+        "The project storage could not complete the operation. Check free disk "
+        "space and the data folder's permissions, then try again."
+    ),
+}
+
+# SQLite primary result codes (the low byte of an extended code).
+_SQLITE_BUSY, _SQLITE_LOCKED, _SQLITE_READONLY = 5, 6, 8
+_SQLITE_FULL, _SQLITE_CANTOPEN = 13, 14
+_WIN_SHARING_VIOLATION, _WIN_LOCK_VIOLATION = 32, 33
+
+
+def _failure(code: str) -> ProjectStorageError:
+    return ProjectStorageError(code=code, message=_FAILURES[code])
+
+
+def _classify_sqlite(error: sqlite3.Error) -> str:
+    primary = getattr(error, "sqlite_errorcode", None)
+    text = str(error).lower()
+    if primary is not None:
+        primary &= 0xFF
+    if primary == _SQLITE_FULL or "disk is full" in text:
+        return "storage_full"
+    if primary == _SQLITE_READONLY or "readonly database" in text:
+        return "storage_read_only"
+    if primary in {_SQLITE_BUSY, _SQLITE_LOCKED} or "locked" in text:
+        return "project_busy"
+    if primary == _SQLITE_CANTOPEN or "unable to open database" in text:
+        return "storage_locked"
+    return "storage_failure"
+
+
+def _classify_os(error: OSError) -> str:
+    if is_disk_full(error):
+        return "storage_full"
+    # Windows reports a sharing or lock violation as errno EACCES too, so the
+    # specific Windows error must be read before the generic errno.
+    if getattr(error, "winerror", None) in {
+        _WIN_SHARING_VIOLATION,
+        _WIN_LOCK_VIOLATION,
+    }:
+        return "storage_locked"
+    if error.errno in {errno.EROFS, errno.EACCES, errno.EPERM}:
+        return "storage_read_only"
+    return "storage_failure"
 
 
 def storage_guarded(function: Callable[_P, _R]) -> Callable[_P, _R]:
@@ -79,23 +159,25 @@ def storage_guarded(function: Callable[_P, _R]) -> Callable[_P, _R]:
 
     The new error is raised after the ``except`` block has finished, so it carries
     no ``__context__`` or ``__cause__``: the original failure (a Unicode error, for
-    instance, holds the offending text) is not reachable from it.
+    instance, holds the offending text) is not reachable from it. Disk-full,
+    read-only, in-use and busy faults each get their own code and a fixed message
+    that says what to do; the raw error text is never shown.
     """
 
     @functools.wraps(function)
     def guarded(*args: _P.args, **kwargs: _P.kwargs) -> _R:
-        failure: ProjectStorageError
+        code: str
         try:
             return function(*args, **kwargs)
         except ProjectStorageError:
             raise
         except sqlite3.Error as error:
-            failure = _storage_failure(busy="locked" in str(error).lower())
+            code = _classify_sqlite(error)
         except UnicodeEncodeError:
-            failure = _storage_failure(text=True)
-        except OSError:
-            failure = _storage_failure()
-        raise failure
+            code = "unsupported_text"
+        except OSError as error:
+            code = _classify_os(error)
+        raise _failure(code)
 
     return guarded
 

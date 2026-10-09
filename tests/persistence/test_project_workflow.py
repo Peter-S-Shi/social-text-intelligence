@@ -216,7 +216,34 @@ def test_row_failures_are_recorded_but_do_not_fail_the_run(tmp_path: Path) -> No
 
     assert flow.analyze(project_id) is AnalysisRun.COMMITTED
     done = flow.open_project(project_id)
-    assert (done.analyzed_rows, done.failed_rows) == (2, 1)
+    # the row rejected at import never reached analysis, so it is not an analysis
+    # failure: analysed + failed accounts for the valid rows, rejected rows apart
+    assert (done.analyzed_rows, done.failed_rows) == (2, 0)
+    assert done.invalid_rows == 1
+    assert done.analyzed_rows is not None and done.failed_rows is not None
+    assert done.analyzed_rows + done.failed_rows == done.valid_rows
+
+
+def test_rejected_and_analysis_failed_rows_are_counted_apart(tmp_path: Path) -> None:
+    csv = (
+        b"record_id,text\nr1,A fine synthetic message.\nr2,   \n"
+        b"r3,Another fine one.\nr4,A third fine one.\n"
+    )
+
+    def fail_second_valid_row(call: int) -> None:
+        if call == 2:
+            raise RuntimeError(SENTINEL)
+
+    flow = workflow(tmp_path, ScriptedGateway(fail_second_valid_row))
+    project_id = flow.import_csv(csv, name="P").summary.project_id
+
+    assert flow.analyze(project_id) is AnalysisRun.COMMITTED
+    done = flow.open_project(project_id)
+
+    assert (done.row_count, done.valid_rows, done.invalid_rows) == (4, 3, 1)
+    assert (done.analyzed_rows, done.failed_rows) == (2, 1)  # r3 failed; r2 rejected
+    assert done.analyzed_rows is not None and done.failed_rows is not None
+    assert done.analyzed_rows + done.failed_rows == done.valid_rows
 
 
 def test_deleting_removes_the_project_files_and_the_listing(tmp_path: Path) -> None:
@@ -311,17 +338,40 @@ def test_no_error_text_carries_csv_content_or_paths(tmp_path: Path) -> None:
     assert SENTINEL not in joined and str(tmp_path) not in joined
 
 
-def test_a_project_deleted_by_another_process_mid_analysis_is_not_resurrected(
+def test_another_instance_cannot_delete_a_project_mid_analysis(
     tmp_path: Path,
 ) -> None:
     other = workflow(tmp_path)  # a second process over the same folder
     ids: list[str] = []
+    refused: list[ProjectBusyError] = []
 
     def delete_elsewhere(n: int) -> None:
         if n == 2:
-            assert other.delete_project(ids[0]) is True
+            with pytest.raises(ProjectBusyError) as busy:
+                other.delete_project(ids[0])
+            refused.append(busy.value)
 
     flow = workflow(tmp_path, ScriptedGateway(delete_elsewhere))
+    ids.append(flow.import_csv(csv_text(4), name="P").summary.project_id)
+
+    outcome = flow.analyze(ids[0])
+
+    assert outcome is AnalysisRun.COMMITTED  # the analysis was not wasted
+    assert "another window" in refused[0].message
+    assert flow.open_project(ids[0]).analyzed_rows == 4
+
+
+def test_a_project_file_removed_mid_analysis_is_not_resurrected(
+    tmp_path: Path,
+) -> None:
+    ids: list[str] = []
+
+    def remove_file_elsewhere(n: int) -> None:
+        if n == 2:  # outside the app's own delete, e.g. by hand or a clean-up tool
+            for path in (tmp_path / "projects").glob(f"{ids[0]}*"):
+                path.unlink()
+
+    flow = workflow(tmp_path, ScriptedGateway(remove_file_elsewhere))
     ids.append(flow.import_csv(csv_text(4), name="P").summary.project_id)
 
     outcome = flow.analyze(ids[0])
