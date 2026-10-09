@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Signal
-from PySide6.QtGui import QResizeEvent
+from PySide6.QtGui import QResizeEvent, QShowEvent
 from PySide6.QtWidgets import (
     QBoxLayout,
     QHBoxLayout,
@@ -28,6 +28,7 @@ from .components import (
     PageHeader,
     ScorePanel,
     SplitRow,
+    ViewportWatcher,
     chip,
 )
 from .widgets import ActionRow, LanguageBox, add_all, announce, frame, label
@@ -184,6 +185,7 @@ class AnalyzePage(Page):
         self.error_actions.triggered.connect(self._error_action)
         add_all(error_layout, self.error_title, self.error_body, self.error_actions)
         self.split = SplitRow(self.input_card, results, side_width=400, stack_below=860)
+        self._watcher = ViewportWatcher(self, self._reflow_verdicts, area=self.scroller)
         add_all(self.body, self.header, self.limits, self.block, self.split)
         self.body.addWidget(self.error_box)
         self.body.addStretch(1)
@@ -194,6 +196,11 @@ class AnalyzePage(Page):
         self._running = False
         self._external_busy = False
 
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._watcher.attach()
+        self._reflow_verdicts()
+
     def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
         super().resizeEvent(event)
         self._reflow_verdicts()
@@ -201,9 +208,9 @@ class AnalyzePage(Page):
     def _reflow_verdicts(self) -> None:
         """The two large label words sit side by side only when they fit the card."""
 
-        room = self.width() - 13 - 2 * style.PAGE_MARGIN_X - 2 * style.SPACE_L
+        room = self._watcher.available() - 2 * style.SPACE_L  # less the card padding
         if self.split.wide:
-            room -= 400 + style.SPACE_L
+            room -= self.split.side_width
         need = (
             self.sentiment_word.sizeHint().width()
             + self.emotion_word.sizeHint().width()

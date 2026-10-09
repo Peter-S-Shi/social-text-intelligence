@@ -69,9 +69,7 @@ def test_text_meets_the_normal_text_contrast_of_4_5(
     assert ratio(foreground, background) >= 4.5, name
 
 
-@pytest.mark.parametrize(
-    ("matches", "level", "fill", "text"), s.CONFUSION_STYLES
-)
+@pytest.mark.parametrize(("matches", "level", "fill", "text"), s.CONFUSION_STYLES)
 def test_every_confusion_cell_keeps_its_count_readable(
     matches: bool, level: int, fill: str, text: str
 ) -> None:
@@ -83,3 +81,54 @@ def test_a_control_and_its_focus_ring_are_visible_against_the_page() -> None:
     assert ratio(s.LINE_STRONG, s.PAPER) >= 3.0
     assert ratio(s.FOCUS, s.PAPER) >= 3.0
     assert ratio(s.FOCUS, s.PAPER_RAISED) >= 3.0
+
+
+LARGE_TEXT_PAIRS = [  # 22 pt and larger serif words and figures: WCAG large text, 3:1
+    ("neutral word on card", s.NEUTRAL, s.PAPER_RAISED),
+    ("neutral word on paper", s.NEUTRAL, s.PAPER),
+    ("neutral word on AI card", s.NEUTRAL, s.GRAPHITE_TINT),
+    ("section numeral on paper", s.LINE_STRONG, s.PAPER),
+]
+
+
+@pytest.mark.parametrize(("name", "foreground", "background"), LARGE_TEXT_PAIRS)
+def test_large_serif_words_meet_the_large_text_contrast_of_3(
+    name: str, foreground: str, background: str
+) -> None:
+    assert ratio(foreground, background) >= 3.0, name
+
+
+@pytest.mark.parametrize(
+    "surface",
+    [
+        s.PAPER_SUNK,
+        s.SIDEBAR_BG,
+        s.GRAPHITE_TINT,
+        s.ULTRAMARINE_PALE,
+        s.CAUTION_BG,
+    ],
+)
+def test_a_control_border_is_visible_on_every_tinted_surface_it_sits_on(
+    surface: str,
+) -> None:
+    assert ratio(s.LINE_STRONG, surface) >= 3.0
+
+
+@pytest.mark.parametrize(
+    "surface", [s.PAPER, s.PAPER_RAISED, s.GRAPHITE_TINT, s.ULTRAMARINE_PALE]
+)
+def test_text_in_the_failure_positive_and_caution_tones_is_readable_on_cards(
+    surface: str,
+) -> None:
+    assert ratio(s.VERMILION, surface) >= 4.5
+    assert ratio(s.POSITIVE, surface) >= 4.5
+
+
+def test_the_focus_ring_of_a_filled_control_is_visible_against_its_fill() -> None:
+    # a ring of the same blue as a human action would vanish (1.0:1): the ring there is
+    # a 3 px ink border, 2.7:1 against the blue fill and 16:1 against the page
+    assert ratio(s.FOCUS, s.ULTRAMARINE) < 1.5
+    assert ratio(s.INK, s.ULTRAMARINE) >= 2.5
+    assert ratio(s.INK, s.PAPER) >= 7.0
+    assert ratio(s.FOCUS, s.PAPER) >= 3.0  # the ring against the page beside a button
+    assert ratio("#FFFFFF", "#3A4048") >= 4.5  # the primary button's lifted fill

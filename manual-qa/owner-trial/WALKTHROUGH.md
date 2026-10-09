@@ -92,7 +92,7 @@ and 150% display scaling if you are able to.
 
 - Make the destination folder read-only or full and try an export: is the message
   accurate and does your data remain?
-- Close the window mid-analysis: it should finish or cancel cleanly.
+- Close the window mid-analysis and note what happens (the design intends a clean finish or cancel; this has not been checked by you yet).
 
 ## 8. A second launch
 

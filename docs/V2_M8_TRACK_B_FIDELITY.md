@@ -37,7 +37,8 @@ The binding [UI/IA decisions U1–U4](V2_UI_IA_DECISION.md) outrank the prototyp
 
 Native states are produced by `tests/visual/fidelity.py` on synthetic data (see
 section 4). The window content area is 1358 × 803 at 100% scale, the reference's own
-frame. File names follow the reference.
+frame. The first-run and Models windows are dialogs and are captured at their own size
+(1000 × 560 and 640 × 560), so their "900 px" pair is not a like-for-like reflow capture. File names follow the reference.
 
 | # | Reference | Native screen and state | Capture |
 | --- | --- | --- | --- |
@@ -132,12 +133,14 @@ decision; not changed in Track B). Impact: H visible structure, M visible detail
 | --- | --- | --- | --- | --- |
 | G1 | Light sidebar with a white active pill, a "No project open" header and a quiet model line → dark graphite sidebar with an edge bar | H | a | FIXED: light sidebar, pill, idle header, flat mono model status (still one button, same text and name) |
 | G2 | Warm-grey paper with white sheets, near-black primary action → cream paper, ultramarine primary | H | a | FIXED: tokens re-set; every pair re-measured in `test_style_contrast.py` |
-| G3 | Blue means "human" only → blue was also every primary action, blurring the AI/human distinction | M | a | FIXED: primary = ink; blue only for the human's own actions (Save and next, Add note) and chosen judgments |
-| G4 | Tinted status chips → outlined, untinted chips | M | a | FIXED: ready, caution, failure, human and machine tones |
+| G3 | Blue means "human" only → blue was also every primary action, blurring the AI/human distinction | M | a | FIXED: primary = ink; blue marks the human's own actions (Save and next, Add note) and chosen judgments. Checked boxes keep the blue check fill; the Review progress meter is slate like the reference's ink |
+| G4 | Reference: tinted status chips; Before: outlined, untinted chips | M | a | FIXED: chips are now tinted (ready, caution, failure, human and machine tones), each with its word |
 | G5 | Pill-track segmented tabs with counts → dark filled buttons | M | a | FIXED; wraps to a second line when narrow |
 | G6 | Instrument Serif / Inter / IBM Plex Mono → Georgia / Segoe UI / Consolas | M | b | ACCEPTED DEVIATION: system fonts (U1; font licences unverified). See section 6 |
 | G7 | Demo top bar, "Reset demo", simulated title bar and frame | — | b | ACCEPTED DEVIATION: web-only, OS draws the frame |
 | G8 | Small glyph icons in the sidebar | L | b | ACCEPTED DEVIATION: iconography is not fixed by U1; labels carry the meaning |
+| G10 | Quiet scrollbars in the reference → a visibly dark full-height thumb in the queue and the table | M | b | ACCEPTED DEVIATION: the thumb keeps the 3:1 control contrast (`LINE_STRONG`); a paler thumb would fail it |
+| G11 | Sidebar counts Projects 3, Review 17 (unreviewed), notes 2 → Results 48 and Review 46, no Projects count | L | b | ACCEPTED DEVIATION: the counts are rows and reviewable rows; an unreviewed count would change what the badge means |
 | G9 | "Decision practice" group, Moderation training, Support triage, PENDING badges | — | c | NOT IMPLEMENTED (U4) |
 
 ### 5.2 Per screen
@@ -179,11 +182,13 @@ decision; not changed in Track B). Impact: H visible structure, M visible detail
 | V6 | Review | Language notice only when the text may not be English → a large panel for every record | M | a | FIXED: a quiet one-line check when supported; the full notice when not |
 | V7 | Review | No compact-score bars on the AI card ("Inspect all 28" only) → sentiment and nine compact bars | M | b | ACCEPTED DEVIATION: F1.2 and M6 keep the compact scores visible; the page scrolls |
 | V8 | Review | "Accept AI" → "Accept", plus Accept both / Save / Save and next | L | b | ACCEPTED DEVIATION: M5.4 behaviour and tests |
-| A1 | Agreement | Large figures → card-sized figures | M | a | FIXED (display size) |
+| A1 | Agreement | Open, very large numerals → boxed cards with smaller figures | M | a | PARTLY FIXED: figures enlarged to display size, still boxed and smaller than the reference; ACCEPTED DEVIATION for the rest |
 | A2 | Agreement | Larger confusion cells → compact cells | L | a | FIXED |
 | A3 | Agreement | A Sentiment / Dominant emotion toggle for the confidence panel; an export card with explanation → both panels shown; a header button and a checkbox | L | b | ACCEPTED DEVIATION: more information on one screen; M5.4 export copy |
 | C1 | Compare | Numbered steps (01 Group by, 02 Perspective & metric, 03 Filters) → a flat list of fields | M | a | FIXED |
 | C2 | Compare | Group cards side by side, each with name, a small-sample chip, a large figure, bar and counts → full-width text-heavy cards | H | a | FIXED: ReflowRow of cards (two across at 1358 px) |
+| C4 | Compare | An "Export insights CSV…" button at the top right and a Compare / Notes tab strip → neither at the top (the export card is lower on the page; the sidebar chooses the view) | L | b | ACCEPTED DEVIATION |
+| C5 | Results, Compare | A large language-check banner above the figures (reference: a per-row "fr?" chip) | L | b | ACCEPTED DEVIATION: V2-3 product honesty; it pushes the content down |
 | C3 | Compare | Group chips and a segmented AI / Human / Agreement perspective → a checkbox list and a combo | M | b | ACCEPTED DEVIATION: the list is the accessible multi-select; changing the perspective control would churn M5.5 tests for no information gain |
 | N1 | Notes | Association and value side by side; context tags as pills; notes under the form; cases first on the right → a long vertical form, a checkbox column, notes above the cases | H | a | FIXED |
 | N2 | Notes | Case rule as tabs; "Reveal full local text" → a combo; the text shown | M | b | ACCEPTED DEVIATION: the reveal control is a web privacy affordance; the text is local and already shown elsewhere |
@@ -195,9 +200,12 @@ Keyboard and focus: the queue is one tab stop, Up and Down move a ring cursor wi
 opening anything, Enter and Space open the line under the cursor, and the open record is
 drawn from its identity, so the highlighted line always equals the record shown.
 Discarding unsaved edits is confirmed from the queue, the tabs, Previous, Next and the
-filters, and a declined discard restores both the queue and the tabs. Focus return after
-save, error focus and the 900 px reflow tests passed unchanged; the review minimum-width
-test now also covers the queue.
+filters, and a declined discard restores both the queue and the tabs. Choosing a line
+from the queue keeps the keyboard on the queue, and a state refresh (a keystroke in the
+note) does not scroll the queue back. The open line is named as open for assistive
+technology. The existing focus-return, error-focus and review minimum-width tests pass
+unchanged; `test_qt_reflow.py` is new and checks every page at 900 px and Review across
+a sweep of widths.
 
 ## 6. Fonts: a separate note for the owner
 
@@ -249,7 +257,7 @@ The reference pictures stay on the sidecar commit (section 1).
 - **Owner exploratory trial: PENDING OWNER.** See the
   [walkthrough](../manual-qa/owner-trial/WALKTHROUGH.md) and
   [friction log](../manual-qa/owner-trial/FRICTION_LOG.md). It is not M9's UAT.
-- **Not covered by this track:** formal accessibility acceptance, Narrator and
+- **Not covered by this track:** the queue's row geometry is in fixed pixels and does not follow a Windows text-size setting (DPI scaling is covered); formal accessibility acceptance, Narrator and
   high-contrast checks (M9); packaging and the LGPL gate (M10); a repeat on a second
   physical display or DPI beyond the 100% and 150% captures.
 - Application-layer change: `ReviewSnapshot.queue` (read-only `QueueEntry`: row, record
@@ -264,5 +272,6 @@ The reference pictures stay on the sidecar commit (section 1).
 | Capture harness | `tests/visual/fidelity.py`, `capture.py` (unmapped real-platform grabs, narrow and scaled options) |
 | Demo helper | `tools/demo/` (launcher and invented CSV; dev/acceptance helper, no runtime dependency) |
 | Owner trial files | `manual-qa/owner-trial/` (scenario CSV, walkthrough, friction log) |
-| Closeout review | Standards and Spec reviews run as separate passes; findings and repairs are in the PR |
-| Implementation head, governance head, CI | in the PR description |
+| Closeout review | Independent Standards and Spec reviews ran as separate passes; their findings were repaired (see the PR). Pending until then, this line would read "pending" |
+| Status files | `PROJECT_STATUS.md`, `ROADMAP.md`, `README.md` and `DEVLOG.md` carry the M8 Track B row in the governance commit that follows CI |
+| Implementation head, governance head, CI | in the PR description and the Track B validation row of `PROJECT_STATUS.md` |

@@ -408,14 +408,21 @@ class ViewportWatcher(QObject):
     calls ``changed`` whenever it resizes.
     """
 
-    def __init__(self, owner: QWidget, changed: Callable[[], None]) -> None:
+    def __init__(
+        self,
+        owner: QWidget,
+        changed: Callable[[], None],
+        *,
+        area: QAbstractScrollArea | None = None,
+    ) -> None:
         super().__init__(owner)
         self._owner = owner
         self._changed = changed
+        self._own_area = area  # the owner's own scroller, when it is not an ancestor
         self._viewport: QWidget | None = None
 
     def attach(self) -> None:
-        area = self._scroll_area()
+        area = self._own_area or self._scroll_area()
         viewport = area.viewport() if area is not None else None
         if viewport is self._viewport:
             return
@@ -428,8 +435,11 @@ class ViewportWatcher(QObject):
     def available(self) -> int:
         """The width a page's content may use (its viewport less the page margins)."""
 
-        if self._viewport is not None:
-            return int(self._viewport.width()) - 2 * style.PAGE_MARGIN_X
+        try:
+            if self._viewport is not None:
+                return int(self._viewport.width()) - 2 * style.PAGE_MARGIN_X
+        except RuntimeError:  # the scroll area was deleted first (shutdown)
+            self._viewport = None
         return int(self._owner.width())
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
@@ -472,6 +482,12 @@ class SplitRow(QWidget):
     @property
     def wide(self) -> bool:
         return bool(self._wide)
+
+    @property
+    def side_width(self) -> int:
+        """The width the side panel takes (plus the gap) when laid out beside."""
+
+        return self._side_width + style.SPACE_L
 
     def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
         super().resizeEvent(event)

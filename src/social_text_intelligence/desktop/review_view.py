@@ -298,7 +298,14 @@ def _queue_heading(snapshot: ReviewSnapshot) -> tuple[str, str]:
     heading = f"Queue · {names[snapshot.filters.status.value]}"
     if snapshot.record is None:
         return heading, ""
-    return heading, f"{snapshot.position} / {snapshot.filtered_count}"
+    # the place within THIS queue (not the record's place among all reviewable rows)
+    open_row = snapshot.record.row_number
+    places = [
+        i for i, e in enumerate(snapshot.queue, start=1) if e.row_number == open_row
+    ]
+    place = places[0] if places else snapshot.position
+    total = len(snapshot.queue) or snapshot.filtered_count
+    return heading, f"{place} / {total}"
 
 
 def _position(snapshot: ReviewSnapshot) -> str:

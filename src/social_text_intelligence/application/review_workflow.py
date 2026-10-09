@@ -206,7 +206,8 @@ class ReviewWorkflow:
             raise ReviewUnavailableError
         report = details.current.outcome.report
         assert report is not None
-        navigation = self._navigation(workspace, details.current, filters)
+        cases = self._queue_cases(workspace, details.current, filters)
+        navigation = self._navigation(workspace, details.current, cases)
         return ReviewSnapshot(
             project_id=project_id,
             filters=filters,
@@ -223,7 +224,7 @@ class ReviewWorkflow:
             next_row=navigation.next_row,
             next_unreviewed_row=navigation.next_unreviewed_row,
             summary=details.summary,
-            queue=self._queue(workspace, details.current, filters),
+            queue=self._queue(cases),
         )
 
     def save(
@@ -306,7 +307,10 @@ class ReviewWorkflow:
 
     @classmethod
     def _navigation(
-        cls, workspace: BatchWorkspace, current: ReviewCase, filters: ReviewFilters
+        cls,
+        workspace: BatchWorkspace,
+        current: ReviewCase,
+        queue: tuple[ReviewCase, ...],
     ) -> ReviewNavigation:
         """Previous and next around ``current``, even if it no longer matches."""
 
@@ -315,15 +319,13 @@ class ReviewWorkflow:
             workspace.result,
             workspace.reviews,
             current_record_id=current.review.record_id,
-            filtered_cases=cls._queue_cases(workspace, current, filters),
+            filtered_cases=queue,
         )
 
-    @classmethod
-    def _queue(
-        cls, workspace: BatchWorkspace, current: ReviewCase, filters: ReviewFilters
-    ) -> tuple[QueueEntry, ...]:
+    @staticmethod
+    def _queue(queue: tuple[ReviewCase, ...]) -> tuple[QueueEntry, ...]:
         entries = []
-        for case in cls._queue_cases(workspace, current, filters):
+        for case in queue:
             report = case.outcome.report
             assert report is not None  # only analysed rows are reviewable
             entries.append(

@@ -45,7 +45,6 @@ POSITIVE_LINE = "#BFDCE5"
 NEUTRAL = "#6B6F76"
 FOCUS = "#2C47E0"
 SIDEBAR_BG = "#F7F5F1"
-SIDEBAR_MUTED = MUTED
 
 # -- type ---------------------------------------------------------------------
 SERIF = "Georgia, 'Times New Roman', serif"
@@ -61,7 +60,6 @@ SIZE_WORD = "22pt"
 SIZE_QUOTE = "15pt"
 
 # -- space (pixels) -----------------------------------------------------------
-SPACE_XS = 4
 SPACE_S = 8
 SPACE_M = 12
 SPACE_L = 16
@@ -214,8 +212,11 @@ QPushButton[danger="true"][ghost="true"]:hover {{ border-color: {VERMILION}; }}
 QPushButton:focus, QToolButton:focus {{
   border: 2px solid {FOCUS}; padding: 5px 13px;
 }}
-QPushButton[primary="true"]:focus, QPushButton[human="true"]:focus {{
-  border: 2px solid {FOCUS}; padding: 5px 13px;
+QPushButton[primary="true"]:focus {{
+  border: 2px solid {FOCUS}; padding: 5px 13px; background: #3A4048;
+}}
+QPushButton[human="true"]:focus {{
+  border: 3px solid {INK}; padding: 4px 12px;
 }}
 QToolButton {{
   border: 1px solid transparent; color: {ULTRAMARINE}; text-decoration: underline;
@@ -230,7 +231,7 @@ QPushButton[seg="true"] {{
 }}
 QPushButton[seg="true"]:hover {{ color: {INK}; background: transparent; border-color: transparent; }}
 QPushButton[seg="true"]:checked {{
-  background: {PAPER_RAISED}; color: {INK}; border: 1px solid {LINE};
+  background: {PAPER_RAISED}; color: {INK}; border: 1px solid {LINE_STRONG};
 }}
 QPushButton[seg="true"]:focus {{ border: 2px solid {FOCUS}; padding: 4px 11px; }}
 QPushButton[seg="true"]:disabled {{ color: #7A7E85; background: transparent; border-color: transparent; }}
@@ -296,6 +297,9 @@ QRadioButton[choice="true"]:checked {{
 }}
 QRadioButton[choice="true"]:focus {{
   border: 2px solid {FOCUS}; padding: 4px 11px; border-radius: 6px;
+}}
+QRadioButton[choice="true"]:checked:focus {{
+  border: 3px solid {INK}; padding: 3px 10px;
 }}
 QRadioButton[choice="true"]:disabled {{ color: #7A7E85; border-color: {LINE}; }}
 

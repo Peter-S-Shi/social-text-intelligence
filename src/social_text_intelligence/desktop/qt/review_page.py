@@ -12,7 +12,15 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from PySide6.QtCore import QModelIndex, QPersistentModelIndex, QRect, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QKeyEvent, QPainter, QPen, QResizeEvent
+from PySide6.QtGui import (
+    QColor,
+    QFont,
+    QKeyEvent,
+    QPainter,
+    QPen,
+    QResizeEvent,
+    QShowEvent,
+)
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QBoxLayout,
@@ -51,6 +59,7 @@ from ..review_view import (
 )
 from . import style
 from .components import (
+    MAX_CONTENT_WIDTH,
     BarMeter,
     Combo,
     FlowRow,
@@ -59,6 +68,7 @@ from .components import (
     PageHeader,
     ScorePanel,
     SegmentedFilter,
+    ViewportWatcher,
     relax_width,
 )
 from .platform import DesktopPlatform
@@ -171,8 +181,9 @@ class QueueList(QListWidget):
         self.setFrameShape(QFrame.Shape.NoFrame)
         self._signature: object = None
         self._open_row: int | None = None
+        # one signal for a click; Enter, Return and Space are handled below, so a
+        # platform's single-click activation cannot choose a line twice
         self.itemClicked.connect(self._chosen)
-        self.itemActivated.connect(self._chosen)
 
     def set_entries(
         self, entries: tuple[QueueItemView, ...], selected_row: int | None
@@ -181,7 +192,8 @@ class QueueList(QListWidget):
 
         self.blockSignals(True)
         try:
-            if entries != self._signature:
+            rebuilt = entries != self._signature
+            if rebuilt:
                 self._signature = entries
                 self.clear()
                 for entry in entries:
@@ -190,11 +202,9 @@ class QueueList(QListWidget):
                     item.setData(QueueDelegate.ROLE_ID, entry.record_id)
                     item.setData(QueueDelegate.ROLE_TEXT, entry.excerpt)
                     item.setData(QueueDelegate.ROLE_DONE, entry.reviewed)
-                    item.setData(
-                        Qt.ItemDataRole.AccessibleTextRole, entry.accessible_name
-                    )
                     item.setToolTip(entry.excerpt)
                     self.addItem(item)
+            moved = rebuilt or selected_row != self._open_row
             self._open_row = selected_row
             for index in range(self.count()):
                 item = self.item(index)
@@ -202,7 +212,14 @@ class QueueList(QListWidget):
                     continue
                 is_open = item.data(Qt.ItemDataRole.UserRole) == selected_row
                 item.setData(QueueDelegate.ROLE_OPEN, is_open)
-                if is_open:
+                # the open line is named as such, so assistive technology can tell
+                # which record is open (the list has no selection of its own)
+                name = entries[index].accessible_name
+                item.setData(
+                    Qt.ItemDataRole.AccessibleTextRole,
+                    f"{name} Open record." if is_open else name,
+                )
+                if is_open and moved:  # a state refresh must not undo the user's scroll
                     self.setCurrentItem(item)  # the cursor starts on the open line
                     self.scrollToItem(item)
         finally:
@@ -214,8 +231,10 @@ class QueueList(QListWidget):
         return self._open_row
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802 (Qt override)
-        if event.key() == Qt.Key.Key_Space and self.currentItem() is not None:
-            self._chosen(self.currentItem())
+        keys = (Qt.Key.Key_Space, Qt.Key.Key_Return, Qt.Key.Key_Enter)
+        current = self.currentItem()
+        if event.key() in keys and current is not None:
+            self._chosen(current)
             return
         super().keyPressEvent(event)
 
@@ -533,6 +552,8 @@ class ReviewPage(Page):
         self._filters_signature: object = None
         self._focus_before_busy: QWidget | None = None
         self._stacked: bool | None = None
+        self._watcher = ViewportWatcher(self, self._reflow, area=self.scroller)
+        self._queue_has_the_floor = False
 
         self.header = PageHeader("Review")
         self.title = self.header.title
@@ -552,7 +573,7 @@ class ReviewPage(Page):
         self.status_tabs.setObjectName("review-state-tabs")
         self.status_tabs.setAccessibleName("Review state filter")
         self.status_tabs.selected.connect(self._status_chosen)
-        self.meter = BarMeter(0.0, "human")
+        self.meter = BarMeter(0.0, "ai")
         self.meter.setObjectName("review-meter")
         self.meter.setFixedWidth(180)
         self.meter_text = label(role="mono", wrap=False)
@@ -619,7 +640,10 @@ class ReviewPage(Page):
         self.next_unreviewed_button = self._button(
             "review-next-unreviewed", "Next unreviewed", "Next unreviewed ›"
         )
-        navigation = QHBoxLayout()
+        self.record_nav = QWidget()
+        self.record_nav.setProperty("role", "plain")
+        navigation = QHBoxLayout(self.record_nav)
+        navigation.setContentsMargins(0, 0, 0, 0)
         navigation.setSpacing(2)
         navigation.addWidget(self.record_title, 1)
         for button in (
@@ -647,7 +671,7 @@ class ReviewPage(Page):
         self.columns.setSpacing(16)
         self.columns.addWidget(self.ai, 1, Qt.AlignmentFlag.AlignTop)
         self.columns.addWidget(self.human, 1, Qt.AlignmentFlag.AlignTop)
-        record_layout.addLayout(navigation)
+        record_layout.addWidget(self.record_nav)
         add_all(record_layout, self.record_context, self.record_text)
         add_all(record_layout, self.language_box)
         record_layout.addLayout(self.columns)
@@ -695,6 +719,11 @@ class ReviewPage(Page):
 
     # -- layout -------------------------------------------------------------
 
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._watcher.attach()
+        self._reflow()
+
     def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
         super().resizeEvent(event)
         self._reflow()
@@ -708,12 +737,21 @@ class ReviewPage(Page):
         hold two cards the cards stack, and the queue beside them needs a single one.
         """
 
-        content = max(self.width() - 2 * style.PAGE_MARGIN_X, 0)
+        # the width the scrolling viewport really offers, and never more than the
+        # page's own content column
+        content = max(
+            min(
+                self._watcher.available(),
+                MAX_CONTENT_WIDTH - 2 * style.PAGE_MARGIN_X,
+            ),
+            0,
+        )
         gap = 16
         ai_need = self.ai.minimumSizeHint().width()
         human_need = self.human.minimumSizeHint().width()
-        both = ai_need + gap + human_need
-        one = max(ai_need, human_need)
+        # a record column also holds the navigation row: it sets the narrowest column
+        one = max(ai_need, human_need, self.record_nav.minimumSizeHint().width())
+        both = max(ai_need + gap + human_need, one)
         if content >= both:
             cards_side_by_side = True
             queue_beside = content >= both + gap + QUEUE_WIDTH
@@ -828,7 +866,7 @@ class ReviewPage(Page):
     def _show_header(self, view: ReviewView) -> None:
         self.position.setText(view.position_line)
         self.progress.setText(view.progress_line)
-        self.meter.set_value(view.progress_fraction, "human")
+        self.meter.set_value(view.progress_fraction, "ai")
         self.meter.setAccessibleName(view.progress_text)
         self.meter_text.setText(view.progress_text)
         self.failed.setText(view.failed_line)
@@ -914,7 +952,12 @@ class ReviewPage(Page):
             if record is not None:
                 announce(self.record_title, f"{view.position_line}. {record.title}")
         elif changed and record is not None and (had_focus or not self.isVisible()):
-            self.human.first_field().setFocus()
+            keep_queue = self._queue_has_the_floor and self.queue.isEnabled()
+            self._queue_has_the_floor = False
+            if keep_queue:
+                self.queue.setFocus()
+            else:
+                self.human.first_field().setFocus()
             announce(self.record_title, f"{view.position_line}. {record.title}")
         elif not self._focus_still_valid():
             self.title.setFocus()
@@ -941,6 +984,8 @@ class ReviewPage(Page):
 
         if row == self._shown_row:
             return
+        # the person is working down the queue: keep the keyboard there
+        self._queue_has_the_floor = self.window().focusWidget() is self.queue
         self._guarded(lambda: self._controller.go_to(row))
 
     def _status_chosen(self, value: str) -> None:

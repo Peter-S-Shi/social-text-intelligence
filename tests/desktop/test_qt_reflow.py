@@ -106,3 +106,25 @@ def test_the_first_run_window_and_the_models_window_fit_their_minimum_size(
         scroll = dialog.panel.findChild(QScrollArea, "panel-scroll")
         assert scroll is not None
         assert scroll.horizontalScrollBar().maximum() == 0, dialog.windowTitle()
+
+
+def test_review_never_scrolls_sideways_across_a_sweep_of_widths(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell: Shell = make_shell(FakeProvisioning(current=READY))
+    window = shell.window
+    folder = tmp_path / "csv"
+    folder.mkdir()
+    (folder / "tickets.csv").write_bytes(csv_text(6))
+    shell.platform.csv_file = folder / "tickets.csv"
+    page = window.projects_page
+    shell.button(page, "Import CSV…").click()
+    page.analyze_button.click()
+    window.nav_buttons["Review"].click()
+    settle()
+
+    for width in range(900, 1500, 37):  # across every layout flip point
+        window.resize(width, 700)
+        settle()
+        bar = page.review_page.scroller.horizontalScrollBar()
+        assert bar.maximum() == 0, f"sideways scroll at {width} px"

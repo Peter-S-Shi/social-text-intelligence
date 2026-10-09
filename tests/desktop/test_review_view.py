@@ -237,3 +237,24 @@ def test_the_view_carries_the_queue_the_tabs_and_the_progress_meter(
     assert 0.0 < view.progress_fraction < 1.0
     assert "1 / " in view.progress_text and "to go" in view.progress_text
     assert "reviewed" in view.queue[1].accessible_name
+
+
+def test_the_queue_counter_counts_within_the_filtered_queue() -> None:
+    import tempfile
+
+    from social_text_intelligence.application.review_workflow import ReviewFilter
+
+    with tempfile.TemporaryDirectory() as folder:
+        flow, project_id = snapshot_of(Path(folder), rows=4)
+        first = flow.open_review(project_id, row=1).record
+        assert first is not None
+        flow.accept_both(project_id, 1, "", expected=first.review)
+
+        shown = flow.open_review(
+            project_id, ReviewFilters(status=ReviewFilter.UNREVIEWED), row=3
+        )
+        view = build_review_view(state_for(shown))
+
+    assert view is not None
+    # row 3 is the 2nd of the 3 unreviewed lines, not "3 of 3" or "30 / 17"-style
+    assert view.queue_position == "2 / 3"
