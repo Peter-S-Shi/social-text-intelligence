@@ -310,3 +310,60 @@ def feedback_csv() -> bytes:
     add("c-4001", f"This row will fail inside the model: {FAIL_MARKER}.")
     add("c-4002", "Final check: everything arrived on time and works fine.")
     return ("\n".join(rows) + "\n").encode("utf-8")
+
+
+def checkout_csv() -> bytes:
+    """48 data rows shaped like the Round 3 reference project.
+
+    One empty text (rejected at import), one row the synthetic model fails on, one
+    French row, and three ``source_label`` groups for the Insights comparison.
+    """
+
+    header = "record_id,text,source_label,topic,timestamp"
+    sources = ("app_store", "support", "forum")
+    topics = ("pricing", "performance", "login", "export")
+    rows = [header]
+    for index in range(46):
+        text = SENTENCES[index % len(SENTENCES)].replace('"', "'")
+        if index == 7:
+            text = "Merci, la nouvelle version est beaucoup plus rapide."
+        rows.append(
+            f'c-{1001 + index},"{text}",{sources[index % 3]},{topics[index % 4]},'
+            f"2026-{1 + index % 3:02d}-{1 + index % 27:02d}T09:00:00Z"
+        )
+    rows.append("c-1047,,support,login,2026-02-03T09:00:00Z")
+    rows.append(
+        f'c-1048,"This row will fail inside the model: {FAIL_MARKER}.",forum,export,'
+        "2026-02-04T09:00:00Z"
+    )
+    return ("\n".join(rows) + "\n").encode("utf-8")
+
+
+def support_inbox_csv() -> bytes:
+    """14 rows with an unconventionally named text column, one empty, one Spanish."""
+
+    texts = (
+        "Billing page shows the wrong currency after the update.",
+        "Great job on the new search, it's instant now.",
+        "Can I export only the reviewed rows?",
+        "The reminder feature woke me at 3am. Twice.",
+        "Gracias por la ayuda, todo funciona.",
+        "Not impressed, it's the same app with a new logo.",
+        "Agent was patient and walked me through the restore. Thank you!",
+        "I can't tell if the backup ran or not.",
+        "",
+        "Seriously the best note app on Windows right now.",
+        "My team keeps getting duplicate notifications.",
+        "Loving the calendar integration, small but mighty.",
+        "[3,410-character log pasted into the feedback form]",
+        "Why is the student plan hidden?",
+    )
+    kinds = ("support", "app_store", "forum")
+    rows = ["record_id,message_body,source_label,topic,timestamp"]
+    for index, text in enumerate(texts):
+        body = f'"{text}"' if text else ""
+        rows.append(
+            f"o-{1001 + index},{body},{kinds[index % 3]},billing,"
+            f"2026-10-{1 + index:02d}T09:00:00Z"
+        )
+    return ("\n".join(rows) + "\n").encode("utf-8")
