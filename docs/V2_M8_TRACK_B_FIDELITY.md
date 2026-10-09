@@ -153,7 +153,7 @@ decision; not changed in Track B). Impact: H visible structure, M visible detail
 | S4 | Setup | "Licences…" link → none | L | b | ACCEPTED DEVIATION: no licence viewer exists; notices and the LGPL gate belong to M10 |
 | P1 | Projects | One list card of rows, newest "Open" primary → separate bordered cards, every Open primary | H | a | FIXED |
 | P2 | Projects | "Analyze one text" beside the main action → only Import | M | a | FIXED |
-| P3 | Projects | ROWS and HUMAN REVIEW (segmented bar, "29 / 46 reviewed · 10 corrected") columns, "last opened", filter tabs All / In review / Fully reviewed → name and updated time only | H | a | **UNRESOLVED**: the project listing carries only name, status and dates. Row counts and review progress per project would extend the persistence read path (every project file opened to list), which Track B must not change. Decision needed: extend the listing summary in a later milestone, or accept the plainer list |
+| P3 | Projects | Per-project ROWS and HUMAN REVIEW (bar, "29 / 46 reviewed · 10 corrected"), filter tabs All / In review / Fully reviewed → name and updated time only | H | a | FIXED in Round 2 (section 11): per-project counts read at listing time with five `COUNT(*)` queries, no text; a progress meter and words per row; tabs All / Not analysed / In review / Fully reviewed with counts that filter the list |
 | P4 | Projects | "New project from CSV…" and a × delete → "Import CSV…" and "Delete…" | L | b | ACCEPTED DEVIATION: M4 wording and conservative delete wording (V2-1) |
 | P5 | Projects | Storage path line (`%LOCALAPPDATA%…`) → a sentence without a path | L | b | ACCEPTED DEVIATION: no machine-specific path is shown |
 | D1 | Direct | Input beside result → input above result | H | a | FIXED: two panes, stacked below 860 px |
@@ -162,15 +162,15 @@ decision; not changed in Track B). Impact: H visible structure, M visible detail
 | D4 | Direct | Threshold-fallback caution box → a muted sentence | M | a | FIXED: caution box only when the fallback chose Neutral |
 | D5 | Direct | Character counter → none | L | a | FIXED |
 | D6 | Direct | "Try an example" list → none | L | b | ACCEPTED DEVIATION: not in the F1 boundary; a prototype nicety |
-| D7 | Direct | Vertical bars with a threshold line for the nine compact scores → horizontal bars | M | b | ACCEPTED DEVIATION: every score is written beside its bar, the rows reflow and read well to assistive technology |
+| D7 | Direct | Vertical bars with a threshold line for the nine compact scores → horizontal bars | M | a | FIXED in Round 2: the Analyze page draws the nine scores as columns with their numbers and a dashed threshold line, named in full for assistive technology. Review's narrow AI card keeps the horizontal bar rows (ACCEPTED DEVIATION) |
 | I1 | Import | A two-step wizard (read the file, name the project, then "Create project & analyze N rows") → the import creates the project at once | H | b | ACCEPTED DEVIATION: V2-1 and M4 persist the project at import; a confirm-before-create step would change persistence semantics |
 | I2 | Import | Large valid / invalid / possibly-not-English figures → one text line | M | a | FIXED: figures; the language figure appears after analysis because the language check runs with the analysis |
 | I3 | Import | Recognised metadata chips ("— not in file") → none | M | a | FIXED, with the note that groups come only from these columns |
-| I4 | Import | A preview table of every row (id, text, source, check chip) with All / Invalid / Language notice tabs → only the rejected rows | H | a | **UNRESOLVED**: the results read model deliberately never holds record text, and today lists only problem rows. A full preview would reopen that data-minimisation decision. Decision needed |
+| I4 | Import | A preview table of every row (id, text, source, check chip) with All / Invalid / Language notice tabs → only the rejected rows | H | a | FIXED in Round 2: every row with a 100-character text excerpt, a Ready / Rejected check and the rejection reason, All / Rejected tabs, scrolling inside a bounded height. No source column (the reference's `source_type` is not a displayed field here) and no Language notice tab (the language check runs with the analysis, so it is unknown at import: ACCEPTED DEVIATION) |
 | I5 | Import | Wide reason column and scrollbar → squeezed table | L | a | FIXED (columns fit; the reason is elided with a tooltip) |
 | R1 | Results | Big coloured sentiment counts over a proportional bar → three bar rows | H | a | FIXED: counts, share, stacked bar; exact text kept in accessible names |
 | R2 | Results | Coloured sentiment words in the table → plain | M | a | FIXED (the word is written) |
-| R3 | Results | A TEXT column (truncated record text) → no text | H | a | **UNRESOLVED**: same decision as I4 |
+| R3 | Results | A TEXT column (truncated record text) → no text | H | a | FIXED in Round 2: a read-only TEXT column from the same bounded excerpt; exports are unchanged |
 | R4 | Results | Status chips ("analyzed", "fallback") in table cells → status words with a check mark | L | b | ACCEPTED DEVIATION: table cells are text; the word carries the state |
 | R5 | Results | Vertical dominant-emotion chart, clicking a bar filters → horizontal bars, filters by combo | M | b | ACCEPTED DEVIATION as D7 |
 | R6 | Results | Four cards in one row → three columns with the failed card under sentiment | L | b | ACCEPTED DEVIATION: reflows at narrow widths |
@@ -214,9 +214,20 @@ difference shows most: the display serif (Instrument Serif is narrower and highe
 than Georgia, so titles and large figures look heavier and wider), the UI face (Inter vs
 Segoe UI Variable: very close at 10 pt) and the letter-spaced mono eyebrows (IBM Plex Mono
 vs Consolas). No fonts were bundled. Per the UI/IA record the licence claim is unverified;
-bundling would need an independent licence check, entries in
-[Third-Party Notices](../THIRD_PARTY_NOTICES.md) and a decision by the owner. Nothing in
-this track depends on it.
+bundling needs a decision by the owner and entries in
+[Third-Party Notices](../THIRD_PARTY_NOTICES.md).
+
+Licence facts, read from the official licence files in Round 2 (not legal advice):
+Inter (`rsms/inter`), IBM Plex (`IBM/plex`, which covers IBM Plex Mono) and Instrument
+Serif (`Instrument/instrument-serif`) are each under the SIL Open Font License 1.1.
+Copyright lines: "The Inter Project Authors" (2016), "IBM Corp." (2017) and "The
+Instrument Serif Project Authors" (2022). IBM Plex declares the Reserved Font Name
+"Plex"; Inter and Instrument Serif declare none. The OFL permits bundling the fonts
+with software if each copy carries the copyright notice and the licence text (as text
+files or in the font metadata) and the fonts are not sold on their own; the fonts stay
+under the OFL; a modified version may not use a Reserved Font Name. The Google Fonts
+licence page for Instrument Serif was not read. Bundling is therefore plausible but is
+an owner decision and a notices task; **no font was bundled**.
 
 ## 7. Interaction regression tests
 
@@ -251,9 +262,9 @@ The reference pictures stay on the sidecar commit (section 1).
 
 - **Visual acceptance: PENDING OWNER.** The register above lists what was changed and
   what was deliberately kept; whether the result is close enough is the owner's call.
-- **UNRESOLVED (owner decision):** P3 (per-project rows and review progress), I4 and R3
-  (record text in the import preview and the results table). Each needs a deliberate
-  change to a read model or a persisted summary.
+- **UNRESOLVED:** none from Round 1 remain. P3, I4 and R3 were built in Round 2
+  (section 11) within the owner's constraints; no obstacle was met. The remaining
+  ACCEPTED DEVIATIONS are listed in section 5.
 - **Owner exploratory trial: PENDING OWNER.** See the
   [walkthrough](../manual-qa/owner-trial/WALKTHROUGH.md) and
   [friction log](../manual-qa/owner-trial/FRICTION_LOG.md). It is not M9's UAT.
@@ -301,3 +312,43 @@ Existing tests that encoded the old "read models never hold record text" boundar
 (`SENTINEL not in ...`) are revised deliberately, not weakened by accident: the text
 may appear only as a bounded excerpt in the row read models and the table, and must
 still be absent from every notice, error and export-independent surface.
+
+
+### 11.1 Outcome
+
+- **P3 (project list):** `ProjectSummary` gains read-time counts (`row_count`,
+  `rejected_rows`, `analysed_rows`, `reviewed_rows`, `corrected_rows`), filled by five
+  `COUNT(*)` queries over the identity, status and judgment columns inside the
+  listing's existing read transaction. No text, report or note is read and nothing is
+  decoded or persisted; no schema change. The listing already runs off the UI thread
+  (`ProjectsController.refresh` through the job runner) and already opened each project
+  file to read its name; that cost is unchanged apart from the five small queries.
+  `test_listing_reads_counts_without_loading_any_record_text` traces the SQL and fails
+  if a text column is selected. Track A's rules hold: a project held by another window
+  is still skipped as before, and the counts use `invalid` for rows rejected at import
+  and `analysed` for rows with a result, so analysed + failed = valid (A6) is untouched.
+- **I4 (import preview) and R3 (results text):** the workflow read models carry
+  `ValidationRow` / `ResultRow.excerpt`, produced by
+  `application/text_excerpt.py` (whitespace folded, cut at 100 characters, `(empty)`
+  for an empty text). The full text is never copied into a view model; a test checks
+  that the tail of a long text is absent from every read model and view. Notices,
+  errors and exports are unchanged. The tests that used to assert "no record text in the
+  read models" were revised to assert the bounded excerpt instead.
+- **Selection integrity and UI:** the queue and tabs are unchanged; project rows open by
+  project id (`test_the_review_tabs_filter_the_list_and_open_still_opens_the_right_project`);
+  rows fall back to a compact layout below 760 px; the 900 px sweep and the list page at
+  900 px pass.
+- **D7:** the nine compact scores of Analyze one text are columns with a threshold
+  line (`ColumnChart`); the narrow Review card keeps bar rows.
+
+### 11.2 Round 2 re-audit against the Reference
+
+High-impact structural differences still present after Round 2, each deliberate:
+Agreement keeps boxed figure cards and shows both confidence panels at once (the
+reference toggles one); Compare keeps a combo for the perspective and a checkbox list
+for the groups (the reference uses segmented tabs and chips); Notes keeps a combo for
+the case rule; Review's AI card keeps the compact bar rows beside the scores the
+reference hides behind "Inspect all"; Results keeps three card columns (the reference
+has four); the sidebar has no icons. None hides data or breaks a binding decision; each
+trades a visual match for information, keyboard operation or reflow. Typography is the
+largest remaining material difference and is system-font bound (section 6).

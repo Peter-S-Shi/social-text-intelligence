@@ -21,9 +21,9 @@ Directories (all PNG, shrunk to 1000 px wide):
 | Directory | What it is |
 | --- | --- |
 | `before/` | the baseline `53a5c27` (M7 merged), 1358 × 803 content area, 100% scale |
-| `after/` | this branch's final behavioural head, same frame and data |
+| `after/` | this branch's final behavioural head (Round 2 included: project counts and tabs, the import row preview, the Results text column, the Analyze columns chart), same frame and data |
 | `before-900/`, `after-900/` | the same screens at the 900 px minimum window width |
-| `after-150/` | Review (and its unsupported-language record), Projects and Analyze one text (and its fallback state) at 150% scaling, logical 1100 × 700 |
+| `after-150/` | Review (and its unsupported-language record), Projects, Analyze one text (and its fallback state), Import and Results at 150% scaling, logical 1100 × 700 |
 
 ## Reference → Before → After index
 
@@ -48,7 +48,8 @@ were retired from the V2 surface by U4.
 At 150% scaling: [Review](after-150/demo_review.png),
 [Review, unsupported language](after-150/demo_review-language.png),
 [Projects](after-150/demo_projects.png), [Analyze one text](after-150/demo_direct.png),
-[Analyze one text, fallback](after-150/demo_direct-fallback.png).
+[Analyze one text, fallback](after-150/demo_direct-fallback.png),
+[Import](after-150/demo_import.png), [Results](after-150/demo_results.png).
 
 Not shown: the datasets here are invented and differ from the prototype's scripted
 numbers, and the operating-system window frame is not part of a widget grab.
