@@ -17,7 +17,8 @@ _INVALID_HANDLE = ctypes.c_void_p(-1).value
 def exclusive_handle(path: Path, share: int) -> Iterator[None]:
     """Keep ``path`` open with a Win32 share mode (0 allows no other opener)."""
 
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    win_dll = getattr(ctypes, "WinDLL")  # noqa: B009 - Windows-only, absent elsewhere
+    kernel32 = win_dll("kernel32", use_last_error=True)
     kernel32.CreateFileW.restype = ctypes.c_void_p
     handle = kernel32.CreateFileW(
         str(path),
@@ -29,7 +30,8 @@ def exclusive_handle(path: Path, share: int) -> Iterator[None]:
         None,
     )
     if handle in (None, _INVALID_HANDLE):
-        raise OSError(ctypes.get_last_error(), "could not hold the file open")
+        last_error = getattr(ctypes, "get_last_error")  # noqa: B009
+        raise OSError(last_error(), "could not hold the file open")
     try:
         yield
     finally:

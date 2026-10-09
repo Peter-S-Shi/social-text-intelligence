@@ -214,8 +214,9 @@ def test_a_read_only_project_file_cannot_be_written_but_stays_readable(
             repo.cancel_analysis(lease)
         if sys.platform == "win32":  # POSIX owners may still write; Windows may not
             assert failure.value.code == "storage_read_only"
-        with pytest.raises(ProjectStorageError):
-            repo.delete(token)  # cannot be removed while read-only
+        if sys.platform == "win32":  # POSIX unlinks a read-only file freely
+            with pytest.raises(ProjectStorageError):
+                repo.delete(token)  # cannot be removed while read-only
     finally:
         path.chmod(stat.S_IREAD | stat.S_IWRITE)
 

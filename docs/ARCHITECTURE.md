@@ -190,9 +190,15 @@ project store; M5.0 adds the model provisioner (below).
   repository token and is validated before it can name a file. Every operation
   opens and closes its own connection (`foreign_keys=ON`, `secure_delete=ON`,
   WAL) and writes in a `BEGIN IMMEDIATE` transaction, so a failed write changes
-  nothing. Leases are process-local, so a crashed analysis never blocks a
-  project, and a per-project revision makes a stale lease fail to commit rather
-  than overwrite changes another process made. Analysis commits as one
+  nothing. Leases are process-local, but since M8 an analysis lease (and
+  create, delete and listing of a half-created project) also holds a per-project
+  OS file lock (`<root>/locks/project-<id>.lock`, `process_locks.py` behind the
+  `ProcessLocks` port), so a second application instance is refused at once
+  (`project_busy`, "in use in another window") instead of repeating minutes of
+  inference. The lock is tried, never waited on, and the operating system drops
+  it with its process, so a crashed analysis never blocks a project. A
+  per-project revision still makes a stale lease fail to commit rather than
+  overwrite changes another process made. Analysis commits as one
   transaction; a cancelled or crashed analysis therefore leaves no partial
   result. After a committed write the WAL is checkpointed so replaced content does
   not linger in write-ahead frames. Listing is read-only: it reports a file this

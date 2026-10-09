@@ -148,9 +148,13 @@ Each model has exactly one readiness state:
 - **Installing:** a file is moved into place atomically only after its size
   and SHA-256 match. A failed hash discards that partial file (it cannot be
   resumed correctly) and the operation fails with `checksum_mismatch`.
-- **One at a time:** only one download or import runs per process. A second
-  request fails with `provisioning_in_progress`. Cross-process exclusion
-  belongs to the deferred single-instance work from M4.
+- **One at a time:** only one download, import, Verify or discard runs per
+  process. A second request fails with `provisioning_in_progress`. Across
+  application instances (M8) the same operations are excluded by an OS-level
+  lock on the shared models folder (`<root>/locks/models.lock`, tried and never
+  waited on, released by the operating system when its holder dies, so a killed
+  instance leaves no stale lock). The loser fails with `provisioning_elsewhere`;
+  the quick status stays read-only and unblocked.
 
 ## 7. Use a models folder (offline / pre-provisioned)
 
@@ -227,6 +231,8 @@ addresses or server text.
 | `checksum_mismatch` | A downloaded or imported file does not match the pinned hash | That file discarded; earlier files kept | Download again; or a different models folder |
 | `storage_failed` | The models folder cannot be created, written or read (disk full, permissions, or on Windows a file that a running analysis has loaded), including when a Verify finding cannot be recorded or cleared | Whatever was installed is kept; existing Verify findings are kept, and an unreadable file is never recorded as `corrupt` | Free space, fix permissions, or restart the app, then retry |
 | `source_unreadable` | The chosen folder does not exist or cannot be read | Unchanged | Choose another folder |
+| `storage_full` (M8) | A write failed because the disk is full (`ENOSPC`) | Same as `storage_failed`: finished files and a partial download are kept; a staged import copy is removed | Free disk space, then retry (a download resumes) |
+| `provisioning_elsewhere` (M8) | Another window of the app holds the models-folder lock | Unchanged | Wait for it to finish there, or close that window, then retry |
 | `provisioning_in_progress` | Another download, import or Verify is already running | Unchanged | Wait for it to finish |
 
 When analysis is attempted while models are not ready, `ModelsNotReadyError`
