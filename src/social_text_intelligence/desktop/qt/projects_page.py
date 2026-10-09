@@ -143,11 +143,12 @@ class ProjectRowWidget(QWidget):
         self._text.addWidget(label(row.subtitle, role="subtitle"))
         self.rows_label = label(row.rows_line, role="mono")
         self.rows_label.setObjectName("project-rows")
-        self.rows_label.setVisible(bool(row.rows_line))
         self._text.addWidget(self.rows_label)
         self._inner.addLayout(self._text, 1)
         # the review progress: a thin meter and the words that carry its numbers
+        self.project_id = row.project_id
         self.progress = QWidget()
+        self.progress.setObjectName("project-progress")
         self.progress.setProperty("role", "plain")
         self.progress.setFixedWidth(240)
         progress = QVBoxLayout(self.progress)
@@ -160,12 +161,10 @@ class ProjectRowWidget(QWidget):
         self.review_label.setObjectName("project-review")
         progress.addWidget(self.meter)
         progress.addWidget(self.review_label)
-        self.progress.setVisible(bool(row.review_line))
         self._compact: bool | None = None
         self.open_button = QPushButton("Open")
         self.open_button.setAccessibleName(f"Open {row.title}")
         self.open_button.setEnabled(enabled and row.can_open)
-        self.open_button.setVisible(row.can_open)
         self.open_button.setProperty("primary", primary and row.can_open)
         self.delete_button = QPushButton("Delete…")
         self.delete_button.setAccessibleName(f"Delete {row.title}")
@@ -187,6 +186,25 @@ class ProjectRowWidget(QWidget):
         self.rule = rule()
         outer.addWidget(self.rule)
         self.set_compact(False)
+        # visibility is decided only now, once every widget has its parent: a widget
+        # shown while it has none would flash up as a window of its own
+        self.rows_label.setVisible(bool(row.rows_line))
+        self.progress.setVisible(bool(row.review_line))
+        self.open_button.setVisible(row.can_open)
+
+    def focused_button(self) -> str | None:
+        """Which of this row's buttons has the keyboard, if one does."""
+
+        window = self.window()
+        focus = window.focusWidget() if window is not None else None
+        if focus is self.open_button:
+            return "open"
+        return "delete" if focus is self.delete_button else None
+
+    def focus_button(self, which: str) -> None:
+        button = self.open_button if which == "open" else self.delete_button
+        if button.isEnabled() and button.isVisible():
+            button.setFocus()
 
     def set_compact(self, compact: bool) -> None:
         """Wide: progress between the name and the buttons. Narrow: under the name."""
@@ -232,6 +250,7 @@ class ProjectsPage(QWidget):
         self._other_analysis_running = False
         self._row_signature: object = None
         self._review_filter = "all"
+        self._held_focus: tuple[str, str] | None = None
         self._rows: list[ProjectRowWidget] = []
         self._detail_title = ""
         self._section = Section.PROJECTS
@@ -425,6 +444,7 @@ class ProjectsPage(QWidget):
         self.preview_tabs.setAccessibleName("Rows to show")
         self.preview_tabs.selected.connect(self._preview_filter_chosen)
         self._preview_filter = "all"
+        self._preview_project: str | None = None
         self.preview_table = DataTable()
         self.preview_table.setObjectName("preview-table")
         self.preview_table.setAccessibleName("Imported rows and their checks")
@@ -673,6 +693,10 @@ class ProjectsPage(QWidget):
     def _show_list(self, state: ProjectsState) -> None:
         view = build_list_view(state, self._review_filter)
         listed_any = bool(view.tabs)
+        if not listed_any and self._review_filter != "all":
+            # no projects left: a stale tab must not hide the next import
+            self._review_filter = "all"
+            view = build_list_view(state, "all")
         self.header.set_subtitle(view.summary if view.rows or listed_any else "")
         self.import_button.setEnabled(view.import_enabled)
         empty = not listed_any and state.listed and not state.list_failed
@@ -688,6 +712,19 @@ class ProjectsPage(QWidget):
         if signature == self._row_signature:
             return
         self._row_signature = signature
+        # a rebuilt list keeps the keyboard where it was: the same project's button
+        current = next(
+            (
+                (row.project_id, which)
+                for row in self._rows
+                if (which := row.focused_button()) is not None
+            ),
+            None,
+        )
+        if current is not None:
+            self._held_focus = (
+                current  # (kept across a busy spell, when buttons are off)
+            )
         for widget in self._rows:
             self.rows_box.removeWidget(widget)
             widget.hide()  # a deleted widget is still painted until the loop runs
@@ -706,6 +743,12 @@ class ProjectsPage(QWidget):
             self._rows.append(widget)
         if self._rows:
             self._rows[-1].rule.setVisible(False)
+        held = self._held_focus
+        if held is not None and view.row_actions_enabled:
+            self._held_focus = None
+            again = next((r for r in self._rows if r.project_id == held[0]), None)
+            if again is not None:
+                again.focus_button(held[1])
 
     def _show_detail(self, view: ProjectDetailView, *, had_focus: bool) -> None:
         self._detail_title = view.title
@@ -802,6 +845,12 @@ class ProjectsPage(QWidget):
         )
         if view is None or not shown:
             return
+        project_id = state.project_id
+        rejected_any = any(item.rejected for item in view.preview)
+        if project_id != self._preview_project or not rejected_any:
+            # a new project, or no rejected rows: the "rejected" tab has nothing to show
+            self._preview_project = project_id
+            self._preview_filter = "all"
         signature = (
             view.preview,
             view.failures,

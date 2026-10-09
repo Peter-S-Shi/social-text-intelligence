@@ -6,6 +6,7 @@ written as text next to its picture, and no state is carried by colour alone.
 
 from __future__ import annotations
 
+import html
 from collections.abc import Callable, Sequence
 
 from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, QSize, Qt, Signal
@@ -691,17 +692,21 @@ class ColumnChart(QWidget):
                 if row.note == "dominant"
                 else style.GRAPHITE_SOFT
                 if row.note == "secondary"
-                else "#AEB6C2"
+                else style.CHART_PALE
             )
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QColor(colour))
             painter.drawRoundedRect(bar, 2, 2)
             painter.setPen(QColor(style.INK if row.note else style.MUTED))
+            value_font = QFont(mono)
+            value_font.setBold(bool(row.note))  # dominant or secondary: bold number
+            painter.setFont(value_font)
             painter.drawText(
                 QRectF(left, bar.top() - 16.0, slot, 14.0),
                 int(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom),
                 row.text,
             )
+            painter.setFont(mono)
             painter.setPen(QColor(style.MUTED))
             name = painter.fontMetrics().elidedText(
                 row.label.lower(), Qt.TextElideMode.ElideRight, int(slot) - 2
@@ -918,7 +923,8 @@ class DataTable(QTableWidget):
             for r, row in enumerate(rows):
                 for c, text in enumerate(row):
                     item = QTableWidgetItem(text)
-                    item.setToolTip(text)
+                    # record text is untrusted: shown literally, never as markup
+                    item.setToolTip(f"<qt>{html.escape(text)}</qt>")
                     if failed and failed[r] and c == self.tone_column:
                         item.setForeground(QColor(style.VERMILION))
                     if c == 0 and names:

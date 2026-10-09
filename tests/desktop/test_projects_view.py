@@ -410,3 +410,22 @@ def test_a_filter_that_matches_nothing_says_so_and_keeps_the_tabs() -> None:
 
     assert view.rows == () and "No projects match" in view.summary
     assert view.tabs[0][2] == 1
+
+
+def test_a_project_whose_analysis_produced_no_result_is_not_called_unanalysed() -> None:
+    summary = ProjectSummary(
+        "ab" * 16,
+        ProjectStatus.OK,
+        "All failed",
+        row_count=3,
+        rejected_rows=0,
+        analysed_rows=0,
+        attempted_rows=3,
+        reviewed_rows=0,
+        corrected_rows=0,
+    )
+
+    (row,) = build_list_view(ProjectsState(projects=(summary,), listed=True)).rows
+
+    assert row.review_line == "Analysis ran · no row succeeded"
+    assert row.review_state == "not_analysed"

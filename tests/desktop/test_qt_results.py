@@ -504,3 +504,21 @@ def test_a_large_import_previews_every_row_without_growing_the_page(
         table.maximumHeight() <= 16 * table.verticalHeader().defaultSectionSize() + 60
     )
     assert table.verticalScrollBar().maximum() > 0
+
+
+def test_record_text_in_a_tooltip_is_shown_literally_not_as_markup(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell: Shell = make_shell(FakeProvisioning(current=READY))
+    path = tmp_path / "markup.csv"
+    path.write_bytes(b'record_id,text\nr1,"<b>bold</b> <img src=x> plain"\n')
+    shell.platform.csv_file = path
+    page = shell.window.projects_page
+
+    shell.button(page, "Import CSV…").click()
+
+    item = page.preview_table.item(0, 2)
+    assert item is not None
+    tip = item.toolTip()
+    assert "<b>" not in tip and "<img" not in tip
+    assert "&lt;b&gt;bold" in tip and tip.startswith("<qt>")

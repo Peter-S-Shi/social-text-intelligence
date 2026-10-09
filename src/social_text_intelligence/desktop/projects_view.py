@@ -95,6 +95,8 @@ def _review_facts(summary: ProjectSummary) -> tuple[str, float, str]:
     if analysed is None or summary.reviewed_rows is None:
         return "unknown", 0.0, ""
     if analysed == 0:
+        if summary.attempted_rows:  # an analysis ran and no row succeeded
+            return "not_analysed", 0.0, "Analysis ran · no row succeeded"
         return "not_analysed", 0.0, "Not analysed yet"
     reviewed = summary.reviewed_rows
     line = f"{reviewed} / {analysed} reviewed"

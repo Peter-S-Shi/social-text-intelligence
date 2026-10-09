@@ -47,8 +47,8 @@ COLUMNS = (
     ("Text", 232),
     ("Sentiment", 80),
     ("Dominant emotion", 120),
-    ("Secondary emotions / reason", 150),
-    ("Language check", 120),
+    ("Secondary emotions / reason", 190),
+    ("Language check", 110),
 )
 
 

@@ -532,3 +532,116 @@ def test_a_filter_with_no_match_shows_a_plain_message(
     assert page._rows == []
     assert "No projects match" in text_of(page.summary)
     assert page.review_tabs.buttons["all"].isEnabled()
+
+
+def test_a_row_does_not_flash_up_as_a_window_while_it_is_built(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    from PySide6.QtWidgets import QWidget
+
+    from social_text_intelligence.desktop.projects_view import ProjectRowView
+    from social_text_intelligence.desktop.qt.projects_page import ProjectRowWidget
+
+    row = ProjectRowView(
+        "p" * 32, "T", "Updated", True, "3 rows", "in_review", 0.5, "1 / 2 reviewed"
+    )
+    shown_alone: list[bool] = []
+    original = QWidget.setVisible
+
+    def watching(self: QWidget, visible: bool) -> None:
+        if (
+            visible
+            and self.parentWidget() is None
+            and self.objectName()
+            in {
+                "project-rows",
+                "project-progress",
+            }
+        ):
+            shown_alone.append(True)
+        original(self, visible)
+
+    QWidget.setVisible = watching  # type: ignore[method-assign]
+    try:
+        ProjectRowWidget(row, True)
+    finally:
+        QWidget.setVisible = original  # type: ignore[method-assign]
+
+    assert shown_alone == []  # nothing was shown before it had a parent
+
+
+def test_the_rows_switch_to_a_compact_layout_when_narrow_and_back(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+    row = row_for(page, "Reviewed")
+
+    shell.window.resize(1280, 800)
+    QCoreApplication.processEvents()
+    assert row._compact is False
+    assert row._inner.indexOf(row.progress) >= 0  # between the name and the buttons
+
+    shell.window.resize(900, 700)
+    QCoreApplication.processEvents()
+    assert row._compact is True
+    assert row._text.indexOf(row.progress) >= 0  # under the name
+    assert row.open_button.accessibleName() == "Open Reviewed"
+    assert row.delete_button.accessibleName() == "Delete Reviewed"
+    assert row.open_button.isEnabled()
+
+    shell.window.resize(1280, 800)
+    QCoreApplication.processEvents()
+    assert row._compact is False
+
+
+def test_keyboard_focus_on_a_row_survives_a_list_refresh(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+    shell.window.show()
+    row = row_for(page, "Fresh")
+    row.open_button.setFocus()
+    QCoreApplication.processEvents()
+    assert shell.window.focusWidget() is row.open_button
+
+    shell.window.projects.refresh()  # the list is rebuilt from a fresh listing
+    QCoreApplication.processEvents()
+
+    kept = row_for(page, "Fresh")
+    assert shell.window.focusWidget() is kept.open_button
+
+
+def test_filters_that_no_longer_apply_are_reset(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+    page.review_tabs.buttons["in_review"].click()
+
+    # delete every project: the next import must not stay hidden by that tab
+    for project in list(page._controller.state.projects):
+        shell.platform.confirmed = True
+        page._controller.delete(project.project_id)
+    QCoreApplication.processEvents()
+    import_csv(shell, csv_file(tmp_path, "Again.csv", csv_text(2)))
+    shell.window.nav_buttons["Projects"].click()
+
+    assert page.review_tabs.buttons["all"].isChecked()
+    assert len(page._rows) == 1
+
+
+def test_the_rejected_only_preview_resets_for_a_project_with_none(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    import_csv(shell, csv_file(tmp_path, "Clean.csv", csv_text(3)))
+    page._preview_filter_chosen("rejected")
+
+    assert page._preview_filter == "all"  # a filter that matches nothing is dropped
+    assert page.preview_table.rowCount() == 3

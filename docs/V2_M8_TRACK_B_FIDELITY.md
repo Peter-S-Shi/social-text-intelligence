@@ -136,7 +136,7 @@ decision; not changed in Track B). Impact: H visible structure, M visible detail
 | G3 | Blue means "human" only → blue was also every primary action, blurring the AI/human distinction | M | a | FIXED: primary = ink; blue marks the human's own actions (Save and next, Add note) and chosen judgments. Checked boxes keep the blue check fill; the Review progress meter is slate like the reference's ink |
 | G4 | Reference: tinted status chips; Before: outlined, untinted chips | M | a | FIXED: chips are now tinted (ready, caution, failure, human and machine tones), each with its word |
 | G5 | Pill-track segmented tabs with counts → dark filled buttons | M | a | FIXED; wraps to a second line when narrow |
-| G6 | Instrument Serif / Inter / IBM Plex Mono → Georgia / Segoe UI / Consolas | M | b | ACCEPTED DEVIATION: system fonts (U1; font licences unverified). See section 6 |
+| G6 | Instrument Serif / Inter / IBM Plex Mono → Georgia / Segoe UI / Consolas | M | b | ACCEPTED DEVIATION: system fonts (U1). The OFL facts and the owner decision are in section 6 |
 | G7 | Demo top bar, "Reset demo", simulated title bar and frame | — | b | ACCEPTED DEVIATION: web-only, OS draws the frame |
 | G8 | Small glyph icons in the sidebar | L | b | ACCEPTED DEVIATION: iconography is not fixed by U1; labels carry the meaning |
 | G10 | Quiet scrollbars in the reference → a visibly dark full-height thumb in the queue and the table | M | b | ACCEPTED DEVIATION: the thumb keeps the 3:1 control contrast (`LINE_STRONG`); a paler thumb would fail it |
@@ -153,7 +153,7 @@ decision; not changed in Track B). Impact: H visible structure, M visible detail
 | S4 | Setup | "Licences…" link → none | L | b | ACCEPTED DEVIATION: no licence viewer exists; notices and the LGPL gate belong to M10 |
 | P1 | Projects | One list card of rows, newest "Open" primary → separate bordered cards, every Open primary | H | a | FIXED |
 | P2 | Projects | "Analyze one text" beside the main action → only Import | M | a | FIXED |
-| P3 | Projects | Per-project ROWS and HUMAN REVIEW (bar, "29 / 46 reviewed · 10 corrected"), filter tabs All / In review / Fully reviewed → name and updated time only | H | a | FIXED in Round 2 (section 11): per-project counts read at listing time with five `COUNT(*)` queries, no text; a progress meter and words per row; tabs All / Not analysed / In review / Fully reviewed with counts that filter the list |
+| P3 | Projects | Per-project ROWS and HUMAN REVIEW (segmented bar, "29 / 46 reviewed · 10 corrected"), "last opened", filter tabs All / In review / Fully reviewed → name and updated time only | H | a | FIXED in Round 2 (section 11) with these remaining choices: counts read at listing time with six small `COUNT(*)` queries (no text); a continuous progress meter with the numbers in words under it; tabs All / Not analysed / In review / Fully reviewed with counts (one more tab than the reference, so that an unanalysed project has a home); the row count is a line under the name, not a column with a header row; "last opened" is not shown because the product stores only created and updated times and the owner ruled out new persisted data (the updated time is shown instead); "corrected" follows the Review page's rule and can include a record that is not fully reviewed yet |
 | P4 | Projects | "New project from CSV…" and a × delete → "Import CSV…" and "Delete…" | L | b | ACCEPTED DEVIATION: M4 wording and conservative delete wording (V2-1) |
 | P5 | Projects | Storage path line (`%LOCALAPPDATA%…`) → a sentence without a path | L | b | ACCEPTED DEVIATION: no machine-specific path is shown |
 | D1 | Direct | Input beside result → input above result | H | a | FIXED: two panes, stacked below 860 px |
@@ -166,13 +166,13 @@ decision; not changed in Track B). Impact: H visible structure, M visible detail
 | I1 | Import | A two-step wizard (read the file, name the project, then "Create project & analyze N rows") → the import creates the project at once | H | b | ACCEPTED DEVIATION: V2-1 and M4 persist the project at import; a confirm-before-create step would change persistence semantics |
 | I2 | Import | Large valid / invalid / possibly-not-English figures → one text line | M | a | FIXED: figures; the language figure appears after analysis because the language check runs with the analysis |
 | I3 | Import | Recognised metadata chips ("— not in file") → none | M | a | FIXED, with the note that groups come only from these columns |
-| I4 | Import | A preview table of every row (id, text, source, check chip) with All / Invalid / Language notice tabs → only the rejected rows | H | a | FIXED in Round 2: every row with a 100-character text excerpt, a Ready / Rejected check and the rejection reason, All / Rejected tabs, scrolling inside a bounded height. No source column (the reference's `source_type` is not a displayed field here) and no Language notice tab (the language check runs with the analysis, so it is unknown at import: ACCEPTED DEVIATION) |
+| I4 | Import | A preview table of every row (id, text, source, check chip) with All / Invalid / Language notice tabs → only the rejected rows | H | a | FIXED in Round 2: every row, numbered from 1 for the first data row (as the Results table numbers rows), with a 100-character text excerpt, a Ready / Rejected check and the rejection reason, All / Rejected tabs, scrolling inside a bounded height. Choices: no source column (width; the metadata columns are shown as chips instead) and no Language notice tab (an obstacle: the language check runs with the analysis, so it is unknown at import) |
 | I5 | Import | Wide reason column and scrollbar → squeezed table | L | a | FIXED (columns fit; the reason is elided with a tooltip) |
 | R1 | Results | Big coloured sentiment counts over a proportional bar → three bar rows | H | a | FIXED: counts, share, stacked bar; exact text kept in accessible names |
 | R2 | Results | Coloured sentiment words in the table → plain | M | a | FIXED (the word is written) |
 | R3 | Results | A TEXT column (truncated record text) → no text | H | a | FIXED in Round 2: a read-only TEXT column from the same bounded excerpt; exports are unchanged |
 | R4 | Results | Status chips ("analyzed", "fallback") in table cells → status words with a check mark | L | b | ACCEPTED DEVIATION: table cells are text; the word carries the state |
-| R5 | Results | Vertical dominant-emotion chart, clicking a bar filters → horizontal bars, filters by combo | M | b | ACCEPTED DEVIATION as D7 |
+| R5 | Results | Vertical dominant-emotion chart, clicking a bar filters → horizontal bars, filters by combo | M | b | ACCEPTED DEVIATION (a choice, not an obstacle): the dominant-emotion card keeps bar rows with exact counts and shares and is filtered by the combo. The vertical chart was built only for Analyze one text (D7), where it is the main result |
 | R6 | Results | Four cards in one row → three columns with the failed card under sentiment | L | b | ACCEPTED DEVIATION: reflows at narrow widths |
 | V1 | Review | Queue of records with id and text excerpt, current line highlighted → none (a position counter and filters) | H | a | FIXED: queue pane over the existing filtered queue; a line opens its record by row identity; the open record stays selected after it leaves the filter |
 | V2 | Review | Review-state tabs with counts and a progress bar → three combos | H | a | FIXED: tabs (All, Unreviewed, Reviewed, Corrected, Uncertain) with counts and a meter; the two AI filters stay as combos |
@@ -217,7 +217,10 @@ vs Consolas). No fonts were bundled. Per the UI/IA record the licence claim is u
 bundling needs a decision by the owner and entries in
 [Third-Party Notices](../THIRD_PARTY_NOTICES.md).
 
-Licence facts, read from the official licence files in Round 2 (not legal advice):
+Licence facts, read in Round 2 from `https://raw.githubusercontent.com/rsms/inter/master/LICENSE.txt`,
+`https://raw.githubusercontent.com/IBM/plex/master/LICENSE.txt` and
+`https://raw.githubusercontent.com/Instrument/instrument-serif/main/OFL.txt` on 2026-10-09
+(not legal advice):
 Inter (`rsms/inter`), IBM Plex (`IBM/plex`, which covers IBM Plex Mono) and Instrument
 Serif (`Instrument/instrument-serif`) are each under the SIL Open Font License 1.1.
 Copyright lines: "The Inter Project Authors" (2016), "IBM Corp." (2017) and "The
@@ -245,6 +248,11 @@ All run under `QT_QPA_PLATFORM=offscreen` with real Qt widgets.
 | Cards beside each other at 1280, stacked at 900, no horizontal scroll | `test_review_at_minimum_window_width_shows_both_records_without_horizontal_scroll` |
 | Contrast of every new pair | `test_style_contrast.py` |
 | Results figures and stacked bar | `test_qt_results.py` |
+| Project list counts: read at listing time, no text column selected, six COUNT statements, a failing count degrades one row | `tests/persistence/test_project_listing_counts.py` |
+| Review tabs filter the project list; Open by project id; filter kept and reset; compact rows at 900 px; keyboard focus kept through a refresh; no window flash while a row is built | `tests/desktop/test_qt_projects.py`, `tests/desktop/test_projects_view.py` |
+| Import preview of every row, All / Rejected tabs, bounded scrolling height, 300-row import, markup in a tooltip shown literally | `tests/desktop/test_qt_results.py` |
+| Bounded excerpts: tail of a long text absent, control and bidirectional characters removed | `tests/test_text_excerpt.py`, `tests/persistence/test_results_workflow.py`, `tests/desktop/test_results_view.py` |
+| The nine compact scores as columns with a threshold, named in full | `tests/desktop/test_qt_navigation.py`, `tests/desktop/test_scores.py` |
 | Owner scenario CSV imports as documented | `tests/test_owner_trial_scenario.py` |
 
 ## 8. Evidence index
@@ -254,7 +262,14 @@ Pictures are at 1000 px width. Directory `manual-qa/m8-visual-evidence/` (see it
 
 - `before/` and `after/`: the nine screens at 1358 × 803, plus the variants in section 2.
 - `before-900/` and `after-900/`: the same at the 900 px minimum width.
-- `after-150/`: Review, Projects and Analyze one text at 150% scaling.
+- `after-150/`: Review, Projects, Analyze one text, Import and Results at 150% scaling.
+
+Changed in Round 2: `after/`, `after-900/` and `after-150/` pictures of Projects, Import,
+Results (now with `demo_results-table`, scrolled to the table so the TEXT column is
+visible at every width) and Analyze one text (the columns chart). The `before/` sets are
+the original baseline captures and were not regenerated. The Import preview shows its
+first rows only at the narrow and scaled sizes; the bounded scroll is exercised by the
+300-row test, not by a picture.
 
 The reference pictures stay on the sidecar commit (section 1).
 
@@ -283,7 +298,7 @@ The reference pictures stay on the sidecar commit (section 1).
 | Capture harness | `tests/visual/fidelity.py`, `capture.py` (unmapped real-platform grabs, narrow and scaled options) |
 | Demo helper | `tools/demo/` (launcher and invented CSV; dev/acceptance helper, no runtime dependency) |
 | Owner trial files | `manual-qa/owner-trial/` (scenario CSV, walkthrough, friction log) |
-| Closeout review | Independent Standards and Spec reviews ran as separate passes; their findings were repaired (see the PR). Pending until then, this line would read "pending" |
+| Closeout review | Independent Standards and Spec reviews ran as separate passes after Round 1 and again after Round 2; their findings were repaired test-first (see the PR) |
 | Status files | `PROJECT_STATUS.md`, `ROADMAP.md`, `README.md` and `DEVLOG.md` carry the M8 Track B row in the governance commit that follows CI |
 | Implementation head, governance head, CI | in the PR description and the Track B validation row of `PROJECT_STATUS.md` |
 
@@ -305,7 +320,7 @@ the code:
 | P3a | Per-project counts in the project list (rows, rejected, analysed, reviewed, corrected) as a read-time summary: a handful of `COUNT(*)` queries inside the listing's existing read transaction, no text, no JSON, no full workspace load; computed in the same worker-thread listing the app already runs | `tests/persistence/test_project_listing_counts.py` (real SQLite repository: import, analyse, review, list) |
 | P3b | List view model: row line, review progress, review state (not analysed / in review / fully reviewed) and the filter tabs with counts | `tests/desktop/test_projects_view.py` (Qt-free) |
 | P3c | Project list widgets: progress meter and text per row, state tabs filtering the list, Open still opens by project id, accessible names | `tests/desktop/test_qt_projects.py` (real clicks) |
-| I4 | Import validation: a read model of every row (row, id, a 100-character excerpt, ready or rejected with its reason), the table with All / Rejected tabs, scrolling inside a bounded height | `tests/persistence/test_results_workflow.py`, `tests/desktop/test_results_view.py`, `tests/desktop/test_qt_projects.py` |
+| I4 | Import validation: a read model of every row (row, id, a 100-character excerpt, ready or rejected with its reason), the table with All / Rejected tabs, scrolling inside a bounded height | `tests/persistence/test_results_workflow.py`, `tests/desktop/test_results_view.py`, `tests/desktop/test_qt_results.py` |
 | R3 | Results: a truncated read-only TEXT column from the same bounded excerpt | `tests/persistence/test_results_workflow.py`, `tests/desktop/test_results_view.py`, `tests/desktop/test_qt_results.py` |
 
 Existing tests that encoded the old "read models never hold record text" boundary
@@ -340,6 +355,12 @@ still be absent from every notice, error and export-independent surface.
   900 px pass.
 - **D7:** the nine compact scores of Analyze one text are columns with a threshold
   line (`ColumnChart`); the narrow Review card keeps bar rows.
+
+Cell text is cut at the column width on screen (about 28 characters at the default
+column widths); the tooltip carries the full 100-character excerpt, escaped so record
+text is shown literally and never as markup. A project whose analysis ran but produced
+no result is labelled "Analysis ran · no row succeeded", not "Not analysed yet".
+A count that cannot be read degrades that one list row instead of hiding the project.
 
 ### 11.2 Round 2 re-audit against the Reference
 

@@ -73,7 +73,11 @@ def _summary(connection: sqlite3.Connection) -> ProjectSummary:
     project_id, name, created_at, updated_at = connection.execute(
         "SELECT project_id, name, created_at, updated_at FROM project"
     ).fetchone()
-    counts = _counts(connection)
+    try:
+        counts: tuple[int | None, ...] = _counts(connection)
+    except sqlite3.Error:
+        # a count that cannot be read must not hide a project that opens fine
+        counts = (None,) * 6
     return ProjectSummary(
         project_id=project_id,
         status=ProjectStatus.OK,
@@ -85,15 +89,18 @@ def _summary(connection: sqlite3.Connection) -> ProjectSummary:
         analysed_rows=counts[2],
         reviewed_rows=counts[3],
         corrected_rows=counts[4],
+        attempted_rows=counts[5],
     )
 
 
-def _counts(connection: sqlite3.Connection) -> tuple[int, int, int, int, int]:
+def _counts(connection: sqlite3.Connection) -> tuple[int, int, int, int, int, int]:
     """Per-project counts for the list: five ``COUNT`` queries over small columns.
 
-    Only identity, status and judgment columns are touched, never the text, the
+    Only identity, status and judgment columns are selected, never the text, the
     report or the note, and nothing is decoded, so listing stays cheap and leaves
-    the stored workspace alone.
+    the stored workspace alone. "Corrected" follows the Review page's rule (one
+    corrected dimension marks the record), so it can include a record that is not
+    yet fully reviewed.
     """
 
     def count(sql: str) -> int:
@@ -110,6 +117,11 @@ def _counts(connection: sqlite3.Connection) -> tuple[int, int, int, int, int]:
         count(
             "SELECT COUNT(*) FROM human_review "
             "WHERE sentiment_judgment = 'correct' OR emotion_judgment = 'correct'"
+        ),
+        count(
+            "SELECT COUNT(*) FROM analysis_outcome o "
+            "JOIN prepared_row p ON p.row_number = o.row_number "
+            "WHERE p.error_code IS NULL"
         ),
     )
 

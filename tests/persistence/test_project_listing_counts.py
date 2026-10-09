@@ -109,6 +109,9 @@ def test_listing_reads_counts_without_loading_any_record_text(
     text_columns = ("input_values_json", "record_json", "report_json", "note")
     selects = [s for s in statements if s.lstrip().upper().startswith("SELECT")]
     assert selects
+    assert not any("SELECT *" in s.upper() for s in selects)
+    counting = [s for s in selects if "COUNT(" in s.upper()]
+    assert len(counting) == 6  # the six listing counts, and nothing that reads rows
     assert not any(column in s for s in selects for column in text_columns)
 
 
@@ -120,4 +123,63 @@ def test_the_in_memory_repository_has_no_counts() -> None:
 
     summary = ProjectSummary("x" * 32, ProjectStatus.OK, "n")
 
+    assert summary.row_count is None and summary.reviewed_rows is None
+
+
+def test_a_partly_judged_correction_counts_as_corrected_but_not_reviewed(
+    tmp_path: Path,
+) -> None:
+    flow = ProjectWorkflow(repository(tmp_path), ScriptedGateway(), LIMITS)
+    project_id = flow.import_csv(CSV, name="P").summary.project_id
+    flow.analyze(project_id)
+    reviews = ReviewWorkflow(repository(tmp_path))
+    first = reviews.open_review(project_id, row=1).record
+    assert first is not None
+    reviews.save(
+        project_id,
+        1,
+        ReviewDraft(
+            sentiment_judgment=ReviewJudgment.CORRECT,
+            human_sentiment=SentimentLabel.NEGATIVE,
+        ),
+        expected=first.review,
+    )
+
+    summary = repository(tmp_path).list_projects()[0]
+
+    # the same rules as the Review page: one corrected dimension marks the record
+    assert (summary.reviewed_rows, summary.corrected_rows) == (0, 1)
+
+
+def test_attempted_rows_tell_a_failed_analysis_from_no_analysis(
+    tmp_path: Path,
+) -> None:
+    flow = ProjectWorkflow(repository(tmp_path), ScriptedGateway(), LIMITS)
+    flow.import_csv(CSV, name="P")
+    before = repository(tmp_path).list_projects()[0]
+    assert before.attempted_rows == 0
+
+    project_id = before.project_id
+    flow.analyze(project_id)
+    after = repository(tmp_path).list_projects()[0]
+
+    assert after.attempted_rows == 3 and after.analysed_rows == 3
+
+
+def test_a_failing_count_degrades_the_row_instead_of_hiding_the_project(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from social_text_intelligence.infrastructure import sqlite_projects
+
+    flow = ProjectWorkflow(repository(tmp_path), ScriptedGateway(), LIMITS)
+    flow.import_csv(CSV, name="P")
+
+    def broken(connection: sqlite3.Connection) -> object:
+        raise sqlite3.OperationalError("simulated")
+
+    monkeypatch.setattr(sqlite_projects, "_counts", broken)
+
+    (summary,) = repository(tmp_path).list_projects()
+
+    assert summary.name == "P" and summary.status.value == "ok"
     assert summary.row_count is None and summary.reviewed_rows is None

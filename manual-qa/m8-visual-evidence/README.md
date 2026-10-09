@@ -35,7 +35,8 @@ Directories (all PNG, shrunk to 1000 px wide):
 | `demo_direct.png` | Analyze one text | [before](before/demo_direct.png) | [after](after/demo_direct.png) | [before](before-900/demo_direct.png) / [after](after-900/demo_direct.png) |
 | | threshold-fallback state | [before](before/demo_direct-fallback.png) | [after](after/demo_direct-fallback.png) | [before](before-900/demo_direct-fallback.png) / [after](after-900/demo_direct-fallback.png) |
 | `demo_import.png` | Import & validation | [before](before/demo_import.png) | [after](after/demo_import.png) | [before](before-900/demo_import.png) / [after](after-900/demo_import.png) |
-| `demo_results.png` | Results | [before](before/demo_results.png) | [after](after/demo_results.png) | [before](before-900/demo_results.png) / [after](after-900/demo_results.png) |
+| `demo_results.png` | Results (cards) | [before](before/demo_results.png) | [after](after/demo_results.png) | [before](before-900/demo_results.png) / [after](after-900/demo_results.png) |
+| | Results, table with the TEXT column | [before](before/demo_results.png) | [after](after/demo_results-table.png) | [after](after-900/demo_results-table.png) |
 | `demo_review.png` | Review, unreviewed queue | [before](before/demo_review.png) | [after](after/demo_review.png) | [before](before-900/demo_review.png) / [after](after-900/demo_review.png) |
 | | Review, unsupported-language record | [before](before/demo_review-language.png) | [after](after/demo_review-language.png) | [before](before-900/demo_review-language.png) / [after](after-900/demo_review-language.png) |
 | `demo_agreement.png` | Agreement | [before](before/demo_agreement.png) | [after](after/demo_agreement.png) | [before](before-900/demo_agreement.png) / [after](after-900/demo_agreement.png) |
@@ -49,7 +50,8 @@ At 150% scaling: [Review](after-150/demo_review.png),
 [Review, unsupported language](after-150/demo_review-language.png),
 [Projects](after-150/demo_projects.png), [Analyze one text](after-150/demo_direct.png),
 [Analyze one text, fallback](after-150/demo_direct-fallback.png),
-[Import](after-150/demo_import.png), [Results](after-150/demo_results.png).
+[Import](after-150/demo_import.png), [Results](after-150/demo_results.png),
+[Results table](after-150/demo_results-table.png).
 
 Not shown: the datasets here are invented and differ from the prototype's scripted
 numbers, and the operating-system window frame is not part of a widget grab.

@@ -43,6 +43,7 @@ POSITIVE = "#1F6B80"
 POSITIVE_TINT = "#E3F1F5"
 POSITIVE_LINE = "#BFDCE5"
 NEUTRAL = "#6B6F76"
+CHART_PALE = "#9AA3B0"  # a quiet chart column (its number is written above it)
 FOCUS = "#2C47E0"
 SIDEBAR_BG = "#F7F5F1"
 

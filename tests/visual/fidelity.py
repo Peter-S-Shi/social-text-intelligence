@@ -150,6 +150,16 @@ def scene_results(out: Path) -> None:
     run.nav(Section.RESULTS)
     run.clear_focus()
     run.shot("demo_results")
+    # the table lies below the cards: scroll to it, as a person would
+    results = run.page.results_page
+    results.scroller.ensureWidgetVisible(results.table, 0, 8)
+    results.scroller.verticalScrollBar().setValue(
+        results.table.mapTo(
+            results.scroller.widget(), results.table.rect().topLeft()
+        ).y()
+        - 70
+    )
+    run.shot("demo_results-table")
 
 
 def _reviewed(out: Path) -> Run:

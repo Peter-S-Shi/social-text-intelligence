@@ -7,12 +7,25 @@ whole by a view and a line break never reaches a table cell.
 
 from __future__ import annotations
 
+import unicodedata
+
 ROW_EXCERPT_LENGTH = 100
 EMPTY_MARKER = "(empty)"
 
 
+def _printable(text: str) -> str:
+    """Drop control and format characters (including bidirectional overrides)."""
+
+    return "".join(
+        char
+        for char in text
+        if char.isspace() or unicodedata.category(char) not in {"Cc", "Cf"}
+    )
+
+
 def excerpt(text: str, limit: int = ROW_EXCERPT_LENGTH) -> str:
-    flat = " ".join(text.split())
+    # only the start can reach a cell, so a huge text is never copied whole
+    flat = " ".join(_printable(text[: limit * 4]).split())
     if not flat:
         return EMPTY_MARKER
     if len(flat) <= limit:

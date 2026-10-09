@@ -86,6 +86,7 @@ class ProjectSummary:
     row_count: int | None = None  # every data row of the imported CSV
     rejected_rows: int | None = None  # rows the CSV preparation rejected
     analysed_rows: int | None = None  # rows with an AI result
+    attempted_rows: int | None = None  # rows an analysis ran on (ok or failed)
     reviewed_rows: int | None = None  # rows judged in both dimensions
     corrected_rows: int | None = None  # rows where the human corrected the AI
 
