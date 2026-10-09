@@ -354,6 +354,11 @@ $env:QT_QPA_PLATFORM = "offscreen"; python tools\m8\probe_memory_ui.py ui --root
 | `f08028e` | A2 listing and creation hazards |
 | `5fad79d` | A4 accurate storage-fault errors; stress and fault probes |
 | `3c1e576` | A3/A5 probes; documentation of the new behaviour |
+| `27c7d04` | This ledger |
+| `01d8ec3` | Review repairs; **final behavioural head** (local full regression 1018 passed, 4 opt-in skipped; Ruff, strict MyPy, compileall, pip check; GitHub CI green on Python 3.11, 3.12, 3.13) |
 
-Later commits (review repairs, the final behavioural head and the governance-only
-commit) are recorded in `PROJECT_STATUS.md` and the pull request.
+The governance-only commit after `01d8ec3` is `[skip ci]` and changes documents and
+lifecycle-wording assertions only. Independent Standards and Spec reviews ran on this
+branch; their findings (Windows sharing violations were classed as read-only; a shared
+disk-full helper; the `mutate`/models limits now disclosed here) were repaired in
+`01d8ec3`.
