@@ -118,7 +118,10 @@ def test_each_row_has_a_status_in_words_and_a_reason_when_it_has_no_result(
     assert failed.sentiment == "—" and failed.can_review is False
     assert rejected.status_word == "✕ Rejected at import"
     assert rejected.record_id == "r26" and ": " in rejected.detail
-    assert SENTINEL not in repr(view)
+    # the TEXT column holds a bounded excerpt, never the whole text
+    assert SENTINEL in first.text
+    assert all(len(row.text) <= 100 for row in rows)
+    assert rejected.text  # a rejected row still shows what was in it
 
 
 def test_an_analysed_row_lists_its_secondary_emotions_or_none(
@@ -271,3 +274,42 @@ def test_ignored_columns_are_named_as_untrusted(tmp_path: Path) -> None:
 
     assert view is not None
     assert view.ignored_line == "Ignored untrusted columns: secret_col"
+
+
+def test_the_import_preview_lists_every_row_with_its_check_and_reason(
+    tmp_path: Path,
+) -> None:
+    view = build_validation_view(loaded(tmp_path, analyse=False).state)
+
+    assert view is not None
+    assert len(view.preview) == 26
+    first, rejected = view.preview[0], view.preview[25]
+    assert (first.row, first.record_id, first.check) == (1, "r1", "Ready")
+    assert first.reason == "" and SENTINEL in first.text
+    assert rejected.check == "Rejected" and rejected.reason
+    assert rejected.record_id == "r26" and ": " in rejected.reason
+    assert (
+        "Rejected" in rejected.accessible_name and "Row 26" in rejected.accessible_name
+    )
+    assert [(t, v, n) for t, v, n in view.preview_tabs] == [
+        ("All", "all", 26),
+        ("Rejected", "rejected", 1),
+    ]
+
+
+def test_the_preview_is_bounded_and_survives_a_long_text(tmp_path: Path) -> None:
+    repository = SqliteProjectRepository(AppDataLocations(tmp_path))
+    flow = ProjectWorkflow(repository, VariedGateway(), LIMITS)
+    long_text = "begin " + "word " * 120 + "ENDMARK"
+    project_id = flow.import_csv(
+        f'record_id,text\nr1,"{long_text}"\n'.encode(), name="P"
+    ).summary.project_id
+    controller = ResultsController(ResultsWorkflow(repository), ImmediateRunner())
+    controller.open(project_id)
+
+    view = build_validation_view(controller.state)
+
+    assert view is not None
+    (row,) = view.preview
+    assert len(row.text) <= 100 and row.text.endswith("…")
+    assert "ENDMARK" not in repr(view)

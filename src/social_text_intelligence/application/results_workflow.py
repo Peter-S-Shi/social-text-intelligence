@@ -3,8 +3,9 @@
 A thin, typed seam over the stored batch workspace. It restates nothing: CSV validation,
 the row outcomes, the aggregates, the language check, and the spreadsheet-safe export
 all stay in the batch services, and this module only turns a project id into read
-models. A read model never holds a record's text, only its identity, labels, and the
-fixed reason a row did not make it through.
+models. A read model holds a record's text only as a bounded one-line excerpt (see
+``text_excerpt``), never whole, plus its identity, labels, and the fixed reason a row
+did not make it through.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from ..services.batch import ActivationRate, BatchAggregates, BatchOutcome
 from ..services.language import LanguageSummary, summarize_result
 from .project_workflow import ProjectNotFoundError
 from .projects import BatchWorkspace, ProjectRepository
+from .text_excerpt import excerpt
 from .use_cases import ApplicationUseCases
 
 
@@ -68,6 +70,18 @@ class RowProblem:
 
 
 @dataclass(frozen=True, slots=True)
+class ValidationRow:
+    """One row of the import preview: where it is, a short text, and its check."""
+
+    row_number: int
+    record_id: str
+    excerpt: str
+    rejected: bool
+    code: str | None = None  # why it was rejected, when it was
+    message: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ValidationSnapshot:
     project_id: str
     text_column: str
@@ -78,6 +92,7 @@ class ValidationSnapshot:
     invalid_rows: tuple[RowProblem, ...]  # rejected when the CSV was prepared
     analysed: bool
     failed_rows: tuple[RowProblem, ...]  # valid rows whose analysis failed
+    rows: tuple[ValidationRow, ...] = ()  # every row, in file order
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +108,7 @@ class ResultRow:
     error_message: str | None = None
     # True for a row the CSV preparation rejected: it never reached the models.
     rejected_at_import: bool = False
+    excerpt: str = ""  # the start of the record's text, bounded (never the whole)
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,6 +132,7 @@ def _row(outcome: BatchOutcome) -> ResultRow:
             error_code=outcome.error_code,
             error_message=outcome.error_message,
             rejected_at_import=prepared.record is None,
+            excerpt=excerpt(prepared.value_map.get("text", "")),
         )
     return ResultRow(
         row_number=prepared.row_number,
@@ -125,6 +142,7 @@ def _row(outcome: BatchOutcome) -> ResultRow:
         dominant_emotion=report.emotion.dominant_emotion,
         secondary_emotions=report.emotion.secondary_emotions,
         language=report.language,
+        excerpt=excerpt(prepared.value_map.get("text", "")),
     )
 
 
@@ -181,6 +199,23 @@ class ResultsWorkflow:
             ),
             analysed=result is not None,
             failed_rows=failed,
+            rows=tuple(
+                ValidationRow(
+                    row.row_number,
+                    row.identity,
+                    excerpt(row.value_map.get("text", "")),
+                    rejected=row.record is None,
+                    code=(row.error_code or "invalid_row")
+                    if row.record is None
+                    else None,
+                    message=(
+                        (row.error_message or "This row could not be prepared.")
+                        if row.record is None
+                        else None
+                    ),
+                )
+                for row in preview.rows
+            ),
         )
 
     def results(
@@ -235,6 +270,7 @@ __all__ = [
     "ResultsUnavailableError",
     "ResultsWorkflow",
     "RowProblem",
+    "ValidationRow",
     "ValidationSnapshot",
     "ValidationUnavailableError",
 ]

@@ -148,14 +148,14 @@ class ProjectRowWidget(QWidget):
         # the review progress: a thin meter and the words that carry its numbers
         self.progress = QWidget()
         self.progress.setProperty("role", "plain")
-        self.progress.setFixedWidth(200)
+        self.progress.setFixedWidth(240)
         progress = QVBoxLayout(self.progress)
         progress.setContentsMargins(0, 0, 0, 0)
         progress.setSpacing(2)
         self.meter = BarMeter(row.review_fraction, "ink")
         self.meter.setObjectName("project-meter")
         self.meter.setAccessibleName(row.review_line)
-        self.review_label = label(row.review_line, role="mono", wrap=False)
+        self.review_label = label(row.review_line, role="mono")
         self.review_label.setObjectName("project-review")
         progress.addWidget(self.meter)
         progress.addWidget(self.review_label)
@@ -200,7 +200,7 @@ class ProjectRowWidget(QWidget):
             self.progress.setMinimumWidth(0)
             self._text.addWidget(self.progress)
         else:
-            self.progress.setFixedWidth(200)
+            self.progress.setFixedWidth(240)
             self._inner.insertWidget(1, self.progress, 0, Qt.AlignmentFlag.AlignVCenter)
 
 
