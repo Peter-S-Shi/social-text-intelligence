@@ -295,7 +295,7 @@ class SqliteProjectRepository:
             return False
         if hold is None:
             return True
-        hold.release()
+        hold.discard()  # leave no lock file behind for a project nobody is using
         return False
 
     @support.storage_guarded

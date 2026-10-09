@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import ParamSpec, TypeVar
 
 from ..contracts.errors import ProjectStorageError
+from .os_errors import is_disk_full
 
 PROJECT_ID_PATTERN = re.compile(r"[0-9a-f]{32}")
 # Every file name this store creates for a project: the database, a migration
@@ -96,9 +97,9 @@ _FAILURES = {
     ),
     "storage_read_only": (
         "This project's file or folder cannot be written. It may be marked "
-        "read-only, or another program may be holding it open. Clear the "
-        "read-only setting or close that program, then try again. Nothing was "
-        "changed."
+        "read-only, access may be denied, or another program may be holding it "
+        "open. Clear the read-only setting or close that program, then try "
+        "again. Nothing was changed."
     ),
     "storage_locked": (
         "This project's file could not be opened. Another program (a backup, "
@@ -116,7 +117,6 @@ _FAILURES = {
 _SQLITE_BUSY, _SQLITE_LOCKED, _SQLITE_READONLY = 5, 6, 8
 _SQLITE_FULL, _SQLITE_CANTOPEN = 13, 14
 _WIN_SHARING_VIOLATION, _WIN_LOCK_VIOLATION = 32, 33
-_WIN_DISK_FULL, _WIN_HANDLE_DISK_FULL = 112, 39
 
 
 def _failure(code: str) -> ProjectStorageError:
@@ -140,18 +140,17 @@ def _classify_sqlite(error: sqlite3.Error) -> str:
 
 
 def _classify_os(error: OSError) -> str:
-    if error.errno == errno.ENOSPC or getattr(error, "winerror", None) in {
-        _WIN_DISK_FULL,
-        _WIN_HANDLE_DISK_FULL,
-    }:
+    if is_disk_full(error):
         return "storage_full"
-    if error.errno in {errno.EROFS, errno.EACCES, errno.EPERM}:
-        return "storage_read_only"
+    # Windows reports a sharing or lock violation as errno EACCES too, so the
+    # specific Windows error must be read before the generic errno.
     if getattr(error, "winerror", None) in {
         _WIN_SHARING_VIOLATION,
         _WIN_LOCK_VIOLATION,
     }:
         return "storage_locked"
+    if error.errno in {errno.EROFS, errno.EACCES, errno.EPERM}:
+        return "storage_read_only"
     return "storage_failure"
 
 

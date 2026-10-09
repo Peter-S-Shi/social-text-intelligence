@@ -10,7 +10,6 @@ reads those markers but never hashes and never writes. Nothing here logs.
 from __future__ import annotations
 
 import contextlib
-import errno
 import hashlib
 import os
 import threading
@@ -45,6 +44,7 @@ from .model_download import (
     UrllibDownloadTransport,
     pinned_file_url,
 )
+from .os_errors import is_disk_full
 from .process_locks import FileProcessLocks
 
 STAGING_DIRECTORY_NAME = ".sti-staging"
@@ -60,7 +60,6 @@ _FINDING_PRIORITY = (
     FolderFinding.NOT_FOUND,
 )
 _HASH_CHUNK = 1024 * 1024
-_WIN_DISK_FULL, _WIN_HANDLE_DISK_FULL = 112, 39
 
 
 def snapshots_dir(root: Path, spec: ModelSpec) -> Path:
@@ -652,10 +651,7 @@ def _install(part: Path, target: Path) -> None:
 def _storage_error(error: OSError) -> ModelProvisioningError:
     """A full disk gets its own code; every other write failure stays generic."""
 
-    full = error.errno == errno.ENOSPC or getattr(error, "winerror", None) in {
-        _WIN_DISK_FULL,
-        _WIN_HANDLE_DISK_FULL,
-    }
+    full = is_disk_full(error)
     return ModelProvisioningError("storage_full" if full else "storage_failed")
 
 

@@ -101,7 +101,11 @@ lock explicitly because an in-process "crash" cannot drop it; the real kill is c
 in `tests/cross_process/`. (3) A freshly killed holder can look held for a few
 milliseconds on Windows until the kernel closes its handles; the tests retry for that.
 
-**Limits (ACCEPTED).** Analysis that is loading weights while another instance
+**Limits (ACCEPTED).** `mutate` (review saves, notes, column choice) takes no
+cross-process hold: state already separates it from analysis (analysis needs a READY,
+unanalysed project; review and notes need an analysed one; the only write on a ready
+project is the column choice, which a ready project refuses), and the revision check
+still protects the rest, so no case was found where it would waste an analysis. Analysis that is loading weights while another instance
 imports the same files is not excluded: import only replaces a file that fails its
 hash, and a replace of an open file on Windows fails with `storage_failed`
 (recoverable). The POSIX (`flock`) branch is exercised only by the Linux CI job, not on
@@ -212,7 +216,10 @@ violation), `project_busy` (SQLITE_BUSY/LOCKED, as before), otherwise `storage_f
 with advice. Messages are fixed, content-free, say what to do and that nothing was
 changed. The desktop shows a matching title. Model download/import gained
 `storage_full` ("not enough free disk space; finished files and a partial download are
-kept"). `list_projects` no longer lets a raw `OSError` escape. Delete's failure message
+kept"); other model-folder write faults (read-only, locked) keep the generic
+`storage_failed`, whose message already says to free space or check permissions
+(ACCEPTED). Windows reports sharing violations with errno EACCES, so the Windows error
+is read before the errno (found in review; regression added). `list_projects` no longer lets a raw `OSError` escape. Delete's failure message
 now also mentions the read-only setting.
 
 **Real versus emulated.**

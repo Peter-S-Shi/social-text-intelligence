@@ -46,6 +46,14 @@ def sqlite_error(name: str, code: int, text: str) -> sqlite3.OperationalError:
     return error
 
 
+def windows_error(winerror: int, text: str) -> OSError:
+    """Windows reports sharing and lock violations with errno EACCES."""
+
+    error = PermissionError(errno.EACCES, text)
+    setattr(error, "winerror", winerror)  # noqa: B010 - absent off Windows
+    return error
+
+
 def guarded_raise(error: BaseException) -> ProjectStorageError:
     @support.storage_guarded
     def fail() -> None:
@@ -77,6 +85,9 @@ def guarded_raise(error: BaseException) -> ProjectStorageError:
         ),
         (sqlite_error("SQLITE_IOERR", 10, "disk I/O error"), "storage_failure"),
         (OSError(errno.EIO, "I/O error"), "storage_failure"),
+        (windows_error(32, "sharing violation"), "storage_locked"),
+        (windows_error(33, "lock violation"), "storage_locked"),
+        (windows_error(112, "disk full"), "storage_full"),
     ],
 )
 def test_each_fault_gets_its_own_code_and_a_content_free_actionable_message(
@@ -212,7 +223,7 @@ def test_a_read_only_project_file_cannot_be_written_but_stays_readable(
                 repo.complete_analysis(lease, analysed(lease.workspace))
         finally:
             repo.cancel_analysis(lease)
-        if sys.platform == "win32":  # POSIX owners may still write; Windows may not
+        if sys.platform == "win32":  # on POSIX the code depends on the user (root)
             assert failure.value.code == "storage_read_only"
         if sys.platform == "win32":  # POSIX unlinks a read-only file freely
             with pytest.raises(ProjectStorageError):
