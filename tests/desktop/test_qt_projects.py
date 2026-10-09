@@ -537,6 +537,7 @@ def test_a_filter_with_no_match_shows_a_plain_message(
 def test_a_row_does_not_flash_up_as_a_window_while_it_is_built(
     make_shell: Any, tmp_path: Path
 ) -> None:
+    import shiboken6
     from PySide6.QtWidgets import QWidget
 
     from social_text_intelligence.desktop.projects_view import ProjectRowView
@@ -563,9 +564,10 @@ def test_a_row_does_not_flash_up_as_a_window_while_it_is_built(
 
     QWidget.setVisible = watching  # type: ignore[method-assign]
     try:
-        ProjectRowWidget(row, True)
+        built = ProjectRowWidget(row, True)
     finally:
         QWidget.setVisible = original  # type: ignore[method-assign]
+        shiboken6.delete(built)  # a parentless widget must not outlive the test
 
     assert shown_alone == []  # nothing was shown before it had a parent
 
