@@ -72,6 +72,7 @@ COMPACT_ROWS_BELOW = (
     760  # page width under which a project's progress sits under its name
 )
 PROBLEM_COLUMNS = (("Row", 60), ("Record ID", 140), ("Reason", 200))
+PREVIEW_COLUMNS = (("Row", 52), ("Record ID", 100), ("Text", 260), ("Check", 240))
 
 
 class RowProgress(QWidget):
@@ -414,13 +415,29 @@ class ProjectsPage(QWidget):
         self.progress.setVisible(False)
         self.progress.cancel_requested.connect(self._controller.cancel)
 
-        self.problems_card = Card("ROWS REJECTED AT IMPORT")
+        # every imported row with its check, as a scrolling table (a bounded
+        # excerpt of each text, never the whole text)
+        self.preview_card = Card("ROW PREVIEW · VALIDATION")
         self.all_ready = label(role="muted")
         self.all_ready.setObjectName("all-ready")
-        self.problems_table = self._problem_table(
-            "problems-table", "Rows with problems"
+        self.preview_tabs = SegmentedFilter(noun="rows")
+        self.preview_tabs.setObjectName("preview-tabs")
+        self.preview_tabs.setAccessibleName("Rows to show")
+        self.preview_tabs.selected.connect(self._preview_filter_chosen)
+        self._preview_filter = "all"
+        self.preview_table = DataTable()
+        self.preview_table.setObjectName("preview-table")
+        self.preview_table.setAccessibleName("Imported rows and their checks")
+        self.preview_table.tone_column = 3
+        self.preview_table.set_columns(
+            [name for name, _ in PREVIEW_COLUMNS], [w for _, w in PREVIEW_COLUMNS]
         )
-        add_all(self.problems_card.layout_, self.all_ready, self.problems_table)
+        self.preview_table.fit_rows(1)
+        add_all(self.preview_card.layout_, self.all_ready)
+        self.preview_card.layout_.addWidget(
+            self.preview_tabs, 0, Qt.AlignmentFlag.AlignLeft
+        )
+        self.preview_card.add(self.preview_table)
         self.failures_card = Card("ROWS THAT FAILED IN ANALYSIS")
         self.failures_table = self._problem_table(
             "failures-table", "Rows that failed in analysis"
@@ -443,7 +460,7 @@ class ProjectsPage(QWidget):
         add_all(
             column_layout_right,
             self.language_box,
-            self.problems_card,
+            self.preview_card,
             self.failures_card,
         )
         column_layout_right.addStretch(1)
@@ -481,6 +498,11 @@ class ProjectsPage(QWidget):
         compact = self._compact_rows()
         for row in self._rows:
             row.set_compact(compact)
+
+    def _preview_filter_chosen(self, value: str) -> None:
+        self._preview_filter = value
+        self._problem_signature = None
+        self._show_problems(self._results.state)
 
     def _review_filter_chosen(self, value: str) -> None:
         self._review_filter = value
@@ -774,17 +796,18 @@ class ProjectsPage(QWidget):
     def _show_problems(self, state: ResultsState) -> None:
         view = build_validation_view(state)
         shown = view is not None
-        self.problems_card.setVisible(shown)
+        self.preview_card.setVisible(shown)
         self.failures_card.setVisible(
             shown and view is not None and bool(view.failures)
         )
         if view is None or not shown:
             return
         signature = (
-            view.problems,
+            view.preview,
             view.failures,
             view.all_ready_line,
             view.ignored_line,
+            self._preview_filter,
         )
         self.ignored.setText(view.ignored_line)
         self.ignored.setVisible(bool(view.ignored_line))
@@ -793,11 +816,26 @@ class ProjectsPage(QWidget):
         self._problem_signature = signature
         self.all_ready.setText(view.all_ready_line)
         self.all_ready.setVisible(bool(view.all_ready_line))
-        self.problems_table.setVisible(bool(view.problems))
-        self.problems_table.set_rows(
-            [(str(p.row), p.record_id, p.reason) for p in view.problems]
+        self.preview_tabs.set_options(view.preview_tabs, self._preview_filter)
+        shown_rows = [
+            item
+            for item in view.preview
+            if self._preview_filter == "all" or item.rejected
+        ]
+        self.preview_table.set_rows(
+            [
+                (
+                    str(item.row),
+                    item.record_id,
+                    item.text,
+                    item.check + (f" · {item.reason}" if item.reason else ""),
+                )
+                for item in shown_rows
+            ],
+            failed=[item.rejected for item in shown_rows],
+            names=[item.accessible_name for item in shown_rows],
         )
-        self.problems_table.fit_rows(len(view.problems), cap=10)
+        self.preview_table.fit_rows(len(shown_rows), cap=12)
         self.failures_table.set_rows(
             [(str(p.row), p.record_id, p.reason) for p in view.failures]
         )

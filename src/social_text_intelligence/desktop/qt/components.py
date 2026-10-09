@@ -763,6 +763,7 @@ class DataTable(QTableWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.tone_column = 2  # the cell that turns red for a failed row
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -817,7 +818,7 @@ class DataTable(QTableWidget):
                 for c, text in enumerate(row):
                     item = QTableWidgetItem(text)
                     item.setToolTip(text)
-                    if failed and failed[r] and c == 2:
+                    if failed and failed[r] and c == self.tone_column:
                         item.setForeground(QColor(style.VERMILION))
                     if c == 0 and names:
                         item.setData(Qt.ItemDataRole.AccessibleTextRole, names[r])

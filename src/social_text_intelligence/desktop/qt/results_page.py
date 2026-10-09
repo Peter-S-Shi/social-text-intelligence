@@ -39,11 +39,12 @@ from .platform import DesktopPlatform
 from .widgets import LanguageBox, NoticeBox, add_all, label
 
 EXPORT_FILE_NAME = "normalized-results.csv"
-SENTIMENT_COLUMN = 3
+SENTIMENT_COLUMN = 4
 COLUMNS = (
     ("Row", 48),
     ("Record ID", 104),
     ("Status", 132),
+    ("Text", 260),
     ("Sentiment", 86),
     ("Dominant emotion", 124),
     ("Secondary emotions / reason", 190),
@@ -307,6 +308,7 @@ class ResultsPage(Page):
                     str(row.row),
                     row.record_id,
                     row.status_word,
+                    row.text,
                     row.sentiment,
                     row.dominant,
                     row.detail,
