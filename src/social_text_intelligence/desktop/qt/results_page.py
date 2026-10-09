@@ -41,14 +41,14 @@ from .widgets import LanguageBox, NoticeBox, add_all, label
 EXPORT_FILE_NAME = "normalized-results.csv"
 SENTIMENT_COLUMN = 4
 COLUMNS = (
-    ("Row", 48),
-    ("Record ID", 104),
-    ("Status", 132),
-    ("Text", 260),
-    ("Sentiment", 86),
-    ("Dominant emotion", 124),
-    ("Secondary emotions / reason", 190),
-    ("Language check", 220),
+    ("Row", 44),
+    ("Record ID", 88),
+    ("Status", 116),
+    ("Text", 232),
+    ("Sentiment", 80),
+    ("Dominant emotion", 120),
+    ("Secondary emotions / reason", 150),
+    ("Language check", 120),
 )
 
 

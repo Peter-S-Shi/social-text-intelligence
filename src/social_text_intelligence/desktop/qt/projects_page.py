@@ -72,7 +72,7 @@ COMPACT_ROWS_BELOW = (
     760  # page width under which a project's progress sits under its name
 )
 PROBLEM_COLUMNS = (("Row", 60), ("Record ID", 140), ("Reason", 200))
-PREVIEW_COLUMNS = (("Row", 52), ("Record ID", 100), ("Text", 260), ("Check", 240))
+PREVIEW_COLUMNS = (("Row", 48), ("Record ID", 92), ("Text", 250), ("Check", 120))
 
 
 class RowProgress(QWidget):

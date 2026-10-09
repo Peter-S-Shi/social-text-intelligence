@@ -481,3 +481,26 @@ def test_the_results_controls_are_keyboard_operable_and_named(
     assert results.status_filter.buttons["error"].accessibleName() == (
         "Not analysed, 2 rows"
     )
+
+
+def test_a_large_import_previews_every_row_without_growing_the_page(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell: Shell = make_shell(FakeProvisioning(current=READY))
+    path = tmp_path / "big.csv"
+    lines = ["record_id,text"] + [
+        f"r{n},record number {n} " + "x" * 400 for n in range(1, 301)
+    ]
+    path.write_bytes(("\n".join(lines) + "\n").encode())
+    shell.platform.csv_file = path
+    page = shell.window.projects_page
+
+    shell.button(page, "Import CSV…").click()
+
+    table = page.preview_table
+    assert table.rowCount() == 300
+    assert max(len(cell(table, r, 2)) for r in range(300)) <= 100
+    assert (
+        table.maximumHeight() <= 12 * table.verticalHeader().defaultSectionSize() + 60
+    )
+    assert table.verticalScrollBar().maximum() > 0
