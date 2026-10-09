@@ -105,6 +105,7 @@ QWidget {{
 }}
 QDialog, QMainWindow {{ background: {PAPER}; }}
 QLabel {{ background: transparent; }}
+QWidget[role="plain"] {{ background: transparent; }}
 QScrollArea {{ border: none; background: transparent; }}
 QScrollArea > QWidget > QWidget {{ background: transparent; }}
 QToolTip {{
@@ -117,6 +118,9 @@ QLabel[role="headline"] {{ font-family: {SERIF}; font-size: {SIZE_HEADLINE}; }}
 QLabel[role="title"] {{ font-family: {SERIF}; font-size: {SIZE_TITLE}; }}
 QLabel[role="figure"] {{ font-family: {SERIF}; font-size: {SIZE_FIGURE}; }}
 QLabel[role="display"] {{ font-family: {SERIF}; font-size: {SIZE_DISPLAY}; }}
+QLabel[role="numeral"] {{ font-family: {SERIF}; font-size: 20pt; color: {LINE_STRONG}; }}
+QLabel[role="display"][size="hero"] {{ font-size: 25pt; }}
+QWidget#setup-hero {{ background: {PAPER}; border-right: 1px solid {LINE}; }}
 QLabel[role="word"] {{ font-family: {SERIF}; font-size: {SIZE_WORD}; }}
 QLabel[quote="true"] {{ font-family: {SERIF}; font-size: {SIZE_QUOTE}; }}
 QLabel[role="muted"] {{ color: {MUTED}; }}
@@ -136,6 +140,7 @@ QLabel[fallback="true"] {{
 QLabel[polarity="negative"] {{ color: {VERMILION}; }}
 QLabel[polarity="positive"] {{ color: {POSITIVE}; }}
 QLabel[polarity="neutral"] {{ color: {NEUTRAL}; }}
+QLabel[polarity="caution"] {{ color: {CAUTION_TEXT}; }}
 
 /* -- surfaces ------------------------------------------------------------------ */
 QFrame[role="card"], QFrame[role="panel"] {{
@@ -206,6 +211,8 @@ QPushButton[ghost="true"] {{
 QPushButton[ghost="true"]:hover {{ background: {PAPER_RAISED}; border-color: {LINE_STRONG}; }}
 QPushButton[ghost="true"]:disabled {{ background: transparent; border-color: transparent; }}
 QPushButton[danger="true"] {{ color: {VERMILION}; border-color: {VERMILION}; }}
+QPushButton[danger="true"][ghost="true"] {{ border-color: transparent; }}
+QPushButton[danger="true"][ghost="true"]:hover {{ border-color: {VERMILION}; }}
 QPushButton:focus, QToolButton:focus {{
   border: 2px solid {FOCUS}; padding: 5px 13px;
 }}
@@ -265,6 +272,19 @@ QTabBar::tab {{
 }}
 QTabBar::tab:selected {{ color: {INK}; border-bottom: 2px solid {ULTRAMARINE}; }}
 QTabBar::tab:focus {{ border-bottom: 2px solid {FOCUS}; }}
+
+/* -- pill choices (context tags) ------------------------------------------------- */
+QCheckBox[pill="true"] {{
+  background: {PAPER_RAISED}; border: 1px solid {LINE_STRONG}; border-radius: 11px;
+  padding: 3px 10px; font-family: {MONO}; font-size: {SIZE_SMALL};
+}}
+QCheckBox[pill="true"]::indicator {{ width: 0; height: 0; border: none; }}
+QCheckBox[pill="true"]:hover {{ border-color: {INK}; }}
+QCheckBox[pill="true"]:checked {{
+  background: {ULTRAMARINE_TINT}; border: 1px solid {ULTRAMARINE}; color: {ULTRAMARINE};
+}}
+QCheckBox[pill="true"]:focus {{ border: 2px solid {FOCUS}; padding: 2px 9px; }}
+QCheckBox[pill="true"]:disabled {{ color: #7A7E85; border-color: {LINE}; }}
 
 /* -- judgment choice (Accept AI / Correct / Uncertain) --------------------------- */
 QRadioButton[choice="true"] {{
@@ -375,8 +395,8 @@ QLabel[chip="true"][tone="machine"] {{
   border-color: {GRAPHITE_LINE}; background: {GRAPHITE_TINT}; color: {GRAPHITE};
 }}
 QLabel[cell="true"] {{
-  border: 1px solid {LINE}; font-family: {SERIF}; font-size: 15pt;
-  min-width: 70px; min-height: 44px;
+  border: 1px solid {LINE}; font-family: {SERIF}; font-size: 18pt;
+  min-width: 70px; min-height: 52px;
 }}
 {_confusion_rules()}
 """

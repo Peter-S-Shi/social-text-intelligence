@@ -26,6 +26,7 @@ sys.path.insert(0, str(HERE.parent))  # tests/ (desktop.fakes, visual.*)
 sys.path.insert(0, str(HERE.parents[1] / "src"))
 
 from desktop.fakes import FakeProvisioning, status  # noqa: E402
+from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from social_text_intelligence.application.insights_workflow import (  # noqa: E402
@@ -165,6 +166,14 @@ def scene_compare(out: Path) -> None:
     run = _reviewed(out)
     run.nav(Section.COMPARE)
     page = run.page.insights_page
+    page.grouping_combo.setCurrentIndex(page.grouping_combo.findData("source_label"))
+    page.grouping_combo.activated.emit(page.grouping_combo.currentIndex())
+    settle()
+    page.compare_box.setChecked(True)
+    settle()
+    for index in range(page.group_list.count()):
+        page.group_list.item(index).setCheckState(Qt.CheckState.Checked)
+    settle()
     combo = page.perspective_combo
     combo.setCurrentIndex(combo.findData(InsightPerspective.AGREEMENT.value))
     combo.activated.emit(combo.currentIndex())

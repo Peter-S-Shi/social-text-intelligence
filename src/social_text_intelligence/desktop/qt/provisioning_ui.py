@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Qt
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -34,18 +34,46 @@ from .platform import DesktopPlatform
 from .provisioning_panel import ProvisioningPanel
 from .widgets import ActionRow, ProgressBlock, ReportBox, add_all, frame, label
 
+HERO_EYEBROW = "BEFORE THE FIRST ANALYSIS"
+HERO_HEADLINE = (
+    "Two pinned models are needed once. After that, your text never leaves this "
+    "computer."
+)
+HERO_BODY = (
+    "The models are downloaded once from huggingface.co, at the exact revisions "
+    "shown, and checked after the download. A partly downloaded or damaged model "
+    "is never used."
+)
+HERO_OFFLINE = (
+    "On a machine without a connection, use a models folder you already have. "
+    "Only the exact approved revisions are accepted."
+)
+
 
 class PanelDialog(QDialog):
-    """A window that hosts the provisioning panel plus one closing button."""
+    """A window that hosts the provisioning panel plus one closing button.
 
-    def __init__(self, title: str, parent: QWidget | None = None) -> None:
+    The first-run setup window also carries a short statement on the left (what is
+    needed, why, and that nothing else leaves the computer), as in the reference.
+    """
+
+    def __init__(
+        self, title: str, parent: QWidget | None = None, *, hero: bool = False
+    ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setAccessibleName(title)
-        self.setMinimumSize(640, 560)
+        self.setMinimumSize(900 if hero else 640, 560)
         layout = QVBoxLayout(self)
         self.panel = ProvisioningPanel()
-        layout.addWidget(self.panel, 1)
+        if hero:
+            split = QHBoxLayout()
+            split.setSpacing(0)
+            split.addWidget(self._hero(), 5)
+            split.addWidget(self.panel, 6)
+            layout.addLayout(split, 1)
+        else:
+            layout.addWidget(self.panel, 1)
         row = QHBoxLayout()
         row.addStretch(1)
         self.close_button = QPushButton("Close")
@@ -53,6 +81,27 @@ class PanelDialog(QDialog):
         self.close_button.clicked.connect(self.reject)
         row.addWidget(self.close_button)
         layout.addLayout(row)
+
+    @staticmethod
+    def _hero() -> QWidget:
+        side = QWidget()
+        side.setObjectName("setup-hero")
+        side.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        column = QVBoxLayout(side)
+        column.setContentsMargins(28, 28, 20, 20)
+        column.setSpacing(12)
+        statement = label(HERO_HEADLINE, role="display")
+        statement.setObjectName("hero-statement")
+        statement.setProperty("size", "hero")
+        add_all(
+            column,
+            label(HERO_EYEBROW, role="eyebrow"),
+            statement,
+            label(HERO_BODY, role="muted"),
+            label(HERO_OFFLINE, role="muted"),
+        )
+        column.addStretch(1)
+        return side
 
 
 class FolderDialog(QDialog):
@@ -163,7 +212,7 @@ class ProvisioningUi(QObject):
         self._models_root = models_root
         self.platform = platform
         self._window = parent_window
-        self.setup_dialog = PanelDialog("Set up models", parent_window)
+        self.setup_dialog = PanelDialog("Set up models", parent_window, hero=True)
         self.setup_dialog.setObjectName("setup-dialog")
         self.setup_dialog.panel.action_requested.connect(self.handle)
         self.models_dialog = PanelDialog("Models", parent_window)

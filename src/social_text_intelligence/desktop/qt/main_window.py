@@ -137,6 +137,9 @@ class MainWindow(QMainWindow):
 
         self.models_button.clicked.connect(self.ui.show_models)
         self.projects_page.open_models.connect(self.ui.show_models)
+        self.projects_page.analyze_text_requested.connect(
+            lambda: self._open_section(Section.ANALYZE)
+        )
         self.projects_page.section_changed.connect(self._on_section)
         self.projects_page.review_page.agreement_requested.connect(
             lambda: self._open_section(Section.AGREEMENT)

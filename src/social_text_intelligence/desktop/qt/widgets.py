@@ -28,6 +28,9 @@ from ..panel import (
 )
 from ..projects import NoticeKind, ProjectsNotice
 
+# a readiness chip's icon decides its tint (the word is always written beside it)
+_CHIP_TONES = {"✓": "ok", "○": "neutral", "◆": "warn", "◇": "warn", "✕": "error"}
+
 _REPORT_PREFIX = {
     ReportKind.SUCCESS: "✓",
     ReportKind.INFO: "ℹ",
@@ -311,6 +314,7 @@ class CardWidget(QFrame):
         head = QHBoxLayout()
         self.title = label(role="title", wrap=False)
         self.chip = label(wrap=False)
+        self.chip.setProperty("chip", True)
         self.chip.setObjectName(f"chip-{key}")
         head.addWidget(self.title)
         head.addStretch(1)
@@ -337,6 +341,9 @@ class CardWidget(QFrame):
     def show_card(self, view: CardView) -> None:
         self.title.setText(view.title)
         self.chip.setText(view.chip)
+        self.chip.setProperty("tone", _CHIP_TONES.get(view.chip_icon, "neutral"))
+        self.chip.style().unpolish(self.chip)
+        self.chip.style().polish(self.chip)
         self.sentence.setText(view.sentence)
         self.problems.setText(", ".join(view.problem_files))
         self.problems.setVisible(bool(view.problem_files))

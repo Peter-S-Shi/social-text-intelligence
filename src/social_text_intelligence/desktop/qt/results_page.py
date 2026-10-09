@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QCheckBox,
     QHBoxLayout,
@@ -18,22 +19,26 @@ from ..results_view import (
     build_results_view,
     filters_from,
 )
+from . import style
 from .components import (
     BarGrid,
     Card,
     Combo,
     DataTable,
     EmptyState,
+    Figure,
     FlowRow,
     Page,
     PageHeader,
     ReflowRow,
     SegmentedFilter,
+    StackedBar,
 )
 from .platform import DesktopPlatform
 from .widgets import LanguageBox, NoticeBox, add_all, label
 
 EXPORT_FILE_NAME = "normalized-results.csv"
+SENTIMENT_COLUMN = 3
 COLUMNS = (
     ("Row", 48),
     ("Record ID", 104),
@@ -101,10 +106,19 @@ class ResultsPage(Page):
         self.import_button.clicked.connect(self.import_requested.emit)
         self.empty.layout_.addWidget(self.import_button, 0, Qt.AlignmentFlag.AlignLeft)
 
-        self.sentiment_bars = BarGrid("ai")
-        self.sentiment_bars.setObjectName("sentiment-bars")
+        self.sentiment_figures: dict[str, Figure] = {}
+        figures = QHBoxLayout()
+        figures.setSpacing(14)
+        for tone in ("negative", "neutral", "positive"):
+            figure = Figure(tone, tone)
+            figure.setObjectName(f"sentiment-{tone}")
+            self.sentiment_figures[tone] = figure
+            figures.addWidget(figure, 1)
+        self.sentiment_stack = StackedBar()
+        self.sentiment_stack.setObjectName("sentiment-stack")
         self.sentiment_card = Card()
-        self.sentiment_card.add(self.sentiment_bars)
+        self.sentiment_card.layout_.addLayout(figures)
+        self.sentiment_card.add(self.sentiment_stack)
         self.sentiment_caption = label(role="muted")
         self.sentiment_card.add(self.sentiment_caption)
         self.dominant_bars = BarGrid("ai")
@@ -121,6 +135,7 @@ class ResultsPage(Page):
         self.activation_card.add(self.activation_caption)
         self.failed_card = Card("NOT ANALYSED")
         self.failed_figure = label(role="figure", wrap=False)
+        self.failed_figure.setProperty("polarity", "negative")
         self.failed_figure.setObjectName("failed-figure")
         self.failed_caption = label(
             "Rows that were rejected at import or failed in analysis are kept with "
@@ -256,14 +271,15 @@ class ResultsPage(Page):
         self.dominant_card.eyebrow.setVisible(True)
         self.activation_card.eyebrow.setText(view.activation.title.upper())
         self.activation_card.eyebrow.setVisible(True)
+        self.sentiment_caption.setText(view.sentiment.caption)
         for grid, caption, dist in (
-            (self.sentiment_bars, self.sentiment_caption, view.sentiment),
             (self.dominant_bars, self.dominant_caption, view.dominant),
             (self.activation_bars, self.activation_caption, view.activation),
         ):
             grid.set_rows([(b.label, b.fraction, b.text, "") for b in dist.bars])
             caption.setText(dist.caption)
             grid.setAccessibleName(dist.title)
+        self._show_sentiment_figures(view)
         self.failed_figure.setText(str(view.failed_count))
         self.failed_card.setAccessibleName(
             f"{view.failed_count} rows not analysed, kept with their reason"
@@ -298,6 +314,7 @@ class ResultsPage(Page):
             ],
             failed=[not row.can_review for row in view.rows],
         )
+        self._tone_cells()
         self.table.selectionModel().clear()
         for index, row in enumerate(self._rows):
             if row.row == selected_record_row:
@@ -311,9 +328,40 @@ class ResultsPage(Page):
             widget.setEnabled(not controls)
         self._sync_buttons()
 
+    def _show_sentiment_figures(self, view: ResultsView) -> None:
+        """Big counts and a proportional bar over the exact rows and percentages."""
+
+        segments: list[tuple[float, str]] = []
+        for tone, figure in self.sentiment_figures.items():
+            bar = next(
+                (b for b in view.sentiment.bars if b.label.lower() == tone), None
+            )
+            figure.setVisible(bar is not None)
+            if bar is not None:
+                figure.set_value(str(bar.value))
+                percent = bar.text.split("·")[-1].strip()
+                figure.caption.setText(f"{tone}\n{percent}")
+                figure.setAccessibleName(f"{bar.value} {tone} rows, {percent}")
+                segments.append((float(bar.value), tone))
+        self.sentiment_stack.set_segments(segments)
+        self.sentiment_stack.setAccessibleName(view.sentiment.title)
+
     def _has_focus(self) -> bool:
         focused = self.window().focusWidget()
         return focused is not None and self.isAncestorOf(focused)
+
+    def _tone_cells(self) -> None:
+        """Colour the label words (the word is always written too)."""
+
+        tones = {
+            "positive": style.POSITIVE,
+            "negative": style.VERMILION,
+            "neutral": style.NEUTRAL,
+        }
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, SENTIMENT_COLUMN)
+            if item is not None and item.text().lower() in tones:
+                item.setForeground(QColor(tones[item.text().lower()]))
 
     def _sync_buttons(self) -> None:
         row = self.table.currentRow()

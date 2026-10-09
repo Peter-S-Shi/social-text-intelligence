@@ -18,6 +18,20 @@ from .panel import AnalysisBlockView, build_analysis_block
 from .projects import ProjectsActivity, ProjectsNotice, ProjectsState
 
 IMPORT_LABEL = "Import CSV…"
+# The optional columns a CSV may carry beside its text column. Insights groups come
+# only from these (nothing is inferred); a test keeps this list equal to the batch
+# service's own list of supported fields.
+METADATA_COLUMNS = (
+    "record_id",
+    "source_type",
+    "source_label",
+    "language",
+    "timestamp",
+    "topic",
+    "community",
+    "parent_record_id",
+    "notes",
+)
 
 
 def _when(value: datetime | None) -> str:
@@ -112,6 +126,12 @@ class ProjectDetailView:
     language_headline: str | None = None
     language_detail: str = ""
     language_warns: bool = False
+    # the figures of the CSV card: rows ready, rejected at import, and (once
+    # analysed) texts not confirmed as a supported language
+    ready_count: int | None = None
+    rejected_count: int | None = None
+    language_count: int | None = None
+    metadata: tuple[tuple[str, bool], ...] = ()  # recognised column, present in file
 
 
 _STATE_LINES = {
@@ -181,6 +201,7 @@ def build_detail_view(
     block = build_analysis_block(models, availability) if ready else None
     busy = state.busy
     language = describe_summary(details.language) if details.language else None
+    counted = details.phase in (ProjectPhase.READY, ProjectPhase.ANALYZED)
     return ProjectDetailView(
         title=details.summary.name or DEFAULT_PROJECT_NAME,
         state_line=_STATE_LINES[details.phase],
@@ -205,6 +226,16 @@ def build_detail_view(
         language_headline=None if language is None else language.headline,
         language_detail="" if language is None else language.detail,
         language_warns=language is not None and language.warns,
+        ready_count=details.valid_rows if counted else None,
+        rejected_count=details.invalid_rows if counted else None,
+        language_count=(
+            details.language.attention_count if details.language is not None else None
+        ),
+        metadata=(
+            tuple((name, name in details.headers) for name in METADATA_COLUMNS)
+            if counted
+            else ()
+        ),
     )
 
 

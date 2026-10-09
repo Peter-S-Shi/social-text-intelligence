@@ -218,6 +218,19 @@ class ReflowRow(QWidget):
     def columns(self) -> int:
         return self._columns
 
+    @property
+    def items(self) -> tuple[QWidget, ...]:
+        return tuple(self._items)
+
+    def clear(self) -> None:
+        for widget in self._items:
+            self._grid.removeWidget(widget)
+            widget.hide()  # a deleted widget is still painted until the loop runs
+            widget.setParent(None)
+            widget.deleteLater()
+        self._items = []
+        self._arrange(force=True)
+
     def add(self, widget: QWidget) -> None:
         self._items.append(widget)
         self._arrange(force=True)
@@ -242,6 +255,83 @@ class ReflowRow(QWidget):
         for column in range(len(self._items)):
             self._grid.setColumnStretch(column, 1 if column < columns else 0)
         self.updateGeometry()
+
+
+POLARITY_COLOURS = {
+    "negative": style.VERMILION,
+    "neutral": style.NEUTRAL,
+    "positive": style.POSITIVE,
+}
+
+
+class StackedBar(QWidget):
+    """One thin bar split into proportional segments (a picture of written counts)."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._segments: tuple[tuple[float, str], ...] = ()
+        self.setFixedHeight(10)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    @property
+    def segments(self) -> tuple[tuple[float, str], ...]:
+        return self._segments
+
+    def set_segments(self, segments: Sequence[tuple[float, str]]) -> None:
+        """Each segment: its weight and a tone name (negative, neutral, positive)."""
+
+        self._segments = tuple(segments)
+        self.update()
+
+    def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802 (Qt override)
+        total = sum(weight for weight, _ in self._segments)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(style.PAPER_SUNK))
+        track = QRectF(0.0, 2.0, float(self.width()), 6.0)
+        painter.drawRoundedRect(track, 3, 3)
+        if total <= 0:
+            return
+        x = 0.0
+        for weight, tone in self._segments:
+            width = track.width() * weight / total
+            if width <= 0:
+                continue
+            painter.setBrush(QColor(POLARITY_COLOURS.get(tone, style.GRAPHITE)))
+            painter.drawRect(
+                QRectF(x, track.y(), max(width - 1.0, 1.0), track.height())
+            )
+            x += width
+
+
+class Figure(QWidget):
+    """A large serif number over a small caption, in a tone (never colour alone: the
+    caption always says what the number counts)."""
+
+    def __init__(
+        self,
+        caption: str,
+        tone: str | None = None,
+        parent: QWidget | None = None,
+        *,
+        size: str = "figure",
+    ) -> None:
+        super().__init__(parent)
+        self.setProperty("role", "plain")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.value = label(role=size, wrap=False)
+        if tone:
+            self.value.setProperty("polarity", tone)
+        self.caption = label(caption, role="muted")
+        layout.addWidget(self.value)
+        layout.addWidget(self.caption)
+
+    def set_value(self, text: str) -> None:
+        self.value.setText(text)
+        self.setAccessibleName(f"{text} {self.caption.text()}")
 
 
 class Combo(QComboBox):
@@ -716,6 +806,7 @@ __all__ = [
     "ConfusionGrid",
     "DataTable",
     "EmptyState",
+    "Figure",
     "FlowRow",
     "LabeledControl",
     "NavButton",
@@ -725,6 +816,7 @@ __all__ = [
     "ScorePanel",
     "SegmentedFilter",
     "SplitRow",
+    "StackedBar",
     "chip",
     "frame",
     "inline_note",

@@ -43,7 +43,19 @@ from ..results import ResultsController, ResultsState
 from ..results_view import build_validation_view
 from ..review import ReviewController, ReviewState
 from .agreement_page import AgreementPage
-from .components import Card, Combo, DataTable, EmptyState, Page, PageHeader
+from .components import (
+    Card,
+    Combo,
+    DataTable,
+    EmptyState,
+    Figure,
+    FlowRow,
+    Page,
+    PageHeader,
+    SplitRow,
+    chip,
+    rule,
+)
 from .insights_page import InsightsPage
 from .pages import AnalysisBlockBox
 from .platform import DesktopPlatform
@@ -52,7 +64,7 @@ from .review_page import ReviewPage
 from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
 
 COLUMN_PLACEHOLDER = "Choose a column…"
-PROBLEM_COLUMNS = (("Row", 60), ("Record ID", 150), ("Reason", 520))
+PROBLEM_COLUMNS = (("Row", 60), ("Record ID", 140), ("Reason", 200))
 
 
 class RowProgress(QWidget):
@@ -93,19 +105,29 @@ class RowProgress(QWidget):
 
 
 class ProjectRowWidget(QWidget):
+    """One project line inside the list card: name and date, then Open and Delete."""
+
     open_requested = Signal(str)
     delete_requested = Signal(str)
 
     def __init__(
-        self, row: ProjectRowView, enabled: bool, parent: QWidget | None = None
+        self,
+        row: ProjectRowView,
+        enabled: bool,
+        parent: QWidget | None = None,
+        *,
+        primary: bool = False,
     ) -> None:
         super().__init__(parent)
+        self.setProperty("role", "plain")
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        box = frame("card")
+        outer.setSpacing(0)
+        box = QWidget()
+        box.setProperty("role", "plain")
         box.setAccessibleName(row.accessible_name)
         inner = QHBoxLayout(box)
-        inner.setContentsMargins(16, 12, 16, 12)
+        inner.setContentsMargins(18, 14, 18, 14)
         text = QVBoxLayout()
         text.setSpacing(2)
         text.addWidget(label(row.title, role="title"))
@@ -115,10 +137,11 @@ class ProjectRowWidget(QWidget):
         self.open_button.setAccessibleName(f"Open {row.title}")
         self.open_button.setEnabled(enabled and row.can_open)
         self.open_button.setVisible(row.can_open)
-        self.open_button.setProperty("primary", row.can_open)
+        self.open_button.setProperty("primary", primary and row.can_open)
         self.delete_button = QPushButton("Delete…")
         self.delete_button.setAccessibleName(f"Delete {row.title}")
         self.delete_button.setProperty("danger", True)
+        self.delete_button.setProperty("ghost", True)
         self.delete_button.setEnabled(enabled)
         self.open_button.clicked.connect(
             lambda: self.open_requested.emit(row.project_id)
@@ -129,10 +152,13 @@ class ProjectRowWidget(QWidget):
         inner.addWidget(self.open_button, 0, Qt.AlignmentFlag.AlignVCenter)
         inner.addWidget(self.delete_button, 0, Qt.AlignmentFlag.AlignVCenter)
         outer.addWidget(box)
+        self.rule = rule()
+        outer.addWidget(self.rule)
 
 
 class ProjectsPage(QWidget):
     open_models = Signal()
+    analyze_text_requested = Signal()
     section_changed = Signal(object)  # the Section now shown
 
     def __init__(
@@ -226,11 +252,19 @@ class ProjectsPage(QWidget):
         self.import_button.setProperty("primary", True)
         self.import_button.setAccessibleName("Import a CSV file as a new project")
         self.import_button.clicked.connect(self._import)
+        self.analyze_text_button = QPushButton("Analyze one text")
+        self.analyze_text_button.setObjectName("projects-analyze-text")
+        self.analyze_text_button.setAccessibleName("Analyze one text, unsaved")
+        self.analyze_text_button.clicked.connect(self.analyze_text_requested.emit)
+        self.header.add_action(self.analyze_text_button)
         self.header.add_action(self.import_button)
         self.summary = self.header.subtitle
         self.summary.setObjectName("projects-summary")
-        self.rows_box = QVBoxLayout()
-        self.rows_box.setSpacing(10)
+        self.rows_card = frame("card")
+        self.rows_card.setObjectName("projects-card")
+        self.rows_box = QVBoxLayout(self.rows_card)
+        self.rows_box.setContentsMargins(0, 0, 0, 0)
+        self.rows_box.setSpacing(0)
         self.empty_list = EmptyState(
             "No projects yet",
             "A project is one imported CSV and everything derived from it. Import "
@@ -242,8 +276,7 @@ class ProjectsPage(QWidget):
             "stays on this computer until you delete it.",
             role="muted",
         )
-        add_all(self.list_page.body, self.header)
-        self.list_page.body.addLayout(self.rows_box)
+        add_all(self.list_page.body, self.header, self.rows_card)
         add_all(self.list_page.body, self.empty_list, self.note)
         self.list_page.body.addStretch(1)
         self.stack.addWidget(self.list_page)
@@ -274,7 +307,32 @@ class ProjectsPage(QWidget):
         self.ignored = label(role="muted")
         self.ignored.setObjectName("project-ignored")
         self.facts_card = Card("THIS CSV")
+        self.figure_ready = Figure("ready to analyse")
+        self.figure_ready.setObjectName("figure-ready")
+        self.figure_rejected = Figure("rejected at import", "negative")
+        self.figure_rejected.setObjectName("figure-rejected")
+        self.figure_language = Figure("not confirmed as English", "caution")
+        self.figure_language.setObjectName("figure-language")
+        figures = QHBoxLayout()
+        figures.setSpacing(18)
+        for figure in (self.figure_ready, self.figure_rejected, self.figure_language):
+            figures.addWidget(figure, 1)
+        self.metadata_caption = label("RECOGNISED METADATA COLUMNS", role="eyebrow")
+        self.metadata_row = FlowRow()
+        self.metadata_row.setObjectName("metadata-columns")
+        self.metadata_note = label(
+            "Groups in Insights come only from these columns. Nothing is inferred.",
+            role="muted",
+        )
+        self._metadata_signature: object = None
+        self.facts_card.layout_.addLayout(figures)
         add_all(self.facts_card.layout_, self.facts, self.ignored)
+        add_all(
+            self.facts_card.layout_,
+            self.metadata_caption,
+            self.metadata_row,
+            self.metadata_note,
+        )
         self.language_box = LanguageBox("project-language")
         self.column_box = frame("panel")
         self.column_box.setObjectName("column-step")
@@ -319,8 +377,22 @@ class ProjectsPage(QWidget):
         )
         add_all(self.detail_page.body, self.detail_header, self.detail_block)
         add_all(self.detail_page.body, self.column_box, self.progress)
-        add_all(self.detail_page.body, self.facts_card, self.language_box)
-        add_all(self.detail_page.body, self.problems_card, self.failures_card)
+        results_column = QWidget()
+        results_column.setProperty("role", "plain")
+        column_layout_right = QVBoxLayout(results_column)
+        column_layout_right.setContentsMargins(0, 0, 0, 0)
+        column_layout_right.setSpacing(16)
+        add_all(
+            column_layout_right,
+            self.language_box,
+            self.problems_card,
+            self.failures_card,
+        )
+        column_layout_right.addStretch(1)
+        self.detail_split = SplitRow(
+            self.facts_card, results_column, side_width=360, stack_below=860
+        )
+        self.detail_page.body.addWidget(self.detail_split)
         self.detail_page.body.addStretch(1)
         self.stack.addWidget(self.detail_page)
 
@@ -502,6 +574,7 @@ class ProjectsPage(QWidget):
         self.import_button.setEnabled(view.import_enabled)
         empty = not view.rows and state.listed and not state.list_failed
         self.empty_list.setVisible(empty)
+        self.rows_card.setVisible(bool(view.rows))
         self.note.setVisible(bool(view.rows))
         if not view.rows and not empty:
             self.header.set_subtitle(view.summary)
@@ -515,13 +588,17 @@ class ProjectsPage(QWidget):
             widget.setParent(None)
             widget.deleteLater()
         self._rows = []
-        for row in view.rows:
-            widget = ProjectRowWidget(row, view.row_actions_enabled)
+        for position, row in enumerate(view.rows):
+            widget = ProjectRowWidget(
+                row, view.row_actions_enabled, primary=position == 0
+            )
             widget.open_requested.connect(self._controller.open_project)
             widget.delete_requested.connect(self._delete)
             self.rows_box.addWidget(widget)
             widget.show()
             self._rows.append(widget)
+        if self._rows:
+            self._rows[-1].rule.setVisible(False)
 
     def _show_detail(self, view: ProjectDetailView, *, had_focus: bool) -> None:
         self._detail_title = view.title
@@ -529,6 +606,7 @@ class ProjectsPage(QWidget):
         self.state_line.setText(view.state_line)
         self.facts.setText("\n".join(view.facts))
         self.facts_card.setVisible(bool(view.facts))
+        self._show_figures(view)
         self.language_box.show_language(
             view.language_headline, view.language_detail, view.language_warns
         )
@@ -573,6 +651,40 @@ class ProjectsPage(QWidget):
         self.delete_button.setEnabled(view.delete_enabled)
         self.delete_button.setAccessibleName("Delete this project")
         self._show_problems(self._results.state)
+
+    def _show_figures(self, view: ProjectDetailView) -> None:
+        figures = (
+            (self.figure_ready, view.ready_count),
+            (self.figure_rejected, view.rejected_count),
+            (self.figure_language, view.language_count),
+        )
+        for figure, count in figures:
+            figure.setVisible(count is not None)
+            if count is not None:
+                figure.set_value(str(count))
+        shown = bool(view.metadata)
+        self.metadata_caption.setVisible(shown)
+        self.metadata_row.setVisible(shown)
+        self.metadata_note.setVisible(shown)
+        if view.metadata == self._metadata_signature:
+            return
+        self._metadata_signature = view.metadata
+        flow = self.metadata_row.flow
+        while flow.count():
+            item = flow.takeAt(0)
+            widget = item.widget() if item is not None else None
+            if widget is not None:
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
+        for name, present in view.metadata:
+            text = name if present else f"{name} — not in file"
+            piece = chip(text, "human" if present else "neutral")
+            piece.setAccessibleName(
+                f"{name} column, {'in the file' if present else 'not in the file'}"
+            )
+            self.metadata_row.add(piece)
+            piece.show()
 
     def _show_problems(self, state: ResultsState) -> None:
         view = build_validation_view(state)

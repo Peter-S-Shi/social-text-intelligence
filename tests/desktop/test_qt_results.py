@@ -131,16 +131,30 @@ def test_the_aggregates_are_written_beside_their_bars(
     shell = opened(make_shell, tmp_path)
     results = shell.window.projects_page.results_page
 
-    texts = {
-        m.accessibleName() for m in results.sentiment_bars.meters
-    }  # "label: written value"
-    assert "Positive: 7 rows · 29.2%" in texts
-    assert "Neutral: 10 rows · 41.7%" in texts
+    figures = {
+        tone: figure.accessibleName()
+        for tone, figure in results.sentiment_figures.items()
+    }  # "count tone rows, share"
+    assert figures["positive"] == "7 positive rows, 29.2%"
+    assert figures["neutral"] == "10 neutral rows, 41.7%"
+    assert {
+        tone: text_of(f.value) for tone, f in results.sentiment_figures.items()
+    } == {
+        "negative": "7",
+        "neutral": "10",
+        "positive": "7",
+    }
     assert len(results.dominant_bars.meters) == 9
     assert len(results.activation_bars.meters) == 8
     assert text_of(results.failed_figure) == "2"
-    # a bar is only a picture: its fraction is the share the text states
-    assert results.sentiment_bars.meters[0].fraction == pytest.approx(7 / 24)
+    # a bar is only a picture: its segments are the counts the figures state
+    assert dict(
+        (tone, weight) for weight, tone in results.sentiment_stack.segments
+    ) == {
+        "negative": 7.0,
+        "neutral": 10.0,
+        "positive": 7.0,
+    }
 
 
 def test_every_row_is_in_the_table_with_a_status_word_and_a_reason(

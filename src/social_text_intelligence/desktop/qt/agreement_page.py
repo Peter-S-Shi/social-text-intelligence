@@ -40,7 +40,7 @@ LEGEND = (
 class FigureCard(Card):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__("", parent)
-        self.value = label(role="figure", wrap=False)
+        self.value = label(role="display", wrap=False)
         self.caption = label(role="muted")
         add_all(self.layout_, self.value, self.caption)
 
