@@ -84,8 +84,9 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
     assert (
-        "| Current lifecycle phase | **V2 Pre-Release Feasibility (M7, "
-        "CONDITIONAL, PR #49 open)** after **V2 Native UI Integration** — "
+        "| Current lifecycle phase | **V2 Pre-Release Feasibility (M7 "
+        "complete, CONDITIONAL exit accepted)** after **V2 Native UI "
+        "Integration** — "
         in status
     )
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
@@ -115,11 +116,12 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         in status
     )
     assert (
-        "| M7 — Pre-Release Feasibility & Risk Gate | **CONDITIONAL" in status
+        "| M7 — Pre-Release Feasibility & Risk Gate | **COMPLETE on `main` "
+        "with a formally accepted CONDITIONAL exit" in status
     )
     assert (
-        "| Next required action | External verification of PR #49 and the "
-        "owner's decision on the M7 CONDITIONAL exit"
+        "| Next required action | Scope M8 — Product Hardening from the "
+        "carried M7 inputs"
         in status
     )
     assert (
@@ -169,9 +171,9 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
     assert (
         "**Current phase: V2 Native UI Integration (M6) is complete; M7 — "
-        "Pre-Release Feasibility & Risk Gate is recorded as CONDITIONAL in "
-        "open PR #49, and the next action is the owner's decision on that "
-        "exit.**" in roadmap
+        "Pre-Release Feasibility & Risk Gate is complete with a formally "
+        "accepted CONDITIONAL exit, M8 has not started, and the next action "
+        "is to scope M8.**" in roadmap
     )
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
@@ -182,13 +184,11 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert (
-        "> **Current lifecycle phase: V2 Native UI Integration — M6 complete**"
-        in readme
+        "> **Current lifecycle phase: V2 Pre-Release Feasibility — M7 "
+        "complete (CONDITIONAL)**" in readme
     )
-    assert (
-        "integration and polish) is complete on `main`; the next action is to scope"
-        in readme
-    )
+    assert "M8 has not started and the next action is to scope" in readme
+    assert "formally accepted CONDITIONAL exit" in readme
 
 
 def test_source_of_truth_responsibilities_are_explicit() -> None:

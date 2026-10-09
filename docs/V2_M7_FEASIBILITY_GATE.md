@@ -319,26 +319,31 @@ release-candidate verification. M7 implemented none of M9 or M10.
 
 ## 12. Reproducing the measurements
 
-From the repository root, in the project virtual environment with the `dev` extra,
+From the repository root in Windows PowerShell, in the activated project virtual environment with the `dev` extra,
 `pyinstaller` and a local Hugging Face cache of the two pinned revisions (the M7 runs
 used an ignored `model_cache/` directory):
 
-```text
+```powershell
 # build (about 6 minutes); M7_MINIMISE=1 excludes dev tooling
-M7_MINIMISE=1 python -m PyInstaller --noconfirm --distpath _local/m7/dist --workpath _local/m7/build tools/m7/sti_desktop.spec
+$env:M7_MINIMISE = "1"
+python -m PyInstaller --noconfirm --distpath _local\m7\dist --workpath _local\m7\build tools\m7\sti_desktop.spec
 
 # end-to-end probe, frozen; use a disposable root
-_local/m7/dist/sti-m7/sti-probe.exe --root _local/m7/run/root --models-src model_cache --out _local/m7/run/report.json --recovery --net
+New-Item -ItemType Directory -Force _local\m7\run | Out-Null
+_local\m7\dist\sti-m7\sti-probe.exe --root _local\m7\run\root --models-src model_cache --out _local\m7\run\report.json --recovery --net
 
 # the same probe unfrozen
-python tools/m7/probe_e2e.py --root _local/m7/run_unfrozen/root --models-src model_cache --out _local/m7/run_unfrozen/report.json
+New-Item -ItemType Directory -Force _local\m7\run_unfrozen | Out-Null
+python tools\m7\probe_e2e.py --root _local\m7\run_unfrozen\root --models-src model_cache --out _local\m7\run_unfrozen\report.json
 
 # concurrency scenarios A (two analyses), B (delete), C (kill), E (model import)
-PYTHONPATH=src python tools/m7/probe_concurrency.py --root _local/m7/conc/root --models-src model_cache --only A,B,C,E --out _local/m7/conc/report.json
+New-Item -ItemType Directory -Force _local\m7\conc | Out-Null
+$env:PYTHONPATH = "src"
+python tools\m7\probe_concurrency.py --root _local\m7\conc\root --models-src model_cache --only A,B,C,E --out _local\m7\conc\report.json
 
 # DLL closure proxy (needs `pip install pefile`); the Qt byte-identity check compared
 # the bundled PySide6 files with the installed wheel by SHA-256 (not scripted)
-python tools/m7/dll_closure.py _local/m7/dist/sti-m7
+python tools\m7\dll_closure.py _local\m7\dist\sti-m7
 ```
 
 The concurrency probe imports the models into its root on first use. The probes use synthetic text and write only to the
