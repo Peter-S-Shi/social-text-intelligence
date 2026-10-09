@@ -59,6 +59,7 @@ from .components import (
     PageHeader,
     ScorePanel,
     SegmentedFilter,
+    relax_width,
 )
 from .platform import DesktopPlatform
 from .widgets import LanguageBox, NoticeBox, add_all, announce, label
@@ -594,6 +595,7 @@ class ReviewPage(Page):
 
         self.native_box = QCheckBox(NATIVE_LABEL)
         self.native_box.setObjectName("export-native")
+        relax_width(self.native_box)
         self.export_button = QPushButton(EXPORT_LABEL)
         self.export_button.setObjectName("review-export")
         self.export_button.setAccessibleName("Export reviewed CSV")

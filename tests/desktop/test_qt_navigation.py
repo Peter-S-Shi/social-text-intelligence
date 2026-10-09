@@ -15,8 +15,12 @@ from persistence.insight_samples import (  # noqa: E402
     VariedGateway,
     insights_csv,
 )
-from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtCore import QCoreApplication, Qt  # noqa: E402
+from PySide6.QtWidgets import QLabel, QWidget  # noqa: E402
 
+from social_text_intelligence.application.model_provisioning import (  # noqa: E402
+    Readiness,
+)
 from social_text_intelligence.desktop.navigation import Section  # noqa: E402
 
 from .fakes import FakeProvisioning, ManualRunner, status  # noqa: E402
@@ -288,3 +292,79 @@ def test_the_model_native_scores_are_one_click_away_and_listed_when_opened(
 
     assert scores.native.isVisibleTo(page)
     assert len(scores.native.meters) > 0
+
+
+# -- the Analyze page layout and the first-run window -------------------------------
+
+
+def test_the_analyze_page_states_its_safeguards_and_counts_characters(
+    make_shell: Any,
+) -> None:
+    shell: Shell = make_shell(FakeProvisioning(current=READY))
+    shell.window.nav_buttons["Analyze one text"].click()
+    page = shell.window.analyze_page
+    chips = {c.text() for c in page.limits.findChildren(type(page.counter))}
+    assert chips == {
+        "English only",
+        "20,000-character limit",
+        "Rejected, never truncated",
+        "Not saved",
+    }
+    assert text_of(page.counter) == "0 characters"
+
+    page.editor.setPlainText("Hello there")
+
+    assert text_of(page.counter) == "11 characters"
+    assert page.empty_result.isVisibleTo(page)  # nothing analysed yet
+    assert not page.result_box.isVisibleTo(page)
+
+
+def test_the_result_names_the_label_words_and_stays_beside_the_input_when_wide(
+    make_shell: Any,
+) -> None:
+    from PySide6.QtCore import QPoint
+
+    shell: Shell = make_shell(FakeProvisioning(current=READY))
+    shell.window.nav_buttons["Analyze one text"].click()
+    shell.window.resize(1280, 860)
+    QCoreApplication.processEvents()
+    page = shell.window.analyze_page
+    page.editor.setPlainText("A synthetic joyful sentence.")
+
+    page.analyze_button.click()
+
+    assert not page.empty_result.isVisibleTo(page)
+    assert text_of(page.sentiment_word) and text_of(page.emotion_word)
+    assert "confidence" in text_of(page.sentiment_detail)
+    assert page.sentiment_word.property("polarity") in {
+        "positive",
+        "negative",
+        "neutral",
+    }
+    assert page.split.wide
+    assert (
+        page.result_box.mapTo(page, QPoint()).x()
+        > page.input_card.mapTo(page, QPoint()).x()
+    )
+    shell.window.resize(900, 620)
+    QCoreApplication.processEvents()
+    assert not page.split.wide  # stacked at the minimum width
+    assert page.scroller.horizontalScrollBar().maximum() == 0
+
+
+def test_the_first_run_window_states_what_is_needed_and_the_models_window_does_not(
+    make_shell: Any,
+) -> None:
+    missing = status(Readiness.NOT_INSTALLED, Readiness.NOT_INSTALLED)
+    shell: Shell = make_shell(FakeProvisioning(current=missing))
+
+    hero = shell.setup.findChild(QWidget, "setup-hero")
+    assert hero is not None
+    words = " ".join(w.text() for w in hero.findChildren(QLabel))
+    assert "After that, your text never leaves this computer." in words
+    assert "huggingface.co" in words
+    assert shell.models.findChild(QWidget, "setup-hero") is None
+    # the model cards carry a tinted state chip, with its word written
+    chip = shell.setup.panel.cards["sentiment"].chip
+    assert chip.property("chip") is True and chip.property("tone") == "neutral"
+    assert "Not installed" in text_of(chip)

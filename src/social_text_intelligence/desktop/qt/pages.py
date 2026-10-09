@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (
+    QBoxLayout,
     QHBoxLayout,
     QPlainTextEdit,
     QPushButton,
@@ -17,6 +19,7 @@ from ...contracts.inputs import DEFAULT_MAX_TEXT_LENGTH
 from ..analysis import AnalysisPageState
 from ..gate import AnalysisAvailability
 from ..panel import ActionId, ActionView, build_analysis_block
+from . import style
 from .components import (
     Card,
     EmptyState,
@@ -138,8 +141,9 @@ class AnalyzePage(Page):
         self.emotion_word.setObjectName("result-emotion")
         self.emotion_detail = label(role="mono")
         self.emotion_detail.setObjectName("result-emotion-detail")
-        verdicts = QHBoxLayout()
-        verdicts.setSpacing(24)
+        self.verdicts = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+        self.verdicts.setSpacing(24)
+        verdicts = self.verdicts
         for caption, word, detail in (
             ("SENTIMENT", self.sentiment_word, self.sentiment_detail),
             ("DOMINANT EMOTION", self.emotion_word, self.emotion_detail),
@@ -189,6 +193,29 @@ class AnalyzePage(Page):
         self._availability = AnalysisAvailability.AVAILABLE
         self._running = False
         self._external_busy = False
+
+    def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
+        super().resizeEvent(event)
+        self._reflow_verdicts()
+
+    def _reflow_verdicts(self) -> None:
+        """The two large label words sit side by side only when they fit the card."""
+
+        room = self.width() - 13 - 2 * style.PAGE_MARGIN_X - 2 * style.SPACE_L
+        if self.split.wide:
+            room -= 400 + style.SPACE_L
+        need = (
+            self.sentiment_word.sizeHint().width()
+            + self.emotion_word.sizeHint().width()
+            + self.verdicts.spacing()
+        )
+        direction = (
+            QBoxLayout.Direction.LeftToRight
+            if room >= need
+            else QBoxLayout.Direction.TopToBottom
+        )
+        if self.verdicts.direction() != direction:
+            self.verdicts.setDirection(direction)
 
     def _count(self) -> None:
         count = len(self.editor.toPlainText())
@@ -268,6 +295,7 @@ class AnalyzePage(Page):
                 result.language_warns,
             )
             self.scores.show_scores(result.scores)
+            self._reflow_verdicts()
         error = state.error
         self.error_box.setVisible(error is not None)
         if error is not None:

@@ -50,6 +50,7 @@ from .components import (
     ReflowRow,
     SplitRow,
     chip,
+    relax_width,
     rule,
 )
 from .platform import DesktopPlatform
@@ -364,8 +365,10 @@ class InsightsPage(QWidget):
         self.provenance = label(role="mono")
         self.native_box = QCheckBox("Include model-native emotion scores")
         self.native_box.setObjectName("export-native")
+        relax_width(self.native_box)
         self.records_box = QCheckBox("Include supporting record text and metadata")
         self.records_box.setObjectName("export-records")
+        relax_width(self.records_box)
         self.export_button = QPushButton("Export insights CSV…")
         self.export_button.setObjectName("insights-export")
         self.export_button.setAccessibleName("Export insights CSV")

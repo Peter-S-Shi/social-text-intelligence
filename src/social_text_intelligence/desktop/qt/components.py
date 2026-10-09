@@ -6,9 +6,9 @@ written as text next to its picture, and no state is carried by colour alone.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import (
     QColor,
     QKeyEvent,
@@ -16,9 +16,12 @@ from PySide6.QtGui import (
     QPaintEvent,
     QPen,
     QResizeEvent,
+    QShowEvent,
 )
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QAbstractScrollArea,
+    QBoxLayout,
     QButtonGroup,
     QComboBox,
     QFrame,
@@ -100,12 +103,17 @@ class Page(QWidget):
 
 
 class PageHeader(QWidget):
-    """The page title, a one-line mono subtitle, and actions aligned to the right."""
+    """The page title, a one-line mono subtitle, and actions aligned to the right.
+
+    When the title and the actions cannot share a line, the actions move under the
+    title instead of widening the page.
+    """
 
     def __init__(self, title: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self._layout = QBoxLayout(QBoxLayout.Direction.LeftToRight, self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(style.SPACE_S)
         text = QVBoxLayout()
         text.setSpacing(2)
         self.title = label(title, role="headline")
@@ -115,15 +123,39 @@ class PageHeader(QWidget):
         text.addWidget(self.subtitle)
         self.action_row = QHBoxLayout()
         self.action_row.setSpacing(style.SPACE_S)
-        layout.addLayout(text, 1)
-        layout.addLayout(self.action_row)
+        self._actions: list[QWidget] = []
+        self._layout.addLayout(text, 1)
+        self._layout.addLayout(self.action_row)
+        self._watcher = ViewportWatcher(self, self._reflow)
 
     def set_subtitle(self, text: str) -> None:
         self.subtitle.setText(text)
         self.subtitle.setVisible(bool(text))
 
     def add_action(self, widget: QWidget) -> None:
+        self._actions.append(widget)
         self.action_row.addWidget(widget, 0, Qt.AlignmentFlag.AlignTop)
+
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._watcher.attach()
+        self._reflow()
+
+    def _reflow(self) -> None:
+        actions = sum(w.sizeHint().width() for w in self._actions if not w.isHidden())
+        actions += style.SPACE_S * max(len(self._actions) - 1, 0)
+        text = max(
+            self.title.minimumSizeHint().width(),
+            self.subtitle.minimumSizeHint().width() if self.subtitle.isVisible() else 0,
+        )
+        fits = text + style.SPACE_S + actions <= self._watcher.available()
+        direction = (
+            QBoxLayout.Direction.LeftToRight
+            if fits
+            else QBoxLayout.Direction.TopToBottom
+        )
+        if self._layout.direction() != direction:
+            self._layout.setDirection(direction)
 
 
 class Card(QFrame):
@@ -334,8 +366,27 @@ class Figure(QWidget):
         self.setAccessibleName(f"{text} {self.caption.text()}")
 
 
+def relax_width(widget: QWidget) -> None:
+    """Let a long one-line control be narrower than its text rather than widen a page.
+
+    Where the column is wide enough the layout still gives it the whole line.
+    """
+
+    widget.setSizePolicy(
+        QSizePolicy.Policy.Ignored, widget.sizePolicy().verticalPolicy()
+    )
+
+
 class Combo(QComboBox):
-    """A combo box that draws its own chevron, so it looks the same everywhere."""
+    """A combo box that draws its own chevron, so it looks the same everywhere.
+
+    It can be squeezed (its text elides) instead of forcing a page wider than the
+    window; its preferred width is still that of its longest item.
+    """
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802 (Qt override)
+        hint = super().minimumSizeHint()
+        return QSize(min(hint.width(), 120), hint.height())
 
     def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802 (Qt override)
         super().paintEvent(event)
@@ -347,6 +398,52 @@ class Combo(QComboBox):
         painter.drawPolyline(
             [QPointF(cx - 4, cy - 2), QPointF(cx, cy + 2), QPointF(cx + 4, cy - 2)]
         )
+
+
+class ViewportWatcher(QObject):
+    """Tell a widget how much width its scrolling page really offers.
+
+    A widget whose minimum width exceeds a shrinking viewport stops resizing, so its
+    own width can never say "now stack". The viewport is the width on offer, and this
+    calls ``changed`` whenever it resizes.
+    """
+
+    def __init__(self, owner: QWidget, changed: Callable[[], None]) -> None:
+        super().__init__(owner)
+        self._owner = owner
+        self._changed = changed
+        self._viewport: QWidget | None = None
+
+    def attach(self) -> None:
+        area = self._scroll_area()
+        viewport = area.viewport() if area is not None else None
+        if viewport is self._viewport:
+            return
+        if self._viewport is not None:
+            self._viewport.removeEventFilter(self)
+        self._viewport = viewport
+        if viewport is not None:
+            viewport.installEventFilter(self)
+
+    def available(self) -> int:
+        """The width a page's content may use (its viewport less the page margins)."""
+
+        if self._viewport is not None:
+            return int(self._viewport.width()) - 2 * style.PAGE_MARGIN_X
+        return int(self._owner.width())
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if event.type() == QEvent.Type.Resize and watched is self._viewport:
+            self._changed()
+        return False
+
+    def _scroll_area(self) -> QAbstractScrollArea | None:
+        widget = self._owner.parentWidget()
+        while widget is not None:
+            if isinstance(widget, QAbstractScrollArea):
+                return widget
+            widget = widget.parentWidget()
+        return None
 
 
 class SplitRow(QWidget):
@@ -366,6 +463,7 @@ class SplitRow(QWidget):
         self._side_width = side_width
         self._stack_below = stack_below
         self._wide: bool | None = None
+        self._watcher = ViewportWatcher(self, self._arrange)
         self._grid = QGridLayout(self)
         self._grid.setContentsMargins(0, 0, 0, 0)
         self._grid.setSpacing(style.SPACE_L)
@@ -379,8 +477,14 @@ class SplitRow(QWidget):
         super().resizeEvent(event)
         self._arrange()
 
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._watcher.attach()
+        self._arrange()
+
     def _arrange(self, *, force: bool = False) -> None:
-        wide = self.width() <= 1 or self.width() >= self._stack_below
+        available = self._watcher.available()
+        wide = available <= 1 or available >= self._stack_below
         if wide == self._wide and not force:
             return
         self._wide = wide
@@ -737,7 +841,7 @@ class ConfusionGrid(QWidget):
                 widget.setParent(None)
                 widget.deleteLater()
         for column, name in enumerate(view.columns, start=1):
-            header = label(f"you · {name}", role="eyebrow", wrap=False)
+            header = label(f"you · {name}", role="eyebrow")
             header.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self._grid.addWidget(header, 0, column)
         peak = max((cell.count for row in view.rows for cell in row.cells), default=0)
@@ -830,5 +934,6 @@ __all__ = [
     "inline_note",
     "rule",
     "score_rows",
+    "relax_width",
     "section_title",
 ]

@@ -33,6 +33,7 @@ from .components import (
     ReflowRow,
     SegmentedFilter,
     StackedBar,
+    relax_width,
 )
 from .platform import DesktopPlatform
 from .widgets import LanguageBox, NoticeBox, add_all, label
@@ -95,6 +96,7 @@ class ResultsPage(Page):
         self.header.add_action(self.export_button)
         self.native_box = QCheckBox("Include model-native emotion scores in the export")
         self.native_box.setObjectName("export-native")
+        relax_width(self.native_box)
         self.notice = NoticeBox()
         self.notice.setVisible(False)
         self.language_box = LanguageBox("results-language")

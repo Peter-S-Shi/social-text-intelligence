@@ -223,3 +223,54 @@ def test_delete_wording_is_conservative() -> None:
     assert "backups are not affected" in text
     for forbidden in ("securely", "erase", "wipe", "shred", "permanently"):
         assert forbidden not in text.lower()
+
+
+def test_the_csv_card_figures_and_recognised_metadata_columns() -> None:
+    view = build_detail_view(
+        ProjectsState(
+            current=details(ProjectPhase.READY, headers=("record_id", "text", "topic"))
+        ),
+        AVAILABLE,
+        status(),
+    )
+
+    assert view is not None
+    assert (view.ready_count, view.rejected_count) == (4, 1)
+    assert view.language_count is None  # the language check runs with the analysis
+    present = {name: found for name, found in view.metadata}
+    assert present["record_id"] and present["topic"]
+    assert not present["community"] and not present["notes"]
+    # the text column is not metadata, and nothing is inferred from other headers
+    assert "text" not in present
+
+
+def test_the_language_figure_appears_once_the_project_is_analysed() -> None:
+    from social_text_intelligence.services.language import LanguageSummary
+
+    done = details(
+        ProjectPhase.ANALYZED,
+        analyzed_rows=4,
+        failed_rows=0,
+        language=LanguageSummary(4, 2, 1, 1, 0, 0, (("fr", 1),)),
+    )
+
+    view = build_detail_view(ProjectsState(current=done), AVAILABLE, status())
+
+    assert view is not None and view.language_count == 2  # unsupported + undetermined
+
+
+def test_a_project_still_choosing_its_column_shows_no_figures() -> None:
+    view = build_detail_view(
+        ProjectsState(current=details(ProjectPhase.NEEDS_COLUMN)), AVAILABLE, status()
+    )
+
+    assert view is not None
+    assert view.ready_count is None and view.rejected_count is None
+    assert view.metadata == ()
+
+
+def test_the_metadata_list_matches_the_batch_services_supported_fields() -> None:
+    from social_text_intelligence.desktop.projects_view import METADATA_COLUMNS
+    from social_text_intelligence.services.batch import SUPPORTED_BATCH_FIELDS
+
+    assert METADATA_COLUMNS == SUPPORTED_BATCH_FIELDS

@@ -393,3 +393,67 @@ def test_no_notice_in_the_ui_carries_csv_content(
     import_csv(shell, csv_file(tmp_path, "x.csv", SENTINEL.encode() + b"\xff"))
     shown = text_of(page.notice.title) + text_of(page.notice.body)
     assert SENTINEL not in shown and "x.csv" not in shown
+
+
+def test_the_import_card_shows_figures_and_recognised_columns(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+
+    import_csv(shell, csv_file(tmp_path, "Support tickets.csv", csv_text(4)))
+
+    assert text_of(page.figure_ready.value) == "4"
+    assert text_of(page.figure_rejected.value) == "0"
+    assert not page.figure_language.isVisibleTo(page)  # known only after analysis
+    names = {
+        c.accessibleName() for c in page.metadata_row.findChildren(type(page.heading))
+    }
+    assert "record_id column, in the file" in names
+    assert "notes column, not in the file" in names
+    # each chip says its state in words as well as by tint
+    texts = {c.text() for c in page.metadata_row.findChildren(type(page.heading))}
+    assert "notes — not in file" in texts
+
+
+def test_the_project_list_is_one_card_with_the_newest_open_as_the_primary_action(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    import_csv(shell, csv_file(tmp_path, "First.csv", csv_text(2)))
+    shell.window.nav_buttons["Projects"].click()
+    import_csv(shell, csv_file(tmp_path, "Second.csv", csv_text(2)))
+    shell.window.nav_buttons["Projects"].click()
+
+    opens = [row.open_button for row in page._rows]
+    assert len(opens) == 2
+    assert [b.property("primary") for b in opens] == [True, False]
+    assert page.rows_card.isVisibleTo(page)
+    assert all(row.parent() is page.rows_card for row in page._rows)
+
+
+def test_the_list_offers_a_way_to_analyze_one_text(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+
+    page.analyze_text_button.click()
+
+    assert shell.window.current_section().value == "analyze"
+    assert shell.window.nav_buttons["Analyze one text"].isChecked()
+
+
+def test_the_sidebar_says_when_no_project_is_open(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    window = shell.window
+    assert window.no_project.isVisibleTo(window)
+    assert not window.project_area.isVisibleTo(window)
+
+    import_csv(shell, csv_file(tmp_path, "Support tickets.csv", csv_text(2)))
+
+    assert window.project_area.isVisibleTo(window)
+    assert not window.no_project.isVisibleTo(window)
