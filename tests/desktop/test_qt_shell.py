@@ -320,7 +320,8 @@ def test_analysis_runs_when_ready_and_shows_provenance(make_shell: Any) -> None:
     page.analyze_button.click()
 
     assert page.result_box.isVisibleTo(page)
-    assert "Sentiment:" in page.result_text.text()
+    assert "Sentiment:" in page.result_box.accessibleName()
+    assert page.sentiment_word.text() and page.emotion_word.text()
     assert len(shell.gateway.records) == 1
 
 
@@ -331,7 +332,7 @@ def test_h2_blocks_every_analysis_surface_until_restart(make_shell: Any) -> None
     page = shell.window.analyze_page
     page.editor.setPlainText("A synthetic sentence.")
     page.analyze_button.click()  # analysis loads the service
-    first_text = page.result_text.text()
+    first_text = page.result_box.accessibleName()
 
     shell.window.models_button.click()
     shell.button(shell.models, "Verify files").click()
@@ -342,7 +343,7 @@ def test_h2_blocks_every_analysis_surface_until_restart(make_shell: Any) -> None
     assert "restart" in page.block.body.text().lower()
     assert shell.window.projects_page.block.isVisibleTo(shell.window.projects_page)
     assert shell.models.panel.session_note.isVisibleTo(shell.models)
-    assert page.result_text.text() == first_text  # the earlier result stays
+    assert page.result_box.accessibleName() == first_text  # the earlier result stays
 
     # repair by download: models become ready, the block stays
     fake.next_download = ProvisioningResult(ProvisioningOutcome.COMPLETED, status())

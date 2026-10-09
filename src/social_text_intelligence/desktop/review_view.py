@@ -37,11 +37,11 @@ NO_ROWS_LINE = (
 )
 
 STATUS_FILTERS = (
-    ("All records", ReviewFilter.ALL),
+    ("All", ReviewFilter.ALL),
     ("Unreviewed", ReviewFilter.UNREVIEWED),
     ("Reviewed", ReviewFilter.REVIEWED),
     ("Corrected", ReviewFilter.CORRECTED),
-    ("Marked uncertain", ReviewFilter.UNCERTAIN),
+    ("Uncertain", ReviewFilter.UNCERTAIN),
 )
 JUDGMENT_WORDS = (
     (ReviewJudgment.ACCEPT, "Accept"),
@@ -58,6 +58,12 @@ class AiRecordView:
     secondary_line: str
     scores: ScoreSetView
     provenance: tuple[str, ...]
+    # the same facts split for display: a large label word and a small detail line
+    sentiment_word: str = ""
+    sentiment_value: str = ""  # the raw label, for a polarity colour (never alone)
+    sentiment_detail: str = ""
+    emotion_word: str = ""
+    emotion_detail: str = ""
 
     @property
     def accessible_name(self) -> str:
@@ -100,6 +106,21 @@ class RecordView:
 
 
 @dataclass(frozen=True, slots=True)
+class QueueItemView:
+    """One queue line: the record's identity, a short text, and whether it is judged."""
+
+    row_number: int
+    record_id: str
+    excerpt: str
+    reviewed: bool
+
+    @property
+    def accessible_name(self) -> str:
+        state = "reviewed" if self.reviewed else "not yet reviewed"
+        return f"Row {self.row_number}, {self.record_id}, {state}. {self.excerpt}"
+
+
+@dataclass(frozen=True, slots=True)
 class ReviewView:
     position_line: str
     progress_line: str
@@ -118,6 +139,14 @@ class ReviewView:
     emotion_filter_choices: tuple[tuple[str, str], ...]
     filters: ReviewFilters
     notice: ReviewNotice | None
+    # the review-state tabs with their counts, and the queue beside the open record
+    status_tabs: tuple[tuple[str, str, int], ...] = ()
+    queue: tuple[QueueItemView, ...] = ()
+    queue_heading: str = ""
+    queue_position: str = ""
+    selected_row: int | None = None
+    progress_fraction: float = 0.0
+    progress_text: str = ""
 
 
 def filters_from(status: str, sentiment: str, emotion: str) -> ReviewFilters:
@@ -144,6 +173,14 @@ def _ai_view(report: AnalysisReport) -> AiRecordView:
             f"{emotion.confidence * 100:.1f}% · threshold ≥ {emotion.threshold:.2f}"
         ),
         secondary_line=f"Secondary emotions: {secondary or 'none'}",
+        sentiment_word=sentiment.label.value.capitalize(),
+        sentiment_value=sentiment.label.value,
+        sentiment_detail=f"confidence {sentiment.confidence * 100:.1f}%",
+        emotion_word=emotion.dominant_emotion.value.capitalize(),
+        emotion_detail=(
+            f"confidence {emotion.confidence * 100:.1f}% · "
+            f"threshold ≥ {emotion.threshold:.2f}"
+        ),
         scores=build_scores(report),
         provenance=(
             f"Sentiment model: {sentiment.provider.model_name}@"
@@ -235,6 +272,35 @@ def _progress(snapshot: ReviewSnapshot) -> tuple[str, str]:
     )
 
 
+def _status_tabs(snapshot: ReviewSnapshot) -> tuple[tuple[str, str, int], ...]:
+    progress = snapshot.summary.progress
+    counts = {
+        ReviewFilter.ALL: progress.reviewable_records,
+        ReviewFilter.UNREVIEWED: progress.unreviewed,
+        ReviewFilter.REVIEWED: progress.reviewed,
+        ReviewFilter.CORRECTED: progress.corrected,
+        ReviewFilter.UNCERTAIN: progress.uncertain,
+    }
+    return tuple((label, f.value, counts[f]) for label, f in STATUS_FILTERS)
+
+
+def _progress_text(snapshot: ReviewSnapshot) -> tuple[float, str]:
+    progress = snapshot.summary.progress
+    total = progress.reviewable_records
+    fraction = progress.reviewed / total if total else 0.0
+    return fraction, (
+        f"{progress.reviewed} / {total} reviewed · {progress.unreviewed} to go"
+    )
+
+
+def _queue_heading(snapshot: ReviewSnapshot) -> tuple[str, str]:
+    names = dict((f.value, label) for label, f in STATUS_FILTERS)
+    heading = f"Queue · {names[snapshot.filters.status.value]}"
+    if snapshot.record is None:
+        return heading, ""
+    return heading, f"{snapshot.position} / {snapshot.filtered_count}"
+
+
 def _position(snapshot: ReviewSnapshot) -> str:
     if snapshot.record is None:
         return "No records to review"
@@ -259,6 +325,8 @@ def build_review_view(state: ReviewState) -> ReviewView | None:
     record = snapshot.record
     progress_line, failed_line = _progress(snapshot)
     changed = state.has_unsaved_changes
+    fraction, progress_text = _progress_text(snapshot)
+    queue_heading, queue_position = _queue_heading(snapshot)
     return ReviewView(
         position_line=_position(snapshot),
         progress_line=progress_line,
@@ -281,4 +349,14 @@ def build_review_view(state: ReviewState) -> ReviewView | None:
         ),
         filters=state.filters,
         notice=state.notice,
+        status_tabs=_status_tabs(snapshot),
+        queue=tuple(
+            QueueItemView(e.row_number, e.record_id, e.excerpt, e.reviewed)
+            for e in snapshot.queue
+        ),
+        queue_heading=queue_heading,
+        queue_position=queue_position,
+        selected_row=None if record is None else record.row_number,
+        progress_fraction=fraction,
+        progress_text=progress_text,
     )

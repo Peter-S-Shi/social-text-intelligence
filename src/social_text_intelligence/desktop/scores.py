@@ -31,6 +31,7 @@ class ScoreSetView:
     emotion: tuple[ScoreRow, ...]
     emotion_rule: str
     native: tuple[ScoreRow, ...]
+    fallback: bool = False  # Neutral was chosen by the threshold fallback
 
 
 def _name(value: str) -> str:
@@ -84,4 +85,5 @@ def build_scores(report: AnalysisReport) -> ScoreSetView:
         emotion=emotion_rows,
         emotion_rule=rule,
         native=tuple(_row(item.label, item.score) for item in emotion.native_scores),
+        fallback=fell_back,
     )

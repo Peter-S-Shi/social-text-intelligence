@@ -57,6 +57,8 @@ SIZE_TITLE = "13pt"
 SIZE_HEADLINE = "21pt"
 SIZE_FIGURE = "28pt"
 SIZE_DISPLAY = "34pt"
+SIZE_WORD = "22pt"
+SIZE_QUOTE = "15pt"
 
 # -- space (pixels) -----------------------------------------------------------
 SPACE_XS = 4
@@ -115,6 +117,8 @@ QLabel[role="headline"] {{ font-family: {SERIF}; font-size: {SIZE_HEADLINE}; }}
 QLabel[role="title"] {{ font-family: {SERIF}; font-size: {SIZE_TITLE}; }}
 QLabel[role="figure"] {{ font-family: {SERIF}; font-size: {SIZE_FIGURE}; }}
 QLabel[role="display"] {{ font-family: {SERIF}; font-size: {SIZE_DISPLAY}; }}
+QLabel[role="word"] {{ font-family: {SERIF}; font-size: {SIZE_WORD}; }}
+QLabel[quote="true"] {{ font-family: {SERIF}; font-size: {SIZE_QUOTE}; }}
 QLabel[role="muted"] {{ color: {MUTED}; }}
 QLabel[role="mono"] {{ font-family: {MONO}; color: {MUTED}; font-size: {SIZE_SMALL}; }}
 QLabel[role="eyebrow"] {{
@@ -122,6 +126,13 @@ QLabel[role="eyebrow"] {{
 }}
 QLabel[role="error"] {{ color: {VERMILION}; }}
 QLabel[role="subtitle"] {{ font-family: {MONO}; color: {MUTED}; font-size: {SIZE_SMALL}; }}
+QLabel[role="cardhead"] {{ font-weight: 600; font-size: 10.5pt; }}
+QLabel[role="cardhead"][side="ai"] {{ color: {GRAPHITE}; }}
+QLabel[role="cardhead"][side="human"] {{ color: {ULTRAMARINE}; }}
+QLabel[fallback="true"] {{
+  background: {CAUTION_BG}; border: 1px solid {CAUTION_LINE}; border-radius: 6px;
+  padding: 8px 10px; color: {INK};
+}}
 QLabel[polarity="negative"] {{ color: {VERMILION}; }}
 QLabel[polarity="positive"] {{ color: {POSITIVE}; }}
 QLabel[polarity="neutral"] {{ color: {NEUTRAL}; }}
@@ -159,6 +170,13 @@ QGroupBox {{
   background: transparent;
 }}
 QGroupBox::title {{ subcontrol-origin: margin; left: 8px; padding: 0 4px; }}
+QGroupBox[plain="true"] {{
+  border: none; margin-top: 18px; padding: 2px 0 0 0; background: transparent;
+}}
+QGroupBox[plain="true"]::title {{
+  subcontrol-origin: margin; left: 0; padding: 0; color: {MUTED};
+  font-family: {MONO}; font-size: 8pt;
+}}
 
 /* -- buttons ------------------------------------------------------------------- */
 QPushButton {{
@@ -182,6 +200,11 @@ QPushButton[human="true"]:hover {{ background: #2239B8; }}
 QPushButton[human="true"]:disabled {{
   background: {ULTRAMARINE_TINT}; color: {MUTED}; border: 1px solid {ULTRAMARINE_LINE};
 }}
+QPushButton[ghost="true"] {{
+  background: transparent; border: 1px solid transparent; padding: 4px 10px;
+}}
+QPushButton[ghost="true"]:hover {{ background: {PAPER_RAISED}; border-color: {LINE_STRONG}; }}
+QPushButton[ghost="true"]:disabled {{ background: transparent; border-color: transparent; }}
 QPushButton[danger="true"] {{ color: {VERMILION}; border-color: {VERMILION}; }}
 QPushButton:focus, QToolButton:focus {{
   border: 2px solid {FOCUS}; padding: 5px 13px;
@@ -257,6 +280,9 @@ QRadioButton[choice="true"]:focus {{
   border: 2px solid {FOCUS}; padding: 4px 11px; border-radius: 6px;
 }}
 QRadioButton[choice="true"]:disabled {{ color: #7A7E85; border-color: {LINE}; }}
+
+QListWidget#review-queue {{ border: none; border-radius: 0; background: {PAPER_RAISED}; }}
+QListWidget#review-queue:focus {{ border: 2px solid {FOCUS}; }}
 
 /* -- tables -------------------------------------------------------------------- */
 QTableWidget {{

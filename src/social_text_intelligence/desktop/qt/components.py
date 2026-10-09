@@ -432,6 +432,10 @@ class ScorePanel(QWidget):
         self.native_toggle.setText("Show model-native emotion scores")
         self.native_toggle.setCheckable(True)
         self.native_toggle.setObjectName("native-toggle")
+        # a long caption must never widen a narrow card: it may clip instead
+        self.native_toggle.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed
+        )
         self.native = BarGrid("quiet")
         self.native.setObjectName("native-scores")
         self.native.setVisible(False)
@@ -445,6 +449,9 @@ class ScorePanel(QWidget):
         self.sentiment.set_rows(score_rows(scores.sentiment))
         self.emotion.set_rows(score_rows(scores.emotion))
         self.rule.setText(scores.emotion_rule)
+        self.rule.setProperty("fallback", scores.fallback)
+        self.rule.style().unpolish(self.rule)
+        self.rule.style().polish(self.rule)
         self.native.set_rows(score_rows(scores.native))
         self.native_toggle.setText(
             f"Show {len(scores.native)} model-native emotion scores"
@@ -462,13 +469,14 @@ class SegmentedFilter(QWidget):
 
     selected = Signal(str)
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, *, noun: str = "rows") -> None:
         super().__init__(parent)
+        self._noun = noun
         self.setProperty("role", "segtrack")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self._layout = QHBoxLayout(self)
+        # wraps onto a second line when the page is narrow, instead of widening it
+        self._layout = FlowLayout(self, spacing=2, one_line_hint=True)
         self._layout.setContentsMargins(3, 3, 3, 3)
-        self._layout.setSpacing(2)
         self._group = QButtonGroup(self)
         self._group.setExclusive(True)
         self._buttons: dict[str, QPushButton] = {}
@@ -478,6 +486,12 @@ class SegmentedFilter(QWidget):
     @property
     def buttons(self) -> dict[str, QPushButton]:
         return self._buttons
+
+    def preferred_width(self) -> int:
+        """The width of all the buttons on one line (what it takes not to wrap)."""
+
+        widths = [button.sizeHint().width() for button in self._buttons.values()]
+        return sum(widths) + 2 * max(len(widths) - 1, 0) + 6
 
     def set_options(
         self, options: Sequence[tuple[str, str, int]], selected: str
@@ -504,7 +518,7 @@ class SegmentedFilter(QWidget):
                     if index == len(options) - 1
                     else "mid",
                 )
-                button.setAccessibleName(f"{text}, {count} rows")
+                button.setAccessibleName(f"{text}, {count} {self._noun}")
                 button.setObjectName(f"seg-{value}")
                 button.clicked.connect(lambda _=False, v=value: self._chosen(v))
                 self._group.addButton(button)

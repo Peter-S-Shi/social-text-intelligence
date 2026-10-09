@@ -452,3 +452,49 @@ def test_agreement_needs_an_analysed_project(tmp_path: Path) -> None:
         reviews(tmp_path).agreement(ready)
     with pytest.raises(ProjectNotFoundError):
         reviews(tmp_path).agreement("no-such-project")
+
+
+def test_the_queue_lists_the_filtered_records_in_row_order(tmp_path: Path) -> None:
+    project_id = analysed(tmp_path, rows=4)
+    flow = reviews(tmp_path)
+    flow.accept_both(
+        project_id, 2, "", expected=current(flow.open_review(project_id, row=2))
+    )
+
+    everything = flow.open_review(project_id)
+    unreviewed = flow.open_review(
+        project_id, ReviewFilters(status=ReviewFilter.UNREVIEWED)
+    )
+
+    assert [entry.row_number for entry in everything.queue] == [1, 2, 3, 4]
+    assert [entry.reviewed for entry in everything.queue] == [False, True, False, False]
+    assert [entry.row_number for entry in unreviewed.queue] == [1, 3, 4]
+    assert all(entry.record_id and entry.excerpt for entry in everything.queue)
+    assert SENTINEL in everything.queue[0].excerpt
+
+
+def test_the_queue_keeps_the_open_record_after_it_leaves_the_filter(
+    tmp_path: Path,
+) -> None:
+    project_id = analysed(tmp_path, rows=3)
+    flow = reviews(tmp_path)
+    unreviewed = ReviewFilters(status=ReviewFilter.UNREVIEWED)
+    first = flow.open_review(project_id, unreviewed)
+
+    saved = flow.accept_both(
+        project_id, 1, "", expected=current(first), filters=unreviewed
+    )
+
+    assert saved.record is not None and saved.record.row_number == 1
+    assert [entry.row_number for entry in saved.queue] == [1, 2, 3]
+    assert saved.queue[0].reviewed is True
+
+
+def test_a_queue_excerpt_is_one_short_line() -> None:
+    from social_text_intelligence.application.review_workflow import _excerpt
+
+    long = "word " * 60 + "\nsecond line"
+    shown = _excerpt(long)
+
+    assert "\n" not in shown and len(shown) <= 90 and shown.endswith("…")
+    assert _excerpt("  short   text ") == "short text"

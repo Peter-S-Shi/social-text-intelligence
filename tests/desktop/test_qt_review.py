@@ -20,6 +20,7 @@ from persistence.workflow_samples import (  # noqa: E402
 )
 from PySide6.QtCore import QCoreApplication, QPoint, Qt  # noqa: E402
 from PySide6.QtGui import QCloseEvent  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QCheckBox,
     QComboBox,
@@ -269,12 +270,10 @@ def test_navigation_and_filters_follow_the_existing_queue_rules(
     review.next_unreviewed_button.click()
     assert "Row 1" in text_of(review.record_title)  # wraps past the reviewed row 2
 
-    choose(review.status_filter, "reviewed")
-    review.status_filter.activated.emit(review.status_filter.currentIndex())
+    review.status_tabs.buttons["reviewed"].click()
     assert "Row 2" in text_of(review.record_title)
     assert "1 match the filters" in text_of(review.position)
-    choose(review.status_filter, "all")
-    review.status_filter.activated.emit(review.status_filter.currentIndex())
+    review.status_tabs.buttons["all"].click()
     assert "4 match" not in text_of(review.position)
 
 
@@ -497,16 +496,17 @@ def test_review_at_minimum_window_width_shows_both_records_without_horizontal_sc
     assert review.scroller.horizontalScrollBar().maximum() == 0
     assert review.ai.isVisibleTo(review)
     assert review.human.isVisibleTo(review)
-    assert review.human.mapTo(review, QPoint()).y() > review.ai.mapTo(
-        review, QPoint()
-    ).y()
+    assert (
+        review.human.mapTo(review, QPoint()).y() > review.ai.mapTo(review, QPoint()).y()
+    )
 
     shell.window.resize(1280, 860)
     QCoreApplication.processEvents()
     assert review.scroller.horizontalScrollBar().maximum() == 0
-    assert review.human.mapTo(review, QPoint()).y() == review.ai.mapTo(
-        review, QPoint()
-    ).y()
+    assert (
+        review.human.mapTo(review, QPoint()).y()
+        == review.ai.mapTo(review, QPoint()).y()
+    )
 
 
 def test_review_focus_follows_record_and_field_error(
@@ -542,3 +542,88 @@ def test_provisioning_and_project_analysis_still_work_beside_review(
     assert shell.window.projects_page.stack.currentWidget() is (
         shell.window.projects_page.review_page
     )  # the open project's page is where the person left it
+
+
+def test_the_queue_lists_the_records_and_opens_one_by_its_row(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+
+    assert review.queue.count() == 4
+    assert review.queue.selected_row() == 1
+    review.queue.row_chosen.emit(3)
+    QCoreApplication.processEvents()
+
+    assert "Row 3" in text_of(review.record_title)
+    assert review.queue.selected_row() == 3  # the selection follows the record
+    assert "3 / 4" in text_of(review.queue_pane.position)
+
+
+def test_choosing_a_queue_line_with_a_real_click_opens_that_record(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    shell.window.resize(1280, 860)
+    QCoreApplication.processEvents()
+
+    rect = review.queue.visualItemRect(review.queue.item(1))
+    QTest.mouseClick(
+        review.queue.viewport(), Qt.MouseButton.LeftButton, pos=rect.center()
+    )
+
+    assert "Row 2" in text_of(review.record_title)
+    assert review.queue.selected_row() == 2
+
+
+def test_the_queue_asks_before_dropping_an_unsaved_judgment(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    pick(review, "uncertain", "sentiment")
+
+    shell.platform.confirmed = False
+    review.queue.row_chosen.emit(2)
+    assert "Row 1" in text_of(review.record_title)  # stayed
+    assert review.queue.selected_row() == 1  # and the list did not move on
+    assert review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
+
+    shell.platform.confirmed = True
+    review.queue.row_chosen.emit(2)
+    assert "Row 2" in text_of(review.record_title)
+    assert review.queue.selected_row() == 2
+
+
+def test_the_review_state_tabs_carry_counts_and_filter_the_queue(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    review.accept_button.click()  # row 1 is now reviewed
+
+    tabs = review.status_tabs.buttons
+    assert (
+        "Unreviewed" in tabs["unreviewed"].text() and "3" in tabs["unreviewed"].text()
+    )
+    assert "Reviewed" in tabs["reviewed"].text() and "1" in tabs["reviewed"].text()
+    tabs["unreviewed"].click()
+    assert review.queue.count() == 3
+    assert "Row 2" in text_of(review.record_title)
+    assert tabs["unreviewed"].isChecked()
+
+
+def test_a_saved_record_stays_selected_after_it_leaves_the_filter(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    review.status_tabs.buttons["unreviewed"].click()
+    assert review.queue.count() == 4
+
+    review.accept_button.click()  # saved, and now outside "Unreviewed"
+
+    assert "Row 1" in text_of(review.record_title)
+    assert review.queue.selected_row() == 1
+    assert review.queue.count() == 4  # the open record does not vanish from the queue
