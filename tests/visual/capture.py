@@ -12,6 +12,7 @@ high-contrast, or any other assistive-technology check.
 
 from __future__ import annotations
 
+import os
 import sys
 import tempfile
 from collections.abc import Callable
@@ -28,6 +29,7 @@ from desktop.fakes import (  # noqa: E402
     status,
 )
 from PySide6.QtCore import QCoreApplication, Qt  # noqa: E402
+from PySide6.QtGui import QPixmap  # noqa: E402
 from PySide6.QtWidgets import QApplication, QWidget  # noqa: E402
 
 from social_text_intelligence.application.insights_workflow import (  # noqa: E402
@@ -123,6 +125,16 @@ class Platform:
         return self.confirmed
 
 
+def save_scaled(picture: QPixmap, path: Path) -> None:
+    """Save ``picture``; ``STI_CAPTURE_MAX_WIDTH=1000`` shrinks wider ones."""
+
+    limit = int(os.environ.get("STI_CAPTURE_MAX_WIDTH", "0") or 0)
+    image = picture.toImage()
+    if limit and image.width() > limit:
+        image = image.scaledToWidth(limit, Qt.TransformationMode.SmoothTransformation)
+    image.save(str(path))
+
+
 def settle() -> None:
     for _ in range(10):
         QCoreApplication.processEvents()
@@ -177,7 +189,7 @@ class Run:
         settle()
         target = widget or self.window
         path = self.out / f"{name}.png"
-        target.grab().save(str(path))
+        save_scaled(target.grab(), path)
         print("saved", path.name)
 
     def full(self, name: str) -> None:

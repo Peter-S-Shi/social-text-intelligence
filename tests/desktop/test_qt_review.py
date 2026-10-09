@@ -659,3 +659,20 @@ def test_the_queue_keyboard_moves_a_cursor_and_enter_or_space_opens_a_line(
     assert "Row 2" in text_of(review.record_title)
     assert review.queue.open_row() == 2
     assert review.queue.horizontalScrollBar().maximum() == 0
+
+
+def test_a_declined_discard_restores_the_tabs_and_the_queue(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    pick(review, "uncertain", "sentiment")
+
+    shell.platform.confirmed = False
+    review.status_tabs.buttons["unreviewed"].click()
+
+    assert review.status_tabs.buttons["all"].isChecked()  # the tab went back
+    assert not review.status_tabs.buttons["unreviewed"].isChecked()
+    assert review.queue.count() == 4 and review.queue.open_row() == 1
+    assert review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
+    assert "unsaved changes" in shell.platform.confirmations[-1]

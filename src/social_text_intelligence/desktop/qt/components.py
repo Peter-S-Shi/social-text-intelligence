@@ -518,6 +518,12 @@ class ScorePanel(QWidget):
         self.emotion.setObjectName("emotion-scores")
         self.rule = label(role="muted")
         self.rule.setObjectName("emotion-rule")
+        # the threshold rule; a caution box when the fallback chose Neutral
+        self.rule_box = frame("quiet")
+        self.rule_box.setObjectName("emotion-rule-box")
+        rule_layout = QVBoxLayout(self.rule_box)
+        rule_layout.setContentsMargins(0, 0, 0, 0)
+        rule_layout.addWidget(self.rule)
         self.native_toggle = QToolButton()
         self.native_toggle.setText("Show model-native emotion scores")
         self.native_toggle.setCheckable(True)
@@ -531,7 +537,7 @@ class ScorePanel(QWidget):
         self.native.setVisible(False)
         self.native_toggle.toggled.connect(self.native.setVisible)
         add_all(layout, self.sentiment_heading, self.sentiment)
-        add_all(layout, self.emotion_heading, self.emotion, self.rule)
+        add_all(layout, self.emotion_heading, self.emotion, self.rule_box)
         layout.addWidget(self.native_toggle, 0, Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.native)
 
@@ -539,9 +545,11 @@ class ScorePanel(QWidget):
         self.sentiment.set_rows(score_rows(scores.sentiment))
         self.emotion.set_rows(score_rows(scores.emotion))
         self.rule.setText(scores.emotion_rule)
-        self.rule.setProperty("fallback", scores.fallback)
-        self.rule.style().unpolish(self.rule)
-        self.rule.style().polish(self.rule)
+        self.rule_box.setProperty("role", "caution" if scores.fallback else "quiet")
+        margin = 12 if scores.fallback else 0
+        self.rule_box.layout().setContentsMargins(margin, 8, margin, 8)  # type: ignore[union-attr]
+        self.rule_box.style().unpolish(self.rule_box)
+        self.rule_box.style().polish(self.rule_box)
         self.native.set_rows(score_rows(scores.native))
         self.native_toggle.setText(
             f"Show {len(scores.native)} model-native emotion scores"

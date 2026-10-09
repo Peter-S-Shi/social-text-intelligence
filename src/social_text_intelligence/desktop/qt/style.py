@@ -133,10 +133,6 @@ QLabel[role="subtitle"] {{ font-family: {MONO}; color: {MUTED}; font-size: {SIZE
 QLabel[role="cardhead"] {{ font-weight: 600; font-size: 10.5pt; }}
 QLabel[role="cardhead"][side="ai"] {{ color: {GRAPHITE}; }}
 QLabel[role="cardhead"][side="human"] {{ color: {ULTRAMARINE}; }}
-QLabel[fallback="true"] {{
-  background: {CAUTION_BG}; border: 1px solid {CAUTION_LINE}; border-radius: 6px;
-  padding: 8px 10px; color: {INK};
-}}
 QLabel[polarity="negative"] {{ color: {VERMILION}; }}
 QLabel[polarity="positive"] {{ color: {POSITIVE}; }}
 QLabel[polarity="neutral"] {{ color: {NEUTRAL}; }}
@@ -162,11 +158,13 @@ QFrame[role="ai"] {{
 QFrame[role="human"] {{
   background: {ULTRAMARINE_PALE}; border: 1px solid {ULTRAMARINE_LINE}; border-radius: {RADIUS_CARD}px;
 }}
+QFrame[role="quiet"] {{ background: transparent; border: none; }}
 QFrame[role="empty"] {{
   background: transparent; border: 1px dashed {LINE_STRONG}; border-radius: {RADIUS_CARD}px;
 }}
 QFrame[role="alert"] QLabel, QFrame[role="notice"] QLabel, QFrame[role="caution"] QLabel,
-QFrame[role="ai"] QLabel, QFrame[role="human"] QLabel, QFrame[role="empty"] QLabel {{
+QFrame[role="ai"] QLabel, QFrame[role="human"] QLabel, QFrame[role="empty"] QLabel,
+QFrame[role="quiet"] QLabel {{
   background: transparent;
 }}
 QFrame[role="rule"] {{ background: {LINE}; border: none; max-height: 1px; min-height: 1px; }}

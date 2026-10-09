@@ -128,6 +128,10 @@ def scene_direct(out: Path) -> None:
     page.analyze_button.click()
     run.clear_focus()
     run.shot("demo_direct")
+    page.editor.setPlainText("It is a table of numbers with a column for dates.")
+    page.analyze_button.click()
+    run.clear_focus()
+    run.shot("demo_direct-fallback")
 
 
 def scene_import(out: Path) -> None:
@@ -163,6 +167,13 @@ def scene_review(out: Path) -> None:
     settle()
     run.clear_focus()
     run.shot("demo_review")
+    current = run.window.projects.state.current
+    assert current is not None
+    # the French row, with every filter off: the language-warning state
+    run.window.review.open(current.summary.project_id, ReviewFilters(), row=8)
+    settle()
+    run.clear_focus()
+    run.shot("demo_review-language")
 
 
 def scene_agreement(out: Path) -> None:
