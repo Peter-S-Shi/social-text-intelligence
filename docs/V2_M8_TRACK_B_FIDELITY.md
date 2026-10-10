@@ -422,3 +422,7 @@ and not to be a symlink or junction; and no unknown entry. Any malformed layout 
 (exit 2, message on stderr) with the whole tree unchanged, well-typed siblings included.
 Regression tests in `tests/tools/test_launch_demo_safety.py` snapshot the tree byte for
 byte before and after each refusal.
+
+Outcome: implemented test-first at behavioural head `adf9a31` (fresh CI on Python 3.11,
+3.12 and 3.13 passed; local full regression 1151 passed, 4 opt-in skipped). Owner visual
+acceptance and the exploratory trial remain PENDING OWNER; M8 is IN PROGRESS.
