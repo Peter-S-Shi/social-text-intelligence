@@ -56,6 +56,7 @@ STALE_CURRENT_PHRASES = (
     "M8 is in progress",
     "M8 as a whole is not complete",
     "owner visual review and exploratory trial PENDING OWNER",
+    "Review, insights, and exports are not in the desktop yet.",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",

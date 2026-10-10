@@ -220,8 +220,10 @@ the text column when the file has no `text` column), analyse it with visible row
 progress and Cancel (a cancelled or failed run saves nothing), reopen it later, and
 delete it (removal from this application's data files). Analysis, including
 Analyze one text, needs the `sentiment` and `emotion` extras installed above.
-Review, insights, and exports are not in the desktop yet. The
-desktop shell uses Qt (LGPL-3.0); see [Third-party notices](THIRD_PARTY_NOTICES.md).
+The desktop also provides human Review and reviewed CSV export, filtered Results
+and normalized CSV export, detailed Agreement views, and Insights with context
+notes, representative cases, and CSV export. The desktop shell uses Qt (LGPL-3.0);
+see [Third-party notices](THIRD_PARTY_NOTICES.md).
 
 Run the dependency-free test suite:
 
