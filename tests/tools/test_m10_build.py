@@ -69,3 +69,11 @@ def test_build_refuses_source_not_identified_by_head(
         (tmp_path / "src" / "extra.py").write_text("# new synthetic input\n")
     with pytest.raises(ValueError, match="committed"):
         build.source_revision(tmp_path)
+
+
+def test_an_overlong_new_build_root_is_rejected_before_creation(tmp_path: Path) -> None:
+    build = load()
+    output = tmp_path / ("synthetic-output-" * 8)
+    with pytest.raises(ValueError, match="short"):
+        build.prepare_output(output)
+    assert not output.exists()

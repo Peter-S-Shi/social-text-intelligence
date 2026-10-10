@@ -20,6 +20,8 @@ def prepare_output(output: Path) -> Path:
         raise ValueError(
             "A new output directory is required; existing data is preserved."
         )
+    if len(str(output.resolve())) > 60:
+        raise ValueError("Use a short output directory (60 characters maximum).")
     output.mkdir(parents=True, exist_ok=False)
     return output.resolve()
 
@@ -114,8 +116,10 @@ def main() -> int:
         )
         print("Windows onedir build complete; distribution gates remain open.")
         return 0
+    except ValueError as error:
+        print(str(error))
+        return 2
     except (
-        ValueError,
         OSError,
         subprocess.CalledProcessError,
         importlib.metadata.PackageNotFoundError,
