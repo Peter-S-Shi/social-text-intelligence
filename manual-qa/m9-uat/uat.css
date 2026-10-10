@@ -1,0 +1,21 @@
+:root { font-family: system-ui, sans-serif; color-scheme: light dark; line-height: 1.5; }
+body { max-width: 74rem; margin: auto; padding: 1rem; }
+header, section, nav { margin-bottom: 1.5rem; }
+section { border: 1px solid currentColor; border-radius: .35rem; padding: 1rem; }
+.skip { position: absolute; left: -999rem; }
+.skip:focus { position: static; }
+.warning { border-left: .3rem solid #ad6a00; padding-left: .7rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: .7rem; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; }
+label { display: block; font-weight: 600; }
+label input, label select, label textarea { display: block; width: 100%; box-sizing: border-box; font: inherit; padding: .35rem; }
+button, select, input { font: inherit; }
+button { padding: .4rem .8rem; cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: .2rem solid currentColor; outline-offset: .2rem; }
+.step { border-top: 1px solid currentColor; padding-top: 1rem; margin-top: 1rem; }
+.step dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem .7rem; }
+.step dt { font-weight: 700; }
+.step dd { margin: 0; overflow-wrap: anywhere; }
+.step form { display: grid; gap: .7rem; }
+.error { font-weight: 700; }
+@media (max-width: 38rem) { body { padding: .5rem; } .step dl { display: block; } .step dd { margin-bottom: .5rem; } }

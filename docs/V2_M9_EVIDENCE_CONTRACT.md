@@ -141,7 +141,8 @@ unexposed sample; never call a retrospective choice preregistered.
 | M9.3 Windows UAT/accessibility | Actual owner/authorized operator sessions, evidence and defect/retest dispositions |
 | M9.4 Consolidated exit | Owner `PASS` / `CONDITIONAL` / `FAIL` from all three streams and remaining risks |
 
-M9.1–M9.4 have not started through this design delivery. The phases are bounded
+At the M9.0 design delivery, M9.1–M9.4 had not started. Current slice state is
+recorded in [Project Status](../PROJECT_STATUS.md). The phases are bounded
 work slices, not an instruction to parallelize large implementation tasks.
 
 ## Risk carry-forward (no automatic closure)

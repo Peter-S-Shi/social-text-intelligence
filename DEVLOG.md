@@ -1,5 +1,18 @@
 # Development Log
 
+## M9.1 — UAT Infrastructure
+
+Delivered a versioned project-authored `SYNTH_UAT` CSV/long-text recipe and
+24 reserved scenario families with 49 stable atomic steps. A separate offline
+HTML companion records authorized observations with strict versioned JSON,
+derived progress, local draft recovery, safe import/export and linked retests.
+Core, fixture and real-browser checks validate the recorder only: all actual
+Windows UAT/accessibility steps remain NOT RUN. M9.2 source authorization,
+independent second-annotator availability and execution preregistration remain
+future gates. M7/M8 open risk dispositions are unchanged; M9.3/M9.4 and M10
+remain unstarted. No STI product behavior, model evaluation or release claim
+changes here.
+
 ## M9.0 — Owner Evidence Design Gate PASS (2026-10-10)
 
 After PR #53 independent review and its targeted README correction, the owner
@@ -10,7 +23,8 @@ double-blind reference targets; three channels, task-specific denominators,
 This approves the design, not any named source's rights, the availability of a
 second annotator, any executed evaluation/UAT or overall M9 acceptance. The
 original design-delivery entry below documents its historical pre-approval state.
-M9.1 is next but not started. M7/M8 risk dispositions remain unchanged.
+At the M9.0 Gate decision, M9.1 had not started. M7/M8 risk dispositions
+remain unchanged.
 This governance-only decision record uses `[skip ci]`.
 
 ## M9.0 — Evidence Design Gate: design delivery (historical pre-approval record)
@@ -24,7 +38,8 @@ later source-bound execution preregistration and reports uncertainty/inference
 coverage independently for sentiment, dominant emotion and non-neutral sets.
 M7's CONDITIONAL exit and M8's unresolved/owner-decision/unverified observations
 remain intact. No data acquisition, fixtures, labels, model runs or product changes
-were made. M9.1–M9.4 have not started. Engineering review and document merge do
+were made. At that historical design-delivery point, M9.1–M9.4 had not started.
+Engineering review and document merge do
 not constitute owner Gate approval or overall M9 completion. Validation was
 limited to local lifecycle/link checks and targeted assertion lint; the design
 closeout uses `[skip ci]`. See the [contract](docs/V2_M9_EVIDENCE_CONTRACT.md).
