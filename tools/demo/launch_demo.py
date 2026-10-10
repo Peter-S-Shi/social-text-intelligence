@@ -50,6 +50,33 @@ def _is_link(path: Path) -> bool:
     )
 
 
+def _preflight(root: Path, entries: dict[str, Path]) -> None:
+    """Refuse a malformed tool layout; reads only, never changes anything."""
+
+    sentinel = entries[SENTINEL]
+    if _is_link(sentinel) or not sentinel.is_file():
+        raise _refuse(root, "its ownership marker is not a plain file")
+    try:
+        text = sentinel.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        text = None
+    if text != SENTINEL_TEXT:
+        raise _refuse(root, "its ownership marker was not written by this tool")
+    known = {*TOOL_CHILDREN, SEEDED_MARKER, SENTINEL}
+    unknown = sorted(set(entries) - known)
+    if unknown:
+        raise _refuse(root, f"it holds files this tool did not create ({unknown[0]})")
+    for name, path in entries.items():
+        if name == SENTINEL:
+            continue
+        if _is_link(path):
+            raise _refuse(root, f"{name} is a link to somewhere else")
+        if name in TOOL_CHILDREN and not path.is_dir():
+            raise _refuse(root, f"{name} is not a folder")
+        if name == SEEDED_MARKER and not path.is_file():
+            raise _refuse(root, f"{name} is not a plain file")
+
+
 def prepare_workspace(
     root: Path, *, real_app_data: Path | None, repo: Path, reset: bool = False
 ) -> bool:
@@ -85,12 +112,7 @@ def prepare_workspace(
         return True
     if SENTINEL not in entries:
         raise _refuse(root, "it is not empty and was not created by this tool")
-    known = {*TOOL_CHILDREN, SEEDED_MARKER, SENTINEL}
-    unknown = sorted(set(entries) - known)
-    if unknown:
-        raise _refuse(root, f"it holds files this tool did not create ({unknown[0]})")
-    if any(_is_link(entries[name]) for name in TOOL_CHILDREN if name in entries):
-        raise _refuse(root, "one of its folders is a link to somewhere else")
+    _preflight(root, entries)  # read-only: validate everything before any deletion
     if not reset and SEEDED_MARKER in entries:
         return False
     for name in TOOL_CHILDREN:  # a reset, or an interrupted seed: clean what we made

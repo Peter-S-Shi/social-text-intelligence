@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import os
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
 
@@ -250,3 +251,116 @@ def test_main_refuses_the_real_folder(
 
     assert status == 2
     assert "real application-data folder" in capsys.readouterr().err
+
+
+def snapshot(root: Path) -> dict[str, bytes | None]:
+    """Every entry under root (links not followed) with file bytes; None for dirs."""
+
+    state: dict[str, bytes | None] = {}
+    for path in sorted(root.rglob("*")):
+        key = path.relative_to(root).as_posix()
+        if path.is_symlink():
+            state[key] = b"link:" + os.readlink(path).encode()
+        elif path.is_dir():
+            state[key] = None
+        else:
+            state[key] = path.read_bytes()
+    return state
+
+
+def _models_as_file(demo: ModuleType, root: Path) -> None:
+    (root / "models").rmdir()
+    (root / "models").write_text("not a folder", encoding="utf-8")
+
+
+def _locks_as_file(demo: ModuleType, root: Path) -> None:
+    (root / "locks").rmdir()
+    (root / "locks").write_text("not a folder", encoding="utf-8")
+
+
+def _marker_as_dir(demo: ModuleType, root: Path) -> None:
+    (root / demo.SEEDED_MARKER).unlink()
+    (root / demo.SEEDED_MARKER).mkdir()
+
+
+def _sentinel_as_dir(demo: ModuleType, root: Path) -> None:
+    (root / demo.SENTINEL).unlink()
+    (root / demo.SENTINEL).mkdir()
+
+
+def _sentinel_wrong_text(demo: ModuleType, root: Path) -> None:
+    (root / demo.SENTINEL).write_text("something else\n", encoding="utf-8")
+
+
+def _sentinel_empty(demo: ModuleType, root: Path) -> None:
+    (root / demo.SENTINEL).write_text("", encoding="utf-8")
+
+
+MALFORMED: list[Callable[[ModuleType, Path], None]] = [
+    _models_as_file,
+    _locks_as_file,
+    _marker_as_dir,
+    _sentinel_as_dir,
+    _sentinel_wrong_text,
+    _sentinel_empty,
+]
+
+
+@pytest.mark.parametrize("damage", MALFORMED, ids=lambda f: f.__name__)
+@pytest.mark.parametrize("reset", [False, True])
+def test_a_malformed_layout_is_refused_before_anything_is_deleted(
+    demo: ModuleType,
+    real: Path,
+    tmp_path: Path,
+    damage: Callable[[ModuleType, Path], None],
+    reset: bool,
+) -> None:
+    root = tmp_path / "demo"
+    tool_owned(demo, root)
+    (root / "locks").mkdir()
+    damage(demo, root)
+    before = snapshot(root)
+
+    with pytest.raises(demo.UnsafeRoot):
+        prepare(demo, root, real, reset=reset)
+
+    assert snapshot(root) == before  # projects/ and every sibling untouched
+
+
+def test_a_linked_child_with_a_well_typed_sibling_deletes_nothing(
+    demo: ModuleType, real: Path, tmp_path: Path
+) -> None:
+    root = tmp_path / "demo"
+    tool_owned(demo, root)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep.txt").write_text("keep", encoding="utf-8")
+    try:
+        os.symlink(outside, root / "locks", target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available here")
+    before = snapshot(root)
+
+    with pytest.raises(demo.UnsafeRoot):
+        prepare(demo, root, real, reset=True)
+
+    assert snapshot(root) == before
+    assert (outside / "keep.txt").read_text(encoding="utf-8") == "keep"
+
+
+def test_main_reports_a_malformed_layout_and_deletes_nothing(
+    demo: ModuleType,
+    real: Path,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = tmp_path / "demo"
+    tool_owned(demo, root)
+    _models_as_file(demo, root)
+    before = snapshot(root)
+
+    status = demo.main(["--root", str(root), "--reset"], real_app_data=real)
+
+    assert status == 2
+    assert "Refusing" in capsys.readouterr().err
+    assert snapshot(root) == before

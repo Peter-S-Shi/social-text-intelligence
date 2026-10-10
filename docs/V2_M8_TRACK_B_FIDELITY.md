@@ -408,3 +408,17 @@ fault at interpreter exit ("shared QObject was deleted directly") after every te
 passed. It is **not conclusively root-caused**. A test that left a parentless widget
 alive was fixed as the likeliest cause and the next run was green. It will be
 investigated only if the same warning or crash recurs.
+
+### 12.1 Preflight before any deletion
+
+A second review found that a sentinel-marked workspace with a wrongly typed known child
+(for example `projects/` a directory but `models` a regular file) could lose `projects/`
+before the launcher failed on `models`, and that the sentinel's own type and content were
+not checked. Seam, again `prepare_workspace` (no Qt): a complete read-only preflight now
+runs before the first deletion. It requires the sentinel to be a regular file, not a link
+or folder, holding exactly the text the tool writes; every known child that exists to
+have its expected type (`projects`, `models`, `locks` folders; the marker a regular file)
+and not to be a symlink or junction; and no unknown entry. Any malformed layout is refused
+(exit 2, message on stderr) with the whole tree unchanged, well-typed siblings included.
+Regression tests in `tests/tools/test_launch_demo_safety.py` snapshot the tree byte for
+byte before and after each refusal.
