@@ -32,10 +32,12 @@ def test_the_scenario_csv_imports_with_the_counts_the_walkthrough_states(
     assert {"record_id", "source_label", "topic", "timestamp"} <= set(details.headers)
 
 
-def test_the_walkthrough_states_the_counts_and_the_pending_owner_status() -> None:
+def test_the_walkthrough_states_the_counts_and_owner_overall_decision() -> None:
     walkthrough = (SCENARIO / "WALKTHROUGH.md").read_text(encoding="utf-8")
     log = (SCENARIO / "FRICTION_LOG.md").read_text(encoding="utf-8")
 
-    assert "PENDING OWNER" in walkthrough and "PENDING OWNER" in log
+    assert "owner completed and approved the exploratory trial overall" in walkthrough
+    assert "No item-level observations or friction entries were supplied" in log
+    assert "empty log does not mean zero friction" in log
     assert "29 rows, 26 ready, 3 rejected" in walkthrough
     assert "Analyze 26 rows" in walkthrough

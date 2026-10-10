@@ -90,7 +90,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Freeze status | **PASS" in status
     assert (
         "| Current lifecycle phase | **V2 Evidence & Formal Acceptance — "
-        "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 next** after "
+        "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 UAT "
+        "Infrastructure complete on `main`; M9.2 next** after "
         "**M8 complete, owner PASS; M7 CONDITIONAL exit retained** — "
         in status
     )
@@ -130,7 +131,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         in status
     )
     assert (
-        "| Next required action | Begin **M9.1 — UAT Infrastructure**"
+        "| Next required action | Scope **M9.2 — Evidence acquisition and "
+        "evaluation execution**"
         in status
     )
     assert (
@@ -180,8 +182,9 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
     assert (
         "**Current phase: M9 — Evidence & Formal Acceptance, M9.0 "
-        "Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 is next "
-        "but not started. M8 is complete with owner PASS, M7 retains its "
+        "Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 UAT "
+        "Infrastructure complete on `main`; M9.2 next. M8 is complete "
+        "with owner PASS, M7 retains its "
         "CONDITIONAL exit, and M9.2–M9.4/M10 have not started.**"
         in roadmap
     )
@@ -195,9 +198,10 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert (
         "> **Current lifecycle phase: V2 Evidence & Formal Acceptance — "
-        "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 next**" in readme
+        "M9.0 owner Gate PASS; M9.1 UAT Infrastructure complete on "
+        "`main`; M9.2 next**" in readme
     )
-    assert "M9.1–M9.4 and M10 have not started" in readme
+    assert "M9.2–M9.4 and M10 have not started" in readme
     assert "formally accepted CONDITIONAL exit" in readme
 
     track_a = (ROOT / "docs" / "V2_M8_TRACK_A_LEDGER.md").read_text(encoding="utf-8")
@@ -225,7 +229,14 @@ def test_m9_owner_gate_pass_does_not_imply_evaluation_or_uat() -> None:
         "No acquisition, labels, model runs, formal UAT or V2 release "
         "readiness is implied" in status
     )
-    assert "M9.1 is next and not started; M9.2–M9.4 and M10 have not started" in status
+    assert (
+        "M9.1 infrastructure is complete; M9.2–M9.4 and M10 have not started"
+        in status
+    )
+    assert "all initially NOT RUN" in status
+    assert "formal UAT steps remain NOT RUN" in status
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "M9.1–M9.4 and M10 have not started" not in readme
     for name in (
         "V2_M9_EVIDENCE_CONTRACT.md",
         "V2_M9_EVALUATION_PROTOCOL.md",

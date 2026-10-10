@@ -1,0 +1,13 @@
+record_id,message,source_type,source_label,language,topic,community,timestamp
+SYN-001,The update opened quickly and the settings are easy to find.,file,app_store,en,navigation,desktop,2026-01-10T10:00:00Z
+SYN-002,The search button did nothing after I selected a filter.,file,support,en,search,desktop,2026-01-11T10:00:00Z
+SYN-003,It works but I cannot tell whether my changes were saved.,file,forum,en,saving,desktop,2026-01-12T10:00:00Z
+SYN-004,The export finished and the file opened correctly.,file,app_store,en,export,mobile,2026-01-13T10:00:00Z
+SYN-005,The dialog looks clear although the shortcut still confuses me.,file,support,en,keyboard,desktop,2026-01-14T10:00:00Z
+SYN-006,The app opened today.,file,forum,en,startup,mobile,2026-01-15T10:00:00Z
+SYN-007,Je ne trouve pas le bouton pour enregistrer mes modifications.,file,forum,fr,saving,desktop,2026-01-16T10:00:00Z
+SYN-008,The table has a useful filter and the note is saved.,file,app_store,en,results,desktop,2026-01-17T10:00:00Z
+SYN-009,The first card is readable after changing the window size.,file,support,en,layout,desktop,2026-01-18T10:00:00Z
+SYN-009,The second card uses the same synthetic identifier.,file,support,en,layout,desktop,2026-01-19T10:00:00Z
+SYN-010,,file,forum,en,empty,desktop,2026-01-20T10:00:00Z
+SYN-011,The export name is a harmless synthetic marker.,file,=SYNTHETIC_FORMULA_TEST,en,export,desktop,2026-01-21T10:00:00Z

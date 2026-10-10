@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STI M9 UAT evidence companion</title>
+  <link rel="stylesheet" href="uat.css">
+  <script defer src="scenario-pack.js"></script>
+  <script defer src="uat-core.js"></script>
+  <script defer src="uat-app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to scenario</a>
+  <header>
+    <h1>STI M9 UAT evidence companion</h1>
+    <p>Offline evidence recorder for authorized Windows testing. All steps begin NOT RUN. Companion tests do not establish desktop UAT or release readiness.</p>
+    <p class="warning">Drafts use this browser's local storage and may be cleared. Export JSON regularly. Keep private exports local until privacy review.</p>
+  </header>
+  <main id="main">
+    <section aria-labelledby="session-heading">
+      <h2 id="session-heading">Session provenance</h2>
+      <form id="metadata-form" novalidate>
+        <div id="metadata-fields" class="grid"></div>
+        <button type="submit">Save session metadata</button>
+      </form>
+      <p id="metadata-message" role="status" aria-live="polite"></p>
+    </section>
+    <section aria-labelledby="transfer-heading">
+      <h2 id="transfer-heading">Local evidence files</h2>
+      <div class="actions">
+        <button type="button" id="export-json">Export session JSON</button>
+        <button type="button" id="export-summary">Export Markdown summary</button>
+        <button type="button" id="new-session">Start new session</button>
+        <label for="import-file">Restore JSON file</label>
+        <input type="file" id="import-file" accept=".json,application/json">
+      </div>
+      <p id="transfer-message" role="status" aria-live="polite"></p>
+    </section>
+    <section aria-labelledby="progress-heading">
+      <h2 id="progress-heading">Recorded steps</h2>
+      <p id="progress" aria-live="polite"></p>
+      <p>Recorded progress is not an acceptance decision. FAIL and NOT RUN remain visible.</p>
+    </section>
+    <nav aria-label="Scenario pages" class="actions">
+      <button type="button" id="previous">Previous</button>
+      <label for="scenario-select">Scenario</label>
+      <select id="scenario-select"></select>
+      <button type="button" id="next">Next</button>
+    </nav>
+    <section id="scenario" aria-labelledby="scenario-heading">
+      <h2 id="scenario-heading" tabindex="-1"></h2>
+      <p id="scenario-position"></p>
+      <div id="steps"></div>
+    </section>
+    <section aria-labelledby="retest-heading">
+      <h2 id="retest-heading">Linked defect retest</h2>
+      <p>Record a retest only after an observed FAIL. The original failure stays visible.</p>
+      <form id="retest-form" novalidate>
+        <div class="grid">
+          <label>Failing step <select name="step_id" required id="retest-step"></select></label>
+          <p>Defect ID is linked from the selected current or historical FAIL.</p>
+          <label>Classification <select name="classification"><option>PRODUCT</option><option>FIXTURE</option><option>ENVIRONMENT</option><option>PROTOCOL</option></select></label>
+          <label>Blocking or non-blocking rationale <input name="blocking_rationale" required maxlength="500" autocomplete="off"></label>
+          <label>Relevant automated check (if any) <input name="automated_check" maxlength="500" autocomplete="off"></label>
+          <label>Fix full SHA (if any) <input name="fix_sha" maxlength="40" autocomplete="off"></label>
+          <label>Retest result <select name="outcome"><option>PASS</option><option>FAIL</option></select></label>
+          <label>Evidence reference <input name="evidence_ref" required maxlength="53" placeholder="EVID-001" autocomplete="off"></label>
+        </div>
+        <label>Retest note <textarea name="note" maxlength="2000" rows="3"></textarea></label>
+        <button type="submit">Add linked retest</button>
+      </form>
+      <p id="retest-message" role="status" aria-live="polite"></p>
+      <ul id="retest-list"></ul>
+    </section>
+  </main>
+</body>
+</html>

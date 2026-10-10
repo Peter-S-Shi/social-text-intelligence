@@ -3,7 +3,8 @@
 ## Evidence boundary
 
 This is the M9.0 coverage and recorder design, not an executed UAT session.
-M9.1 will build fixtures/companion; M9.3 will observe the real Windows PySide6
+M9.1 supplies the [fixtures/companion](../manual-qa/m9-uat/README.md);
+M9.3 will observe the real Windows PySide6
 application. The [evidence contract](V2_M9_EVIDENCE_CONTRACT.md) governs authority
 and privacy, and the [exit gate](V2_M9_EXIT_GATE.md) governs owner decisions.
 M8 exploratory PASS contains no item-level M9 results. Source/headless tests,

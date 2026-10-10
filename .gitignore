@@ -64,6 +64,7 @@ logs/
 !manual-qa/sample-data/*.csv
 !manual-qa/owner-trial/
 !manual-qa/owner-trial/*.csv
+!manual-qa/m9-uat/fixtures/*.csv
 
 # Human QA results can contain private notes, screenshots, and machine paths
 manual-qa/results/
