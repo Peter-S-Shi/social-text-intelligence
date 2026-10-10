@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: M10 engineering priority — M10-A Production Packaging Foundation complete on `main`; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
+**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -385,3 +385,14 @@ them; the authoritative record is section 11 of the
 The V1 `0.10.0` boundary is unchanged: persistence and the other items above
 are not part of the shipped V1 runtime, and none of this work may be mixed into
 V1 defect or hardening work.
+
+### M10-B — Compliance engineering established; distribution BLOCKED
+
+The actual Windows onedir audit, license/source packet, prominent Qt notice and
+bounded DLL replacement verification are established on `main`.
+[The compliance record](docs/V2_M10_B_DISTRIBUTION_COMPLIANCE.md) retains exact
+source, software-renderer, runtime redistribution and embedded dependency/model
+obligations as blockers. The next required action is to resolve those blockers;
+no compliance certification, installer, distribution or release readiness is
+claimed. M9.2–M9.4 remain deferred and Q5 is not waived. The owner optional
+30-minute packaged-app smoke remains planned NOT RUN.

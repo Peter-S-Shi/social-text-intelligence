@@ -89,7 +89,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
     assert "| Current lifecycle phase | **V2 M10 engineering priority" in status
-    assert "M10-A Production Packaging Foundation complete on `main`" in status
+    assert "M10-A packaging foundation and M10-B compliance engineering" in status
+    assert "distribution gate BLOCKED" in status
     assert "M9.0 historical approved design and M9.1 COMPLETE retained" in status
     assert "M9.2–M9.4 deferred by owner" in status
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
@@ -127,7 +128,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "**COMPLETE on `main` — owner overall PASS (2026-10-10).**"
         in status
     )
-    assert "| Next required action | Scope the next M10" in status
+    assert "| Next required action | Resolve the M10-B" in status
     assert "planned NOT RUN" in status
     assert (
         "| M5.5 — Native Insights, Context Notes, and Representative Cases | "

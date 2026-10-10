@@ -116,3 +116,25 @@ def test_source_delivery_rejects_parent_paths(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="filename"):
         compliance.stage_sources(source, output, manifest)
     assert not output.exists()
+
+
+def test_packet_verification_rejects_an_uninventoried_dll(tmp_path: Path) -> None:
+    compliance = load()
+    notice = tmp_path / "notice.txt"
+    notice.write_text("synthetic notice")
+    inventory = {
+        "materials": [{"path": notice.name, "sha256": compliance.digest(notice)}]
+    }
+    assert compliance.verify_packet(tmp_path, inventory)["materials_valid"] is True
+    (tmp_path / "unreviewed.dll").write_bytes(b"synthetic unreviewed binary")
+    assert compliance.verify_packet(tmp_path, inventory)["materials_valid"] is False
+
+
+def test_packet_verification_rejects_duplicate_receipts(tmp_path: Path) -> None:
+    compliance = load()
+    notice = tmp_path / "notice.txt"
+    notice.write_text("synthetic notice")
+    entry = {"path": notice.name, "sha256": compliance.digest(notice)}
+    assert compliance.verify_packet(tmp_path, {"materials": [entry, entry]})[
+        "materials_valid"
+    ] is False

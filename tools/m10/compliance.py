@@ -112,6 +112,17 @@ def verify_packet(root: Path, inventory: dict[str, object]) -> dict[str, object]
     if not isinstance(materials, list) or not materials:
         valid = False
     else:
+        expected_paths = {
+            str(entry.get("path", "")) for entry in materials if isinstance(entry, dict)
+        }
+        actual_paths = {
+            path.relative_to(root).as_posix()
+            for path in root.rglob("*")
+            if path.is_file()
+            and path.relative_to(root).as_posix() != "legal/inventory.json"
+        }
+        if actual_paths != expected_paths or len(expected_paths) != len(materials):
+            valid = False
         for entry in materials:
             if not isinstance(entry, dict):
                 valid = False

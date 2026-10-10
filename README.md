@@ -9,7 +9,7 @@ contains Moderation Training and Support Triage workflows; they are retired
 from the V2 product surface but remain documented here as the unchanged V1
 baseline.
 
-> **Current lifecycle phase: V2 M10 engineering priority — M10-A Production Packaging Foundation complete on `main`; M9.2–M9.4 deferred by owner**
+> **Current lifecycle phase: V2 M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; distribution gate BLOCKED; M9.2–M9.4 deferred by owner**
 > after V2 Native UI Integration, M6 complete (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
@@ -33,7 +33,7 @@ baseline.
 > M9.1 supplies a versioned [synthetic scenario pack and offline recorder](manual-qa/m9-uat/README.md),
 > with all formal UAT steps initially NOT RUN. M9.2–M9.4 are deferred by owner; M10-A packaging foundation is complete, and later M10 distribution gates remain open. V2 is not release-ready: M9
 > formal acceptance, remaining risk decisions, the LGPL gate and later packaging/distribution gates remain.
-> Owner direction now prioritizes [M10-A packaging engineering](docs/V2_M10_A_PACKAGING_FOUNDATION.md), preserving M9.0 as historical approved design and M9.1 as COMPLETE. Deferral does not waive Q5 evidence for model capability claims. The optional 30-minute owner packaged-app smoke is planned NOT RUN; no installer, binary distribution or LGPL compliance is claimed.
+> Owner direction prioritizes M10 engineering; [M10-B compliance materials and evidence](docs/V2_M10_B_DISTRIBUTION_COMPLIANCE.md) are established, with exact-source/native obligations still blocking distribution, preserving M9.0 as historical approved design and M9.1 as COMPLETE. Deferral does not waive Q5 evidence for model capability claims. The optional 30-minute owner packaged-app smoke is planned NOT RUN; no installer, binary distribution or LGPL compliance is claimed.
 > See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.

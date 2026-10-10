@@ -19,8 +19,8 @@ accessibility acceptance, model evaluation or V2 release readiness.
 The audit reads both frozen PYZ tables and actual onedir files rather than
 equating application imports with distributed contents. The previous M10-A
 artifact establishes the starting footprint; every new build rechecks it.
-`distribution/component-register.json` records the 36 observed Python package
-owners plus bootloader (36 entries total, because one is PyInstaller), exact
+`distribution/component-register.json` records 35 observed Python package
+owners and one PyInstaller bootloader component (36 entries total), exact
 versions, selected license expressions and public upstream evidence. The project
 itself is identified by source SHA and repository version, not stale editable
 installation metadata. The `py` shim is owned by pytest 8.4.2 even though the
