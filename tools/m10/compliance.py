@@ -8,7 +8,6 @@ import importlib.metadata
 import json
 import re
 import shutil
-import subprocess
 import sys
 import tarfile
 from collections.abc import Sequence
@@ -214,7 +213,9 @@ def native_owner(relative: str) -> str:
     return "UNRESOLVED native ownership"
 
 
-def assemble(bundle: Path, source_dir: Path, project: Path) -> dict[str, object]:
+def assemble(
+    bundle: Path, source_dir: Path, project: Path, application_revision: str
+) -> dict[str, object]:
     """Inventory actual frozen modules, binaries, installed notices and sources."""
     from PyInstaller.archive.readers import CArchiveReader
 
@@ -310,9 +311,7 @@ def assemble(bundle: Path, source_dir: Path, project: Path) -> dict[str, object]
         "blockers": blockers,
         "python_version": sys.version.split()[0],
         "qt_version": definition["version"],
-        "application_revision": subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=project, text=True
-        ).strip(),
+        "application_revision": application_revision,
         "modules": sorted(modules),
         "native_components": native,
         "components": components,
@@ -331,14 +330,23 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", required=True, type=Path)
     parser.add_argument("--source-dir", type=Path)
+    parser.add_argument("--application-sha")
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
     try:
         if args.verify:
             inventory = json.loads((args.bundle / "legal/inventory.json").read_text())
         elif args.source_dir:
+            if not args.application_sha or not re.fullmatch(
+                r"[0-9a-f]{40}", args.application_sha
+            ):
+                print("Application revision must be a 40-character Git SHA.")
+                return 2
             inventory = assemble(
-                args.bundle, args.source_dir, Path(__file__).parents[2]
+                args.bundle,
+                args.source_dir,
+                Path(__file__).parents[2],
+                args.application_sha,
             )
         else:
             raise ValueError("A verified local source directory is required.")

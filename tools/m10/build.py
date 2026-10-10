@@ -137,6 +137,8 @@ def main() -> int:
                 str(bundle),
                 "--source-dir",
                 str(args.source_dir),
+                "--application-sha",
+                sha,
             ],
             cwd=ROOT,
             check=True,

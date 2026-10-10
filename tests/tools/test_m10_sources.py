@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import io
+import subprocess
 import sys
 import tarfile
 from pathlib import Path
@@ -135,6 +136,32 @@ def test_packet_verification_rejects_duplicate_receipts(tmp_path: Path) -> None:
     notice = tmp_path / "notice.txt"
     notice.write_text("synthetic notice")
     entry = {"path": notice.name, "sha256": compliance.digest(notice)}
-    assert compliance.verify_packet(tmp_path, {"materials": [entry, entry]})[
-        "materials_valid"
-    ] is False
+    assert (
+        compliance.verify_packet(tmp_path, {"materials": [entry, entry]})[
+            "materials_valid"
+        ]
+        is False
+    )
+
+
+def test_packet_cli_rejects_invalid_revision_before_writing(tmp_path: Path) -> None:
+    script = Path(__file__).parents[2] / "tools/m10/compliance.py"
+    output = tmp_path / "untouched"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--bundle",
+            str(output),
+            "--source-dir",
+            str(tmp_path),
+            "--application-sha",
+            "not-a-sha",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "Application revision" in result.stdout
+    assert not output.exists()
