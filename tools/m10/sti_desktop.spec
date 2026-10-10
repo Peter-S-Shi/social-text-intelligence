@@ -28,7 +28,8 @@ common = dict(
 )
 desktop = Analysis([str(config / "entry_desktop.py")], **common)
 check = Analysis([str(config / "entry_check.py")], **common)
-MERGE((desktop, "entry_desktop", "sti-desktop"), (check, "entry_check", "sti-check"))
+# COLLECT deduplicates the shared onedir files. Keep each Analysis intact:
+# MERGE creates cross-executable extraction dependencies, unsuitable here.
 exe_d = EXE(PYZ(desktop.pure), desktop.scripts, [], exclude_binaries=True,
             name="sti-desktop", console=False, upx=False)
 exe_c = EXE(PYZ(check.pure), check.scripts, [], exclude_binaries=True,
