@@ -9,7 +9,7 @@ contains Moderation Training and Support Triage workflows; they are retired
 from the V2 product surface but remain documented here as the unchanged V1
 baseline.
 
-> **Current lifecycle phase: V2 Product Hardening & UI Fidelity — M8 complete (owner PASS)**
+> **Current lifecycle phase: V2 Evidence & Formal Acceptance — M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 next**
 > after V2 Native UI Integration, M6 complete (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
@@ -27,8 +27,10 @@ baseline.
 > risk gate) is complete with a formally accepted CONDITIONAL exit and its open
 > risks retain their item-level dispositions in M8 and M10. M8 Track A and Track B
 > are merged; the owner approved the overall UI fidelity outcome and completed the
-> early exploratory trial with an overall PASS. M9 — Evidence & Formal Acceptance
-> is next and its implementation has not started. V2 is not release-ready: M9
+> early exploratory trial with an overall PASS. M9.0 establishes the
+> [evidence design](docs/V2_M9_EVIDENCE_CONTRACT.md), approved by the owner
+> on 2026-10-10; real-source authorization and evaluation remain future gates.
+> M9.1–M9.4 and M10 have not started. V2 is not release-ready: M9
 > formal acceptance, remaining risk decisions, the LGPL gate and packaging remain.
 > See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
@@ -219,8 +221,10 @@ the text column when the file has no `text` column), analyse it with visible row
 progress and Cancel (a cancelled or failed run saves nothing), reopen it later, and
 delete it (removal from this application's data files). Analysis, including
 Analyze one text, needs the `sentiment` and `emotion` extras installed above.
-Review, insights, and exports are not in the desktop yet. The
-desktop shell uses Qt (LGPL-3.0); see [Third-party notices](THIRD_PARTY_NOTICES.md).
+The desktop also provides human Review and reviewed CSV export, filtered Results
+and normalized CSV export, detailed Agreement views, and Insights with context
+notes, representative cases, and CSV export. The desktop shell uses Qt (LGPL-3.0);
+see [Third-party notices](THIRD_PARTY_NOTICES.md).
 
 Run the dependency-free test suite:
 

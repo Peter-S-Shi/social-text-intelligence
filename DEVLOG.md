@@ -1,5 +1,34 @@
 # Development Log
 
+## M9.0 — Owner Evidence Design Gate PASS (2026-10-10)
+
+After PR #53 independent review and its targeted README correction, the owner
+explicitly approved the substantive M9.0 design on reviewed HEAD `32d8d37`:
+180 real-primary, 45 separate synthetic challenge, and at least 60 independent
+double-blind reference targets; three channels, task-specific denominators,
+2,000 fixed-seed stratified bootstrap resamples and 95% percentile intervals.
+This approves the design, not any named source's rights, the availability of a
+second annotator, any executed evaluation/UAT or overall M9 acceptance. The
+original design-delivery entry below documents its historical pre-approval state.
+M9.1 is next but not started. M7/M8 risk dispositions remain unchanged.
+This governance-only decision record uses `[skip ci]`.
+
+## M9.0 — Evidence Design Gate: design delivery (historical pre-approval record)
+
+Encoded the owner-approved English software/app domain and Strategy A into four
+coherent evidence, evaluation, Windows UAT and exit-gate design records, using
+`45874bb` as the planning baseline. The proposed 180 primary records, 45 separate
+challenge cases and at least 60 dual-blind labels await owner M9.0 Gate approval;
+no named source is authorized. The design separates owner design freeze from the
+later source-bound execution preregistration and reports uncertainty/inference
+coverage independently for sentiment, dominant emotion and non-neutral sets.
+M7's CONDITIONAL exit and M8's unresolved/owner-decision/unverified observations
+remain intact. No data acquisition, fixtures, labels, model runs or product changes
+were made. M9.1–M9.4 have not started. Engineering review and document merge do
+not constitute owner Gate approval or overall M9 completion. Validation was
+limited to local lifecycle/link checks and targeted assertion lint; the design
+closeout uses `[skip ci]`. See the [contract](docs/V2_M9_EVIDENCE_CONTRACT.md).
+
 ## V2 Product Hardening & UI Fidelity — M8 owner acceptance PASS
 
 On 2026-10-10, the repository owner explicitly confirmed completion and approval
@@ -8,8 +37,9 @@ exploratory product trial. The overall M8 decision is **PASS**. No per-step resu
 or filled friction log were provided, so none are inferred from this decision.
 Track A's measured but unresolved risks and owner decisions retain their individual
 dispositions. The exploratory trial does not replace M9's formal acceptance.
-M9 — Evidence & Formal Acceptance is next, to be developed by Codex; its
-implementation has not started. V2 is not release-ready.
+At the M8 acceptance exit, M9 — Evidence & Formal Acceptance was next for
+Codex and had not started. V2 remained not release-ready; live state is recorded
+in Project Status.
 
 ## V2 Product Hardening & UI Fidelity — M8 Track B Native UI fidelity alignment — implementation complete
 

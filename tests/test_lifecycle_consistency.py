@@ -56,6 +56,7 @@ STALE_CURRENT_PHRASES = (
     "M8 is in progress",
     "M8 as a whole is not complete",
     "owner visual review and exploratory trial PENDING OWNER",
+    "Review, insights, and exports are not in the desktop yet.",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -88,9 +89,9 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
     assert (
-        "| Current lifecycle phase | **V2 Product Hardening & UI Fidelity "
-        "(M8 complete, owner PASS)** after **V2 Pre-Release Feasibility "
-        "(M7 complete, CONDITIONAL exit accepted)** — "
+        "| Current lifecycle phase | **V2 Evidence & Formal Acceptance — "
+        "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 next** after "
+        "**M8 complete, owner PASS; M7 CONDITIONAL exit retained** — "
         in status
     )
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
@@ -129,8 +130,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         in status
     )
     assert (
-        "| Next required action | Codex will develop **M9 — Evidence & "
-        "Formal Acceptance**; its implementation has not started."
+        "| Next required action | Begin **M9.1 — UAT Infrastructure**"
         in status
     )
     assert (
@@ -179,10 +179,10 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
     assert (
-        "**Current phase: M8 — Product Hardening & UI Fidelity is complete "
-        "on `main` with the owner's overall PASS; M7 retains its CONDITIONAL "
-        "exit, and M9 — Evidence & Formal Acceptance is next but has not "
-        "started.**"
+        "**Current phase: M9 — Evidence & Formal Acceptance, M9.0 "
+        "Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 is next "
+        "but not started. M8 is complete with owner PASS, M7 retains its "
+        "CONDITIONAL exit, and M9.2–M9.4/M10 have not started.**"
         in roadmap
     )
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
@@ -194,11 +194,10 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert (
-        "> **Current lifecycle phase: V2 Product Hardening & UI Fidelity "
-        "— M8 complete (owner PASS)**" in readme
+        "> **Current lifecycle phase: V2 Evidence & Formal Acceptance — "
+        "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 next**" in readme
     )
-    assert "M9 — Evidence & Formal Acceptance" in readme
-    assert "its implementation has not started" in readme
+    assert "M9.1–M9.4 and M10 have not started" in readme
     assert "formally accepted CONDITIONAL exit" in readme
 
     track_a = (ROOT / "docs" / "V2_M8_TRACK_A_LEDGER.md").read_text(encoding="utf-8")
@@ -214,6 +213,27 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "This is not formal accessibility" in track_b
     assert "no item-level" in walkthrough.lower()
     assert "empty log does not mean zero friction" in friction_log
+
+
+def test_m9_owner_gate_pass_does_not_imply_evaluation_or_uat() -> None:
+    status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
+    assert (
+        "| M9.0 — Evidence Design Gate | **PASS — owner-approved 2026-10-10.**"
+        in status
+    )
+    assert (
+        "No acquisition, labels, model runs, formal UAT or V2 release "
+        "readiness is implied" in status
+    )
+    assert "M9.1 is next and not started; M9.2–M9.4 and M10 have not started" in status
+    for name in (
+        "V2_M9_EVIDENCE_CONTRACT.md",
+        "V2_M9_EVALUATION_PROTOCOL.md",
+        "V2_M9_UAT_PROTOCOL.md",
+        "V2_M9_EXIT_GATE.md",
+    ):
+        assert (ROOT / "docs" / name).is_file()
+        assert f"docs/{name}" in status
 
 
 def test_source_of_truth_responsibilities_are_explicit() -> None:
