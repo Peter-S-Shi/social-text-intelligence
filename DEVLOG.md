@@ -13,6 +13,12 @@ future gates. M7/M8 open risk dispositions are unchanged; M9.3/M9.4 and M10
 remain unstarted. No STI product behavior, model evaluation or release claim
 changes here.
 
+Validation is recorded against implementation HEAD `bdd3b080` in the
+[M9.1 validation record](manual-qa/m9-uat/VALIDATION.md): local Python
+1154 passed / 4 opt-in skipped, Node 11 passed, and fresh three-version
+GitHub CI plus the recorder job PASS. The final documentation-only closeout
+uses `[skip ci]`; actual formal UAT remains NOT RUN.
+
 ## M9.0 — Owner Evidence Design Gate PASS (2026-10-10)
 
 After PR #53 independent review and its targeted README correction, the owner

@@ -7,6 +7,8 @@ execution. All 49 required steps in a new session are `NOT RUN`. No expected
 model label, screenshot, Windows accessibility result, or global Gate decision
 is supplied.
 
+Infrastructure verification is documented in [VALIDATION.md](VALIDATION.md).
+
 ## Reproduce locally
 
 1. Open `index.html` in a browser directly from this directory. Its CSS and
