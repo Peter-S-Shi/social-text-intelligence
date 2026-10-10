@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import importlib.metadata
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -70,6 +71,31 @@ def source_revision(root: Path = ROOT) -> str:
     ).strip()
 
 
+def build_environment(output: Path) -> dict[str, str]:
+    """Keep unrelated host native tools and caches out of dependency analysis."""
+    environment = dict(os.environ)
+    system = Path(os.environ.get("SystemRoot", "C:/Windows"))
+    environment["PATH"] = os.pathsep.join(
+        str(path)
+        for path in (
+            Path(sys.executable).parent,
+            Path(sys.base_prefix),
+            system / "System32",
+            system,
+        )
+    )
+    for name in ("QT_PLUGIN_PATH", "QML2_IMPORT_PATH"):
+        environment.pop(name, None)
+    environment.update(
+        PYTHONPATH=str(ROOT / "src"),
+        PYTHONNOUSERSITE="1",
+        HF_HOME=str(output / "build-hub-cache"),
+        HF_HUB_OFFLINE="1",
+        TRANSFORMERS_OFFLINE="1",
+    )
+    return environment
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
@@ -92,6 +118,7 @@ def main() -> int:
             ],
             cwd=ROOT,
             check=True,
+            env=build_environment(output),
         )
         layout = audit_bundle(output / "dist" / "sti-desktop")
         if source_revision() != sha:

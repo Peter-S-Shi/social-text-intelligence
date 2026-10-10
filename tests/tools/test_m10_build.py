@@ -77,3 +77,22 @@ def test_an_overlong_new_build_root_is_rejected_before_creation(tmp_path: Path) 
     with pytest.raises(ValueError, match="short"):
         build.prepare_output(output)
     assert not output.exists()
+
+
+def test_build_environment_excludes_ambient_native_tools(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import os
+
+    build = load()
+    system = tmp_path / "synthetic-windows"
+    monkeypatch.setenv("SystemRoot", str(system))
+    monkeypatch.setenv("PATH", "synthetic-unrelated-native-tools")
+    monkeypatch.setenv("QT_PLUGIN_PATH", "synthetic-external-qt")
+    environment = build.build_environment(tmp_path / "output")
+    assert "synthetic-unrelated-native-tools" not in environment["PATH"]
+    assert str(system / "System32") in environment["PATH"].split(os.pathsep)
+    assert "QT_PLUGIN_PATH" not in environment
+    assert environment["HF_HOME"] == str(tmp_path / "output" / "build-hub-cache")
+    assert environment["HF_HUB_OFFLINE"] == "1"
+    assert environment["TRANSFORMERS_OFFLINE"] == "1"
