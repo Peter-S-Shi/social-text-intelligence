@@ -57,7 +57,7 @@ def test_all_dependencies_verify_without_accessing_user_data() -> None:
 
 
 def test_packaged_smoke_uses_temporary_app_data(qapp: Any) -> None:
-    from social_text_intelligence.desktop.packaged_entry import smoke
+    from social_text_intelligence.desktop.qt.packaged_entry import smoke
 
     result = smoke()
     assert result == {
