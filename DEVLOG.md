@@ -11,6 +11,13 @@ startup verification and a bounded temporary-data smoke. Model weights stay
 unbundled. M7/M8 risks remain unchanged. Optional owner 30-minute smoke is
 planned NOT RUN; no installer, distribution, LGPL-compliance or release claim.
 
+Actual Windows artifact `302d9f5` passed both frozen native-Qt regressions and
+the bounded DLL closure proxy. Implementation HEAD `49f8771` passed fresh
+Python 3.11/3.12/3.13 CI (1,165 passed / 8 skipped each) and Node (12 passed).
+Independent review findings were repaired and re-reviewed; post-merge governance
+wording is consistent. The final evidence closeout is documentation-only
+`[skip ci]`, preserving separate artifact, application-test and CI provenance.
+
 
 ## M9.1 — UAT Infrastructure
 

@@ -42,8 +42,9 @@ reused nor removed. Failed outputs remain for private diagnosis; use another
 new directory after a repair. No automatic recursive cleanup is provided.
 PyInstaller's build log contains machine paths and stays local/ignored.
 The subprocess uses a controlled PATH containing only the selected Python and
-Windows directories, a source-only PYTHONPATH and no inherited Qt plugin/QML
-paths. Its Hugging Face cache is inside the disposable build output and hub/model
+Windows directories, a source-only PYTHONPATH, and removal of inherited
+QT_PLUGIN_PATH and QML2_IMPORT_PATH overrides. Its Hugging Face cache is inside
+the disposable build output and hub/model
 network access is disabled. This prevents unrelated host native tools from
 supplying conflicting DLLs; it is not a hermetic operating-system build or a
 supply-chain security guarantee.
@@ -123,14 +124,21 @@ owner acceptance:
 | DLL closure proxy | PASS: 103 binaries scanned, no unresolved import library names against bundle/System32; not a complete symbol/compliance or clean-machine proof |
 | Local full application regression | 1,165 passed / 4 existing opt-in skipped at application source `1233cfe`; subsequent packaging-only repairs did not change `src/` |
 | Final focused regressions/static checks | 18 passed; Ruff, strict MyPy (236 files including build driver), compileall passed; two frozen tests explicitly skip by default |
+| Fresh implementation-head CI | [Run 38085348126](https://github.com/Peter-S-Shi/social-text-intelligence/actions/runs/38085348126), `49f8771acb0ebc9b6f54d067a6861be5a944ee26`: Python 3.11/3.12/3.13 each 1,165 passed / 8 skipped, lint/type/compile PASS; Node 12 passed |
 | Owner optional 30-minute trial / formal Windows UAT | Planned NOT RUN / NOT RUN |
 
 The frozen artifact records its exact committed build SHA. The subsequent
 SYSTEMROOT spelling normalization and governance closure do not relabel that
 artifact as a build of a later SHA; Windows environment lookup is case-insensitive.
 Linux CI runs regressions, static checks and compilation only; it does not build
-or validate a Windows executable. Implementation-head CI is recorded separately
-in the final validation closeout.
+or validate a Windows executable. Its eight skips are four existing model/network
+opt-ins, two existing Windows-specific tests and the two actual-frozen checks.
+The final documentation-only closeout uses `[skip ci]`; no implementation changes
+follow the successful CI head. Independent Spec and Standards review findings
+were repaired and re-reviewed. Current-state governance passes the audit question
+"if this PR merged now, would every current-state statement still be true one
+second later?" at 100% YES. This engineering review is not an owner acceptance
+decision, LGPL approval or release authorization.
 
 The real-build repair loop retained failed/superseded outputs privately: Windows
 long license paths prompted the conservative short-root guard; cross-entry MERGE
