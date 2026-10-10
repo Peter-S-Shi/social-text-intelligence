@@ -1,5 +1,17 @@
 # Development Log
 
+## M9.2-A — Source and Independent Annotator Feasibility
+
+From merged main `26e1d08`, documented primary-source terms/provenance and
+versioned PENDING intake candidates, plus a concrete independent human role,
+capacity, blindness and execution-preregistration plan. This is research delivery,
+not owner source approval or a feasibility Gate PASS. No records were acquired,
+imported or labeled; no models or scores were produced. Approved M9.0 design,
+M9.1 infrastructure, M7 CONDITIONAL/M8 risk dispositions and M9.3/M9.4/M10
+boundaries are unchanged. Owner source/use decisions and human commitments
+are the next action before any separately authorized execution.
+
+
 ## M9.1 — UAT Infrastructure
 
 Delivered a versioned project-authored `SYNTH_UAT` CSV/long-text recipe and

@@ -91,7 +91,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert (
         "| Current lifecycle phase | **V2 Evidence & Formal Acceptance — "
         "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 UAT "
-        "Infrastructure complete on `main`; M9.2 next** after "
+        "Infrastructure complete on `main`; M9.2-A feasibility research "
+        "delivered; owner decisions PENDING** after "
         "**M8 complete, owner PASS; M7 CONDITIONAL exit retained** — "
         in status
     )
@@ -130,11 +131,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "**COMPLETE on `main` — owner overall PASS (2026-10-10).**"
         in status
     )
-    assert (
-        "| Next required action | Scope **M9.2 — Evidence acquisition and "
-        "evaluation execution**"
-        in status
-    )
+    assert "| Next required action | Owner reviews the versioned M9.2-A" in status
+    assert "all candidates and personnel commitments remain PENDING" in status
     assert (
         "| M5.5 — Native Insights, Context Notes, and Representative Cases | "
         "**COMPLETE"
@@ -183,9 +181,11 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert (
         "**Current phase: M9 — Evidence & Formal Acceptance, M9.0 "
         "Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 UAT "
-        "Infrastructure complete on `main`; M9.2 next. M8 is complete "
+        "Infrastructure complete on `main`; M9.2-A feasibility research "
+        "delivered; owner decisions PENDING. M8 is complete "
         "with owner PASS, M7 retains its "
-        "CONDITIONAL exit, and M9.2–M9.4/M10 have not started.**"
+        "CONDITIONAL exit, and M9.2 acquisition/evaluation execution and "
+        "M9.3/M9.4/M10 have not started.**"
         in roadmap
     )
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
@@ -199,9 +199,13 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert (
         "> **Current lifecycle phase: V2 Evidence & Formal Acceptance — "
         "M9.0 owner Gate PASS; M9.1 UAT Infrastructure complete on "
-        "`main`; M9.2 next**" in readme
+        "`main`; M9.2-A feasibility research delivered; owner decisions "
+        "PENDING**" in readme
     )
-    assert "M9.2–M9.4 and M10 have not started" in readme
+    assert (
+        "M9.2 acquisition/evaluation execution, M9.3/M9.4 and M10 "
+        "have not started" in readme
+    )
     assert "formally accepted CONDITIONAL exit" in readme
 
     track_a = (ROOT / "docs" / "V2_M8_TRACK_A_LEDGER.md").read_text(encoding="utf-8")
@@ -230,7 +234,8 @@ def test_m9_owner_gate_pass_does_not_imply_evaluation_or_uat() -> None:
         "readiness is implied" in status
     )
     assert (
-        "M9.1 infrastructure is complete; M9.2–M9.4 and M10 have not started"
+        "M9.1 infrastructure is complete; M9.2 acquisition/evaluation "
+        "execution, M9.3/M9.4 and M10 have not started"
         in status
     )
     assert "all initially NOT RUN" in status
@@ -298,3 +303,21 @@ def test_all_tracked_relative_markdown_links_resolve() -> None:
                     f"{document.relative_to(ROOT)} -> {target}"
                 )
     assert failures == []
+
+
+def test_m92a_research_delivery_does_not_approve_sources_or_execution() -> None:
+    register = (ROOT / "docs" / "V2_M9_2A_SOURCE_INTAKE_REGISTER.md").read_text(
+        encoding="utf-8"
+    )
+    candidates = [line for line in register.splitlines() if line.startswith("| SRC-")]
+    assert len(candidates) == 5
+    assert all("| PENDING | Not provided |" in line for line in candidates)
+    assert "no feedback records or dataset" in register
+    assert "180" in register
+    plan = (ROOT / "docs" / "V2_M9_2A_ANNOTATOR_FEASIBILITY.md").read_text(
+        encoding="utf-8"
+    )
+    assert "PERSONNEL AND EXECUTION PENDING" in plan
+    assert "180 A assignments + at least 60 B assignments" in plan
+    assert "execution freeze" in plan
+    assert "M9.3 formal Windows UAT/accessibility" in plan

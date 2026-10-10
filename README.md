@@ -9,7 +9,7 @@ contains Moderation Training and Support Triage workflows; they are retired
 from the V2 product surface but remain documented here as the unchanged V1
 baseline.
 
-> **Current lifecycle phase: V2 Evidence & Formal Acceptance — M9.0 owner Gate PASS; M9.1 UAT Infrastructure complete on `main`; M9.2 next**
+> **Current lifecycle phase: V2 Evidence & Formal Acceptance — M9.0 owner Gate PASS; M9.1 UAT Infrastructure complete on `main`; M9.2-A feasibility research delivered; owner decisions PENDING**
 > after V2 Native UI Integration, M6 complete (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
@@ -31,7 +31,7 @@ baseline.
 > [evidence design](docs/V2_M9_EVIDENCE_CONTRACT.md), approved by the owner
 > on 2026-10-10; real-source authorization and evaluation remain future gates.
 > M9.1 supplies a versioned [synthetic scenario pack and offline recorder](manual-qa/m9-uat/README.md),
-> with all formal UAT steps initially NOT RUN. M9.2–M9.4 and M10 have not started. V2 is not release-ready: M9
+> with all formal UAT steps initially NOT RUN. M9.2-A supplies [source and annotator feasibility research](docs/V2_M9_2A_SOURCE_INTAKE_REGISTER.md); owner source approvals and human commitments remain PENDING. M9.2 acquisition/evaluation execution, M9.3/M9.4 and M10 have not started. V2 is not release-ready: M9
 > formal acceptance, remaining risk decisions, the LGPL gate and packaging remain.
 > See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
