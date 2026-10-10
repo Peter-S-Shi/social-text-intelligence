@@ -88,13 +88,10 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature milestone status | Milestones 1–10 complete |" in status
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
-    assert (
-        "| Current lifecycle phase | **V2 Evidence & Formal Acceptance — "
-        "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 UAT "
-        "Infrastructure complete on `main`; M9.2 next** after "
-        "**M8 complete, owner PASS; M7 CONDITIONAL exit retained** — "
-        in status
-    )
+    assert "| Current lifecycle phase | **V2 M10 engineering priority" in status
+    assert "M10-A Production Packaging Foundation complete on `main`" in status
+    assert "M9.0 historical approved design and M9.1 COMPLETE retained" in status
+    assert "M9.2–M9.4 deferred by owner" in status
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
     assert (
         "**M5.0 — Model Provisioner Function Contract & Foundation, M5.1 — "
@@ -130,11 +127,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "**COMPLETE on `main` — owner overall PASS (2026-10-10).**"
         in status
     )
-    assert (
-        "| Next required action | Scope **M9.2 — Evidence acquisition and "
-        "evaluation execution**"
-        in status
-    )
+    assert "| Next required action | Scope the next M10" in status
+    assert "planned NOT RUN" in status
     assert (
         "| M5.5 — Native Insights, Context Notes, and Representative Cases | "
         "**COMPLETE"
@@ -180,14 +174,9 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert (
-        "**Current phase: M9 — Evidence & Formal Acceptance, M9.0 "
-        "Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 UAT "
-        "Infrastructure complete on `main`; M9.2 next. M8 is complete "
-        "with owner PASS, M7 retains its "
-        "CONDITIONAL exit, and M9.2–M9.4/M10 have not started.**"
-        in roadmap
-    )
+    assert "**Current phase: M10 engineering priority" in roadmap
+    assert "M9.2–M9.4 are deferred by owner" in roadmap
+    assert "M7 CONDITIONAL risks are preserved" in roadmap
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
     assert "**Status: Completed.**" in roadmap
     assert "**Status: Complete.**" in roadmap
@@ -196,12 +185,9 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert roadmap.count("**Status: Not started.**") == 0
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert (
-        "> **Current lifecycle phase: V2 Evidence & Formal Acceptance — "
-        "M9.0 owner Gate PASS; M9.1 UAT Infrastructure complete on "
-        "`main`; M9.2 next**" in readme
-    )
-    assert "M9.2–M9.4 and M10 have not started" in readme
+    assert "> **Current lifecycle phase: V2 M10 engineering priority" in readme
+    assert "M9.2–M9.4 deferred by owner" in readme
+    assert "Deferral does not waive Q5 evidence" in readme
     assert "formally accepted CONDITIONAL exit" in readme
 
     track_a = (ROOT / "docs" / "V2_M8_TRACK_A_LEDGER.md").read_text(encoding="utf-8")
@@ -230,7 +216,7 @@ def test_m9_owner_gate_pass_does_not_imply_evaluation_or_uat() -> None:
         "readiness is implied" in status
     )
     assert (
-        "M9.1 infrastructure is complete; M9.2–M9.4 and M10 have not started"
+        "M9.1 infrastructure is complete; M9.2–M9.4 are deferred by owner"
         in status
     )
     assert "all initially NOT RUN" in status
@@ -298,3 +284,12 @@ def test_all_tracked_relative_markdown_links_resolve() -> None:
                     f"{document.relative_to(ROOT)} -> {target}"
                 )
     assert failures == []
+
+
+def test_m10_foundation_does_not_waive_acceptance_or_distribution_gates() -> None:
+    status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
+    assert "Q5 representative-domain evidence remains required" in status
+    assert "Optional owner packaged-app smoke" in status
+    assert "30-minute owner smoke: NOT RUN" in status
+    assert "no installer, distribution, LGPL compliance or release readiness" in status
+    assert "DEFERRED, not accepted or waived" in status

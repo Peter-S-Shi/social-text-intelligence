@@ -86,7 +86,7 @@ def test_build_environment_excludes_ambient_native_tools(
 
     build = load()
     system = tmp_path / "synthetic-windows"
-    monkeypatch.setenv("SystemRoot", str(system))
+    monkeypatch.setenv("SYSTEMROOT", str(system))
     monkeypatch.setenv("PATH", "synthetic-unrelated-native-tools")
     monkeypatch.setenv("QT_PLUGIN_PATH", "synthetic-external-qt")
     environment = build.build_environment(tmp_path / "output")

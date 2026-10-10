@@ -74,7 +74,7 @@ def source_revision(root: Path = ROOT) -> str:
 def build_environment(output: Path) -> dict[str, str]:
     """Keep unrelated host native tools and caches out of dependency analysis."""
     environment = dict(os.environ)
-    system = Path(os.environ.get("SystemRoot", "C:/Windows"))
+    system = Path(os.environ.get("SYSTEMROOT", "C:/Windows"))
     environment["PATH"] = os.pathsep.join(
         str(path)
         for path in (

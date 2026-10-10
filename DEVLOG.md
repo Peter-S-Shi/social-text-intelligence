@@ -1,5 +1,17 @@
 # Development Log
 
+## M10-A — Production Packaging Foundation and owner sequencing
+
+The owner explicitly reprioritized M10 engineering from merged main `26e1d08`.
+M9.0 remains a historical approved design, M9.1 COMPLETE and merged; M9.2–M9.4
+are deferred without acceptance or waiver of Q5 evidence for model claims.
+Production-oriented PyInstaller onedir configuration follows M7, with pinned
+build dependencies, explicit dynamic model imports, language resources, offline
+startup verification and a bounded temporary-data smoke. Model weights stay
+unbundled. M7/M8 risks remain unchanged. Optional owner 30-minute smoke is
+planned NOT RUN; no installer, distribution, LGPL-compliance or release claim.
+
+
 ## M9.1 — UAT Infrastructure
 
 Delivered a versioned project-authored `SYNTH_UAT` CSV/long-text recipe and
