@@ -9,7 +9,7 @@ contains Moderation Training and Support Triage workflows; they are retired
 from the V2 product surface but remain documented here as the unchanged V1
 baseline.
 
-> **Current lifecycle phase: V2 Pre-Release Feasibility — M7 complete (CONDITIONAL)**
+> **Current lifecycle phase: V2 Product Hardening & UI Fidelity — M8 complete (owner PASS)**
 > after V2 Native UI Integration, M6 complete (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
@@ -25,10 +25,12 @@ baseline.
 > unsupported-language warning) are complete on `main`. M6 (full native UI
 > integration and polish) is complete on `main`. M7 (pre-release feasibility and
 > risk gate) is complete with a formally accepted CONDITIONAL exit and its open
-> risks carry to M8 and M10; M8 is in progress (Track A technical hardening is
-> complete; Track B UI fidelity is implemented and merged, and awaits the owner's visual review and exploratory trial, PENDING OWNER; M8 is not complete). V2 is not
-> release-ready: hardening, the formal accessibility acceptance, the
-> LGPL gate, and packaging come later. See [Project Status](PROJECT_STATUS.md).
+> risks retain their item-level dispositions in M8 and M10. M8 Track A and Track B
+> are merged; the owner approved the overall UI fidelity outcome and completed the
+> early exploratory trial with an overall PASS. M9 — Evidence & Formal Acceptance
+> is next and its implementation has not started. V2 is not release-ready: M9
+> formal acceptance, remaining risk decisions, the LGPL gate and packaging remain.
+> See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
 > Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,

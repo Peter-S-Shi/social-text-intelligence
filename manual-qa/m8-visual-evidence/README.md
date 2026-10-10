@@ -4,8 +4,9 @@ Synthetic, application-widget captures from the real Windows Qt platform plugin
 (`platform: windows`), taken with `tests/visual/fidelity.py` as `QWidget.grab()` of the
 app's own window on throwaway data with synthetic model stand-ins. They are visual and
 interaction evidence only. They are not model-quality measurements, not an
-accessibility acceptance, and **not an acceptance of the design: that judgment is
-PENDING OWNER**. The screen map, the delta register and the capture steps are in
+accessibility acceptance, and the captures alone did not establish design
+acceptance. The repository owner later approved the overall UI fidelity outcome
+with an M8 PASS (2026-10-10). The screen map, delta register and capture steps are in
 [`docs/V2_M8_TRACK_B_FIDELITY.md`](../../docs/V2_M8_TRACK_B_FIDELITY.md).
 
 The reference pictures are not copied here. They live on the sidecar branch

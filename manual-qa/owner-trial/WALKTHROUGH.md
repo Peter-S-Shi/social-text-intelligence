@@ -1,9 +1,10 @@
 # Owner exploratory trial: a short walkthrough
 
-**Status: PENDING OWNER.** This is an early, lightweight, owner-led trial of the
-native desktop. It is not the M9 scenario-based UAT, it does not replace it, and
-nothing here has been run by the owner yet. Do not read this file as evidence that
-any step passed. Record what you actually see in [FRICTION_LOG.md](FRICTION_LOG.md).
+**Status: owner completed and approved the exploratory trial overall (2026-10-10).**
+This is an early, lightweight, owner-led trial of the native desktop. It is not the
+M9 scenario-based UAT and does not replace it. The owner supplied no item-level
+results or friction entries; the overall PASS does not establish that every step
+below passed individually. See [FRICTION_LOG.md](FRICTION_LOG.md).
 
 The data is invented. [scenario.csv](scenario.csv) has 29 rows of made-up product
 feedback in three groups (`app_store`, `support`, `forum`) with deliberate edge
@@ -105,8 +106,9 @@ conservative and accurate? (It must not claim secure erasure.)
 
 ## What to hand back
 
-Fill in [FRICTION_LOG.md](FRICTION_LOG.md): one line per friction point or defect,
-with the screen and what you expected. Subjective design fidelity against the Round 3
-reference is a separate owner decision recorded in
+The log format in [FRICTION_LOG.md](FRICTION_LOG.md) allows one line per reported
+friction point or defect; no such entries were supplied with the overall PASS.
+Subjective design fidelity against the Round 3 reference is a separate owner
+decision recorded in
 [docs/V2_M8_TRACK_B_FIDELITY.md](../../docs/V2_M8_TRACK_B_FIDELITY.md); it is not
-decided by this trial's pass or fail.
+inferred from individual trial steps.

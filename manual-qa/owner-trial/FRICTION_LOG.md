@@ -1,7 +1,8 @@
 # Owner exploratory trial: friction and defect log
 
-**Status: PENDING OWNER.** Nothing below has been filled in. An empty log means the
-trial has not been run, not that it passed.
+**Status: the owner reported the exploratory trial complete with an overall PASS
+(2026-10-10).** No item-level observations or friction entries were supplied.
+The empty log does not mean zero friction or that every step passed individually.
 
 Use one row per observation. Keep text synthetic: do not paste real customer or
 personal text, file paths or account details.

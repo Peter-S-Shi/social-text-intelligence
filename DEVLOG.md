@@ -1,6 +1,17 @@
 # Development Log
 
-## V2 Product Hardening & UI Fidelity — M8 Track B Native UI fidelity alignment — implementation complete, owner review pending
+## V2 Product Hardening & UI Fidelity — M8 owner acceptance PASS
+
+On 2026-10-10, the repository owner explicitly confirmed completion and approval
+of M8 manual acceptance, including the UI fidelity outcome and the early owner-led
+exploratory product trial. The overall M8 decision is **PASS**. No per-step results
+or filled friction log were provided, so none are inferred from this decision.
+Track A's measured but unresolved risks and owner decisions retain their individual
+dispositions. The exploratory trial does not replace M9's formal acceptance.
+M9 — Evidence & Formal Acceptance is next, to be developed by Codex; its
+implementation has not started. V2 is not release-ready.
+
+## V2 Product Hardening & UI Fidelity — M8 Track B Native UI fidelity alignment — implementation complete
 
 Track B compared the nine Round 3 reference screens with the real Windows Qt app,
 captured Before and After from the real platform plugin with an unmapped
@@ -18,11 +29,12 @@ sanitized excerpt of at most 100 characters (a shorter record appears in full), 
 compact scores drawn as columns. Independent reviews found a wrong queue counter
 under a filter, invisible focus rings on filled controls and unescaped text in
 tooltips, all repaired test-first. System fonts stay; the OFL facts for the reference
-fonts are recorded for the owner. Subjective design fidelity and the exploratory
-trial are PENDING OWNER, so M8 is not complete. See the
+fonts are recorded for the owner. At the Track B implementation exit, subjective
+design fidelity and the exploratory trial were pending; the owner's later overall
+PASS is recorded above. See the
 [Track B record](docs/V2_M8_TRACK_B_FIDELITY.md).
 
-## V2 Product Hardening — M8 Track A Technical Product Hardening — complete (M8 in progress)
+## V2 Product Hardening — M8 Track A Technical Product Hardening — complete at Track A exit
 
 Track A turned the open M7 observations into bounded fixes and measurements, with no
 new feature. Two application instances are now excluded where it matters, by OS-level
@@ -34,8 +46,8 @@ hazards were found and fixed. Disk-full, read-only and in-use faults now report
 accurately with no partial commit. The project summary no longer counts import-rejected
 rows as analysis failures. The cost of re-hashing the weights and a native-crash band
 under a low memory limit are measured and left to the owner. See the
-[Track A ledger](docs/V2_M8_TRACK_A_LEDGER.md). Track B (UI fidelity) and the owner
-review are pending, so M8 is not complete.
+[Track A ledger](docs/V2_M8_TRACK_A_LEDGER.md). At the Track A exit, Track B and
+the owner's review were pending; the later M8 owner PASS is recorded above.
 
 ## V2 Pre-Release Feasibility — M7 Pre-Release Feasibility & Risk Gate — conditional
 

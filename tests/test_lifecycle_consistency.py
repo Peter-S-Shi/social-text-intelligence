@@ -52,6 +52,10 @@ STALE_CURRENT_PHRASES = (
     "M6 — Full UI Integration / Polish is the next lifecycle phase",
     "M6 — Full UI Integration / Polish is the next lifecycle phase and has not begun",
     "### M6 — Full UI Integration / Polish (next, not begun)",
+    "M8 is IN PROGRESS",
+    "M8 is in progress",
+    "M8 as a whole is not complete",
+    "owner visual review and exploratory trial PENDING OWNER",
 )
 CURRENT_SURFACES = (
     ROOT / "README.md",
@@ -84,9 +88,9 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
     assert (
-        "| Current lifecycle phase | **V2 Pre-Release Feasibility (M7 "
-        "complete, CONDITIONAL exit accepted)** after **V2 Native UI "
-        "Integration** — "
+        "| Current lifecycle phase | **V2 Product Hardening & UI Fidelity "
+        "(M8 complete, owner PASS)** after **V2 Pre-Release Feasibility "
+        "(M7 complete, CONDITIONAL exit accepted)** — "
         in status
     )
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
@@ -120,8 +124,13 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "with a formally accepted CONDITIONAL exit" in status
     )
     assert (
-        "| Next required action | M8 is IN PROGRESS: Track A (technical "
-        "hardening, PR #50) is complete and merged"
+        "| M8 — Product Hardening & UI Fidelity (shared status) | "
+        "**COMPLETE on `main` — owner overall PASS (2026-10-10).**"
+        in status
+    )
+    assert (
+        "| Next required action | Codex will develop **M9 — Evidence & "
+        "Formal Acceptance**; its implementation has not started."
         in status
     )
     assert (
@@ -170,12 +179,10 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
     assert (
-        "**Current phase: V2 Native UI Integration (M6) is complete; M7 — "
-        "Pre-Release Feasibility & Risk Gate is complete with a formally "
-        "accepted CONDITIONAL exit, and M8 — Product Hardening & UI Fidelity "
-        "is IN PROGRESS (Track A technical hardening complete; Track B UI "
-        "fidelity implemented and merged, owner visual review and exploratory trial "
-        "PENDING OWNER; M8 is not complete).**"
+        "**Current phase: M8 — Product Hardening & UI Fidelity is complete "
+        "on `main` with the owner's overall PASS; M7 retains its CONDITIONAL "
+        "exit, and M9 — Evidence & Formal Acceptance is next but has not "
+        "started.**"
         in roadmap
     )
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
@@ -187,11 +194,26 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert (
-        "> **Current lifecycle phase: V2 Pre-Release Feasibility — M7 "
-        "complete (CONDITIONAL)**" in readme
+        "> **Current lifecycle phase: V2 Product Hardening & UI Fidelity "
+        "— M8 complete (owner PASS)**" in readme
     )
-    assert "M8 is in progress (Track A technical hardening is" in readme
+    assert "M9 — Evidence & Formal Acceptance" in readme
+    assert "its implementation has not started" in readme
     assert "formally accepted CONDITIONAL exit" in readme
+
+    track_a = (ROOT / "docs" / "V2_M8_TRACK_A_LEDGER.md").read_text(encoding="utf-8")
+    track_b = (ROOT / "docs" / "V2_M8_TRACK_B_FIDELITY.md").read_text(encoding="utf-8")
+    walkthrough = (
+        ROOT / "manual-qa" / "owner-trial" / "WALKTHROUGH.md"
+    ).read_text(encoding="utf-8")
+    friction_log = (
+        ROOT / "manual-qa" / "owner-trial" / "FRICTION_LOG.md"
+    ).read_text(encoding="utf-8")
+    assert "OWNER DECISION or NOT VERIFIED items" in track_a
+    assert "M8 overall manual acceptance: PASS (2026-10-10)" in track_b
+    assert "This is not formal accessibility" in track_b
+    assert "no item-level" in walkthrough.lower()
+    assert "empty log does not mean zero friction" in friction_log
 
 
 def test_source_of_truth_responsibilities_are_explicit() -> None:

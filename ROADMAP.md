@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: V2 Native UI Integration (M6) is complete; M7 — Pre-Release Feasibility & Risk Gate is complete with a formally accepted CONDITIONAL exit, and M8 — Product Hardening & UI Fidelity is IN PROGRESS (Track A technical hardening complete; Track B UI fidelity implemented and merged, owner visual review and exploratory trial PENDING OWNER; M8 is not complete).** V2 reopens the project from
+**Current phase: M8 — Product Hardening & UI Fidelity is complete on `main` with the owner's overall PASS; M7 retains its CONDITIONAL exit, and M9 — Evidence & Formal Acceptance is next but has not started.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -78,9 +78,10 @@ detection with an unsupported-language warning (V2-3). The M5 Functional Exit
 audit then passed: V2-1 to V2-4 are implemented behind stable application
 contracts and reachable in the native desktop. Several V1 batch, score, and
 agreement detail views were recorded in Project Status as M6 inputs and are now
-presented natively. Product hardening, the formal accessibility
-acceptance, the representative-domain evaluation, the pre-distribution LGPL
-gate, packaging, and release work remain separate later gates. V2 is not
+presented natively. M8 product hardening is complete with the owner's overall
+PASS; outstanding item-level risks remain as recorded in its ledgers. Formal
+accessibility acceptance, the representative-domain evaluation, the pre-distribution
+LGPL gate, packaging, and release work remain separate later gates. V2 is not
 release-ready. The package version stays `0.10.0`.
 
 ### M7 — Pre-Release Feasibility & Risk Gate (complete, CONDITIONAL exit accepted)
@@ -94,12 +95,14 @@ tooling only; no installer exists and V2 is not release-ready. The sequence stay
 M8 Product Hardening (with an early owner-led exploratory trial), M9 Evidence and
 Formal Acceptance (owner-operated Scenario-Based UAT and a local HTML acceptance
 companion), M10 production packaging, final LGPL compliance, installer and release
-candidate verification. M8 is in progress: Track A technical hardening is complete
-([ledger](docs/V2_M8_TRACK_A_LEDGER.md)), Track B UI fidelity is implemented and merged ([record](docs/V2_M8_TRACK_B_FIDELITY.md))
-and awaits the owner's visual review and exploratory trial (PENDING OWNER),
-and M8 is not complete; M9 and M10 have not started. The CONDITIONAL
-exit is preserved: its open risks close only where the ledger shows affirmative
-evidence, and the rest stay open for M8 Track B, the owner, or M10.
+candidate verification. M8 is complete on `main`: Track A technical hardening
+([ledger](docs/V2_M8_TRACK_A_LEDGER.md)) and Track B UI fidelity
+([record](docs/V2_M8_TRACK_B_FIDELITY.md)) are merged, and the owner approved
+the overall UI fidelity outcome and completed the early exploratory trial with
+an overall PASS on 2026-10-10. This is not M9's formal acceptance; Codex will
+develop M9, whose implementation has not started. M10 has not started. M7's
+CONDITIONAL exit is preserved: open risks close only where the Track A ledger
+shows affirmative evidence; remaining decisions and unverified conditions stay open.
 
 ### M6 — Full UI Integration / Polish (complete)
 
@@ -110,10 +113,10 @@ fixed project-centred IA and the visual separation of the immutable AI record
 from human judgment. The [F-ID acceptance record](docs/V2_M6_ACCEPTANCE.md)
 and [Windows Qt visual evidence](manual-qa/m6-visual-evidence/README.md) cover
 the exact milestone boundary. It adds no new metrics or product concepts.
-The next required action is to scope the next V2 milestone; product hardening,
-formal accessibility acceptance, representative-domain evaluation, LGPL
-compliance, packaging, and release-candidate or distribution work are separate
-later gates, each requiring its own scope. V2 is not release-ready.
+At the M6 exit, the next required action was to scope the next V2 milestone.
+M8 later completed with an owner PASS; M9 formal acceptance, representative-domain
+evaluation, LGPL compliance, packaging, and release-candidate or distribution
+work remain separately gated. V2 is not release-ready.
 
 ## V1 final lifecycle phase (historical)
 
