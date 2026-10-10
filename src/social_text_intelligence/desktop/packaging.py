@@ -40,8 +40,8 @@ def verify_runtime(
                     if not callable(getattr(module, attribute)):
                         raise ImportError("model loader unavailable")
             if name == "py3langid.langid":
-                identifier = module.LanguageIdentifier.from_pickled_model(
-                    module.model, norm_probs=True
+                identifier = module.LanguageIdentifier.from_model_file(
+                    module.MODEL_FILE, norm_probs=True
                 )
                 language, _ = identifier.classify(
                     "This software update works well and the interface is easy to use."

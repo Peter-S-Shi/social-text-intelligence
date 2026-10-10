@@ -33,14 +33,14 @@ def test_lazy_classes_and_language_resources_are_required(broken: str) -> None:
 def complete_module(name: str) -> object:
     class Identifier:
         @classmethod
-        def from_pickled_model(cls, model: object, *, norm_probs: bool) -> Any:
+        def from_model_file(cls, model: object, *, norm_probs: bool) -> Any:
             return SimpleNamespace(classify=lambda text: ("en", 1.0))
 
     return SimpleNamespace(
         AutoTokenizer=lambda: None,
         AutoModelForSequenceClassification=lambda: None,
         LanguageIdentifier=Identifier,
-        model=b"synthetic-resource",
+        MODEL_FILE="synthetic-resource",
     )
 
 
@@ -67,3 +67,14 @@ def test_packaged_smoke_uses_temporary_app_data(qapp: Any) -> None:
         "invalid_rows": 1,
         "reopened": True,
     }
+
+
+def test_actual_bundled_language_resource_verifies() -> None:
+    import importlib
+
+    def load(name: str) -> object:
+        if name == "py3langid.langid":
+            return importlib.import_module(name)
+        return complete_module(name)
+
+    assert verify_runtime(import_module=load).ready
