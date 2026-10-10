@@ -89,7 +89,7 @@
   }
 
   function validNaReason(reason) {
-    return reason.trim() && !/\b(unavailable|cannot access|can't access|could not run|not installed|missing setup|no windows|no model|no permission)\b/i.test(reason);
+    return reason.trim() && !/\b(unavailable|not available|cannot (?:access|run)|can't (?:access|run)|could not run|not installed|missing setup|no windows|no model|no permission)\b/i.test(reason);
   }
 
   function applyDecision(pack, session, stepId, fields, now = new Date().toISOString()) {

@@ -101,6 +101,37 @@ test("observed decisions require session provenance and evidence, and progress s
   assert.equal(Object.hasOwn(updated, "gate_pass"), false);
 });
 
+test("mandatory setups that cannot be used remain NOT RUN rather than N/A", () => {
+  const session = readySession();
+  for (const reason of [
+    "Windows is not available",
+    "I cannot run Narrator",
+    "required model files are not available",
+    "I can't run Narrator",
+  ]) {
+    assert.throws(() => core.applyDecision(pack, session, "UAT-MODEL-01-S01", {
+      status: "N/A", na_reason: reason,
+    }), /NOT RUN/i, reason);
+  }
+  assert.equal(session.results[0].status, "NOT RUN");
+  assert.equal(core.progress(pack, session).recorded, 0);
+  const applicable = core.applyDecision(pack, session, "UAT-MODEL-01-S01", {
+    status: "N/A", na_reason: "The conditional retry action does not apply because the first attempt succeeded",
+  });
+  assert.equal(core.importJson(pack, core.exportJson(pack, applicable)).results[0].status, "N/A");
+  for (const reason of ["Windows is not available", "I cannot run Narrator",
+    "required model files are not available"]) {
+    const imported = structuredClone(applicable);
+    imported.results[0].na_reason = reason;
+    assert.throws(() => core.importJson(pack, JSON.stringify(imported)), /NOT RUN/i);
+    const historical = core.applyDecision(pack, applicable, "UAT-MODEL-01-S01", {
+      status: "NOT RUN",
+    });
+    historical.results[0].history[0].na_reason = reason;
+    assert.throws(() => core.importJson(pack, JSON.stringify(historical)), /NOT RUN/i);
+  }
+});
+
 test("JSON round trip retains provenance and decisions without inventing a gate result", () => {
   const original = readySession();
   const session = core.applyDecision(pack, original, "UAT-MODEL-01-S01", {
