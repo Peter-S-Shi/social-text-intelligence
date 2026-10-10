@@ -1,6 +1,19 @@
 # Development Log
 
-## M9.0 — Evidence Design Gate: design delivered, owner Gate decision pending
+## M9.0 — Owner Evidence Design Gate PASS (2026-10-10)
+
+After PR #53 independent review and its targeted README correction, the owner
+explicitly approved the substantive M9.0 design on reviewed HEAD `32d8d37`:
+180 real-primary, 45 separate synthetic challenge, and at least 60 independent
+double-blind reference targets; three channels, task-specific denominators,
+2,000 fixed-seed stratified bootstrap resamples and 95% percentile intervals.
+This approves the design, not any named source's rights, the availability of a
+second annotator, any executed evaluation/UAT or overall M9 acceptance. The
+original design-delivery entry below documents its historical pre-approval state.
+M9.1 is next but not started. M7/M8 risk dispositions remain unchanged.
+This governance-only decision record uses `[skip ci]`.
+
+## M9.0 — Evidence Design Gate: design delivery (historical pre-approval record)
 
 Encoded the owner-approved English software/app domain and Strategy A into four
 coherent evidence, evaluation, Windows UAT and exit-gate design records, using

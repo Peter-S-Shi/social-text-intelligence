@@ -3,16 +3,17 @@
 ## Authority and scope
 
 This contract encodes the owner's M9.0 planning specification v1.0 against
-`main@45874bb4088cb0afe559c82f1c1f2d9d8bd921c4`. It establishes the design
-submitted for the Evidence Design Gate, not an executed evaluation or an owner
-Gate PASS. Live gate decisions remain in [Project Status](../PROJECT_STATUS.md).
+`main@45874bb4088cb0afe559c82f1c1f2d9d8bd921c4`. The substantive design received explicit owner Evidence Design Gate PASS on
+2026-10-10 (reviewed PR #53 HEAD `32d8d37`). This is not an executed evaluation
+or overall M9 acceptance. Live gate decisions remain in [Project Status](../PROJECT_STATUS.md).
 
 The owner has approved English software/mobile/desktop app feedback as the
 principal domain, authentic lawful feedback as primary evidence (Strategy A),
 synthetic material as separate support, and Codex as the implementation agent.
-M8's overall owner PASS is established. The proposed numerical evaluation
-parameters in the [evaluation protocol](V2_M9_EVALUATION_PROTOCOL.md) still need
-M9.0 owner Gate approval. No named third-party source is approved by this contract.
+M8's overall owner PASS is established. The numerical target evaluation
+parameters in the [evaluation protocol](V2_M9_EVALUATION_PROTOCOL.md) received
+M9.0 owner Gate approval on 2026-10-10. No named third-party source is approved
+and neither sample availability nor independent second annotation is assured.
 
 Three evidence streams must stand independently:
 
@@ -107,11 +108,12 @@ do not claim public reproducibility from unavailable text or labels.
 
 ## Two-stage preregistration
 
-1. **Design freeze (M9.0 owner Gate decision).** Review and approve the versioned
-   channel definitions, eligibility/sampling rules, proposed budgets, blind
-   annotation/adjudication, metric/denominator rules and UAT/exit requirements.
-   Record the approved document commit and owner decision. Submission or merge
-   alone does not supply approval. Until then numerical parameters are proposed.
+1. **Design freeze (M9.0 owner Gate PASS, 2026-10-10).** The owner approved the
+   versioned channel definitions, eligibility/sampling rules, numerical targets,
+   blind annotation/adjudication, metric/denominator/uncertainty rules and UAT/exit
+   requirements on reviewed document HEAD `32d8d37`. This decision is independent
+   of the PR merge and does not approve sources or guarantee target availability.
+   Prospective amendments still require separate approval.
 2. **Execution preregistration (M9.2, after source approval/authorized acquisition,
    before reference labeling or any model predictions).** Bind the approved
    design to actual source versions/dates, frame and eligibility counts, dedup
@@ -133,7 +135,7 @@ unexposed sample; never call a retrospective choice preregistered.
 
 | Slice | Deliverable and boundary |
 | --- | --- |
-| M9.0 Evidence Design Gate | These four reviewed design documents; owner Gate approval pending until recorded; no acquisition, labels, scores or executed UAT required |
+| M9.0 Evidence Design Gate | **PASS, owner-approved 2026-10-10** on reviewed design HEAD `32d8d37`; no acquisition, labels, scores or executed UAT implied |
 | M9.1 UAT Infrastructure | Synthetic scenario pack and tested offline companion; functional evidence recording, no formal UAT inferred |
 | M9.2 Domain Evaluation | Approved sources, execution freeze, blind references/adjudication, exact inference and mandatory honest report |
 | M9.3 Windows UAT/accessibility | Actual owner/authorized operator sessions, evidence and defect/retest dispositions |

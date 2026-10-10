@@ -90,7 +90,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "| Feature Freeze status | **PASS" in status
     assert (
         "| Current lifecycle phase | **V2 Evidence & Formal Acceptance — "
-        "M9.0 Evidence Design Gate (owner approval PENDING)** after "
+        "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 next** after "
         "**M8 complete, owner PASS; M7 CONDITIONAL exit retained** — "
         in status
     )
@@ -130,8 +130,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         in status
     )
     assert (
-        "| Next required action | Repository owner to decide **M9.0 — "
-        "Evidence Design Gate**"
+        "| Next required action | Begin **M9.1 — UAT Infrastructure**"
         in status
     )
     assert (
@@ -180,10 +179,10 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
     assert (
-        "**Current phase: M9 — Evidence & Formal Acceptance is at M9.0 "
-        "design; owner Evidence Design Gate approval is PENDING. M8 is "
-        "complete with owner PASS, M7 retains its CONDITIONAL exit, and "
-        "M9.1–M9.4/M10 have not started.**"
+        "**Current phase: M9 — Evidence & Formal Acceptance, M9.0 "
+        "Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 is next "
+        "but not started. M8 is complete with owner PASS, M7 retains its "
+        "CONDITIONAL exit, and M9.2–M9.4/M10 have not started.**"
         in roadmap
     )
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
@@ -196,7 +195,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert (
         "> **Current lifecycle phase: V2 Evidence & Formal Acceptance — "
-        "M9.0 design (owner Gate approval pending)**" in readme
+        "M9.0 Evidence Design Gate PASS (2026-10-10); M9.1 next**" in readme
     )
     assert "M9.1–M9.4 and M10 have not started" in readme
     assert "formally accepted CONDITIONAL exit" in readme
@@ -216,14 +215,14 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "empty log does not mean zero friction" in friction_log
 
 
-def test_m9_design_delivery_does_not_imply_owner_gate_approval() -> None:
+def test_m9_owner_gate_pass_does_not_imply_evaluation_or_uat() -> None:
     status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
     assert (
-        "| M9.0 — Evidence Design Gate | **Design documents established; "
-        "owner Gate approval PENDING.**" in status
+        "| M9.0 — Evidence Design Gate | **PASS — owner-approved 2026-10-10.**"
+        in status
     )
-    assert "merging the documents alone does not imply approval" in status
-    assert "M9.1–M9.4 and M10 have not started" in status
+    assert "No acquisition, labels, model runs, formal UAT or V2 release readiness is implied" in status
+    assert "M9.1 is next and not started; M9.2–M9.4 and M10 have not started" in status
     for name in (
         "V2_M9_EVIDENCE_CONTRACT.md",
         "V2_M9_EVALUATION_PROTOCOL.md",

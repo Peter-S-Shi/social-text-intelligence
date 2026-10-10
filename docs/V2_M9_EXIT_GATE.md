@@ -2,13 +2,14 @@
 
 ## Status and decision authority
 
-This document defines gate criteria. It records no owner M9.0 Gate PASS, executed
-evaluation, formal Windows UAT, accessibility acceptance or overall M9 exit.
+This document defines gate criteria. Owner M9.0 Evidence Design Gate PASS was
+explicitly granted on 2026-10-10 for reviewed design HEAD `32d8d37`; this is
+not executed evaluation, formal Windows UAT, accessibility acceptance or overall M9 exit.
 Live decisions and next action belong to [Project Status](../PROJECT_STATUS.md).
 The [evidence contract](V2_M9_EVIDENCE_CONTRACT.md) distinguishes owner-approved
-strategy from proposed numerical design. Review completion or merging documents
-does not automatically approve the Gate; record the owner's explicit decision
-and approved revision separately.
+strategy from owner-approved numerical target design. Review completion or
+merging documents did not itself approve the Gate; the owner's explicit
+2026-10-10 decision on reviewed HEAD `32d8d37` did. No dataset rights follow.
 
 M8 is complete by overall owner PASS, but its exploratory trial is not formal
 M9 acceptance and supplies no individual trial results. M7's CONDITIONAL exit
@@ -18,7 +19,7 @@ and remaining M8 risk dispositions persist. No M9 gate is release readiness.
 
 | Gate | Required decision basis | Missing evidence |
 | --- | --- | --- |
-| M9.0 Evidence Design | Four committed/reviewed documents, source rights/privacy workflow, design choices, blind labeling/adjudication, metric/denominator/uncertainty rules, Windows UAT/a11y coverage, recorder schema and handoffs; explicit owner approval of design/parameters and approved commit | Owner decision remains pending; no source retrieval, sample, model score or executed UAT needed |
+| M9.0 Evidence Design | Four committed/reviewed documents, source rights/privacy workflow, design choices, blind labeling/adjudication, metric/denominator/uncertainty rules, Windows UAT/a11y coverage, recorder schema and handoffs; explicit owner approval of design/parameters and approved commit | Owner PASS on 2026-10-10; no source retrieval, sample, model score or executed UAT implied |
 | M9.1 UAT Infrastructure | Deterministic synthetic pack, tested functional expectations, actual offline companion state/progress/schema round-trip and browser smoke | Infrastructure pending; never infer desktop UAT execution |
 | M9.2 Representative Evaluation | Approved source sets, target eligible real sample or prospectively approved amended design, frozen manifests, blind labels/independence/adjudication, exact shipped inference, all metrics/coverage/limitations independently auditable | PENDING/BLOCK if lawful sources, sample or second annotation unavailable; escalate before amendment, never replace Q5 with synthetics |
 | M9.3 Windows UAT/accessibility | Authorized observed sessions for every required scenario, justified applicability decisions, actual Narrator/high contrast/keyboard/scaling/text-size, failures classified/fixed/retested or explicitly accepted non-blocking | Required NOT RUN items block unconditional formal UAT PASS |
@@ -116,4 +117,5 @@ M9.0 merge or a later clean test run.
 M10 alone handles final Windows packaging, installer, LGPL compliance,
 clean-machine verification, SmartScreen and release candidates. Any product
 repair discovered later needs its own authorized scope, regression and retest;
-this design does not authorize implementing it or beginning M9.1.
+this design does not authorize product repair; M9.1 requires a
+separately scoped execution contract.

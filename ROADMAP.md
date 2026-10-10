@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: M9 — Evidence & Formal Acceptance is at M9.0 design; owner Evidence Design Gate approval is PENDING. M8 is complete with owner PASS, M7 retains its CONDITIONAL exit, and M9.1–M9.4/M10 have not started.** V2 reopens the project from
+**Current phase: M9 — Evidence & Formal Acceptance, M9.0 Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 is next but not started. M8 is complete with owner PASS, M7 retains its CONDITIONAL exit, and M9.2–M9.4/M10 have not started.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -90,8 +90,10 @@ The [evidence contract](docs/V2_M9_EVIDENCE_CONTRACT.md) defines three independe
 streams: Q5 representative-domain model evaluation, formal native Windows UAT,
 and formal Windows accessibility. The [evaluation protocol](docs/V2_M9_EVALUATION_PROTOCOL.md),
 [UAT protocol](docs/V2_M9_UAT_PROTOCOL.md) and [exit gate](docs/V2_M9_EXIT_GATE.md)
-define their design and handoffs. M9.0 design is established, with owner Gate
-approval PENDING; proposed numerical parameters are not yet owner-approved.
+define their design and handoffs. M9.0 design is established with owner Evidence Design Gate PASS (2026-10-10,
+reviewed design HEAD `32d8d37`). The 180/45/60 target sample design and
+prespecified metrics/uncertainty method are approved; no named data source,
+actual sample, or independent annotator is thereby authorized.
 The sequence is M9.0 design freeze, M9.1 synthetic pack/offline recorder, M9.2
 approved-source evaluation with execution preregistration, M9.3 observed
 Windows UAT/accessibility, then M9.4 owner synthesis. M9.1–M9.4 have not started.
@@ -113,8 +115,9 @@ candidate verification. M8 is complete on `main`: Track A technical hardening
 ([ledger](docs/V2_M8_TRACK_A_LEDGER.md)) and Track B UI fidelity
 ([record](docs/V2_M8_TRACK_B_FIDELITY.md)) are merged, and the owner approved
 the overall UI fidelity outcome and completed the early exploratory trial with
-an overall PASS on 2026-10-10. This is not M9's formal acceptance. Codex has prepared the M9.0 design; its
-owner Gate approval is pending. M9.1–M9.4 and M10 have not started. M7's
+an overall PASS on 2026-10-10. This is not M9's formal acceptance. Codex has delivered the M9.0 design and the
+owner approved the Gate on 2026-10-10. M9.1 is next and not started;
+M9.2–M9.4 and M10 have not started. M7's
 CONDITIONAL exit is preserved: open risks close only where the Track A ledger
 shows affirmative evidence; remaining decisions and unverified conditions stay open.
 

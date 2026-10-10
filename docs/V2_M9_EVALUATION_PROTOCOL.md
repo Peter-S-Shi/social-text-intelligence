@@ -2,19 +2,20 @@
 
 ## Registration and authority
 
-This is the proposed M9.0 design for Q5, governed by the
+This is the owner-approved M9.0 design for Q5 (Gate PASS 2026-10-10), governed by the
 [evidence contract](V2_M9_EVIDENCE_CONTRACT.md). English software/app feedback and
-Strategy A are owner-approved. **180 primary records, 45 challenge cases and at
-least 60 dual-blind references are design proposals awaiting M9.0 owner Gate
-approval**, not acquired data or separately owner-confirmed historical choices.
+Strategy A are owner-approved. **The targets of 180 real primary records,
+45 separate synthetic challenge cases and at least 60 double-blind human
+references received owner M9.0 Gate approval** (reviewed design HEAD `32d8d37`);
+they are not acquired data or proof of source or annotator availability.
 No sources, annotations or predictions are produced here.
 
-Design freeze occurs at recorded M9.0 owner approval. The later M9.2 execution
+Design freeze occurred at recorded M9.0 owner approval on 2026-10-10. The later M9.2 execution
 freeze binds sources, frames, dates, seeds and IDs before labeling/predictions.
 Both freeze records must identify versions, reviewer/owner roles and amendment
 history. Source permissions precede retrieval; see the contract's intake gate.
 
-## Proposed sample design
+## Approved target sample design
 
 | Source-channel stratum | Primary real target | Synthetic challenge style target |
 | --- | ---: | ---: |
@@ -99,7 +100,7 @@ or the complete set cannot be resolved under the guide, the emotion reference
 remains uncertain for both emotion analyses. Sentiment certainty is independent.
 Record context gaps, sarcasm, mixed signals and sentiment/emotion divergence.
 
-Proposed independent review: draw 20 IDs without replacement per channel (at
+Approved independent review target: draw 20 IDs without replacement per channel (at
 least 60/180 total), register this subset before predictions, and have two human
 roles label independently and blind to one another. The remaining 120 are not
 independently corroborated. Keep original labels, disagreement reasons and
@@ -125,7 +126,7 @@ variation or no pairs is `not estimable`, not perfect agreement.
 
 Use production normalization and the audited compact mapping. Record application
 SHA, package/Python/runtime/tokenizer versions, analysis mode, full model
-revisions, mapping/guide versions and configuration. Proposed evaluation mode
+revisions, mapping/guide versions and configuration. Approved evaluation mode
 is the shipped combined analysis with audited default inclusive threshold `0.5`;
 record the actual value and do not tune it for M9. The two providers have a
 512-token encoded-input budget with special tokens and no truncation; the
@@ -194,7 +195,7 @@ For set comparison map human/predicted `neutral` fallback to the empty
 non-neutral set. Dominant analysis remains nine-way and separate. Exact set
 match counts two empty sets as a match, and their prevalence must be shown so
 fallback does not inflate an unexplained headline. Preserve all eight labels in
-macro metrics, including zero-positive-support labels. Proposed convention:
+macro metrics, including zero-positive-support labels. Approved convention:
 zero precision/recall/F1 denominators yield 0 with support shown; an entirely
 empty task subset yields no estimate. Unsupported classes do not support
 capability claims about those classes. Report unweighted counts/matrices with
@@ -209,14 +210,14 @@ channel has no contributing definitive successful rows, the planned equal-channe
 estimate is not estimable; do not renormalize over remaining channels silently.
 Reference/inference coverage still uses original `N`, not these metric weights.
 
-Proposed finite-sample uncertainty method: 2,000 fixed-seed stratified bootstrap
+Approved finite-sample uncertainty method: 2,000 fixed-seed stratified bootstrap
 resamples with replacement within each channel, 95% percentile intervals,
 recomputing weights and metrics in each draw. Register generator/version/seed
 before labels/predictions. Resample whole record units to retain within-row
 label dependence. Metric intervals describe conditional `M_t` evidence, not
 failed/uncertain rows; show their coverage limits. Report non-estimable draws and
 do not hide unsupported labels or sparse per-channel support. These numerical
-analysis defaults require M9.0 approval alongside the sample budgets.
+analysis defaults were owner-approved at M9.0 alongside the target sample budgets.
 
 ## Report and claims
 
