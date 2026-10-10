@@ -54,12 +54,27 @@ def verify_build_environment() -> None:
             )
 
 
+def source_revision(root: Path = ROOT) -> str:
+    paths = ("src", "tools/m10", "LICENSE", "THIRD_PARTY_NOTICES.md", "pyproject.toml")
+    status = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=all", "--", *paths],
+        cwd=root,
+        text=True,
+    )
+    if status.strip():
+        raise ValueError("Packaging inputs must be committed before building.")
+    return subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=root, text=True
+    ).strip()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
         verify_build_environment()
+        sha = source_revision()
         output = prepare_output(args.output)
         subprocess.run(
             [
@@ -77,9 +92,8 @@ def main() -> int:
             check=True,
         )
         layout = audit_bundle(output / "dist" / "sti-desktop")
-        sha = subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
-        ).strip()
+        if source_revision() != sha:
+            raise ValueError("Packaging inputs changed during the build.")
         evidence = {
             "schema_version": 1,
             "application_sha": sha,
