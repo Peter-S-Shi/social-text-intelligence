@@ -25,6 +25,8 @@ versions, selected license expressions and public upstream evidence. The project
 itself is identified by source SHA and repository version, not stale editable
 installation metadata. The `py` shim is owned by pytest 8.4.2 even though the
 pytest runner is excluded; this included fragment is inventoried honestly.
+PyInstaller's `_pyi_rth_utils` is resolved from its installed fake-module header;
+its Apache-2.0 attribution is separate from the bootloader's GPL exception.
 
 The build assembles `legal/inventory.json` containing module names, package
 notice receipts, native file ownership, hashes of delivered files, source
@@ -61,6 +63,7 @@ describe the route and its unresolved build details.
 | B3 | Microsoft runtime redistribution grant and custom CPython/native runtime producer provenance/build details must be established; installed/public binaries do not imply permission | OPEN, blocks distribution |
 | B4 | Rust/static native dependencies and vendored components require compiled-content/license coverage; package-level labels and source-superset notices are insufficient | OPEN, blocks distribution |
 | B5 | py3langid's embedded model training-corpus redistribution terms remain the pre-existing risk | OPEN, blocks distribution |
+| B6 | Both tested Qt-only DLL/plugin replacements failed with unchanged 6.11.2 bindings; a coherent compatible replacement or rebuild must be demonstrated | OPEN, blocks distribution |
 
 MIT/BSD portions require preserved copyright/license and applicable disclaimer
 or non-endorsement statements. Apache portions require license and applicable
@@ -87,6 +90,78 @@ notices are recorded by the generated inventory and block any clearance.
 
 ## Verification record
 
-Actual frozen-build and replacement observations are recorded in the final
-validation closeout. Linux CI tests infrastructure and regressions only; it
-cannot establish Windows DLL compatibility or legal compliance.
+### Actual Windows artifact and material validation
+
+The actual Windows x64 PyInstaller freeze completed on application/binary input
+SHA `c93191ee4d0677f7e78a99fca8b89460b503e7f5`. Its first material stage failed:
+the deliberately isolated build PATH contains no Git, while the assembler
+attempted an internal Git lookup. The driver now passes its already-verified
+application SHA; the PATH isolation is retained. A later audit identified and
+attributed the included PyInstaller Apache runtime helper.
+
+The final material tool SHA is `e6fdd85abd7c36cf368a871fd7f5a323e20670d2`.
+The committed diff confirms all binary inputs (application, spec, entry files,
+build requirements and embedded project notices) are unchanged from `c93191e`.
+The preserved `_internal` tree and two executables were copied to a fresh folder;
+material assembly and verification then passed under the same Git-free PATH.
+Executable byte equality was checked. This is a successful resumed material
+stage over an actual frozen build, **not** a claim that the original complete
+build-driver invocation succeeded. All failed outputs remain local.
+
+The final folder has **5,265 files / 761,696,609 bytes**, unbundled model weights,
+**6,648 PYZ modules**, **36 registered components**, and **103 native binaries**
+(DLL/PYD/EXE). The full local inventory is 1,513,576 bytes, SHA-256
+`896f53e8337b5208bd714df369f8eb07a9471c69c2f202cf172921083efda607`.
+Its 5,264 material receipts deliberately exclude only the inventory itself.
+The 224 source-notice entries occupy 190 unique hash-named files; their scope
+remains a source superset. Five complete, hash-verified release archives
+accompany the engineering artifact. All delivered-byte/set checks pass;
+`distribution_permitted` remains false. The generated inventory records B1–B5;
+B6 is retained separately in the actual compatibility evidence.
+
+[The sanitized inventory receipt](evidence/m10-b/inventory-receipt.json) records
+component versions, selected terms, original notice paths/hashes, native paths
+and hashes, source receipts and artifact identity. No binaries, private build
+logs, machine paths or source archives are published in this PR.
+
+### Actual Windows replacement experiments
+
+Two independent PyPI upstream wheels were downloaded and hash-checked without
+installing them: PySide6-Essentials **6.11.1** and **6.12.0**. Each experiment used
+a separate fresh copy of the original bundle, replacing five Qt DLLs and 20
+matching plugin DLLs while retaining the original 6.11.2 Python bindings and
+executable bytes. In both cases `--license-info` exited **2**; no replacement Qt
+version was verified. Subsequent runtime/smoke checks on those copies are
+**NOT RUN**, not passing. The exact ABI/loader cause is not established.
+The original bundle still reports Qt **6.11.2** and both original frozen runtime
+and synthetic native-smoke regressions pass (**2 passed**).
+
+[Replacement evidence](evidence/m10-b/replacement-evidence.json) preserves both
+wheel receipts, all 25 changed-file hashes per experiment and failed outcomes.
+Neither a compatible arbitrary library rebuild nor successful relinking has
+been demonstrated; **B6 remains OPEN**. The user-facing replacement procedure
+requires a coherent compatible library/wrapper set where necessary and does
+not represent these failed experiments as a validated installation recipe.
+
+### Regression and review evidence
+
+- Windows full application suite on `c93191e`: **1,176 passed / 6 skipped**
+  (four opt-in model/network tests and two opt-in frozen checks). Later commits
+  modify only the material tooling/attribution and focused regressions; product
+  sources are unchanged.
+- Final focused material/build checks: **15 passed**; lifecycle and real Qt
+  notice checks: **8 passed**; actual original frozen checks: **2 passed**.
+- Ruff, strict MyPy (**239 files**), compileall and dependency consistency pass.
+- [Fresh implementation-head CI](https://github.com/Peter-S-Shi/social-text-intelligence/actions/runs/38096001797)
+  on `e6fdd85`: Python 3.11/3.12/3.13 each **1,176 passed / 8 skipped**, quality
+  checks pass; Node **12 passed**. Linux CI is not Windows replacement evidence.
+- Independent Spec and Standards reviews cover implementation and final actual
+  governance/evidence: **both PASS, no unresolved review findings**. Both audited
+  every changed current-state statement with the one-second-after-merge test:
+  **100% YES**. Engineering review does not clear B1–B6 or imply owner
+  acceptance. Final closeout is documentation/evidence-only `[skip ci]`.
+
+[Windows screenshots](../manual-qa/m10-b-visual-evidence/README.md) show the
+prominent license entry at 1280px and 900px and its full dialog. They are source
+Qt captures of synthetic/disposable state, not frozen UI screenshots, formal
+Windows UAT or accessibility acceptance. M6/M8 evidence is unchanged.

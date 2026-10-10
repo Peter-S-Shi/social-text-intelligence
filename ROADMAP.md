@@ -389,7 +389,9 @@ V1 defect or hardening work.
 ### M10-B — Compliance engineering established; distribution BLOCKED
 
 The actual Windows onedir audit, license/source packet, prominent Qt notice and
-bounded DLL replacement verification are established on `main`.
+bounded DLL replacement experiments are established on `main`.
+The two Qt-only replacement experiments failed; compatible replacement is
+unverified and explicitly blocks distribution (B6).
 [The compliance record](docs/V2_M10_B_DISTRIBUTION_COMPLIANCE.md) retains exact
 source, software-renderer, runtime redistribution and embedded dependency/model
 obligations as blockers. The next required action is to resolve those blockers;

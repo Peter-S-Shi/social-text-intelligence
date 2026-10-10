@@ -1,5 +1,34 @@
 # Development Log
 
+## M10-B — Compliance materials established; distribution remains BLOCKED
+
+From merged main `282597b`, retained the M7/M10-A Windows onedir route and all
+dependencies. Added prominent Qt LGPL notice, full GNU texts, installed-package
+notices, exact-version component register, hash-verified accompanying upstream
+source archives, source/replacement instructions and frozen-content inventory.
+The source packet is not yet a verified exact-binary corresponding-source claim.
+
+Actual freeze used application SHA `c93191e`. An isolated-PATH Git lookup failed
+in material assembly; the driver now passes its preverified SHA. The final
+material stage ran over a fresh copy of unchanged frozen binaries with tool
+SHA `e6fdd85`, preserving failed outputs. Inventory has 6,648 modules, 36 owners,
+103 native binaries and 5,264 material receipts; final folder 5,265 files.
+Structural checks and two original frozen regressions PASS. Qt-only replacement
+from independently verified 6.11.1 and 6.12.0 wheels failed with retained 6.11.2
+bindings; B6 compatibility remains OPEN alongside B1–B5. No ABI cause is claimed.
+
+Windows full regression at unchanged application sources: 1,176 passed / 6
+skipped. Final focused material/build and lifecycle/Qt checks: 15 + 8 passed.
+Ruff, strict MyPy (239 files), compileall and pip check PASS. Fresh CI on
+`e6fdd85`: all three Python versions 1,176 passed / 8 skipped; Node 12 passed.
+Independent Spec/Standards review includes the final actual evidence and
+post-merge current-state wording. Final docs/evidence closeout uses `[skip ci]`.
+
+See [the exact evidence and blockers](docs/V2_M10_B_DISTRIBUTION_COMPLIANCE.md).
+M9.2–M9.4 remain deferred; Q5 and M7/M8 risks are preserved. Owner 30-minute
+packaged smoke remains NOT RUN. No installer, binaries, release, legal-clearance
+or formal Windows UAT/accessibility acceptance is claimed.
+
 ## M10-A — Production Packaging Foundation and owner sequencing
 
 The owner explicitly reprioritized M10 engineering from merged main `26e1d08`.
