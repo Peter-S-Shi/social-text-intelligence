@@ -221,7 +221,10 @@ def test_m9_owner_gate_pass_does_not_imply_evaluation_or_uat() -> None:
         "| M9.0 — Evidence Design Gate | **PASS — owner-approved 2026-10-10.**"
         in status
     )
-    assert "No acquisition, labels, model runs, formal UAT or V2 release readiness is implied" in status
+    assert (
+        "No acquisition, labels, model runs, formal UAT or V2 release "
+        "readiness is implied" in status
+    )
     assert "M9.1 is next and not started; M9.2–M9.4 and M10 have not started" in status
     for name in (
         "V2_M9_EVIDENCE_CONTRACT.md",
