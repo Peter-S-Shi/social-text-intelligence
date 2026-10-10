@@ -223,8 +223,18 @@ class MainWindow(QMainWindow):
         footer.setContentsMargins(12, 10, 12, 0)
         footer.addWidget(self.models_button)
         footer.addWidget(self.models_meter)
+        self.licenses_button = QPushButton("Licenses · Qt LGPL")
+        self.licenses_button.setAccessibleName("Licenses and Qt LGPL notice")
+        self.licenses_button.clicked.connect(self._show_licenses)
         side.addLayout(footer)
+        side.addWidget(self.licenses_button)
         return sidebar
+
+    def _show_licenses(self) -> None:
+        from .license_dialog import LicenseDialog
+
+        dialog = LicenseDialog(self._platform, self)
+        dialog.show()
 
     def _nav_button(self, section: Section) -> NavButton:
         name = LABELS[section]

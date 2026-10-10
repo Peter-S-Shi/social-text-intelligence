@@ -28,9 +28,11 @@ Create a dedicated build environment in a disposable generic location:
 ```powershell
 py -3.12 -m venv .venv-build
 .venv-build\Scripts\python -m pip install -r tools\m10\requirements-build.txt
-.venv-build\Scripts\python tools\m10\build.py --output X:\sti-build-new
+.venv-build\Scripts\python tools\m10\build.py --output X:\sti-build-new --source-dir X:\sti-source-archives
 ```
 
+M10-B adds the required offline source directory and accompanying legal packet;
+see the [distribution compliance record](V2_M10_B_DISTRIBUTION_COMPLIANCE.md).
 The driver requires Windows x64, Python 3.12 and exact manifest versions. It
 fixes the initial source SHA and rejects staged, unstaged or untracked packaging
 inputs (source, spec/tools and notices) before building; it rechecks inputs and SHA
