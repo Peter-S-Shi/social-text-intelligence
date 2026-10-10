@@ -4,10 +4,11 @@ Track A of M8 turns the open M7 risks into bounded, evidence-driven hardening. I
 adds no product feature and no new dependency. Track B (UI fidelity) is separate and
 is not covered here. This ledger lets another agent continue without chat history.
 
-**Status:** Track A implementation is complete on branch
-`milestone/m8a-technical-hardening`. Every item has an explicit disposition below;
-nothing is claimed beyond its evidence. **M8 as a whole is not complete** (Track B and
-the owner's visual review are pending), and M9 and M10 are not started.
+**Status:** Track A is complete and merged (PR #50). Every item retains the
+disposition below; nothing is claimed beyond its evidence. The repository owner
+later approved M8 as a whole with an overall PASS on 2026-10-10, including Track B's
+UI fidelity outcome and the early exploratory trial. This does not turn Track A's
+OWNER DECISION or NOT VERIFIED items into completed checks. M9 and M10 have not started.
 
 Dispositions: **FIXED** (change plus a regression that failed first), **ACCEPTED**
 (understood, left as is, reason given), **NOT REPRODUCED** (stress found nothing),

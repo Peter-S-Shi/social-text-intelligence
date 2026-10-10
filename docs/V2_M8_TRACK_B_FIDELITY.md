@@ -4,11 +4,13 @@ This record covers Track B of M8: aligning the native Windows desktop with the
 approved Round 3 UI/IA reference. Track A (technical hardening) is a separate PR and
 is not described here.
 
-**Status: Track B implementation complete and awaiting independent review. Subjective
-design fidelity: PENDING OWNER. Owner exploratory trial: PENDING OWNER.** No agent can
-accept the visual result. Nothing in this record is a visual acceptance, an accessibility
-acceptance, a model-quality claim or a release-readiness claim. M8 as a whole is not
-complete.
+**Status: Track B implementation complete and merged (PR #51). The repository owner
+approved the overall UI fidelity outcome and completed the early exploratory trial;
+M8 overall manual acceptance: PASS (2026-10-10).** This owner decision is the visual
+acceptance; the captures and automated checks alone were not. No item-level trial
+results or filled friction log were provided. This is not formal accessibility
+acceptance, a model-quality claim, M9 formal acceptance or release readiness.
+Outstanding risks and owner decisions retain their recorded dispositions.
 
 The reference screenshots and the prototype are not copied into the repository. They
 live on the sidecar branch `prototype/v2-ui-ia-exploration` at commit
@@ -273,16 +275,18 @@ first rows only at the narrow and scaled sizes; the bounded scroll is exercised 
 
 The reference pictures stay on the sidecar commit (section 1).
 
-## 9. Not done, and decisions for the owner
+## 9. Owner acceptance and remaining decisions
 
-- **Visual acceptance: PENDING OWNER.** The register above lists what was changed and
-  what was deliberately kept; whether the result is close enough is the owner's call.
+- **Visual outcome: owner PASS (2026-10-10).** The owner approved the overall
+  UI fidelity result. The register above records what changed and what was kept;
+  the decision supplies no new finding for any individual screen or delta.
 - **UNRESOLVED:** none from Round 1 remain. P3, I4 and R3 were built in Round 2
   (section 11) within the owner's constraints; no obstacle was met. The remaining
   ACCEPTED DEVIATIONS are listed in section 5.
-- **Owner exploratory trial: PENDING OWNER.** See the
+- **Early owner exploratory trial: completed and approved overall (2026-10-10).** See the
   [walkthrough](../manual-qa/owner-trial/WALKTHROUGH.md) and
-  [friction log](../manual-qa/owner-trial/FRICTION_LOG.md). It is not M9's UAT.
+  [friction log](../manual-qa/owner-trial/FRICTION_LOG.md). No item-level results or
+  friction entries were supplied; this is not M9's formal UAT.
 - **Not covered by this track:** the queue's row geometry is in fixed pixels and does not follow a Windows text-size setting (DPI scaling is covered); formal accessibility acceptance, Narrator and
   high-contrast checks (M9); packaging and the LGPL gate (M10); a repeat on a second
   physical display or DPI beyond the 100% and 150% captures.
@@ -425,4 +429,5 @@ byte before and after each refusal.
 
 Outcome: implemented test-first at behavioural head `adf9a31` (fresh CI on Python 3.11,
 3.12 and 3.13 passed; local full regression 1151 passed, 4 opt-in skipped). Owner visual
-acceptance and the exploratory trial remain PENDING OWNER; M8 is IN PROGRESS.
+acceptance and the exploratory trial were pending at this implementation exit.
+The owner's later overall PASS is recorded at the top of this document; M8 is complete.
