@@ -174,7 +174,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "Pre-Release Feasibility & Risk Gate is complete with a formally "
         "accepted CONDITIONAL exit, and M8 — Product Hardening & UI Fidelity "
         "is IN PROGRESS (Track A technical hardening complete; Track B UI "
-        "fidelity implemented, owner visual review and exploratory trial "
+        "fidelity implemented and merged, owner visual review and exploratory trial "
         "PENDING OWNER; M8 is not complete).**"
         in roadmap
     )
