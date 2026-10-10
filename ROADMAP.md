@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: M9 — Evidence & Formal Acceptance, M9.0 Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 UAT Infrastructure complete on `main`; M9.2 next. M8 is complete with owner PASS, M7 retains its CONDITIONAL exit, and M9.2–M9.4/M10 have not started.** V2 reopens the project from
+**Current phase: M9 — Evidence & Formal Acceptance, M9.0 Evidence Design Gate PASS (owner-approved 2026-10-10); M9.1 UAT Infrastructure complete on `main`; M9.2-A feasibility research delivered; owner decisions PENDING. M8 is complete with owner PASS, M7 retains its CONDITIONAL exit, and M9.2 acquisition/evaluation execution and M9.3/M9.4/M10 have not started.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -97,7 +97,12 @@ actual sample, or independent annotator is thereby authorized.
 The sequence is M9.0 design freeze, M9.1 synthetic pack/offline recorder, M9.2
 approved-source evaluation with execution preregistration, M9.3 observed
 Windows UAT/accessibility, then M9.4 owner synthesis. M9.1 delivered the
-versioned `SYNTH_UAT` pack and offline recorder; M9.2–M9.4 have not started.
+versioned `SYNTH_UAT` pack and offline recorder; M9.2-A research is delivered; source and human commitments remain PENDING. M9.2 acquisition/evaluation execution and M9.3/M9.4 have not started.
+M9.2-A delivers the [source-intake research](docs/V2_M9_2A_SOURCE_INTAKE_REGISTER.md)
+and [human annotation feasibility plan](docs/V2_M9_2A_ANNOTATOR_FEASIBILITY.md).
+Next, the owner reviews source rights/use and independent human commitments.
+Every candidate remains PENDING; merging research is not source or Gate approval.
+Acquisition and execution preregistration require separately authorized later work.
 M8 exploratory acceptance cannot close formal M9 evidence, and no M9 gate
 closes M10 packaging/LGPL/release requirements.
 
@@ -118,7 +123,7 @@ candidate verification. M8 is complete on `main`: Track A technical hardening
 the overall UI fidelity outcome and completed the early exploratory trial with
 an overall PASS on 2026-10-10. This is not M9's formal acceptance. Codex has delivered the M9.0 design and the
 owner approved the Gate on 2026-10-10. M9.1 infrastructure is complete on `main`;
-M9.2–M9.4 and M10 have not started. M7's
+M9.2 acquisition/evaluation execution, M9.3/M9.4 and M10 have not started. M7's
 CONDITIONAL exit is preserved: open risks close only where the Track A ledger
 shows affirmative evidence; remaining decisions and unverified conditions stay open.
 
