@@ -1,5 +1,6 @@
 # Python environments and bytecode
 .venv/
+.venv-build/
 venv/
 env/
 __pycache__/
