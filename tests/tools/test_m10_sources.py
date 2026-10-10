@@ -24,6 +24,17 @@ def load() -> Any:
     return module
 
 
+def test_frozen_runtime_helper_is_owned_without_hiding_unknown_modules() -> None:
+    compliance = load()
+    owners, unknown = compliance.module_owners(
+        {"_pyi_rth_utils", "_pyi_rth_utils.qt", "unregistered_native_helper"},
+        {},
+        set(),
+    )
+    assert owners == {"PyInstaller"}
+    assert unknown == ["unregistered_native_helper"]
+
+
 def source_archive(path: Path) -> str:
     with tarfile.open(path, "w:xz") as archive:
         text = b"Synthetic test license text; not an actual upstream license.\n"

@@ -213,6 +213,23 @@ def native_owner(relative: str) -> str:
     return "UNRESOLVED native ownership"
 
 
+def module_owners(
+    modules: set[str], mapping: dict[str, list[str]], stdlib: set[str]
+) -> tuple[set[str], list[str]]:
+    """Resolve PYZ ownership, including PyInstaller's installed fake module."""
+    owners: set[str] = {"PyInstaller"}
+    unknown = []
+    for top in sorted({name.split(".")[0] for name in modules}):
+        if top == "_pyi_rth_utils":
+            # PyInstaller/fake-modules/_pyi_rth_utils; Apache-2.0 in COPYING.txt.
+            owners.add("PyInstaller")
+        elif top in mapping:
+            owners.update(mapping[top])
+        elif top not in stdlib:
+            unknown.append(top)
+    return owners, unknown
+
+
 def assemble(
     bundle: Path, source_dir: Path, project: Path, application_revision: str
 ) -> dict[str, object]:
@@ -238,24 +255,15 @@ def assemble(
             shutil.copyfile(path, target)
     shutil.copyfile(project / "LICENSE", legal / "STI-LICENSE.txt")
     shutil.copyfile(Path(sys.base_prefix) / "LICENSE.txt", legal / "PYTHON-LICENSE.txt")
-    names: set[str] = set()
     mapping = importlib.metadata.packages_distributions()
     modules: set[str] = set()
     for executable in ("sti-desktop.exe", "sti-check.exe"):
         archive = CArchiveReader(str(bundle / executable))
         embedded = archive.open_embedded_archive("PYZ.pyz")
         modules.update(embedded.toc)
-    unmapped = []
     stdlib = sys.stdlib_module_names | {"social_text_intelligence"}
-    for top in sorted({name.split(".")[0] for name in modules}):
-        if top == "social_text_intelligence":
-            continue
-        distributions = mapping.get(top)
-        if distributions:
-            names.update(distributions)
-        elif top not in stdlib:
-            unmapped.append(top)
-    names.add("PyInstaller")
+    mapping.pop("social_text_intelligence", None)
+    names, unmapped = module_owners(modules, mapping, stdlib)
     register = json.loads(
         (project / "distribution/component-register.json").read_text()
     )

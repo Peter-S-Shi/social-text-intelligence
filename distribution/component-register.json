@@ -194,10 +194,10 @@
     {
       "name": "pyinstaller",
       "version": "6.22.3",
-      "selected_license": "GPL-2.0-or-later WITH Bootloader-exception",
+      "selected_license": "GPL-2.0-or-later with PyInstaller bootloader exception; Apache-2.0 runtime hooks and fake modules",
       "upstream": "https://pyinstaller.org",
-      "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
-      "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+      "installed_evidence": "6.22.3 COPYING.txt and PyInstaller/fake-modules/_pyi_rth_utils/__init__.py Apache-2.0 header; material hashes in frozen inventory",
+      "obligations": "Preserve COPYING.txt including Apache-2.0, GPL terms and the actual bootloader exception; preserve runtime-helper copyright attribution. The exception is not a blanket waiver for separately distributed or modified PyInstaller.",
       "status": "IDENTIFIED; embedded/native coverage remains conditional"
     },
     {
