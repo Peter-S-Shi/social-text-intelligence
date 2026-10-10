@@ -158,6 +158,9 @@ test("human-readable summary escapes hostile notes and keeps failures visible", 
   });
   const summary = core.summaryMarkdown(pack, session);
   assert.match(summary, /FAIL: 1/);
+  assert.match(summary, /Protocol: 1/);
+  assert.match(summary, /Synthetic Windows 11/);
+  assert.match(summary, /OWNER-AUTH-001/);
   assert.match(summary, /NOT RUN: 48/);
   assert.ok(!summary.includes("<img"));
   assert.ok(!summary.includes("[link](https://evil.invalid/path)"));

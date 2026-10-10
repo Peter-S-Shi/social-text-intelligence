@@ -366,10 +366,16 @@
     const counts = progress(pack, session);
     const lines = ["# STI M9 UAT working summary", "",
       "Infrastructure record only. Formal acceptance decision: not assessed.", "",
-      `Pack: ${escape(session.pack_version)}; fixture: ${escape(session.fixture_version)}`,
+      `Protocol: ${escape(session.protocol_version)}; pack: ${escape(session.pack_version)}; fixture: ${escape(session.fixture_version)}`,
       `Session: ${escape(session.session_id)}; tested SHA: ${escape(session.environment.tested_sha || "NOT RECORDED")}`,
+      `Created: ${escape(session.created_at)}; updated: ${escape(session.updated_at)}`,
+      `Authorization reference: ${escape(session.authorization_ref || "NOT RECORDED")}`,
       `Recorded: ${counts.recorded}/${counts.total}; PASS: ${counts.pass}; FAIL: ${counts.fail}; N/A: ${counts.na}; NOT RUN: ${counts.not_run}`,
-      "", "## Steps", ""];
+      "", "## Environment", ""];
+    for (const [field, value] of Object.entries(session.environment)) {
+      lines.push(`- ${escape(field)}: ${escape(value || "NOT RECORDED")}`);
+    }
+    lines.push("", "## Steps", "");
     for (const result of session.results) {
       lines.push(`- ${escape(result.step_id)}: ${escape(result.status)}`);
       if (result.defect_id) lines.push(`  - Defect: ${escape(result.defect_id)}`);
@@ -386,6 +392,10 @@
         if (history.status === "FAIL") lines.push(`    - Original severity: ${escape(history.severity)}; blocking status: ${escape(history.blocking_status)}`);
         if (history.evidence_ref) lines.push(`    - Original evidence: ${escape(history.evidence_ref)}`);
         if (history.observed_outcome) lines.push(`    - Original outcome: ${escape(history.observed_outcome)}`);
+        if (history.observed_action) lines.push(`    - Original action: ${escape(history.observed_action)}`);
+        if (history.rationale) lines.push(`    - Original rationale: ${escape(history.rationale)}`);
+        if (history.na_reason) lines.push(`    - Original N/A reason: ${escape(history.na_reason)}`);
+        if (history.note) lines.push(`    - Original note: ${escape(history.note)}`);
       }
     }
     if (session.retests.length) {
