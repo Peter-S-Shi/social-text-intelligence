@@ -307,8 +307,9 @@ The reference pictures stay on the sidecar commit (section 1).
 After Track A merged (PR #50, `origin/main` `1a48d25`), the owner asked for higher
 fidelity and for the three items that Round 1 left UNRESOLVED to be built within
 these constraints: existing project data only; bounded read models; no schema change,
-no new persisted summary, no new analytics; no network; text truncated and never kept
-whole in a view model; nothing logged; exports unchanged; UI thread never blocked.
+no new persisted summary, no new analytics; no network; list text limited to a sanitized
+excerpt of at most 100 characters (a record shorter than that may be shown in full);
+nothing logged; exports unchanged; UI thread never blocked.
 Track A's wording stays coherent: rows rejected at import are `invalid_rows`, analysis
 failures are `failed_rows`, and analysed + failed = valid (A6).
 
@@ -345,8 +346,9 @@ still be absent from every notice, error and export-independent surface.
 - **I4 (import preview) and R3 (results text):** the workflow read models carry
   `ValidationRow` / `ResultRow.excerpt`, produced by
   `application/text_excerpt.py` (whitespace folded, cut at 100 characters, `(empty)`
-  for an empty text). The full text is never copied into a view model; a test checks
-  that the tail of a long text is absent from every read model and view. Notices,
+  for an empty text). A row read model carries only that sanitized excerpt, at most 100
+  characters; a record shorter than the limit is shown in full, a longer one is cut.
+  A test checks that the tail of a long text is absent from every read model and view. Notices,
   errors and exports are unchanged. The tests that used to assert "no record text in the
   read models" were revised to assert the bounded excerpt instead.
 - **Selection integrity and UI:** the queue and tabs are unchanged; project rows open by
@@ -373,3 +375,36 @@ reference hides behind "Inspect all"; Results keeps three card columns (the refe
 has four); the sidebar has no icons. None hides data or breaks a binding decision; each
 trades a visual match for information, keyboard operation or reflow. Typography is the
 largest remaining material difference and is system-font bound (section 6).
+
+
+## 12. Follow-up: the demo launcher may not delete what it does not own
+
+An external review found that `tools/demo/launch_demo.py` called `shutil.rmtree` on a
+caller-supplied `--root` on `--reset`, or when its seed marker was missing, whatever the
+directory held. Fixed test-first. The seam is the launcher module itself, imported by
+path with no Qt: `prepare_workspace(root, ...)` decides and prepares the folder, and
+`main(argv, real_app_data=...)` returns the exit status, both before Qt is loaded.
+
+Rules: automatic cleanup only in a directory that carries the tool's ownership sentinel
+(`.sti-demo-workspace`, written before any seeding, so an interrupted seed is still
+recognised), and then only the known tool-created children (`projects`, `models`,
+`locks` and the marker) are removed, never an arbitrary tree. Refused with exit status 2,
+a plain explanation on stderr and nothing deleted: a non-empty folder without the
+sentinel, an unknown entry next to the tool's own, a file, a drive, home or repository
+root or anything that contains the repository or the home folder, a parent of or place
+inside the real application-data folder, a symlink or junction (on the root or a tool
+child), and the real folder itself. A missing or empty root is created and claimed. An
+older `_local/demo` made before the sentinel existed is refused until it is deleted by
+hand. Tests: `tests/tools/test_launch_demo_safety.py`.
+
+**Corrected wording.** The guarantee about record text is this: Results, Import and
+Review lists carry a sanitized excerpt of **at most 100 characters** (90 in the Review
+queue); a record shorter than the limit may be displayed in full. Earlier statements
+that whole record text can "never" enter a view model were too absolute and have been
+corrected. The Review page itself, as before, shows the open record in full.
+
+**Python 3.12 teardown crash.** A CI run on head `cb84d37` ended with a segmentation
+fault at interpreter exit ("shared QObject was deleted directly") after every test had
+passed. It is **not conclusively root-caused**. A test that left a parentless widget
+alive was fixed as the likeliest cause and the next run was green. It will be
+investigated only if the same warning or crash recurs.

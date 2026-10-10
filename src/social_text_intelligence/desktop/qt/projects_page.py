@@ -435,7 +435,7 @@ class ProjectsPage(QWidget):
         self.progress.cancel_requested.connect(self._controller.cancel)
 
         # every imported row with its check, as a scrolling table (a bounded
-        # excerpt of each text, never the whole text)
+        # excerpt of each text, at most 100 characters)
         self.preview_card = Card("ROW PREVIEW · VALIDATION")
         self.all_ready = label(role="muted")
         self.all_ready.setObjectName("all-ready")

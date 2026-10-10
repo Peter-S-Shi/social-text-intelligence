@@ -118,7 +118,7 @@ def test_each_row_has_a_status_in_words_and_a_reason_when_it_has_no_result(
     assert failed.sentiment == "—" and failed.can_review is False
     assert rejected.status_word == "✕ Rejected at import"
     assert rejected.record_id == "r26" and ": " in rejected.detail
-    # the TEXT column holds a bounded excerpt, never the whole text
+    # the TEXT column holds a sanitized excerpt of at most 100 characters
     assert SENTINEL in first.text
     assert all(len(row.text) <= 100 for row in rows)
     assert rejected.text  # a rejected row still shows what was in it

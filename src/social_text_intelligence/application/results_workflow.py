@@ -3,9 +3,9 @@
 A thin, typed seam over the stored batch workspace. It restates nothing: CSV validation,
 the row outcomes, the aggregates, the language check, and the spreadsheet-safe export
 all stay in the batch services, and this module only turns a project id into read
-models. A read model holds a record's text only as a bounded one-line excerpt (see
-``text_excerpt``), never whole, plus its identity, labels, and the fixed reason a row
-did not make it through.
+models. A read model carries a record's text only as a sanitized one-line excerpt of
+at most 100 characters (see ``text_excerpt``; a shorter record appears in full), plus
+its identity, labels, and the fixed reason a row did not make it through.
 """
 
 from __future__ import annotations
@@ -108,7 +108,9 @@ class ResultRow:
     error_message: str | None = None
     # True for a row the CSV preparation rejected: it never reached the models.
     rejected_at_import: bool = False
-    excerpt: str = ""  # the start of the record's text, bounded (never the whole)
+    excerpt: str = (
+        ""  # the start of the record's text: sanitized, at most 100 characters
+    )
 
 
 @dataclass(frozen=True, slots=True)

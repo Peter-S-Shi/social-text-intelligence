@@ -70,7 +70,7 @@ class TableRowView:
     language: str
     language_warns: bool
     can_review: bool
-    text: str = ""  # a bounded one-line excerpt, never the whole text
+    text: str = ""  # sanitized excerpt, at most 100 characters
 
     @property
     def accessible_name(self) -> str:

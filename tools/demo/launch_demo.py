@@ -13,6 +13,7 @@ Review and Agreement show content. Later runs open the same folder instantly.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -24,6 +25,84 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 DEMO_NAME = "Demo feedback (invented)"
 ACCEPTED_ROWS = 6
 SEEDED_MARKER = "demo_seeded.txt"
+# Written when the tool first claims a folder, before any seeding, so a seed that
+# was interrupted is still recognised as the tool's own. Only a folder that carries
+# it, and holds nothing but the entries below, is ever cleaned automatically.
+SENTINEL = ".sti-demo-workspace"
+SENTINEL_TEXT = "sti demo workspace" + chr(10)
+TOOL_CHILDREN = ("projects", "models", "locks")  # created by the app's own folders
+
+
+class UnsafeRoot(Exception):
+    """The folder is not a disposable demo workspace this tool may touch."""
+
+
+def _refuse(root: Path, why: str) -> UnsafeRoot:
+    return UnsafeRoot(
+        f"Refusing to use {root}: {why}. Nothing was changed or deleted. "
+        "Choose an empty or new folder for --root, or leave --root out."
+    )
+
+
+def _is_link(path: Path) -> bool:
+    return path.is_symlink() or bool(
+        getattr(os.path, "isjunction", lambda _p: False)(path)
+    )
+
+
+def prepare_workspace(
+    root: Path, *, real_app_data: Path | None, repo: Path, reset: bool = False
+) -> bool:
+    """Make ``root`` a clean tool-owned workspace; True when it needs seeding.
+
+    Raises ``UnsafeRoot`` before changing anything unless the folder is missing,
+    empty, or carries this tool's sentinel and holds only the tool's own entries.
+    Cleaning removes only those known entries, never an arbitrary tree.
+    """
+
+    lexical = Path(os.path.abspath(root))
+    resolved = lexical.resolve()
+    home = Path.home().resolve()
+    if _is_link_in_path(lexical):
+        raise _refuse(root, "it is, or sits behind, a link to somewhere else")
+    if resolved == Path(resolved.anchor) or resolved in (home, repo.resolve()):
+        raise _refuse(root, "it is a drive, home or repository root")
+    if resolved in repo.resolve().parents or resolved in home.parents:
+        raise _refuse(root, "it contains the repository or the home folder")
+    if real_app_data is not None:
+        real = real_app_data.resolve()
+        if resolved == real or real in resolved.parents or resolved in real.parents:
+            raise _refuse(root, "it is, holds or sits inside the real app data")
+    if not resolved.exists():
+        resolved.mkdir(parents=True)
+        (resolved / SENTINEL).write_text(SENTINEL_TEXT, encoding="utf-8")
+        return True
+    if not resolved.is_dir():
+        raise _refuse(root, "it is not a folder")
+    entries = {item.name: item for item in resolved.iterdir()}
+    if not entries:
+        (resolved / SENTINEL).write_text(SENTINEL_TEXT, encoding="utf-8")
+        return True
+    if SENTINEL not in entries:
+        raise _refuse(root, "it is not empty and was not created by this tool")
+    known = {*TOOL_CHILDREN, SEEDED_MARKER, SENTINEL}
+    unknown = sorted(set(entries) - known)
+    if unknown:
+        raise _refuse(root, f"it holds files this tool did not create ({unknown[0]})")
+    if any(_is_link(entries[name]) for name in TOOL_CHILDREN if name in entries):
+        raise _refuse(root, "one of its folders is a link to somewhere else")
+    if not reset and SEEDED_MARKER in entries:
+        return False
+    for name in TOOL_CHILDREN:  # a reset, or an interrupted seed: clean what we made
+        if name in entries:
+            shutil.rmtree(entries[name])
+    if SEEDED_MARKER in entries:
+        entries[SEEDED_MARKER].unlink()
+    return True
+
+
+def _is_link_in_path(path: Path) -> bool:
+    return any(_is_link(parent) for parent in (path, *path.parents))
 
 
 def seed(services, models_src: Path) -> list[str]:  # type: ignore[no-untyped-def]
@@ -73,13 +152,42 @@ def seed(services, models_src: Path) -> list[str]:  # type: ignore[no-untyped-de
     return notes
 
 
-def main() -> int:
+def _real_app_data() -> Path | None:
+    from social_text_intelligence.infrastructure.app_data import (
+        default_app_data_locations,
+    )
+
+    try:
+        return default_app_data_locations().root.resolve()
+    except Exception:  # noqa: BLE001 - only used to refuse the real folder
+        return None
+
+
+def main(argv: list[str] | None = None, *, real_app_data: Path | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=str(REPO / "_local" / "demo"))
     parser.add_argument("--models-src", default=str(REPO / "model_cache"))
-    parser.add_argument("--reset", action="store_true", help="delete and re-seed")
-    args = parser.parse_args()
-    root = Path(args.root).resolve()
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="remove this tool's own demo data and seed again",
+    )
+    args = parser.parse_args(argv)
+    root = Path(args.root)
+    real = real_app_data if real_app_data is not None else _real_app_data()
+    if real is not None:
+        resolved = Path(os.path.abspath(root)).resolve()
+        if resolved == real or real in resolved.parents:
+            sys.stderr.write("Refusing to use the real application-data folder.\n")
+            return 2
+    try:
+        needs_seed = prepare_workspace(
+            root, real_app_data=real, repo=REPO, reset=args.reset
+        )
+    except UnsafeRoot as error:
+        sys.stderr.write(f"{error}\n")
+        return 2
+    root = Path(os.path.abspath(root)).resolve()
 
     from PySide6.QtWidgets import QApplication
 
@@ -87,30 +195,13 @@ def main() -> int:
     from social_text_intelligence.desktop.qt.app import build_window
     from social_text_intelligence.desktop.qt.main_window import APP_TITLE
     from social_text_intelligence.desktop.qt.style import STYLESHEET
-    from social_text_intelligence.infrastructure.app_data import (
-        AppDataLocations,
-        default_app_data_locations,
-    )
+    from social_text_intelligence.infrastructure.app_data import AppDataLocations
 
-    try:
-        real: Path | None = default_app_data_locations().root.resolve()
-    except Exception:  # noqa: BLE001 - only used to refuse the real folder
-        real = None
-    if real is not None and (root == real or real in root.parents):
-        sys.stderr.write("Refusing to use the real application-data folder.\n")
-        return 2
-    if args.reset and root.is_dir():
-        shutil.rmtree(root)
     locations = AppDataLocations(root)
-    marker = root / SEEDED_MARKER
-    if not marker.is_file():
-        # a missing marker means no earlier run finished seeding: start clean
-        if root.is_dir():
-            shutil.rmtree(root)
+    if needs_seed:
         for note in seed(build_desktop_services(locations), Path(args.models_src)):
             print(note)
-        root.mkdir(parents=True, exist_ok=True)
-        marker.write_text("seeded\n", encoding="utf-8")
+        (root / SEEDED_MARKER).write_text("seeded\n", encoding="utf-8")
     app = QApplication.instance() or QApplication(sys.argv[:1])
     assert isinstance(app, QApplication)
     app.setApplicationName(APP_TITLE)

@@ -14,7 +14,7 @@ which exposed width locks the Windows captures had hidden. Round 2, after Track 
 merged: per-project row counts and review progress in the project list (six small
 read-time `COUNT(*)` queries, no text, no schema change), review-state tabs, a full
 row preview on Import and a read-only TEXT column on Results, both built from a
-bounded 100-character excerpt so no whole text enters a view model, and the nine
+sanitized excerpt of at most 100 characters (a shorter record appears in full), and the nine
 compact scores drawn as columns. Independent reviews found a wrong queue counter
 under a filter, invisible focus rings on filled controls and unescaped text in
 tooltips, all repaired test-first. System fonts stay; the OFL facts for the reference
