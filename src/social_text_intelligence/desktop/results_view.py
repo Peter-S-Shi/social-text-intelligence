@@ -70,6 +70,7 @@ class TableRowView:
     language: str
     language_warns: bool
     can_review: bool
+    text: str = ""  # sanitized excerpt, at most 100 characters
 
     @property
     def accessible_name(self) -> str:
@@ -111,6 +112,23 @@ class ProblemView:
 
 
 @dataclass(frozen=True, slots=True)
+class PreviewRowView:
+    """One line of the import preview: the row, a short text, its check and reason."""
+
+    row: int
+    record_id: str
+    text: str
+    check: str  # "Ready" or "Rejected"
+    reason: str  # "" when ready, else "code: message"
+    rejected: bool
+
+    @property
+    def accessible_name(self) -> str:
+        reason = f". {self.reason}" if self.reason else ""
+        return f"Row {self.row}, {self.record_id}. {self.check}{reason}. {self.text}"
+
+
+@dataclass(frozen=True, slots=True)
 class ValidationView:
     summary_line: str
     column_line: str
@@ -118,6 +136,8 @@ class ValidationView:
     problems: tuple[ProblemView, ...]  # rejected when the CSV was prepared
     failures: tuple[ProblemView, ...]  # valid rows whose analysis failed
     all_ready_line: str
+    preview: tuple[PreviewRowView, ...] = ()  # every row, in file order
+    preview_tabs: tuple[tuple[str, str, int], ...] = ()  # (text, value, count)
 
 
 def _name(value: str) -> str:
@@ -164,6 +184,7 @@ def _table_row(row: ResultRow) -> TableRowView:
         language=short,
         language_warns=bool(notice and notice.warns),
         can_review=row.status == "ok",
+        text=row.excerpt,
     )
 
 
@@ -278,6 +299,17 @@ def build_validation_view(state: ResultsState) -> ValidationView | None:
     failures = tuple(
         _problem(item, "Failed in analysis") for item in validation.failed_rows
     )
+    preview = tuple(
+        PreviewRowView(
+            row=item.row_number,
+            record_id=item.record_id,
+            text=item.excerpt,
+            check="Rejected" if item.rejected else "Ready",
+            reason=f"{item.code}: {item.message}" if item.rejected else "",
+            rejected=item.rejected,
+        )
+        for item in validation.rows
+    )
     line = (
         f"{validation.total_rows} rows · {validation.valid_rows} ready · "
         f"{len(validation.invalid_rows)} with problems"
@@ -293,4 +325,9 @@ def build_validation_view(state: ResultsState) -> ValidationView | None:
         problems=problems,
         failures=failures,
         all_ready_line=ALL_READY_LINE if not problems and not failures else "",
+        preview=preview,
+        preview_tabs=(
+            ("All", "all", len(preview)),
+            ("Rejected", "rejected", len(problems)),
+        ),
     )

@@ -1,0 +1,30 @@
+record_id,text,source_label,topic,timestamp
+t-001,"The new dashboard is a big step up, I found everything in seconds.",app_store,dashboard,2026-03-02T09:15:00Z
+t-002,"Export keeps timing out and I lost an hour of work. Really frustrating.",support,export,2026-03-02T10:40:00Z
+t-003,"The release notes were clear and the upgrade went smoothly.",forum,upgrade,2026-03-03T08:05:00Z
+t-004,"I am not sure what the new filter button actually does.",app_store,dashboard,2026-03-03T11:20:00Z
+t-005,"Support answered within ten minutes. Thank you, that was lovely.",support,support,2026-03-04T14:00:00Z
+t-006,"The mobile layout is cramped and the text is hard to read.",forum,mobile,2026-03-04T16:30:00Z
+t-007,"Meeting moved to Thursday at noon, please update your calendars.",forum,upgrade,2026-03-05T07:45:00Z
+t-008,"Honestly worried the next update will break my saved views again.",app_store,dashboard,2026-03-05T12:10:00Z
+t-009,"Dark mode looks fantastic, the team clearly cared about the details.",app_store,dashboard,2026-04-06T09:00:00Z
+t-010,"Why does every import ask me to pick the column again? Annoying.",support,import,2026-04-06T13:25:00Z
+t-011,"The tutorial video was helpful and short, exactly what I needed.",forum,support,2026-04-07T10:10:00Z
+t-012,"Pricing page is confusing and I could not find the student plan.",forum,pricing,2026-04-07T15:50:00Z
+t-013,"Oh great, another update that moves every button. Just what I wanted.",app_store,dashboard,2026-04-08T08:30:00Z
+t-014,"The search results feel random lately, I expected better than this.",support,search,2026-04-08T17:05:00Z
+t-015,"Installed on the second laptop without any trouble at all.",app_store,upgrade,2026-04-09T09:40:00Z
+t-016,"Not thrilled about the new limit on exports, but I understand why.",forum,export,2026-04-09T11:55:00Z
+t-017,"Merci pour la mise a jour, tout fonctionne tres bien chez moi.",forum,upgrade,2026-05-10T10:00:00Z
+t-018,"lol the loading animation is weirdly satisfying",app_store,dashboard,2026-05-10T14:20:00Z
+t-019,,support,search,2026-05-11T09:00:00Z
+t-020,"Third crash this week on startup. I am close to giving up on this tool.",support,upgrade,2026-05-11T18:15:00Z
+t-021,"=SUM(1,2) is how I would sum the totals, but the report does it for me now.",forum,reports,2026-05-12T09:30:00Z
+t-022,"The weekly digest made my Monday better, thank you.",forum,newsletter,2026-05-12T12:00:00Z
+t-023,"Why would anyone design a menu like this? Truly baffling.",app_store,dashboard,2026-05-13T08:10:00Z
+t-023,"This row repeats a record id on purpose, so import should reject it.",forum,dashboard,2026-05-13T08:20:00Z
+t-024,"Das Update hat das Problem leider nicht gelöst.",support,upgrade,2026-05-14T10:45:00Z
+t-025,"Fine.",app_store,upgrade,2026-05-14T11:00:00Z
+t-026,"I cannot tell whether the backup ran or not, and that worries me.",support,backup,2026-05-15T16:40:00Z
+t-027,"Great job on the new search, it is instant now.",app_store,search,2026-05-15T17:00:00Z
+t-028,"The invoice export is broken again and nobody replied to my ticket.",support,export,2026-05-16T09:05:00Z

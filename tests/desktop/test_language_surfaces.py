@@ -61,6 +61,7 @@ def test_a_fresh_result_with_no_detector_warns_that_the_check_was_unavailable() 
 
 # -- the real Qt page ----------------------------------------------------------
 
+
 def analyse(make_shell: Any, report: Any) -> Any:
     shell = make_shell(
         FakeProvisioning(current=status()), gateway=StubGateway(report=report)
@@ -76,7 +77,8 @@ def test_the_analyze_page_warns_in_words_and_keeps_the_labels(make_shell: Any) -
     page = analyse(make_shell, synthetic_report(detected="fr"))
 
     assert page.result_box.isVisibleTo(page)
-    assert "Sentiment:" in page.result_text.text()
+    assert "Sentiment:" in page.result_box.accessibleName()
+    assert page.sentiment_word.text() and page.emotion_word.text()
     assert page.language_box.isVisibleTo(page)
     assert page.language_box.property("role") == "notice"
     assert page.language_headline.text().startswith("⚠ ")
@@ -165,9 +167,7 @@ def test_the_project_page_shows_the_language_summary_after_analysis(
 ) -> None:
     from persistence.language_samples import LanguageGateway, mixed_language_csv
 
-    shell = make_shell(
-        FakeProvisioning(current=status()), gateway=LanguageGateway()
-    )
+    shell = make_shell(FakeProvisioning(current=status()), gateway=LanguageGateway())
     page = shell.window.projects_page
     path = tmp_path / "mixed.csv"
     path.write_bytes(mixed_language_csv())

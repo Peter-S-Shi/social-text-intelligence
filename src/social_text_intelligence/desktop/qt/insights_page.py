@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLineEdit,
     QListWidget,
@@ -41,7 +42,17 @@ from ..insights_view import (
     NoteView,
     build_insights_view,
 )
-from .components import BarGrid, Card, Combo, SplitRow
+from .components import (
+    BarGrid,
+    Card,
+    Combo,
+    FlowRow,
+    ReflowRow,
+    SplitRow,
+    chip,
+    relax_width,
+    rule,
+)
 from .platform import DesktopPlatform
 from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
 
@@ -91,6 +102,21 @@ def _fill(combo: Combo, choices: tuple[tuple[str, str], ...], value: str) -> Non
     combo.blockSignals(False)
 
 
+def _step(number: str, title: str, hint: str = "") -> QHBoxLayout:
+    """A numbered section heading: a quiet serif numeral, the title, and a hint."""
+
+    row = QHBoxLayout()
+    row.setSpacing(10)
+    row.addWidget(label(number, role="numeral", wrap=False))
+    column = QVBoxLayout()
+    column.setSpacing(0)
+    column.addWidget(label(title, role="cardhead"))
+    if hint:
+        column.addWidget(label(hint, role="muted"))
+    row.addLayout(column, 1)
+    return row
+
+
 def _clear_layout(layout: QVBoxLayout) -> None:
     while layout.count():
         item = layout.takeAt(0)
@@ -109,7 +135,17 @@ class GroupCardWidget(QFrame):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 12, 16, 14)
         layout.setSpacing(8)
-        layout.addWidget(label(view.heading, role="title"))
+        head = QHBoxLayout()
+        head.addWidget(label(view.heading, role="title"), 1)
+        status = chip("small sample" if view.sample_line else "descriptive", "neutral")
+        status.setProperty("tone", "warn" if view.sample_line else "ok")
+        head.addWidget(status, 0, Qt.AlignmentFlag.AlignTop)
+        layout.addLayout(head)
+        headline = next((row for row in view.rows if row.emphasized), None)
+        if headline is not None:
+            figure = label(headline.percent_text, role="figure", wrap=False)
+            figure.setObjectName("group-figure")
+            add_all(layout, figure, label(headline.label, role="muted"))
         add_all(layout, label(view.context_line), label(view.failed_line, role="muted"))
         if view.sample_line:
             warning = label(f"◆ {view.sample_line}")
@@ -168,8 +204,10 @@ class CaseWidget(QFrame):
         add_all(
             layout, label(view.reason, role="muted"), label(view.title, role="title")
         )
-        layout.addWidget(label(view.text))
-        language = LanguageBox("case-language")
+        quote = label(view.text)
+        quote.setProperty("quote", True)
+        layout.addWidget(quote)
+        language = LanguageBox("case-language", compact=True)
         language.show_language(
             view.language_headline, view.language_detail, view.language_warns
         )
@@ -281,18 +319,38 @@ class InsightsPage(QWidget):
         self.apply_button.setObjectName("insights-apply")
         self.apply_button.setProperty("primary", True)
         self.apply_button.setAccessibleName("Show this view")
+        # three numbered steps, as in the reference: what to group by, what to measure,
+        # and which rows to leave out
+        controls_layout.addLayout(_step("01", "Group by", "as supplied in your file"))
+        add_all(controls_layout, self.grouping_combo, self.compare_box)
+        add_all(controls_layout, self.group_list, self.group_hint)
+        controls_layout.addWidget(rule())
+        controls_layout.addLayout(_step("02", "Perspective & metric"))
         for caption, widget in (
-            ("Group by (as supplied in your file)", self.grouping_combo),
             ("Perspective", self.perspective_combo),
             ("Metric", self.metric_combo),
-            ("AI sentiment filter", self.sentiment_combo),
-            ("AI dominant emotion filter", self.emotion_combo),
-            ("From date", self.date_from_edit),
-            ("To date", self.date_to_edit),
         ):
             controls_layout.addWidget(label(caption, role="muted"))
             controls_layout.addWidget(widget)
-        add_all(controls_layout, self.compare_box, self.group_list, self.group_hint)
+        controls_layout.addWidget(rule())
+        controls_layout.addLayout(_step("03", "Filters"))
+        for caption, widget in (
+            ("AI sentiment", self.sentiment_combo),
+            ("AI dominant emotion", self.emotion_combo),
+        ):
+            controls_layout.addWidget(label(caption, role="muted"))
+            controls_layout.addWidget(widget)
+        filter_grid = QGridLayout()
+        filter_grid.setHorizontalSpacing(8)
+        filter_grid.setVerticalSpacing(4)
+        for column, (caption, date_edit) in enumerate(
+            (("From date", self.date_from_edit), ("To date", self.date_to_edit))
+        ):
+            filter_grid.addWidget(label(caption, role="muted"), 0, column)
+            filter_grid.addWidget(date_edit, 1, column)
+        filter_grid.setColumnStretch(0, 1)
+        filter_grid.setColumnStretch(1, 1)
+        controls_layout.addLayout(filter_grid)
         add_all(controls_layout, self.field_error)
         controls_layout.addWidget(self.apply_button, 0, Qt.AlignmentFlag.AlignLeft)
 
@@ -302,13 +360,15 @@ class InsightsPage(QWidget):
         self.caution = label()
         self.caution.setObjectName("comparison-caution")
         self.language_box = LanguageBox("insights-language")
-        self.cards_box = QVBoxLayout()
+        self.cards_box = ReflowRow(min_width=250, spacing=14)
         self.limitations = label(LIMITATIONS, role="muted")
         self.provenance = label(role="mono")
         self.native_box = QCheckBox("Include model-native emotion scores")
         self.native_box.setObjectName("export-native")
+        relax_width(self.native_box)
         self.records_box = QCheckBox("Include supporting record text and metadata")
         self.records_box.setObjectName("export-records")
+        relax_width(self.records_box)
         self.export_button = QPushButton("Export insights CSV…")
         self.export_button.setObjectName("insights-export")
         self.export_button.setAccessibleName("Export insights CSV")
@@ -322,8 +382,7 @@ class InsightsPage(QWidget):
         main_layout.setSpacing(14)
         add_all(main_layout, self.language_box)
         add_all(main_layout, self.filters_line, self.definition, self.caution)
-        self.cards_box.setSpacing(14)
-        main_layout.addLayout(self.cards_box)
+        main_layout.addWidget(self.cards_box)
         add_all(main_layout, self.limitations, self.provenance)
         export_card = Card("EXPORT")
         add_all(export_card.layout_, self.records_box, self.native_box)
@@ -378,22 +437,39 @@ class InsightsPage(QWidget):
         self.importance_edit.setTabChangesFocus(True)
         self.importance_edit.setFixedHeight(64)
         self.tag_boxes: dict[ContextTag, QCheckBox] = {}
-        for caption, widget in (
-            ("Association", self.association_combo),
-            ("Association value", self.value_combo),
+        pair = QGridLayout()
+        pair.setHorizontalSpacing(8)
+        pair.setVerticalSpacing(4)
+        for column, (caption, widget) in enumerate(
+            (
+                ("Association", self.association_combo),
+                ("Association value", self.value_combo),
+            )
+        ):
+            pair.addWidget(label(caption, role="muted"), 0, column)
+            pair.addWidget(widget, 1, column)
+        pair.setColumnStretch(0, 1)
+        pair.setColumnStretch(1, 1)
+        form_layout.addLayout(pair)
+        for caption, field in (
             ("Phrase or expression", self.phrase_edit),
             ("Your explanation", self.explanation_edit),
             ("Why the context matters", self.importance_edit),
         ):
             form_layout.addWidget(label(caption, role="muted"))
-            form_layout.addWidget(widget)
+            form_layout.addWidget(field)
         form_layout.addWidget(label("Optional context tags", role="muted"))
+        self.tag_row = FlowRow()
+        self.tag_row.setObjectName("context-tags")
         for tag in ContextTag:
-            box = QCheckBox(tag.value.replace("_", " ").capitalize())
-            box.setAccessibleName(f"Tag {tag.value.replace('_', ' ')}")
+            name = tag.value.replace("_", " ")
+            box = QCheckBox(name)
+            box.setProperty("pill", True)
+            box.setAccessibleName(f"Tag {name}")
             box.toggled.connect(self._note_changed)
             self.tag_boxes[tag] = box
-            form_layout.addWidget(box)
+            self.tag_row.add(box)
+        form_layout.addWidget(self.tag_row)
         self.note_error = label(role="error")
         self.note_error.setObjectName("note-field-error")
         self.note_error.setVisible(False)
@@ -401,7 +477,7 @@ class InsightsPage(QWidget):
         self.unsaved_note.setObjectName("unsaved-note")
         self.add_note_button = QPushButton("Add note")
         self.add_note_button.setObjectName("add-note")
-        self.add_note_button.setProperty("primary", True)
+        self.add_note_button.setProperty("human", True)
         self.add_note_button.setAccessibleName("Add this note")
         add_all(form_layout, self.note_error, self.unsaved_note)
         form_layout.addWidget(self.add_note_button, 0, Qt.AlignmentFlag.AlignLeft)
@@ -424,15 +500,29 @@ class InsightsPage(QWidget):
         self.select_button.setAccessibleName("Select cases by this rule")
         cases_panel = frame("panel")
         cases_layout = QVBoxLayout(cases_panel)
-        cases_layout.addWidget(label("Representative cases", role="title"))
-        for caption, control in (
-            ("Selection rule", self.mode_combo),
-            ("Emotion for the highest-score rule", self.example_emotion_combo),
-            ("Context-note tag (optional)", self.example_tag_combo),
-            ("Records for the selected-records rule", self.record_list),
+        cases_layout.addWidget(
+            label("REPRESENTATIVE CASES · RULE-SELECTED", role="eyebrow")
+        )
+        cases_layout.addWidget(label("Selection rule", role="muted"))
+        cases_layout.addWidget(self.mode_combo)
+        rule_grid = QGridLayout()
+        rule_grid.setHorizontalSpacing(8)
+        rule_grid.setVerticalSpacing(4)
+        for column, (caption, control) in enumerate(
+            (
+                ("Emotion for the highest-score rule", self.example_emotion_combo),
+                ("Context-note tag (optional)", self.example_tag_combo),
+            )
         ):
-            cases_layout.addWidget(label(caption, role="muted"))
-            cases_layout.addWidget(control)
+            rule_grid.addWidget(label(caption, role="muted"), 0, column)
+            rule_grid.addWidget(control, 1, column)
+        rule_grid.setColumnStretch(0, 1)
+        rule_grid.setColumnStretch(1, 1)
+        cases_layout.addLayout(rule_grid)
+        cases_layout.addWidget(
+            label("Records for the selected-records rule", role="muted")
+        )
+        cases_layout.addWidget(self.record_list)
         cases_layout.addWidget(self.select_button, 0, Qt.AlignmentFlag.AlignLeft)
         self.cases_box = QVBoxLayout()
         self.cases_empty = label()
@@ -442,17 +532,24 @@ class InsightsPage(QWidget):
         main_layout = QVBoxLayout(main)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(14)
-        main_layout.addWidget(label("Your context notes", role="title"))
-        add_all(main_layout, self.no_notes)
-        self.notes_box.setSpacing(12)
-        main_layout.addLayout(self.notes_box)
         add_all(
             main_layout, cases_panel, label(CASES_NOTE, role="muted"), self.cases_empty
         )
         self.cases_box.setSpacing(14)
         main_layout.addLayout(self.cases_box)
         main_layout.addStretch(1)
-        layout.addWidget(SplitRow(form, main, side_width=360))
+        left = QWidget()
+        left.setProperty("role", "plain")
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(14)
+        left_layout.addWidget(form)
+        left_layout.addWidget(label("Your context notes", role="title"))
+        left_layout.addWidget(self.no_notes)
+        self.notes_box.setSpacing(12)
+        left_layout.addLayout(self.notes_box)
+        left_layout.addStretch(1)
+        layout.addWidget(SplitRow(left, main, side_width=380))
 
         self.association_combo.activated.connect(self._association_changed)
         self.value_combo.currentTextChanged.connect(self._note_changed)
@@ -587,10 +684,10 @@ class InsightsPage(QWidget):
         signature = view.cards
         if signature != self._signatures.get("cards"):
             self._signatures["cards"] = signature
-            _clear_layout(self.cards_box)
+            self.cards_box.clear()
             for card in view.cards:
                 card_widget = GroupCardWidget(card)
-                self.cards_box.addWidget(card_widget)
+                self.cards_box.add(card_widget)
                 card_widget.show()
 
     def _show_notes_tab(self, view: InsightsView, state: InsightsState) -> None:

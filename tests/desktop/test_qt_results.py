@@ -60,21 +60,64 @@ def opened(make_shell: Any, tmp_path: Path, *, analyse: bool = True) -> Shell:
 # -- import and validation ----------------------------------------------------------
 
 
-def test_the_import_page_lists_each_rejected_row_with_its_code_and_reason(
+def test_the_import_page_previews_every_row_with_its_check_and_reason(
     make_shell: Any, tmp_path: Path
 ) -> None:
     shell = opened(make_shell, tmp_path, analyse=False)
     page = shell.window.projects_page
 
-    table = page.problems_table
+    table = page.preview_table
     assert page.stack.currentWidget() is page.detail_page
-    assert page.problems_card.isVisibleTo(page)
-    assert table.rowCount() == 1
-    assert [cell(table, 0, c) for c in (0, 1)] == ["26", "r26"]
-    assert cell(table, 0, 2).startswith("Rejected at import · ")
-    assert ": " in cell(table, 0, 2)  # code, then the fixed message
+    assert page.preview_card.isVisibleTo(page)
+    assert table.rowCount() == 26
+    assert [cell(table, 0, c) for c in (0, 1)] == ["1", "r1"]
+    assert SENTINEL in cell(table, 0, 2)  # a bounded excerpt of the text
+    assert cell(table, 0, 3) == "Ready"
+    assert [cell(table, 25, c) for c in (0, 1)] == ["26", "r26"]
+    assert cell(table, 25, 3).startswith("Rejected · ")
+    assert ": " in cell(table, 25, 3)  # code, then the fixed message
     assert not page.failures_card.isVisibleTo(page)  # nothing analysed yet
-    assert SENTINEL not in cell(table, 0, 2)
+    assert all(len(cell(table, r, 2)) <= 100 for r in range(26))
+
+
+def test_the_preview_tabs_filter_to_the_rejected_rows_and_back(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = opened(make_shell, tmp_path, analyse=False)
+    page = shell.window.projects_page
+    tabs = page.preview_tabs.buttons
+    assert "26" in tabs["all"].text() and "1" in tabs["rejected"].text()
+
+    tabs["rejected"].click()
+    assert page.preview_table.rowCount() == 1
+    assert cell(page.preview_table, 0, 1) == "r26"
+    assert tabs["rejected"].isChecked()
+
+    tabs["all"].click()
+    assert page.preview_table.rowCount() == 26
+
+
+def test_a_row_of_the_preview_is_named_in_full_for_assistive_technology(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = opened(make_shell, tmp_path, analyse=False)
+    table = shell.window.projects_page.preview_table
+
+    item = table.item(25, 0)
+    assert item is not None
+    name = item.data(Qt.ItemDataRole.AccessibleTextRole)
+
+    assert "Row 26" in name and "Rejected" in name and "r26" in name
+
+
+def test_the_preview_scrolls_inside_a_bounded_height(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = opened(make_shell, tmp_path, analyse=False)
+    table = shell.window.projects_page.preview_table
+
+    assert table.maximumHeight() < 26 * table.verticalHeader().defaultSectionSize()
+    assert table.verticalScrollBar().maximum() > 0 or table.rowCount() <= 12
 
 
 def test_after_analysis_the_failed_row_is_listed_apart_with_its_reason(
@@ -91,7 +134,7 @@ def test_after_analysis_the_failed_row_is_listed_apart_with_its_reason(
     assert table.rowCount() == 1
     assert [cell(table, 0, c) for c in (0, 1)] == ["25", "r25"]
     assert cell(table, 0, 2) == "Failed in analysis · synthetic_failure: Row failed."
-    assert page.problems_table.rowCount() == 1  # the rejected row is still listed
+    assert page.preview_table.rowCount() == 26  # the preview still lists every row
 
 
 def test_a_clean_csv_says_every_row_is_ready(make_shell: Any, tmp_path: Path) -> None:
@@ -105,7 +148,8 @@ def test_a_clean_csv_says_every_row_is_ready(make_shell: Any, tmp_path: Path) ->
 
     assert page.all_ready.isVisibleTo(page)
     assert text_of(page.all_ready) == "Every row is ready to analyse."
-    assert not page.problems_table.isVisibleTo(page)
+    assert page.preview_table.rowCount() == 2
+    assert [cell(page.preview_table, r, 3) for r in range(2)] == ["Ready", "Ready"]
 
 
 # -- results ------------------------------------------------------------------------
@@ -131,16 +175,30 @@ def test_the_aggregates_are_written_beside_their_bars(
     shell = opened(make_shell, tmp_path)
     results = shell.window.projects_page.results_page
 
-    texts = {
-        m.accessibleName() for m in results.sentiment_bars.meters
-    }  # "label: written value"
-    assert "Positive: 7 rows · 29.2%" in texts
-    assert "Neutral: 10 rows · 41.7%" in texts
+    figures = {
+        tone: figure.accessibleName()
+        for tone, figure in results.sentiment_figures.items()
+    }  # "count tone rows, share"
+    assert figures["positive"] == "7 positive rows, 29.2%"
+    assert figures["neutral"] == "10 neutral rows, 41.7%"
+    assert {
+        tone: text_of(f.value) for tone, f in results.sentiment_figures.items()
+    } == {
+        "negative": "7",
+        "neutral": "10",
+        "positive": "7",
+    }
     assert len(results.dominant_bars.meters) == 9
     assert len(results.activation_bars.meters) == 8
     assert text_of(results.failed_figure) == "2"
-    # a bar is only a picture: its fraction is the share the text states
-    assert results.sentiment_bars.meters[0].fraction == pytest.approx(7 / 24)
+    # a bar is only a picture: its segments are the counts the figures state
+    assert dict(
+        (tone, weight) for weight, tone in results.sentiment_stack.segments
+    ) == {
+        "negative": 7.0,
+        "neutral": 10.0,
+        "positive": 7.0,
+    }
 
 
 def test_every_row_is_in_the_table_with_a_status_word_and_a_reason(
@@ -150,7 +208,7 @@ def test_every_row_is_in_the_table_with_a_status_word_and_a_reason(
     table = shell.window.projects_page.results_page.table
 
     assert table.rowCount() == 26
-    assert [cell(table, 0, c) for c in range(5)] == [
+    assert [cell(table, 0, c) for c in (0, 1, 2, 4, 5)] == [
         "1",
         "r1",
         "✓ Analysed",
@@ -158,10 +216,15 @@ def test_every_row_is_in_the_table_with_a_status_word_and_a_reason(
         "Joy",
     ]
     assert cell(table, 24, 2) == "✕ Failed"
-    assert cell(table, 24, 5) == "synthetic_failure: Row failed."
+    assert cell(table, 24, 6) == "synthetic_failure: Row failed."
     assert cell(table, 25, 2) == "✕ Rejected at import"
-    assert SENTINEL not in " ".join(
-        cell(table, r, c) for r in range(26) for c in range(7)
+    # the TEXT column: a bounded excerpt, nothing else carries the text
+    assert SENTINEL in cell(table, 0, 3)
+    assert all(len(cell(table, r, 3)) <= 100 for r in range(26))
+    assert all(
+        SENTINEL not in cell(table, r, c)
+        for r in range(26)
+        for c in (0, 1, 2, 4, 5, 6, 7)
     )
 
 
@@ -418,3 +481,44 @@ def test_the_results_controls_are_keyboard_operable_and_named(
     assert results.status_filter.buttons["error"].accessibleName() == (
         "Not analysed, 2 rows"
     )
+
+
+def test_a_large_import_previews_every_row_without_growing_the_page(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell: Shell = make_shell(FakeProvisioning(current=READY))
+    path = tmp_path / "big.csv"
+    lines = ["record_id,text"] + [
+        f"r{n},record number {n} " + "x" * 400 for n in range(1, 301)
+    ]
+    path.write_bytes(("\n".join(lines) + "\n").encode())
+    shell.platform.csv_file = path
+    page = shell.window.projects_page
+
+    shell.button(page, "Import CSV…").click()
+
+    table = page.preview_table
+    assert table.rowCount() == 300
+    assert max(len(cell(table, r, 2)) for r in range(300)) <= 100
+    assert (
+        table.maximumHeight() <= 16 * table.verticalHeader().defaultSectionSize() + 60
+    )
+    assert table.verticalScrollBar().maximum() > 0
+
+
+def test_record_text_in_a_tooltip_is_shown_literally_not_as_markup(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell: Shell = make_shell(FakeProvisioning(current=READY))
+    path = tmp_path / "markup.csv"
+    path.write_bytes(b'record_id,text\nr1,"<b>bold</b> <img src=x> plain"\n')
+    shell.platform.csv_file = path
+    page = shell.window.projects_page
+
+    shell.button(page, "Import CSV…").click()
+
+    item = page.preview_table.item(0, 2)
+    assert item is not None
+    tip = item.toolTip()
+    assert "<b>" not in tip and "<img" not in tip
+    assert "&lt;b&gt;bold" in tip and tip.startswith("<qt>")

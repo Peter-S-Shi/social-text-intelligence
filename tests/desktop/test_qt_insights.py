@@ -107,10 +107,7 @@ def check_only(widget: QListWidget, *wanted: str) -> None:
 
 
 def cards(page: Any) -> list[str]:
-    return [
-        page.cards_box.itemAt(i).widget().accessibleName()
-        for i in range(page.cards_box.count())
-    ]
+    return [item.accessibleName() for item in page.cards_box.items]
 
 
 def stored(tmp_path: Path, project_id: str) -> Any:
@@ -391,9 +388,7 @@ def test_review_changes_show_up_in_the_human_view(
     assert "1 eligible for this metric" in cards(insights)[0]
     assert "11 unreviewed" in " ".join(
         label.text()
-        for label in insights.cards_box.itemAt(0)
-        .widget()
-        .findChildren(type(insights.title))
+        for label in insights.cards_box.items[0].findChildren(type(insights.title))
     )
 
 

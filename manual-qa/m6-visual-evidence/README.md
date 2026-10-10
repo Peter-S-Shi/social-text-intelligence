@@ -1,5 +1,10 @@
 # M6 actual-Qt visual evidence
 
+> Historical. These pictures show the M6 look (cream paper, dark sidebar, ultramarine
+> primary actions). M8 Track B re-aligned the visual treatment; the current look is in
+> [`../m8-visual-evidence/`](../m8-visual-evidence/README.md). The scene scripts here
+> still run and still prove the interaction scenes (focus, 900 px, scaling).
+
 These are synthetic, application-widget captures from the real Windows Qt
 platform plugin. Both directories contain the complete 44-image scene set from
 `tests/visual/capture.py`: `windows-100/` at normal scale and `windows-150/`

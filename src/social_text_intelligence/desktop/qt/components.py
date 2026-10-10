@@ -6,19 +6,24 @@ written as text next to its picture, and no state is carried by colour alone.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import html
+from collections.abc import Callable, Sequence
 
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import (
     QColor,
+    QFont,
     QKeyEvent,
     QPainter,
     QPaintEvent,
     QPen,
     QResizeEvent,
+    QShowEvent,
 )
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QAbstractScrollArea,
+    QBoxLayout,
     QButtonGroup,
     QComboBox,
     QFrame,
@@ -47,6 +52,7 @@ TONES = {
     "human": style.ULTRAMARINE,
     "failure": style.VERMILION,
     "quiet": style.LINE_STRONG,
+    "ink": style.INK,
 }
 
 
@@ -100,12 +106,17 @@ class Page(QWidget):
 
 
 class PageHeader(QWidget):
-    """The page title, a one-line mono subtitle, and actions aligned to the right."""
+    """The page title, a one-line mono subtitle, and actions aligned to the right.
+
+    When the title and the actions cannot share a line, the actions move under the
+    title instead of widening the page.
+    """
 
     def __init__(self, title: str, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        self._layout = QBoxLayout(QBoxLayout.Direction.LeftToRight, self)
+        self._layout.setContentsMargins(0, 0, 0, 0)
+        self._layout.setSpacing(style.SPACE_S)
         text = QVBoxLayout()
         text.setSpacing(2)
         self.title = label(title, role="headline")
@@ -115,15 +126,39 @@ class PageHeader(QWidget):
         text.addWidget(self.subtitle)
         self.action_row = QHBoxLayout()
         self.action_row.setSpacing(style.SPACE_S)
-        layout.addLayout(text, 1)
-        layout.addLayout(self.action_row)
+        self._actions: list[QWidget] = []
+        self._layout.addLayout(text, 1)
+        self._layout.addLayout(self.action_row)
+        self._watcher = ViewportWatcher(self, self._reflow)
 
     def set_subtitle(self, text: str) -> None:
         self.subtitle.setText(text)
         self.subtitle.setVisible(bool(text))
 
     def add_action(self, widget: QWidget) -> None:
+        self._actions.append(widget)
         self.action_row.addWidget(widget, 0, Qt.AlignmentFlag.AlignTop)
+
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._watcher.attach()
+        self._reflow()
+
+    def _reflow(self) -> None:
+        actions = sum(w.sizeHint().width() for w in self._actions if not w.isHidden())
+        actions += style.SPACE_S * max(len(self._actions) - 1, 0)
+        text = max(
+            self.title.minimumSizeHint().width(),
+            self.subtitle.minimumSizeHint().width() if self.subtitle.isVisible() else 0,
+        )
+        fits = text + style.SPACE_S + actions <= self._watcher.available()
+        direction = (
+            QBoxLayout.Direction.LeftToRight
+            if fits
+            else QBoxLayout.Direction.TopToBottom
+        )
+        if self._layout.direction() != direction:
+            self._layout.setDirection(direction)
 
 
 class Card(QFrame):
@@ -218,6 +253,19 @@ class ReflowRow(QWidget):
     def columns(self) -> int:
         return self._columns
 
+    @property
+    def items(self) -> tuple[QWidget, ...]:
+        return tuple(self._items)
+
+    def clear(self) -> None:
+        for widget in self._items:
+            self._grid.removeWidget(widget)
+            widget.hide()  # a deleted widget is still painted until the loop runs
+            widget.setParent(None)
+            widget.deleteLater()
+        self._items = []
+        self._arrange(force=True)
+
     def add(self, widget: QWidget) -> None:
         self._items.append(widget)
         self._arrange(force=True)
@@ -244,8 +292,104 @@ class ReflowRow(QWidget):
         self.updateGeometry()
 
 
+POLARITY_COLOURS = {
+    "negative": style.VERMILION,
+    "neutral": style.NEUTRAL,
+    "positive": style.POSITIVE,
+}
+
+
+class StackedBar(QWidget):
+    """One thin bar split into proportional segments (a picture of written counts)."""
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._segments: tuple[tuple[float, str], ...] = ()
+        self.setFixedHeight(10)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+    @property
+    def segments(self) -> tuple[tuple[float, str], ...]:
+        return self._segments
+
+    def set_segments(self, segments: Sequence[tuple[float, str]]) -> None:
+        """Each segment: its weight and a tone name (negative, neutral, positive)."""
+
+        self._segments = tuple(segments)
+        self.update()
+
+    def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802 (Qt override)
+        total = sum(weight for weight, _ in self._segments)
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(style.PAPER_SUNK))
+        track = QRectF(0.0, 2.0, float(self.width()), 6.0)
+        painter.drawRoundedRect(track, 3, 3)
+        if total <= 0:
+            return
+        x = 0.0
+        for weight, tone in self._segments:
+            width = track.width() * weight / total
+            if width <= 0:
+                continue
+            painter.setBrush(QColor(POLARITY_COLOURS.get(tone, style.GRAPHITE)))
+            painter.drawRect(
+                QRectF(x, track.y(), max(width - 1.0, 1.0), track.height())
+            )
+            x += width
+
+
+class Figure(QWidget):
+    """A large serif number over a small caption, in a tone (never colour alone: the
+    caption always says what the number counts)."""
+
+    def __init__(
+        self,
+        caption: str,
+        tone: str | None = None,
+        parent: QWidget | None = None,
+        *,
+        size: str = "figure",
+    ) -> None:
+        super().__init__(parent)
+        self.setProperty("role", "plain")
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        self.value = label(role=size, wrap=False)
+        if tone:
+            self.value.setProperty("polarity", tone)
+        self.caption = label(caption, role="muted")
+        layout.addWidget(self.value)
+        layout.addWidget(self.caption)
+
+    def set_value(self, text: str) -> None:
+        self.value.setText(text)
+        self.setAccessibleName(f"{text} {self.caption.text()}")
+
+
+def relax_width(widget: QWidget) -> None:
+    """Let a long one-line control be narrower than its text rather than widen a page.
+
+    Where the column is wide enough the layout still gives it the whole line.
+    """
+
+    widget.setSizePolicy(
+        QSizePolicy.Policy.Ignored, widget.sizePolicy().verticalPolicy()
+    )
+
+
 class Combo(QComboBox):
-    """A combo box that draws its own chevron, so it looks the same everywhere."""
+    """A combo box that draws its own chevron, so it looks the same everywhere.
+
+    It can be squeezed (its text elides) instead of forcing a page wider than the
+    window; its preferred width is still that of its longest item.
+    """
+
+    def minimumSizeHint(self) -> QSize:  # noqa: N802 (Qt override)
+        hint = super().minimumSizeHint()
+        return QSize(min(hint.width(), 120), hint.height())
 
     def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802 (Qt override)
         super().paintEvent(event)
@@ -257,6 +401,62 @@ class Combo(QComboBox):
         painter.drawPolyline(
             [QPointF(cx - 4, cy - 2), QPointF(cx, cy + 2), QPointF(cx + 4, cy - 2)]
         )
+
+
+class ViewportWatcher(QObject):
+    """Tell a widget how much width its scrolling page really offers.
+
+    A widget whose minimum width exceeds a shrinking viewport stops resizing, so its
+    own width can never say "now stack". The viewport is the width on offer, and this
+    calls ``changed`` whenever it resizes.
+    """
+
+    def __init__(
+        self,
+        owner: QWidget,
+        changed: Callable[[], None],
+        *,
+        area: QAbstractScrollArea | None = None,
+    ) -> None:
+        super().__init__(owner)
+        self._owner = owner
+        self._changed = changed
+        self._own_area = area  # the owner's own scroller, when it is not an ancestor
+        self._viewport: QWidget | None = None
+
+    def attach(self) -> None:
+        area = self._own_area or self._scroll_area()
+        viewport = area.viewport() if area is not None else None
+        if viewport is self._viewport:
+            return
+        if self._viewport is not None:
+            self._viewport.removeEventFilter(self)
+        self._viewport = viewport
+        if viewport is not None:
+            viewport.installEventFilter(self)
+
+    def available(self) -> int:
+        """The width a page's content may use (its viewport less the page margins)."""
+
+        try:
+            if self._viewport is not None:
+                return int(self._viewport.width()) - 2 * style.PAGE_MARGIN_X
+        except RuntimeError:  # the scroll area was deleted first (shutdown)
+            self._viewport = None
+        return int(self._owner.width())
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if event.type() == QEvent.Type.Resize and watched is self._viewport:
+            self._changed()
+        return False
+
+    def _scroll_area(self) -> QAbstractScrollArea | None:
+        widget = self._owner.parentWidget()
+        while widget is not None:
+            if isinstance(widget, QAbstractScrollArea):
+                return widget
+            widget = widget.parentWidget()
+        return None
 
 
 class SplitRow(QWidget):
@@ -276,6 +476,7 @@ class SplitRow(QWidget):
         self._side_width = side_width
         self._stack_below = stack_below
         self._wide: bool | None = None
+        self._watcher = ViewportWatcher(self, self._arrange)
         self._grid = QGridLayout(self)
         self._grid.setContentsMargins(0, 0, 0, 0)
         self._grid.setSpacing(style.SPACE_L)
@@ -285,12 +486,24 @@ class SplitRow(QWidget):
     def wide(self) -> bool:
         return bool(self._wide)
 
+    @property
+    def side_width(self) -> int:
+        """The width the side panel takes (plus the gap) when laid out beside."""
+
+        return self._side_width + style.SPACE_L
+
     def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
         super().resizeEvent(event)
         self._arrange()
 
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._watcher.attach()
+        self._arrange()
+
     def _arrange(self, *, force: bool = False) -> None:
-        wide = self.width() <= 1 or self.width() >= self._stack_below
+        available = self._watcher.available()
+        wide = available <= 1 or available >= self._stack_below
         if wide == self._wide and not force:
             return
         self._wide = wide
@@ -408,6 +621,103 @@ def score_rows(rows: Sequence[ScoreRow]) -> list[tuple[str, float, str, str]]:
     return [(row.label, row.fraction, row.text, row.note) for row in rows]
 
 
+class ColumnChart(QWidget):
+    """The compact emotion scores as columns with their numbers, a dashed threshold.
+
+    Every column's exact score is drawn above it and its name below, and the whole
+    chart is also named in full for assistive technology, so the picture adds
+    nothing that is not written. The dominant column is dark, a secondary one is
+    slate, the rest are pale.
+    """
+
+    HEIGHT = 190
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._rows: tuple[ScoreRow, ...] = ()
+        self._threshold = 0.5
+        self.setMinimumHeight(self.HEIGHT)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+
+    @property
+    def rows(self) -> tuple[ScoreRow, ...]:
+        return self._rows
+
+    @property
+    def threshold(self) -> float:
+        return self._threshold
+
+    def set_rows(self, rows: Sequence[ScoreRow], threshold: float) -> None:
+        self._rows = tuple(rows)
+        self._threshold = threshold
+        spoken = ", ".join(
+            f"{row.label} {row.text}" + (f" {row.note}" if row.note else "")
+            for row in self._rows
+        )
+        self.setAccessibleName(
+            f"Compact emotion scores, threshold {threshold:.2f}: {spoken}"
+        )
+        self.update()
+
+    def sizeHint(self) -> QSize:  # noqa: N802 (Qt override)
+        return QSize(420, self.HEIGHT)
+
+    def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802 (Qt override)
+        if not self._rows:
+            return
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        top, bottom = 22.0, 22.0
+        plot = QRectF(0.0, top, float(self.width()), self.height() - top - bottom)
+        slot = plot.width() / len(self._rows)
+        mono = QFont(self.font())
+        mono.setFamilies(["Consolas", "Courier New"])
+        mono.setPointSizeF(8.0)
+        painter.setFont(mono)
+        # the baseline and the dashed threshold
+        painter.setPen(QPen(QColor(style.LINE_STRONG), 1))
+        painter.drawLine(
+            QPointF(0, plot.bottom()), QPointF(plot.right(), plot.bottom())
+        )
+        line_y = plot.bottom() - plot.height() * self._threshold
+        painter.setPen(QPen(QColor(style.CAUTION_LINE), 1, Qt.PenStyle.DashLine))
+        painter.drawLine(QPointF(0, line_y), QPointF(plot.right(), line_y))
+        for index, row in enumerate(self._rows):
+            left = plot.left() + index * slot
+            width = max(slot - 10.0, 6.0)
+            height = max(plot.height() * row.fraction, 2.0)
+            bar = QRectF(left + 5.0, plot.bottom() - height, width, height)
+            colour = (
+                style.INK
+                if row.note == "dominant"
+                else style.GRAPHITE_SOFT
+                if row.note == "secondary"
+                else style.CHART_PALE
+            )
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(colour))
+            painter.drawRoundedRect(bar, 2, 2)
+            painter.setPen(QColor(style.INK if row.note else style.MUTED))
+            value_font = QFont(mono)
+            value_font.setBold(bool(row.note))  # dominant or secondary: bold number
+            painter.setFont(value_font)
+            painter.drawText(
+                QRectF(left, bar.top() - 16.0, slot, 14.0),
+                int(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom),
+                row.text,
+            )
+            painter.setFont(mono)
+            painter.setPen(QColor(style.MUTED))
+            name = painter.fontMetrics().elidedText(
+                row.label.lower(), Qt.TextElideMode.ElideRight, int(slot) - 2
+            )
+            painter.drawText(
+                QRectF(left, plot.bottom() + 4.0, slot, 14.0),
+                int(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop),
+                name,
+            )
+
+
 class ScorePanel(QWidget):
     """The score breakdown of one model result: sentiment, compact emotions, native.
 
@@ -415,7 +725,7 @@ class ScorePanel(QWidget):
     scores are one deliberate click away, as in V1, so they never crowd the page.
     """
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, *, columns: bool = False) -> None:
         super().__init__(parent)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -424,27 +734,48 @@ class ScorePanel(QWidget):
         self.sentiment = BarGrid("ai")
         self.sentiment.setObjectName("sentiment-scores")
         self.emotion_heading = label("Compact emotion scores", role="eyebrow")
-        self.emotion = BarGrid("ai")
+        # a wide result card draws columns; a narrow one keeps the bar rows
+        self.emotion: BarGrid | ColumnChart = (
+            ColumnChart() if columns else BarGrid("ai")
+        )
         self.emotion.setObjectName("emotion-scores")
         self.rule = label(role="muted")
         self.rule.setObjectName("emotion-rule")
+        # the threshold rule; a caution box when the fallback chose Neutral
+        self.rule_box = frame("quiet")
+        self.rule_box.setObjectName("emotion-rule-box")
+        rule_layout = QVBoxLayout(self.rule_box)
+        rule_layout.setContentsMargins(0, 0, 0, 0)
+        rule_layout.addWidget(self.rule)
         self.native_toggle = QToolButton()
         self.native_toggle.setText("Show model-native emotion scores")
         self.native_toggle.setCheckable(True)
         self.native_toggle.setObjectName("native-toggle")
+        # a long caption must never widen a narrow card: it may clip instead
+        self.native_toggle.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed
+        )
         self.native = BarGrid("quiet")
         self.native.setObjectName("native-scores")
         self.native.setVisible(False)
         self.native_toggle.toggled.connect(self.native.setVisible)
         add_all(layout, self.sentiment_heading, self.sentiment)
-        add_all(layout, self.emotion_heading, self.emotion, self.rule)
+        add_all(layout, self.emotion_heading, self.emotion, self.rule_box)
         layout.addWidget(self.native_toggle, 0, Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.native)
 
     def show_scores(self, scores: ScoreSetView) -> None:
         self.sentiment.set_rows(score_rows(scores.sentiment))
-        self.emotion.set_rows(score_rows(scores.emotion))
+        if isinstance(self.emotion, ColumnChart):
+            self.emotion.set_rows(scores.emotion, scores.threshold)
+        else:
+            self.emotion.set_rows(score_rows(scores.emotion))
         self.rule.setText(scores.emotion_rule)
+        self.rule_box.setProperty("role", "caution" if scores.fallback else "quiet")
+        margin = 12 if scores.fallback else 0
+        self.rule_box.layout().setContentsMargins(margin, 8, margin, 8)  # type: ignore[union-attr]
+        self.rule_box.style().unpolish(self.rule_box)
+        self.rule_box.style().polish(self.rule_box)
         self.native.set_rows(score_rows(scores.native))
         self.native_toggle.setText(
             f"Show {len(scores.native)} model-native emotion scores"
@@ -453,7 +784,8 @@ class ScorePanel(QWidget):
             f"Show all {len(scores.native)} model-native emotion scores"
         )
         self.sentiment.setAccessibleName("Sentiment scores")
-        self.emotion.setAccessibleName("Compact emotion scores")
+        if not isinstance(self.emotion, ColumnChart):
+            self.emotion.setAccessibleName("Compact emotion scores")
         self.native.setAccessibleName("Model-native emotion scores")
 
 
@@ -462,11 +794,14 @@ class SegmentedFilter(QWidget):
 
     selected = Signal(str)
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, *, noun: str = "rows") -> None:
         super().__init__(parent)
-        self._layout = QHBoxLayout(self)
-        self._layout.setContentsMargins(0, 0, 0, 0)
-        self._layout.setSpacing(0)
+        self._noun = noun
+        self.setProperty("role", "segtrack")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        # wraps onto a second line when the page is narrow, instead of widening it
+        self._layout = FlowLayout(self, spacing=2, one_line_hint=True)
+        self._layout.setContentsMargins(3, 3, 3, 3)
         self._group = QButtonGroup(self)
         self._group.setExclusive(True)
         self._buttons: dict[str, QPushButton] = {}
@@ -476,6 +811,12 @@ class SegmentedFilter(QWidget):
     @property
     def buttons(self) -> dict[str, QPushButton]:
         return self._buttons
+
+    def preferred_width(self) -> int:
+        """The width of all the buttons on one line (what it takes not to wrap)."""
+
+        widths = [button.sizeHint().width() for button in self._buttons.values()]
+        return sum(widths) + 2 * max(len(widths) - 1, 0) + 6
 
     def set_options(
         self, options: Sequence[tuple[str, str, int]], selected: str
@@ -502,7 +843,7 @@ class SegmentedFilter(QWidget):
                     if index == len(options) - 1
                     else "mid",
                 )
-                button.setAccessibleName(f"{text}, {count} rows")
+                button.setAccessibleName(f"{text}, {count} {self._noun}")
                 button.setObjectName(f"seg-{value}")
                 button.clicked.connect(lambda _=False, v=value: self._chosen(v))
                 self._group.addButton(button)
@@ -528,6 +869,7 @@ class DataTable(QTableWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self.tone_column = 2  # the cell that turns red for a failed row
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -581,8 +923,9 @@ class DataTable(QTableWidget):
             for r, row in enumerate(rows):
                 for c, text in enumerate(row):
                     item = QTableWidgetItem(text)
-                    item.setToolTip(text)
-                    if failed and failed[r] and c == 2:
+                    # record text is untrusted: shown literally, never as markup
+                    item.setToolTip(f"<qt>{html.escape(text)}</qt>")
+                    if failed and failed[r] and c == self.tone_column:
                         item.setForeground(QColor(style.VERMILION))
                     if c == 0 and names:
                         item.setData(Qt.ItemDataRole.AccessibleTextRole, names[r])
@@ -623,7 +966,7 @@ class ConfusionGrid(QWidget):
                 widget.setParent(None)
                 widget.deleteLater()
         for column, name in enumerate(view.columns, start=1):
-            header = label(f"you · {name}", role="eyebrow", wrap=False)
+            header = label(f"you · {name}", role="eyebrow")
             header.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self._grid.addWidget(header, 0, column)
         peak = max((cell.count for row in view.rows for cell in row.cells), default=0)
@@ -670,11 +1013,11 @@ class NavButton(QPushButton):
         if not self._badge:
             return
         painter = QPainter(self)
-        colour = QColor(style.SIDEBAR_MUTED if self.isEnabled() else "#A39E90")
+        colour = QColor(style.MUTED if self.isEnabled() else "#7A7E85")
         painter.setPen(colour)
         painter.setFont(self.font())
         painter.drawText(
-            self.rect().adjusted(0, 0, -14, 0),
+            self.rect().adjusted(0, 0, -24, 0),
             int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter),
             self._badge,
         )
@@ -697,9 +1040,11 @@ __all__ = [
     "BarMeter",
     "Card",
     "Combo",
+    "ColumnChart",
     "ConfusionGrid",
     "DataTable",
     "EmptyState",
+    "Figure",
     "FlowRow",
     "LabeledControl",
     "NavButton",
@@ -709,10 +1054,12 @@ __all__ = [
     "ScorePanel",
     "SegmentedFilter",
     "SplitRow",
+    "StackedBar",
     "chip",
     "frame",
     "inline_note",
     "rule",
     "score_rows",
+    "relax_width",
     "section_title",
 ]

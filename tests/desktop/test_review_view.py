@@ -214,3 +214,47 @@ def test_filter_choices_expose_the_existing_review_filters(
     values = [value for _, value in view.status_filter_choices]
     assert status in values
     assert values == ["all", "unreviewed", "reviewed", "corrected", "uncertain"]
+
+
+def test_the_view_carries_the_queue_the_tabs_and_the_progress_meter(
+    tmp_path: Path,
+) -> None:
+    flow, project_id = snapshot_of(tmp_path)
+    second = flow.open_review(project_id, row=2).record
+    assert second is not None
+    flow.accept_both(project_id, 2, "", expected=second.review)
+
+    view = build_review_view(state_for(flow.open_review(project_id, ReviewFilters())))
+
+    assert view is not None
+    tabs = {value: count for _, value, count in view.status_tabs}
+    assert tabs["all"] == len(view.queue)
+    assert tabs["reviewed"] == 1 and tabs["unreviewed"] == len(view.queue) - 1
+    assert view.selected_row == 1
+    assert [item.reviewed for item in view.queue][:2] == [False, True]
+    assert view.queue_heading == "Queue · All"
+    assert view.queue_position == f"1 / {len(view.queue)}"
+    assert 0.0 < view.progress_fraction < 1.0
+    assert "1 / " in view.progress_text and "to go" in view.progress_text
+    assert "reviewed" in view.queue[1].accessible_name
+
+
+def test_the_queue_counter_counts_within_the_filtered_queue() -> None:
+    import tempfile
+
+    from social_text_intelligence.application.review_workflow import ReviewFilter
+
+    with tempfile.TemporaryDirectory() as folder:
+        flow, project_id = snapshot_of(Path(folder), rows=4)
+        first = flow.open_review(project_id, row=1).record
+        assert first is not None
+        flow.accept_both(project_id, 1, "", expected=first.review)
+
+        shown = flow.open_review(
+            project_id, ReviewFilters(status=ReviewFilter.UNREVIEWED), row=3
+        )
+        view = build_review_view(state_for(shown))
+
+    assert view is not None
+    # row 3 is the 2nd of the 3 unreviewed lines, not "3 of 3" or "30 / 17"-style
+    assert view.queue_position == "2 / 3"

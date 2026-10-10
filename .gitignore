@@ -62,6 +62,8 @@ logs/
 # Project-authored synthetic manual-QA samples are reviewable repository assets
 !manual-qa/sample-data/
 !manual-qa/sample-data/*.csv
+!manual-qa/owner-trial/
+!manual-qa/owner-trial/*.csv
 
 # Human QA results can contain private notes, screenshots, and machine paths
 manual-qa/results/

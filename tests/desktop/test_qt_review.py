@@ -20,6 +20,7 @@ from persistence.workflow_samples import (  # noqa: E402
 )
 from PySide6.QtCore import QCoreApplication, QPoint, Qt  # noqa: E402
 from PySide6.QtGui import QCloseEvent  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QCheckBox,
     QComboBox,
@@ -269,12 +270,10 @@ def test_navigation_and_filters_follow_the_existing_queue_rules(
     review.next_unreviewed_button.click()
     assert "Row 1" in text_of(review.record_title)  # wraps past the reviewed row 2
 
-    choose(review.status_filter, "reviewed")
-    review.status_filter.activated.emit(review.status_filter.currentIndex())
+    review.status_tabs.buttons["reviewed"].click()
     assert "Row 2" in text_of(review.record_title)
     assert "1 match the filters" in text_of(review.position)
-    choose(review.status_filter, "all")
-    review.status_filter.activated.emit(review.status_filter.currentIndex())
+    review.status_tabs.buttons["all"].click()
     assert "4 match" not in text_of(review.position)
 
 
@@ -497,16 +496,21 @@ def test_review_at_minimum_window_width_shows_both_records_without_horizontal_sc
     assert review.scroller.horizontalScrollBar().maximum() == 0
     assert review.ai.isVisibleTo(review)
     assert review.human.isVisibleTo(review)
-    assert review.human.mapTo(review, QPoint()).y() > review.ai.mapTo(
-        review, QPoint()
-    ).y()
+    ai_at = review.ai.mapTo(review, QPoint())
+    human_at = review.human.mapTo(review, QPoint())
+    # whichever way the cards fit this platform's fonts, they never overlap and the
+    # human card never hides left of or above the AI card
+    stacked = human_at.y() > ai_at.y()
+    beside = human_at.y() == ai_at.y() and human_at.x() > ai_at.x()
+    assert stacked or beside
 
     shell.window.resize(1280, 860)
     QCoreApplication.processEvents()
     assert review.scroller.horizontalScrollBar().maximum() == 0
-    assert review.human.mapTo(review, QPoint()).y() == review.ai.mapTo(
-        review, QPoint()
-    ).y()
+    assert (
+        review.human.mapTo(review, QPoint()).y()
+        == review.ai.mapTo(review, QPoint()).y()
+    )
 
 
 def test_review_focus_follows_record_and_field_error(
@@ -542,3 +546,215 @@ def test_provisioning_and_project_analysis_still_work_beside_review(
     assert shell.window.projects_page.stack.currentWidget() is (
         shell.window.projects_page.review_page
     )  # the open project's page is where the person left it
+
+
+def test_the_queue_lists_the_records_and_opens_one_by_its_row(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+
+    assert review.queue.count() == 4
+    assert review.queue.open_row() == 1
+    review.queue.row_chosen.emit(3)
+    QCoreApplication.processEvents()
+
+    assert "Row 3" in text_of(review.record_title)
+    assert review.queue.open_row() == 3  # the selection follows the record
+    assert "3 / 4" in text_of(review.queue_pane.position)
+
+
+def test_choosing_a_queue_line_with_a_real_click_opens_that_record(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    shell.window.resize(1280, 860)
+    QCoreApplication.processEvents()
+
+    rect = review.queue.visualItemRect(review.queue.item(1))
+    QTest.mouseClick(
+        review.queue.viewport(), Qt.MouseButton.LeftButton, pos=rect.center()
+    )
+
+    assert "Row 2" in text_of(review.record_title)
+    assert review.queue.open_row() == 2
+
+
+def test_the_queue_asks_before_dropping_an_unsaved_judgment(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    pick(review, "uncertain", "sentiment")
+
+    shell.platform.confirmed = False
+    review.queue.row_chosen.emit(2)
+    assert "Row 1" in text_of(review.record_title)  # stayed
+    assert review.queue.open_row() == 1  # and the list did not move on
+    assert review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
+
+    shell.platform.confirmed = True
+    review.queue.row_chosen.emit(2)
+    assert "Row 2" in text_of(review.record_title)
+    assert review.queue.open_row() == 2
+
+
+def test_the_review_state_tabs_carry_counts_and_filter_the_queue(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    review.accept_button.click()  # row 1 is now reviewed
+
+    tabs = review.status_tabs.buttons
+    assert (
+        "Unreviewed" in tabs["unreviewed"].text() and "3" in tabs["unreviewed"].text()
+    )
+    assert "Reviewed" in tabs["reviewed"].text() and "1" in tabs["reviewed"].text()
+    tabs["unreviewed"].click()
+    assert review.queue.count() == 3
+    assert "Row 2" in text_of(review.record_title)
+    assert tabs["unreviewed"].isChecked()
+
+
+def test_a_saved_record_stays_selected_after_it_leaves_the_filter(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    review.status_tabs.buttons["unreviewed"].click()
+    assert review.queue.count() == 4
+
+    review.accept_button.click()  # saved, and now outside "Unreviewed"
+
+    assert "Row 1" in text_of(review.record_title)
+    assert review.queue.open_row() == 1
+    assert review.queue.count() == 4  # the open record does not vanish from the queue
+
+
+def test_the_queue_keyboard_moves_a_cursor_and_enter_or_space_opens_a_line(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    from social_text_intelligence.desktop.qt.review_page import QueueDelegate
+
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    shell.window.resize(1280, 860)
+    QCoreApplication.processEvents()
+    review.queue.setFocus()
+
+    QTest.keyClick(review.queue, Qt.Key.Key_Down)
+    QTest.keyClick(review.queue, Qt.Key.Key_Down)
+    assert "Row 1" in text_of(review.record_title)  # moving a cursor opens nothing
+    assert review.queue.open_row() == 1
+    assert review.queue.currentRow() == 2
+
+    QTest.keyClick(review.queue, Qt.Key.Key_Return)
+    assert "Row 3" in text_of(review.record_title)
+    opened = [
+        bool(review.queue.item(i).data(QueueDelegate.ROLE_OPEN)) for i in range(4)
+    ]
+    assert opened == [False, False, True, False]  # exactly one line is the open one
+
+    review.queue.setFocus()
+    QTest.keyClick(review.queue, Qt.Key.Key_Up)
+    QTest.keyClick(review.queue, Qt.Key.Key_Space)
+    assert "Row 2" in text_of(review.record_title)
+    assert review.queue.open_row() == 2
+
+
+def test_a_declined_discard_restores_the_tabs_and_the_queue(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    pick(review, "uncertain", "sentiment")
+
+    shell.platform.confirmed = False
+    review.status_tabs.buttons["unreviewed"].click()
+
+    assert review.status_tabs.buttons["all"].isChecked()  # the tab went back
+    assert not review.status_tabs.buttons["unreviewed"].isChecked()
+    assert review.queue.count() == 4 and review.queue.open_row() == 1
+    assert review.human.sentiment_radios[ReviewJudgment.UNCERTAIN].isChecked()
+    assert "unsaved changes" in shell.platform.confirmations[-1]
+
+
+def test_a_queue_line_is_chosen_by_row_identity_when_the_filter_shifts_positions(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    shell.window.resize(1280, 860)
+    review.accept_button.click()  # row 1 reviewed, so "Unreviewed" starts at row 2
+    review.status_tabs.buttons["unreviewed"].click()
+    QCoreApplication.processEvents()
+    assert [review.queue.item(i).data(Qt.ItemDataRole.UserRole) for i in range(3)] == [
+        2,
+        3,
+        4,
+    ]
+
+    rect = review.queue.visualItemRect(review.queue.item(0))
+    QTest.mouseClick(
+        review.queue.viewport(), Qt.MouseButton.LeftButton, pos=rect.center()
+    )
+
+    assert text_of(review.record_title).startswith("Row 2 ")  # not row 1
+    assert review.queue.open_row() == 2
+    assert "1 / 3" in text_of(review.queue_pane.position)
+
+
+def test_the_open_line_is_named_as_open_for_assistive_technology(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    names = [
+        review.queue.item(i).data(Qt.ItemDataRole.AccessibleTextRole) for i in range(4)
+    ]
+    assert names[0].endswith("Open record.")
+    assert not any("Open record." in name for name in names[1:])
+    review.queue.row_chosen.emit(3)
+    names = [
+        review.queue.item(i).data(Qt.ItemDataRole.AccessibleTextRole) for i in range(4)
+    ]
+    assert names[2].endswith("Open record.") and "Open record." not in names[0]
+
+
+def test_editing_a_judgment_does_not_scroll_the_queue_back_to_the_open_line(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path, rows=30)
+    review = start_review(shell)
+    shell.window.resize(1280, 860)
+    QCoreApplication.processEvents()
+    bar = review.queue.verticalScrollBar()
+    assert bar.maximum() > 0  # more lines than the list shows
+    bar.setValue(bar.maximum())
+    scrolled = bar.value()
+
+    pick(review, "uncertain", "sentiment")  # a draft change refreshes the page state
+    review.human.note.setPlainText("typing a note")
+
+    assert bar.value() == scrolled
+    assert review.queue.open_row() == 1
+
+
+def test_choosing_a_line_from_the_queue_keeps_the_keyboard_on_the_queue(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = analysed_shell(make_shell, tmp_path)
+    review = start_review(shell)
+    shell.window.resize(1280, 860)
+    review.queue.setFocus()
+    QTest.keyClick(review.queue, Qt.Key.Key_Down)
+    QTest.keyClick(review.queue, Qt.Key.Key_Return)
+    QCoreApplication.processEvents()
+
+    assert text_of(review.record_title).startswith("Row 2 ")
+    assert shell.window.focusWidget() is review.queue
+    QTest.keyClick(review.queue, Qt.Key.Key_Down)
+    QTest.keyClick(review.queue, Qt.Key.Key_Space)
+    assert text_of(review.record_title).startswith("Row 3 ")  # one press, one record

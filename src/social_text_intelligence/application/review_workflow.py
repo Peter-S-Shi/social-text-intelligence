@@ -129,6 +129,26 @@ class ReviewRecord:
     supplied_language: str | None = None
 
 
+EXCERPT_LENGTH = 90
+
+
+@dataclass(frozen=True, slots=True)
+class QueueEntry:
+    """One line of the queue beside the open record: identity, a short text, status."""
+
+    row_number: int
+    record_id: str
+    excerpt: str
+    reviewed: bool
+
+
+def _excerpt(text: str) -> str:
+    flat = " ".join(text.split())
+    if len(flat) <= EXCERPT_LENGTH:
+        return flat
+    return flat[: EXCERPT_LENGTH - 1].rstrip() + "…"
+
+
 @dataclass(frozen=True, slots=True)
 class ReviewSnapshot:
     """The queue position and summary around one record (``record`` is ``None``
@@ -145,6 +165,9 @@ class ReviewSnapshot:
     next_unreviewed_row: int | None
     summary: ReviewSummary
     saved: ReviewRecord | None = None  # the record just saved, if this follows a save
+    # The filtered queue in row order (always including the open record, so a record
+    # that has just left the filter does not vanish from under the person).
+    queue: tuple[QueueEntry, ...] = ()
 
 
 class ReviewWorkflow:
@@ -183,7 +206,8 @@ class ReviewWorkflow:
             raise ReviewUnavailableError
         report = details.current.outcome.report
         assert report is not None
-        navigation = self._navigation(workspace, details.current, filters)
+        cases = self._queue_cases(workspace, details.current, filters)
+        navigation = self._navigation(workspace, details.current, cases)
         return ReviewSnapshot(
             project_id=project_id,
             filters=filters,
@@ -200,6 +224,7 @@ class ReviewWorkflow:
             next_row=navigation.next_row,
             next_unreviewed_row=navigation.next_unreviewed_row,
             summary=details.summary,
+            queue=self._queue(cases),
         )
 
     def save(
@@ -251,10 +276,10 @@ class ReviewWorkflow:
     # -- internals ----------------------------------------------------------
 
     @staticmethod
-    def _navigation(
+    def _queue_cases(
         workspace: BatchWorkspace, current: ReviewCase, filters: ReviewFilters
-    ) -> ReviewNavigation:
-        """Previous and next around ``current``, even if it no longer matches.
+    ) -> tuple[ReviewCase, ...]:
+        """The filtered queue, plus ``current`` even if it no longer matches.
 
         A record the person just saved can drop out of the active filter (for
         example "unreviewed"). Counting it as part of the queue keeps Next on the
@@ -274,17 +299,44 @@ class ReviewWorkflow:
             )
         }
         matching.add(current.review.record_id)
-        queue = tuple(
+        return tuple(
             case
             for case in review_cases(workspace.result, workspace.reviews)
             if case.review.record_id in matching
         )
+
+    @classmethod
+    def _navigation(
+        cls,
+        workspace: BatchWorkspace,
+        current: ReviewCase,
+        queue: tuple[ReviewCase, ...],
+    ) -> ReviewNavigation:
+        """Previous and next around ``current``, even if it no longer matches."""
+
+        assert workspace.result is not None and workspace.reviews is not None
         return review_navigation(
             workspace.result,
             workspace.reviews,
             current_record_id=current.review.record_id,
             filtered_cases=queue,
         )
+
+    @staticmethod
+    def _queue(queue: tuple[ReviewCase, ...]) -> tuple[QueueEntry, ...]:
+        entries = []
+        for case in queue:
+            report = case.outcome.report
+            assert report is not None  # only analysed rows are reviewable
+            entries.append(
+                QueueEntry(
+                    row_number=case.outcome.prepared.row_number,
+                    record_id=report.record.record_id,
+                    excerpt=_excerpt(report.record.text),
+                    reviewed=case.review.is_reviewed,
+                )
+            )
+        return tuple(entries)
 
     def _analysed(self, project_id: str) -> BatchWorkspace:
         workspace = self._repository.get(project_id)
@@ -356,6 +408,7 @@ __all__ = [
     "Advance",
     "ConfidenceBand",
     "HumanReview",
+    "QueueEntry",
     "ReviewConflictError",
     "ReviewDraft",
     "ReviewFilter",

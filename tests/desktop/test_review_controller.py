@@ -412,3 +412,23 @@ def test_opening_at_a_row_starts_there(env: Env) -> None:
     assert controller.open(env.project_id, row=3)
 
     assert snapshot_of(controller.state).row_number == 3
+
+
+def test_go_to_opens_a_queue_row_by_its_identity(env: Env) -> None:
+    controller = opened(env)
+
+    assert controller.go_to(3)
+
+    assert snapshot_of(controller.state).row_number == 3
+    assert not controller.go_to(99)  # not in the queue: refused, nothing changes
+    assert snapshot_of(controller.state).row_number == 3
+
+
+def test_go_to_respects_the_active_filter_and_refuses_a_hidden_row(env: Env) -> None:
+    controller = opened(env)
+    controller.accept_both()
+    assert controller.set_filters(ReviewFilters(status=ReviewFilter.UNREVIEWED))
+
+    assert not controller.go_to(1)  # row 1 is reviewed, so it is not in this queue
+    assert controller.go_to(2)
+    assert snapshot_of(controller.state).row_number == 2

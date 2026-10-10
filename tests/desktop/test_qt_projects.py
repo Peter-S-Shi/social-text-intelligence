@@ -393,3 +393,257 @@ def test_no_notice_in_the_ui_carries_csv_content(
     import_csv(shell, csv_file(tmp_path, "x.csv", SENTINEL.encode() + b"\xff"))
     shown = text_of(page.notice.title) + text_of(page.notice.body)
     assert SENTINEL not in shown and "x.csv" not in shown
+
+
+def test_the_import_card_shows_figures_and_recognised_columns(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+
+    import_csv(shell, csv_file(tmp_path, "Support tickets.csv", csv_text(4)))
+
+    assert text_of(page.figure_ready.value) == "4"
+    assert text_of(page.figure_rejected.value) == "0"
+    assert not page.figure_language.isVisibleTo(page)  # known only after analysis
+    names = {
+        c.accessibleName() for c in page.metadata_row.findChildren(type(page.heading))
+    }
+    assert "record_id column, in the file" in names
+    assert "notes column, not in the file" in names
+    # each chip says its state in words as well as by tint
+    texts = {c.text() for c in page.metadata_row.findChildren(type(page.heading))}
+    assert "notes — not in file" in texts
+
+
+def test_the_project_list_is_one_card_with_the_newest_open_as_the_primary_action(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    import_csv(shell, csv_file(tmp_path, "First.csv", csv_text(2)))
+    shell.window.nav_buttons["Projects"].click()
+    import_csv(shell, csv_file(tmp_path, "Second.csv", csv_text(2)))
+    shell.window.nav_buttons["Projects"].click()
+
+    opens = [row.open_button for row in page._rows]
+    assert len(opens) == 2
+    assert [b.property("primary") for b in opens] == [True, False]
+    assert page.rows_card.isVisibleTo(page)
+    assert all(row.parent() is page.rows_card for row in page._rows)
+
+
+def test_the_list_offers_a_way_to_analyze_one_text(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+
+    page.analyze_text_button.click()
+
+    assert shell.window.current_section().value == "analyze"
+    assert shell.window.nav_buttons["Analyze one text"].isChecked()
+
+
+def test_the_sidebar_says_when_no_project_is_open(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    window = shell.window
+    assert window.no_project.isVisibleTo(window)
+    assert not window.project_area.isVisibleTo(window)
+
+    import_csv(shell, csv_file(tmp_path, "Support tickets.csv", csv_text(2)))
+
+    assert window.project_area.isVisibleTo(window)
+    assert not window.no_project.isVisibleTo(window)
+
+
+def two_projects(shell: Shell, tmp_path: Path) -> None:
+    """One analysed and part reviewed ("Reviewed"), one only imported ("Fresh")."""
+
+    page = shell.window.projects_page
+    import_csv(shell, csv_file(tmp_path, "Reviewed.csv", csv_text(4)))
+    page.analyze_button.click()
+    shell.window.nav_buttons["Review"].click()
+    page.review_page.accept_button.click()
+    shell.window.nav_buttons["Projects"].click()
+    import_csv(shell, csv_file(tmp_path, "Fresh.csv", csv_text(3)))
+    shell.window.nav_buttons["Projects"].click()
+
+
+def row_for(page: Any, title: str) -> Any:
+    return next(r for r in page._rows if title in r.accessibleName())
+
+
+def test_the_project_list_shows_each_projects_size_and_review_progress(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+
+    reviewed = row_for(page, "Reviewed")
+    fresh = row_for(page, "Fresh")
+
+    assert "4 rows" in text_of(reviewed.rows_label)
+    assert text_of(reviewed.review_label) == "1 / 4 reviewed"
+    assert reviewed.meter.fraction == 0.25
+    assert "1 / 4 reviewed" in reviewed.accessibleName()
+    assert "3 rows" in text_of(fresh.rows_label)
+    assert text_of(fresh.review_label) == "Not analysed yet"
+    assert fresh.meter.fraction == 0.0
+
+
+def test_the_review_tabs_filter_the_list_and_open_still_opens_the_right_project(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+    tabs = page.review_tabs.buttons
+    assert "All" in tabs["all"].text() and "2" in tabs["all"].text()
+    assert "1" in tabs["in_review"].text() and "1" in tabs["not_analysed"].text()
+
+    tabs["in_review"].click()
+    assert [("Reviewed" in r.accessibleName()) for r in page._rows] == [True]
+    assert "1 of 2" in text_of(page.summary)
+
+    tabs["not_analysed"].click()
+    assert [("Fresh" in r.accessibleName()) for r in page._rows] == [True]
+    page._rows[0].open_button.click()  # opens by project identity, not list position
+    assert text_of(page.detail_title_label) == "Fresh"
+
+    shell.window.nav_buttons["Projects"].click()
+    assert tabs["not_analysed"].isChecked()  # the chosen tab is kept on return
+    tabs["all"].click()
+    assert len(page._rows) == 2
+
+
+def test_a_filter_with_no_match_shows_a_plain_message(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+
+    page.review_tabs.buttons["fully_reviewed"].click()
+
+    assert page._rows == []
+    assert "No projects match" in text_of(page.summary)
+    assert page.review_tabs.buttons["all"].isEnabled()
+
+
+def test_a_row_does_not_flash_up_as_a_window_while_it_is_built(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    import shiboken6
+    from PySide6.QtWidgets import QWidget
+
+    from social_text_intelligence.desktop.projects_view import ProjectRowView
+    from social_text_intelligence.desktop.qt.projects_page import ProjectRowWidget
+
+    row = ProjectRowView(
+        "p" * 32, "T", "Updated", True, "3 rows", "in_review", 0.5, "1 / 2 reviewed"
+    )
+    shown_alone: list[bool] = []
+    original = QWidget.setVisible
+
+    def watching(self: QWidget, visible: bool) -> None:
+        if (
+            visible
+            and self.parentWidget() is None
+            and self.objectName()
+            in {
+                "project-rows",
+                "project-progress",
+            }
+        ):
+            shown_alone.append(True)
+        original(self, visible)
+
+    QWidget.setVisible = watching  # type: ignore[method-assign]
+    try:
+        built = ProjectRowWidget(row, True)
+    finally:
+        QWidget.setVisible = original  # type: ignore[method-assign]
+        shiboken6.delete(built)  # a parentless widget must not outlive the test
+
+    assert shown_alone == []  # nothing was shown before it had a parent
+
+
+def test_the_rows_switch_to_a_compact_layout_when_narrow_and_back(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+    row = row_for(page, "Reviewed")
+
+    shell.window.resize(1280, 800)
+    QCoreApplication.processEvents()
+    assert row._compact is False
+    assert row._inner.indexOf(row.progress) >= 0  # between the name and the buttons
+
+    shell.window.resize(900, 700)
+    QCoreApplication.processEvents()
+    assert row._compact is True
+    assert row._text.indexOf(row.progress) >= 0  # under the name
+    assert row.open_button.accessibleName() == "Open Reviewed"
+    assert row.delete_button.accessibleName() == "Delete Reviewed"
+    assert row.open_button.isEnabled()
+
+    shell.window.resize(1280, 800)
+    QCoreApplication.processEvents()
+    assert row._compact is False
+
+
+def test_keyboard_focus_on_a_row_survives_a_list_refresh(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+    shell.window.show()
+    row = row_for(page, "Fresh")
+    row.open_button.setFocus()
+    QCoreApplication.processEvents()
+    assert shell.window.focusWidget() is row.open_button
+
+    shell.window.projects.refresh()  # the list is rebuilt from a fresh listing
+    QCoreApplication.processEvents()
+
+    kept = row_for(page, "Fresh")
+    assert shell.window.focusWidget() is kept.open_button
+
+
+def test_filters_that_no_longer_apply_are_reset(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    two_projects(shell, tmp_path)
+    page.review_tabs.buttons["in_review"].click()
+
+    # delete every project: the next import must not stay hidden by that tab
+    for project in list(page._controller.state.projects):
+        shell.platform.confirmed = True
+        page._controller.delete(project.project_id)
+    QCoreApplication.processEvents()
+    import_csv(shell, csv_file(tmp_path, "Again.csv", csv_text(2)))
+    shell.window.nav_buttons["Projects"].click()
+
+    assert page.review_tabs.buttons["all"].isChecked()
+    assert len(page._rows) == 1
+
+
+def test_the_rejected_only_preview_resets_for_a_project_with_none(
+    make_shell: Any, tmp_path: Path
+) -> None:
+    shell = make_shell(FakeProvisioning(current=READY))
+    page = shell.window.projects_page
+    import_csv(shell, csv_file(tmp_path, "Clean.csv", csv_text(3)))
+    page._preview_filter_chosen("rejected")
+
+    assert page._preview_filter == "all"  # a filter that matches nothing is dropped
+    assert page.preview_table.rowCount() == 3

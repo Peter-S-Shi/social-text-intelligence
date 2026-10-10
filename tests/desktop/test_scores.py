@@ -86,3 +86,9 @@ def test_no_score_is_called_a_probability_or_a_confidence_in_the_note() -> None:
         [scores.emotion_rule, *(row.note for row in scores.emotion)]
     ).lower()
     assert "probab" not in words and "calibrat" not in words
+
+
+def test_the_scores_carry_the_activation_threshold_for_the_chart() -> None:
+    scores = build_scores(report(emotion=EmotionLabel.JOY))
+
+    assert scores.threshold == 0.5

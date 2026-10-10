@@ -12,6 +12,7 @@ high-contrast, or any other assistive-technology check.
 
 from __future__ import annotations
 
+import os
 import sys
 import tempfile
 from collections.abc import Callable
@@ -27,7 +28,8 @@ from desktop.fakes import (  # noqa: E402
     ImmediateRunner,
     status,
 )
-from PySide6.QtCore import QCoreApplication  # noqa: E402
+from PySide6.QtCore import QCoreApplication, Qt  # noqa: E402
+from PySide6.QtGui import QPixmap  # noqa: E402
 from PySide6.QtWidgets import QApplication, QWidget  # noqa: E402
 
 from social_text_intelligence.application.insights_workflow import (  # noqa: E402
@@ -39,6 +41,7 @@ from social_text_intelligence.application.model_provisioning import (  # noqa: E
 from social_text_intelligence.application.review_workflow import (  # noqa: E402
     ReviewDraft,
     ReviewJudgment,
+    ReviewUnavailableError,
 )
 from social_text_intelligence.contracts import (  # noqa: E402
     AnalysisReport,
@@ -122,6 +125,16 @@ class Platform:
         return self.confirmed
 
 
+def save_scaled(picture: QPixmap, path: Path) -> None:
+    """Save ``picture``; ``STI_CAPTURE_MAX_WIDTH=1000`` shrinks wider ones."""
+
+    limit = int(os.environ.get("STI_CAPTURE_MAX_WIDTH", "0") or 0)
+    image = picture.toImage()
+    if limit and image.width() > limit:
+        image = image.scaledToWidth(limit, Qt.TransformationMode.SmoothTransformation)
+    image.save(str(path))
+
+
 def settle() -> None:
     for _ in range(10):
         QCoreApplication.processEvents()
@@ -136,6 +149,7 @@ class Run:
         size: tuple[int, int] = (WIDTH, HEIGHT),
         gateway: Gateway | None = None,
         live: bool = False,
+        unmapped: bool = False,
     ) -> None:
         self.out = out
         self.root = Path(tempfile.mkdtemp(prefix="sti-visual-"))
@@ -158,6 +172,10 @@ class Run:
                 confirm=self.platform.confirm,
             ),
         )
+        if unmapped:
+            # Real platform plugin, real layout and painting, but never mapped to the
+            # desktop: the size is exact (a mapped window is clamped to the screen)
+            self.window.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen)
         self.window.resize(*size)
         self.window.show()
         self.window.start()
@@ -171,7 +189,7 @@ class Run:
         settle()
         target = widget or self.window
         path = self.out / f"{name}.png"
-        target.grab().save(str(path))
+        save_scaled(target.grab(), path)
         print("saved", path.name)
 
     def full(self, name: str) -> None:
@@ -219,7 +237,10 @@ class Run:
         assert current is not None
         project_id = current.summary.project_id
         for index, row in enumerate(rows):
-            record = workflow.open_review(project_id, row=row).record
+            try:
+                record = workflow.open_review(project_id, row=row).record
+            except ReviewUnavailableError:
+                continue  # a rejected or failed row has nothing to review
             if record is None:
                 continue
             how = pattern[index % len(pattern)]
@@ -321,9 +342,7 @@ def scene_results(out: Path) -> None:
     run.shot("06-results-not-analysed")
     page.clear_button.click()
     for sentiment in ("negative", "positive", "neutral"):
-        page.sentiment_filter.setCurrentIndex(
-            page.sentiment_filter.findData(sentiment)
-        )
+        page.sentiment_filter.setCurrentIndex(page.sentiment_filter.findData(sentiment))
         for emotion in ("joy", "anger", "gratitude", "fear", "disgust"):
             page.emotion_filter.setCurrentIndex(page.emotion_filter.findData(emotion))
             page._filters_changed()

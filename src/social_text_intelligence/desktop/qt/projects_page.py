@@ -9,6 +9,7 @@ rule: each page renders a controller's state.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QShowEvent
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QProgressBar,
@@ -43,7 +44,22 @@ from ..results import ResultsController, ResultsState
 from ..results_view import build_validation_view
 from ..review import ReviewController, ReviewState
 from .agreement_page import AgreementPage
-from .components import Card, Combo, DataTable, EmptyState, Page, PageHeader
+from .components import (
+    BarMeter,
+    Card,
+    Combo,
+    DataTable,
+    EmptyState,
+    Figure,
+    FlowRow,
+    Page,
+    PageHeader,
+    SegmentedFilter,
+    SplitRow,
+    ViewportWatcher,
+    chip,
+    rule,
+)
 from .insights_page import InsightsPage
 from .pages import AnalysisBlockBox
 from .platform import DesktopPlatform
@@ -52,7 +68,11 @@ from .review_page import ReviewPage
 from .widgets import LanguageBox, NoticeBox, add_all, announce, frame, label
 
 COLUMN_PLACEHOLDER = "Choose a column…"
-PROBLEM_COLUMNS = (("Row", 60), ("Record ID", 150), ("Reason", 520))
+COMPACT_ROWS_BELOW = (
+    760  # page width under which a project's progress sits under its name
+)
+PROBLEM_COLUMNS = (("Row", 60), ("Record ID", 140), ("Reason", 200))
+PREVIEW_COLUMNS = (("Row", 48), ("Record ID", 92), ("Text", 250), ("Check", 120))
 
 
 class RowProgress(QWidget):
@@ -93,32 +113,63 @@ class RowProgress(QWidget):
 
 
 class ProjectRowWidget(QWidget):
+    """One project line: name, size, review progress, then Open and Delete."""
+
     open_requested = Signal(str)
     delete_requested = Signal(str)
 
     def __init__(
-        self, row: ProjectRowView, enabled: bool, parent: QWidget | None = None
+        self,
+        row: ProjectRowView,
+        enabled: bool,
+        parent: QWidget | None = None,
+        *,
+        primary: bool = False,
     ) -> None:
         super().__init__(parent)
+        self.setProperty("role", "plain")
+        self.setAccessibleName(row.accessible_name)
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
-        box = frame("card")
-        box.setAccessibleName(row.accessible_name)
-        inner = QHBoxLayout(box)
-        inner.setContentsMargins(16, 12, 16, 12)
-        text = QVBoxLayout()
-        text.setSpacing(2)
-        text.addWidget(label(row.title, role="title"))
-        text.addWidget(label(row.subtitle, role="subtitle"))
-        inner.addLayout(text, 1)
+        outer.setSpacing(0)
+        box = QWidget()
+        box.setProperty("role", "plain")
+        self._inner = QHBoxLayout(box)
+        self._inner.setContentsMargins(18, 14, 18, 14)
+        self._inner.setSpacing(18)
+        self._text = QVBoxLayout()
+        self._text.setSpacing(2)
+        self._text.addWidget(label(row.title, role="title"))
+        self._text.addWidget(label(row.subtitle, role="subtitle"))
+        self.rows_label = label(row.rows_line, role="mono")
+        self.rows_label.setObjectName("project-rows")
+        self._text.addWidget(self.rows_label)
+        self._inner.addLayout(self._text, 1)
+        # the review progress: a thin meter and the words that carry its numbers
+        self.project_id = row.project_id
+        self.progress = QWidget()
+        self.progress.setObjectName("project-progress")
+        self.progress.setProperty("role", "plain")
+        self.progress.setFixedWidth(240)
+        progress = QVBoxLayout(self.progress)
+        progress.setContentsMargins(0, 0, 0, 0)
+        progress.setSpacing(2)
+        self.meter = BarMeter(row.review_fraction, "ink")
+        self.meter.setObjectName("project-meter")
+        self.meter.setAccessibleName(row.review_line)
+        self.review_label = label(row.review_line, role="mono")
+        self.review_label.setObjectName("project-review")
+        progress.addWidget(self.meter)
+        progress.addWidget(self.review_label)
+        self._compact: bool | None = None
         self.open_button = QPushButton("Open")
         self.open_button.setAccessibleName(f"Open {row.title}")
         self.open_button.setEnabled(enabled and row.can_open)
-        self.open_button.setVisible(row.can_open)
-        self.open_button.setProperty("primary", row.can_open)
+        self.open_button.setProperty("primary", primary and row.can_open)
         self.delete_button = QPushButton("Delete…")
         self.delete_button.setAccessibleName(f"Delete {row.title}")
         self.delete_button.setProperty("danger", True)
+        self.delete_button.setProperty("ghost", True)
         self.delete_button.setEnabled(enabled)
         self.open_button.clicked.connect(
             lambda: self.open_requested.emit(row.project_id)
@@ -126,13 +177,55 @@ class ProjectRowWidget(QWidget):
         self.delete_button.clicked.connect(
             lambda: self.delete_requested.emit(row.project_id)
         )
-        inner.addWidget(self.open_button, 0, Qt.AlignmentFlag.AlignVCenter)
-        inner.addWidget(self.delete_button, 0, Qt.AlignmentFlag.AlignVCenter)
+        self._buttons = QHBoxLayout()
+        self._buttons.setSpacing(8)
+        self._buttons.addWidget(self.open_button, 0, Qt.AlignmentFlag.AlignVCenter)
+        self._buttons.addWidget(self.delete_button, 0, Qt.AlignmentFlag.AlignVCenter)
+        self._inner.addLayout(self._buttons)
         outer.addWidget(box)
+        self.rule = rule()
+        outer.addWidget(self.rule)
+        self.set_compact(False)
+        # visibility is decided only now, once every widget has its parent: a widget
+        # shown while it has none would flash up as a window of its own
+        self.rows_label.setVisible(bool(row.rows_line))
+        self.progress.setVisible(bool(row.review_line))
+        self.open_button.setVisible(row.can_open)
+
+    def focused_button(self) -> str | None:
+        """Which of this row's buttons has the keyboard, if one does."""
+
+        window = self.window()
+        focus = window.focusWidget() if window is not None else None
+        if focus is self.open_button:
+            return "open"
+        return "delete" if focus is self.delete_button else None
+
+    def focus_button(self, which: str) -> None:
+        button = self.open_button if which == "open" else self.delete_button
+        if button.isEnabled() and button.isVisible():
+            button.setFocus()
+
+    def set_compact(self, compact: bool) -> None:
+        """Wide: progress between the name and the buttons. Narrow: under the name."""
+
+        if compact == self._compact:
+            return
+        self._compact = compact
+        self._inner.removeWidget(self.progress)
+        self._text.removeWidget(self.progress)
+        if compact:
+            self.progress.setFixedWidth(16_777_215)
+            self.progress.setMinimumWidth(0)
+            self._text.addWidget(self.progress)
+        else:
+            self.progress.setFixedWidth(240)
+            self._inner.insertWidget(1, self.progress, 0, Qt.AlignmentFlag.AlignVCenter)
 
 
 class ProjectsPage(QWidget):
     open_models = Signal()
+    analyze_text_requested = Signal()
     section_changed = Signal(object)  # the Section now shown
 
     def __init__(
@@ -156,6 +249,8 @@ class ProjectsPage(QWidget):
         self._availability = AnalysisAvailability.AVAILABLE
         self._other_analysis_running = False
         self._row_signature: object = None
+        self._review_filter = "all"
+        self._held_focus: tuple[str, str] | None = None
         self._rows: list[ProjectRowWidget] = []
         self._detail_title = ""
         self._section = Section.PROJECTS
@@ -212,6 +307,9 @@ class ProjectsPage(QWidget):
         reviews.subscribe(self._on_review)
         insights.subscribe(self._on_insights)
         agreement.subscribe(self._on_agreement)
+        self._list_watcher = ViewportWatcher(
+            self, self._reflow_rows, area=self.list_page.scroller
+        )
         self.show_state(controller.state)
 
     # -- construction -------------------------------------------------------
@@ -226,11 +324,24 @@ class ProjectsPage(QWidget):
         self.import_button.setProperty("primary", True)
         self.import_button.setAccessibleName("Import a CSV file as a new project")
         self.import_button.clicked.connect(self._import)
+        self.analyze_text_button = QPushButton("Analyze one text")
+        self.analyze_text_button.setObjectName("projects-analyze-text")
+        self.analyze_text_button.setAccessibleName("Analyze one text, unsaved")
+        self.analyze_text_button.clicked.connect(self.analyze_text_requested.emit)
+        self.header.add_action(self.analyze_text_button)
         self.header.add_action(self.import_button)
         self.summary = self.header.subtitle
         self.summary.setObjectName("projects-summary")
-        self.rows_box = QVBoxLayout()
-        self.rows_box.setSpacing(10)
+        self.review_tabs = SegmentedFilter(noun="projects")
+        self.review_tabs.setObjectName("projects-review-tabs")
+        self.review_tabs.setAccessibleName("Review state filter")
+        self.review_tabs.selected.connect(self._review_filter_chosen)
+        self.review_tabs.setVisible(False)
+        self.rows_card = frame("card")
+        self.rows_card.setObjectName("projects-card")
+        self.rows_box = QVBoxLayout(self.rows_card)
+        self.rows_box.setContentsMargins(0, 0, 0, 0)
+        self.rows_box.setSpacing(0)
         self.empty_list = EmptyState(
             "No projects yet",
             "A project is one imported CSV and everything derived from it. Import "
@@ -242,8 +353,8 @@ class ProjectsPage(QWidget):
             "stays on this computer until you delete it.",
             role="muted",
         )
-        add_all(self.list_page.body, self.header)
-        self.list_page.body.addLayout(self.rows_box)
+        add_all(self.list_page.body, self.header, self.review_tabs)
+        self.list_page.body.addWidget(self.rows_card)
         add_all(self.list_page.body, self.empty_list, self.note)
         self.list_page.body.addStretch(1)
         self.stack.addWidget(self.list_page)
@@ -274,7 +385,32 @@ class ProjectsPage(QWidget):
         self.ignored = label(role="muted")
         self.ignored.setObjectName("project-ignored")
         self.facts_card = Card("THIS CSV")
+        self.figure_ready = Figure("ready to analyse")
+        self.figure_ready.setObjectName("figure-ready")
+        self.figure_rejected = Figure("rejected at import", "negative")
+        self.figure_rejected.setObjectName("figure-rejected")
+        self.figure_language = Figure("not confirmed as English", "caution")
+        self.figure_language.setObjectName("figure-language")
+        figures = QHBoxLayout()
+        figures.setSpacing(18)
+        for figure in (self.figure_ready, self.figure_rejected, self.figure_language):
+            figures.addWidget(figure, 1)
+        self.metadata_caption = label("RECOGNISED METADATA COLUMNS", role="eyebrow")
+        self.metadata_row = FlowRow()
+        self.metadata_row.setObjectName("metadata-columns")
+        self.metadata_note = label(
+            "Groups in Insights come only from these columns. Nothing is inferred.",
+            role="muted",
+        )
+        self._metadata_signature: object = None
+        self.facts_card.layout_.addLayout(figures)
         add_all(self.facts_card.layout_, self.facts, self.ignored)
+        add_all(
+            self.facts_card.layout_,
+            self.metadata_caption,
+            self.metadata_row,
+            self.metadata_note,
+        )
         self.language_box = LanguageBox("project-language")
         self.column_box = frame("panel")
         self.column_box.setObjectName("column-step")
@@ -298,13 +434,30 @@ class ProjectsPage(QWidget):
         self.progress.setVisible(False)
         self.progress.cancel_requested.connect(self._controller.cancel)
 
-        self.problems_card = Card("ROWS REJECTED AT IMPORT")
+        # every imported row with its check, as a scrolling table (a bounded
+        # excerpt of each text, at most 100 characters)
+        self.preview_card = Card("ROW PREVIEW · VALIDATION")
         self.all_ready = label(role="muted")
         self.all_ready.setObjectName("all-ready")
-        self.problems_table = self._problem_table(
-            "problems-table", "Rows with problems"
+        self.preview_tabs = SegmentedFilter(noun="rows")
+        self.preview_tabs.setObjectName("preview-tabs")
+        self.preview_tabs.setAccessibleName("Rows to show")
+        self.preview_tabs.selected.connect(self._preview_filter_chosen)
+        self._preview_filter = "all"
+        self._preview_project: str | None = None
+        self.preview_table = DataTable()
+        self.preview_table.setObjectName("preview-table")
+        self.preview_table.setAccessibleName("Imported rows and their checks")
+        self.preview_table.tone_column = 3
+        self.preview_table.set_columns(
+            [name for name, _ in PREVIEW_COLUMNS], [w for _, w in PREVIEW_COLUMNS]
         )
-        add_all(self.problems_card.layout_, self.all_ready, self.problems_table)
+        self.preview_table.fit_rows(1)
+        add_all(self.preview_card.layout_, self.all_ready)
+        self.preview_card.layout_.addWidget(
+            self.preview_tabs, 0, Qt.AlignmentFlag.AlignLeft
+        )
+        self.preview_card.add(self.preview_table)
         self.failures_card = Card("ROWS THAT FAILED IN ANALYSIS")
         self.failures_table = self._problem_table(
             "failures-table", "Rows that failed in analysis"
@@ -319,8 +472,22 @@ class ProjectsPage(QWidget):
         )
         add_all(self.detail_page.body, self.detail_header, self.detail_block)
         add_all(self.detail_page.body, self.column_box, self.progress)
-        add_all(self.detail_page.body, self.facts_card, self.language_box)
-        add_all(self.detail_page.body, self.problems_card, self.failures_card)
+        results_column = QWidget()
+        results_column.setProperty("role", "plain")
+        column_layout_right = QVBoxLayout(results_column)
+        column_layout_right.setContentsMargins(0, 0, 0, 0)
+        column_layout_right.setSpacing(16)
+        add_all(
+            column_layout_right,
+            self.language_box,
+            self.preview_card,
+            self.failures_card,
+        )
+        column_layout_right.addStretch(1)
+        self.detail_split = SplitRow(
+            self.facts_card, results_column, side_width=360, stack_below=860
+        )
+        self.detail_page.body.addWidget(self.detail_split)
         self.detail_page.body.addStretch(1)
         self.stack.addWidget(self.detail_page)
 
@@ -334,6 +501,33 @@ class ProjectsPage(QWidget):
         )
         table.fit_rows(1)
         return table
+
+    # -- the project list ---------------------------------------------------
+
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._list_watcher.attach()
+        self._reflow_rows()
+
+    def _compact_rows(self) -> bool:
+        """Under the width where name, progress and buttons share one line."""
+
+        return self._list_watcher.available() < COMPACT_ROWS_BELOW
+
+    def _reflow_rows(self) -> None:
+        compact = self._compact_rows()
+        for row in self._rows:
+            row.set_compact(compact)
+
+    def _preview_filter_chosen(self, value: str) -> None:
+        self._preview_filter = value
+        self._problem_signature = None
+        self._show_problems(self._results.state)
+
+    def _review_filter_chosen(self, value: str) -> None:
+        self._review_filter = value
+        self._row_signature = None
+        self._show_list(self._controller.state)
 
     # -- inputs from the shell ----------------------------------------------
 
@@ -497,31 +691,64 @@ class ProjectsPage(QWidget):
         return focused is not None and self.isAncestorOf(focused)
 
     def _show_list(self, state: ProjectsState) -> None:
-        view = build_list_view(state)
-        self.header.set_subtitle(view.summary if view.rows else "")
+        view = build_list_view(state, self._review_filter)
+        listed_any = bool(view.tabs)
+        if not listed_any and self._review_filter != "all":
+            # no projects left: a stale tab must not hide the next import
+            self._review_filter = "all"
+            view = build_list_view(state, "all")
+        self.header.set_subtitle(view.summary if view.rows or listed_any else "")
         self.import_button.setEnabled(view.import_enabled)
-        empty = not view.rows and state.listed and not state.list_failed
+        empty = not listed_any and state.listed and not state.list_failed
         self.empty_list.setVisible(empty)
-        self.note.setVisible(bool(view.rows))
+        self.review_tabs.setVisible(listed_any)
+        if listed_any:
+            self.review_tabs.set_options(view.tabs, view.selected_filter)
+        self.rows_card.setVisible(bool(view.rows))
+        self.note.setVisible(listed_any)
         if not view.rows and not empty:
             self.header.set_subtitle(view.summary)
         signature = (view.rows, view.row_actions_enabled)
         if signature == self._row_signature:
             return
         self._row_signature = signature
+        # a rebuilt list keeps the keyboard where it was: the same project's button
+        current = next(
+            (
+                (row.project_id, which)
+                for row in self._rows
+                if (which := row.focused_button()) is not None
+            ),
+            None,
+        )
+        if current is not None:
+            self._held_focus = (
+                current  # (kept across a busy spell, when buttons are off)
+            )
         for widget in self._rows:
             self.rows_box.removeWidget(widget)
             widget.hide()  # a deleted widget is still painted until the loop runs
             widget.setParent(None)
             widget.deleteLater()
         self._rows = []
-        for row in view.rows:
-            widget = ProjectRowWidget(row, view.row_actions_enabled)
+        for position, row in enumerate(view.rows):
+            widget = ProjectRowWidget(
+                row, view.row_actions_enabled, primary=position == 0
+            )
             widget.open_requested.connect(self._controller.open_project)
             widget.delete_requested.connect(self._delete)
+            widget.set_compact(self._compact_rows())
             self.rows_box.addWidget(widget)
             widget.show()
             self._rows.append(widget)
+        if self._rows:
+            self._rows[-1].rule.setVisible(False)
+        held = self._held_focus
+        if held is not None and view.row_actions_enabled:
+            self._held_focus = None
+            again = next((r for r in self._rows if r.project_id == held[0]), None)
+            if again is not None:
+                again.focus_button(held[1])
 
     def _show_detail(self, view: ProjectDetailView, *, had_focus: bool) -> None:
         self._detail_title = view.title
@@ -529,6 +756,7 @@ class ProjectsPage(QWidget):
         self.state_line.setText(view.state_line)
         self.facts.setText("\n".join(view.facts))
         self.facts_card.setVisible(bool(view.facts))
+        self._show_figures(view)
         self.language_box.show_language(
             view.language_headline, view.language_detail, view.language_warns
         )
@@ -574,20 +802,61 @@ class ProjectsPage(QWidget):
         self.delete_button.setAccessibleName("Delete this project")
         self._show_problems(self._results.state)
 
+    def _show_figures(self, view: ProjectDetailView) -> None:
+        figures = (
+            (self.figure_ready, view.ready_count),
+            (self.figure_rejected, view.rejected_count),
+            (self.figure_language, view.language_count),
+        )
+        for figure, count in figures:
+            figure.setVisible(count is not None)
+            if count is not None:
+                figure.set_value(str(count))
+        shown = bool(view.metadata)
+        self.metadata_caption.setVisible(shown)
+        self.metadata_row.setVisible(shown)
+        self.metadata_note.setVisible(shown)
+        if view.metadata == self._metadata_signature:
+            return
+        self._metadata_signature = view.metadata
+        flow = self.metadata_row.flow
+        while flow.count():
+            item = flow.takeAt(0)
+            widget = item.widget() if item is not None else None
+            if widget is not None:
+                widget.hide()
+                widget.setParent(None)
+                widget.deleteLater()
+        for name, present in view.metadata:
+            text = name if present else f"{name} — not in file"
+            piece = chip(text, "human" if present else "neutral")
+            piece.setAccessibleName(
+                f"{name} column, {'in the file' if present else 'not in the file'}"
+            )
+            self.metadata_row.add(piece)
+            piece.show()
+
     def _show_problems(self, state: ResultsState) -> None:
         view = build_validation_view(state)
         shown = view is not None
-        self.problems_card.setVisible(shown)
+        self.preview_card.setVisible(shown)
         self.failures_card.setVisible(
             shown and view is not None and bool(view.failures)
         )
         if view is None or not shown:
             return
+        project_id = state.project_id
+        rejected_any = any(item.rejected for item in view.preview)
+        if project_id != self._preview_project or not rejected_any:
+            # a new project, or no rejected rows: the "rejected" tab has nothing to show
+            self._preview_project = project_id
+            self._preview_filter = "all"
         signature = (
-            view.problems,
+            view.preview,
             view.failures,
             view.all_ready_line,
             view.ignored_line,
+            self._preview_filter,
         )
         self.ignored.setText(view.ignored_line)
         self.ignored.setVisible(bool(view.ignored_line))
@@ -596,11 +865,26 @@ class ProjectsPage(QWidget):
         self._problem_signature = signature
         self.all_ready.setText(view.all_ready_line)
         self.all_ready.setVisible(bool(view.all_ready_line))
-        self.problems_table.setVisible(bool(view.problems))
-        self.problems_table.set_rows(
-            [(str(p.row), p.record_id, p.reason) for p in view.problems]
+        self.preview_tabs.set_options(view.preview_tabs, self._preview_filter)
+        shown_rows = [
+            item
+            for item in view.preview
+            if self._preview_filter == "all" or item.rejected
+        ]
+        self.preview_table.set_rows(
+            [
+                (
+                    str(item.row),
+                    item.record_id,
+                    item.text,
+                    item.check + (f" · {item.reason}" if item.reason else ""),
+                )
+                for item in shown_rows
+            ],
+            failed=[item.rejected for item in shown_rows],
+            names=[item.accessible_name for item in shown_rows],
         )
-        self.problems_table.fit_rows(len(view.problems), cap=10)
+        self.preview_table.fit_rows(len(shown_rows), cap=16)
         self.failures_table.set_rows(
             [(str(p.row), p.record_id, p.reason) for p in view.failures]
         )

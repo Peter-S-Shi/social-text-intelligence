@@ -229,6 +229,57 @@ def test_delete_wording_is_conservative() -> None:
         assert forbidden not in text.lower()
 
 
+def test_the_csv_card_figures_and_recognised_metadata_columns() -> None:
+    view = build_detail_view(
+        ProjectsState(
+            current=details(ProjectPhase.READY, headers=("record_id", "text", "topic"))
+        ),
+        AVAILABLE,
+        status(),
+    )
+
+    assert view is not None
+    assert (view.ready_count, view.rejected_count) == (4, 1)
+    assert view.language_count is None  # the language check runs with the analysis
+    present = {name: found for name, found in view.metadata}
+    assert present["record_id"] and present["topic"]
+    assert not present["community"] and not present["notes"]
+    # the text column is not metadata, and nothing is inferred from other headers
+    assert "text" not in present
+
+
+def test_the_language_figure_appears_once_the_project_is_analysed() -> None:
+    from social_text_intelligence.services.language import LanguageSummary
+
+    done = details(
+        ProjectPhase.ANALYZED,
+        analyzed_rows=4,
+        failed_rows=0,
+        language=LanguageSummary(4, 2, 1, 1, 0, 0, (("fr", 1),)),
+    )
+
+    view = build_detail_view(ProjectsState(current=done), AVAILABLE, status())
+
+    assert view is not None and view.language_count == 2  # unsupported + undetermined
+
+
+def test_a_project_still_choosing_its_column_shows_no_figures() -> None:
+    view = build_detail_view(
+        ProjectsState(current=details(ProjectPhase.NEEDS_COLUMN)), AVAILABLE, status()
+    )
+
+    assert view is not None
+    assert view.ready_count is None and view.rejected_count is None
+    assert view.metadata == ()
+
+
+def test_the_metadata_list_matches_the_batch_services_supported_fields() -> None:
+    from social_text_intelligence.desktop.projects_view import METADATA_COLUMNS
+    from social_text_intelligence.services.batch import SUPPORTED_BATCH_FIELDS
+
+    assert METADATA_COLUMNS == SUPPORTED_BATCH_FIELDS
+
+
 @pytest.mark.parametrize(
     ("code", "title"),
     [
@@ -247,3 +298,134 @@ def test_storage_faults_keep_their_code_and_fixed_message_in_the_notice(
     assert (notice.code, notice.title) == (code, title)
     assert notice.body == "Fixed advice. Nothing was changed."
     assert notice.kind is NoticeKind.ERROR
+
+
+def counted(
+    name: str,
+    *,
+    rows: int | None,
+    rejected: int = 0,
+    analysed: int = 0,
+    reviewed: int = 0,
+    corrected: int = 0,
+    key: str = "ab",
+) -> ProjectSummary:
+    return ProjectSummary(
+        key * 16,
+        ProjectStatus.OK,
+        name,
+        datetime(2026, 1, 2, tzinfo=UTC),
+        datetime(2026, 1, 3, tzinfo=UTC),
+        row_count=rows,
+        rejected_rows=rejected,
+        analysed_rows=analysed,
+        reviewed_rows=reviewed,
+        corrected_rows=corrected,
+    )
+
+
+def test_a_row_states_its_size_and_its_review_progress() -> None:
+    state = ProjectsState(
+        projects=(
+            counted(
+                "Checkout", rows=48, rejected=1, analysed=46, reviewed=29, corrected=10
+            ),
+        ),
+        listed=True,
+    )
+
+    (row,) = build_list_view(state).rows
+
+    assert row.rows_line == "48 rows · 1 rejected at import"
+    assert row.review_state == "in_review"
+    assert row.review_fraction == 29 / 46
+    assert row.review_line == "29 / 46 reviewed · 10 corrected"
+    assert "29 / 46 reviewed" in row.accessible_name
+
+
+def test_review_states_cover_every_project() -> None:
+    state = ProjectsState(
+        projects=(
+            counted("Fresh", rows=5, key="aa"),
+            counted("Half", rows=5, analysed=5, reviewed=2, corrected=0, key="bb"),
+            counted("Done", rows=5, analysed=5, reviewed=5, corrected=1, key="cc"),
+            counted("Nothing ok", rows=5, analysed=0, key="dd"),
+            counted("Empty import", rows=0, key="ee"),
+        ),
+        listed=True,
+    )
+
+    rows = {r.title: r for r in build_list_view(state).rows}
+
+    assert rows["Fresh"].review_state == "not_analysed"
+    assert rows["Fresh"].review_line == "Not analysed yet"
+    assert rows["Half"].review_state == "in_review"
+    assert rows["Done"].review_state == "fully_reviewed"
+    assert rows["Done"].review_fraction == 1.0
+    assert rows["Nothing ok"].review_state == "not_analysed"
+    assert rows["Empty import"].rows_line == "No rows imported"
+
+
+def test_a_project_without_counts_shows_no_progress_and_no_state() -> None:
+    state = ProjectsState(
+        projects=(SUMMARY,), listed=True
+    )  # a repository with no counts
+
+    (row,) = build_list_view(state).rows
+
+    assert row.review_state == "unknown" and row.rows_line == ""
+    assert row.review_line == ""
+
+
+def test_the_review_tabs_count_and_filter_the_projects() -> None:
+    state = ProjectsState(
+        projects=(
+            counted("Fresh", rows=5, key="aa"),
+            counted("Half", rows=5, analysed=5, reviewed=2, corrected=0, key="bb"),
+            counted("Done", rows=5, analysed=5, reviewed=5, corrected=1, key="cc"),
+            ProjectSummary("dd" * 16, ProjectStatus.UNREADABLE),
+        ),
+        listed=True,
+    )
+
+    everything = build_list_view(state)
+    assert [(t, v, n) for t, v, n in everything.tabs] == [
+        ("All", "all", 4),
+        ("Not analysed", "not_analysed", 1),
+        ("In review", "in_review", 1),
+        ("Fully reviewed", "fully_reviewed", 1),
+    ]
+    assert len(everything.rows) == 4  # an unreadable entry is always listed under All
+
+    half = build_list_view(state, review_filter="in_review")
+    assert [r.title for r in half.rows] == ["Half"]
+    assert half.selected_filter == "in_review"
+    assert half.summary.startswith("1 of 4")
+
+
+def test_a_filter_that_matches_nothing_says_so_and_keeps_the_tabs() -> None:
+    state = ProjectsState(projects=(counted("Fresh", rows=5),), listed=True)
+
+    view = build_list_view(state, review_filter="fully_reviewed")
+
+    assert view.rows == () and "No projects match" in view.summary
+    assert view.tabs[0][2] == 1
+
+
+def test_a_project_whose_analysis_produced_no_result_is_not_called_unanalysed() -> None:
+    summary = ProjectSummary(
+        "ab" * 16,
+        ProjectStatus.OK,
+        "All failed",
+        row_count=3,
+        rejected_rows=0,
+        analysed_rows=0,
+        attempted_rows=3,
+        reviewed_rows=0,
+        corrected_rows=0,
+    )
+
+    (row,) = build_list_view(ProjectsState(projects=(summary,), listed=True)).rows
+
+    assert row.review_line == "Analysis ran · no row succeeded"
+    assert row.review_state == "not_analysed"

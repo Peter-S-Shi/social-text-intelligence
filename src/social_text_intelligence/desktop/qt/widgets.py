@@ -28,6 +28,9 @@ from ..panel import (
 )
 from ..projects import NoticeKind, ProjectsNotice
 
+# a readiness chip's icon decides its tint (the word is always written beside it)
+_CHIP_TONES = {"✓": "ok", "○": "neutral", "◆": "warn", "◇": "warn", "✕": "error"}
+
 _REPORT_PREFIX = {
     ReportKind.SUCCESS: "✓",
     ReportKind.INFO: "ℹ",
@@ -258,8 +261,11 @@ class LanguageBox(QFrame):
     A warning is an icon and words, never colour alone. Hidden until it has text.
     """
 
-    def __init__(self, name: str, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, name: str, parent: QWidget | None = None, *, compact: bool = False
+    ) -> None:
         super().__init__(parent)
+        self._compact = compact  # a quiet check shows only its headline
         self.setObjectName(name)
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setProperty("role", "panel")
@@ -279,6 +285,12 @@ class LanguageBox(QFrame):
             return
         self.headline.setText(f"⚠ {headline}" if warns else headline)
         self.detail.setText(detail)
+        quiet = self._compact and not warns
+        self.detail.setVisible(not quiet)
+        self.headline.setProperty("role", "mono" if quiet else "title")
+        self.headline.style().unpolish(self.headline)
+        self.headline.style().polish(self.headline)
+        self.setToolTip(detail if quiet else "")
         self.setAccessibleName(f"Language check. {headline}")
         self.setAccessibleDescription(detail)
         self.setProperty("role", "notice" if warns else "panel")
@@ -302,6 +314,7 @@ class CardWidget(QFrame):
         head = QHBoxLayout()
         self.title = label(role="title", wrap=False)
         self.chip = label(wrap=False)
+        self.chip.setProperty("chip", True)
         self.chip.setObjectName(f"chip-{key}")
         head.addWidget(self.title)
         head.addStretch(1)
@@ -328,6 +341,9 @@ class CardWidget(QFrame):
     def show_card(self, view: CardView) -> None:
         self.title.setText(view.title)
         self.chip.setText(view.chip)
+        self.chip.setProperty("tone", _CHIP_TONES.get(view.chip_icon, "neutral"))
+        self.chip.style().unpolish(self.chip)
+        self.chip.style().polish(self.chip)
         self.sentence.setText(view.sentence)
         self.problems.setText(", ".join(view.problem_files))
         self.problems.setVisible(bool(view.problem_files))
@@ -341,10 +357,18 @@ class CardWidget(QFrame):
 class FlowLayout(QLayout):
     """Left-to-right layout that wraps to new rows, so actions never overflow."""
 
-    def __init__(self, parent: QWidget | None = None, spacing: int = 8) -> None:
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        spacing: int = 8,
+        *,
+        one_line_hint: bool = False,
+    ) -> None:
         super().__init__(parent)
         self._items: list[QLayoutItem] = []
         self._spacing = spacing
+        # a wide preferred size (everything on one line) that can still shrink and wrap
+        self._one_line_hint = one_line_hint
 
     def addItem(self, item: QLayoutItem) -> None:  # noqa: N802 (Qt override)
         self._items.append(item)
@@ -372,7 +396,16 @@ class FlowLayout(QLayout):
         self._arrange(rect, apply=True)
 
     def sizeHint(self) -> QSize:  # noqa: N802
-        return self.minimumSize()
+        if not self._one_line_hint:
+            return self.minimumSize()
+        width = sum(item.sizeHint().width() for item in self._items)
+        width += self._spacing * max(len(self._items) - 1, 0)
+        height = max((item.sizeHint().height() for item in self._items), default=0)
+        margins = self.contentsMargins()
+        return QSize(
+            width + margins.left() + margins.right(),
+            height + margins.top() + margins.bottom(),
+        )
 
     def minimumSize(self) -> QSize:  # noqa: N802
         size = QSize()

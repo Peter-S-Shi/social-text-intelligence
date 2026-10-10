@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QResizeEvent, QShowEvent
 from PySide6.QtWidgets import (
+    QBoxLayout,
     QHBoxLayout,
     QPlainTextEdit,
     QPushButton,
@@ -13,10 +15,22 @@ from PySide6.QtWidgets import (
 )
 
 from ...application.model_provisioning import ModelsStatus
+from ...contracts.inputs import DEFAULT_MAX_TEXT_LENGTH
 from ..analysis import AnalysisPageState
 from ..gate import AnalysisAvailability
 from ..panel import ActionId, ActionView, build_analysis_block
-from .components import Card, Page, PageHeader, ScorePanel
+from . import style
+from .components import (
+    Card,
+    EmptyState,
+    FlowRow,
+    Page,
+    PageHeader,
+    ScorePanel,
+    SplitRow,
+    ViewportWatcher,
+    chip,
+)
 from .widgets import ActionRow, LanguageBox, add_all, announce, frame, label
 
 
@@ -74,6 +88,16 @@ class AnalyzePage(Page):
             "Not saved: nothing is written to disk, and the text stays on this "
             "computer."
         )
+        # the V1 safeguards, stated as facts beside the page title
+        self.limits = FlowRow()
+        self.limits.setObjectName("analysis-limits")
+        for text in (
+            "English only",
+            f"{DEFAULT_MAX_TEXT_LENGTH:,}-character limit",
+            "Rejected, never truncated",
+            "Not saved",
+        ):
+            self.limits.add(chip(text, "neutral"))
         self.block = AnalysisBlockBox()
         self.block.triggered.connect(lambda _: self.open_models.emit())
         self.editor = QPlainTextEdit()
@@ -92,34 +116,66 @@ class AnalyzePage(Page):
         self.analyze_button.clicked.connect(
             lambda: self.analyze_requested.emit(self.editor.toPlainText())
         )
+        self.counter = label(role="mono", wrap=False)
+        self.counter.setObjectName("text-counter")
+        self.editor.textChanged.connect(self._count)
+        self._count()
         self.progress_note = label(role="muted")
         self.progress_note.setObjectName("analysis-running")
 
         self.input_card = Card("TEXT")
         self.input_card.add(self.editor)
         actions = QHBoxLayout()
+        actions.addWidget(self.counter, 1)
         actions.addWidget(self.analyze_button, 0)
-        actions.addWidget(self.progress_note, 1)
         self.input_card.layout_.addLayout(actions)
+        self.input_card.add(self.progress_note)
 
         self.result_box = Card("RESULT")
         self.result_box.setObjectName("analysis-result")
         self.result_title = self.result_box.eyebrow
-        self.result_text = label(role="title")
-        self.result_text.setObjectName("result-text")
+        self.sentiment_word = label(role="display", wrap=False)
+        self.sentiment_word.setObjectName("result-sentiment")
+        self.sentiment_detail = label(role="mono")
+        self.sentiment_detail.setObjectName("result-sentiment-detail")
+        self.emotion_word = label(role="display", wrap=False)
+        self.emotion_word.setObjectName("result-emotion")
+        self.emotion_detail = label(role="mono")
+        self.emotion_detail.setObjectName("result-emotion-detail")
+        self.verdicts = QBoxLayout(QBoxLayout.Direction.LeftToRight)
+        self.verdicts.setSpacing(24)
+        verdicts = self.verdicts
+        for caption, word, detail in (
+            ("SENTIMENT", self.sentiment_word, self.sentiment_detail),
+            ("DOMINANT EMOTION", self.emotion_word, self.emotion_detail),
+        ):
+            column = QVBoxLayout()
+            column.setSpacing(2)
+            add_all(column, label(caption, role="eyebrow", wrap=False), word, detail)
+            verdicts.addLayout(column, 1)
         self.result_provenance = label(role="mono")
         # The language check sits beside the labels, never inside them.
-        self.language_box = LanguageBox("analysis-language")
+        self.language_box = LanguageBox("analysis-language", compact=True)
         self.language_headline = self.language_box.headline
         self.language_detail = self.language_box.detail
-        self.scores = ScorePanel()
+        self.scores = ScorePanel(columns=True)
+        self.result_box.layout_.addLayout(verdicts)
         add_all(
             self.result_box.layout_,
-            self.result_text,
             self.language_box,
             self.scores,
             self.result_provenance,
         )
+        self.empty_result = EmptyState(
+            "No result yet",
+            "Paste a text and choose Analyze. The result appears here.",
+        )
+        self.empty_result.setObjectName("analysis-empty")
+        results = QWidget()
+        results_layout = QVBoxLayout(results)
+        results_layout.setContentsMargins(0, 0, 0, 0)
+        add_all(results_layout, self.result_box, self.empty_result)
+        results_layout.addStretch(1)
         self.error_box = frame("alert")
         self.error_box.setObjectName("analysis-error")
         error_layout = QVBoxLayout(self.error_box)
@@ -128,8 +184,10 @@ class AnalyzePage(Page):
         self.error_actions = ActionRow()
         self.error_actions.triggered.connect(self._error_action)
         add_all(error_layout, self.error_title, self.error_body, self.error_actions)
-        add_all(self.body, self.header, self.block, self.input_card)
-        add_all(self.body, self.result_box, self.error_box)
+        self.split = SplitRow(self.input_card, results, side_width=400, stack_below=860)
+        self._watcher = ViewportWatcher(self, self._reflow_verdicts, area=self.scroller)
+        add_all(self.body, self.header, self.limits, self.block, self.split)
+        self.body.addWidget(self.error_box)
         self.body.addStretch(1)
         self.result_box.setVisible(False)
         self.error_box.setVisible(False)
@@ -137,6 +195,38 @@ class AnalyzePage(Page):
         self._availability = AnalysisAvailability.AVAILABLE
         self._running = False
         self._external_busy = False
+
+    def showEvent(self, event: QShowEvent) -> None:  # noqa: N802 (Qt override)
+        super().showEvent(event)
+        self._watcher.attach()
+        self._reflow_verdicts()
+
+    def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802 (Qt override)
+        super().resizeEvent(event)
+        self._reflow_verdicts()
+
+    def _reflow_verdicts(self) -> None:
+        """The two large label words sit side by side only when they fit the card."""
+
+        room = self._watcher.available() - 2 * style.SPACE_L  # less the card padding
+        if self.split.wide:
+            room -= self.split.side_width
+        need = (
+            self.sentiment_word.sizeHint().width()
+            + self.emotion_word.sizeHint().width()
+            + self.verdicts.spacing()
+        )
+        direction = (
+            QBoxLayout.Direction.LeftToRight
+            if room >= need
+            else QBoxLayout.Direction.TopToBottom
+        )
+        if self.verdicts.direction() != direction:
+            self.verdicts.setDirection(direction)
+
+    def _count(self) -> None:
+        count = len(self.editor.toPlainText())
+        self.counter.setText(f"{count:,} character{'' if count == 1 else 's'}")
 
     def _error_action(self, action: ActionView) -> None:
         if action.action is ActionId.VERIFY:
@@ -184,15 +274,26 @@ class AnalyzePage(Page):
             announce(self.progress_note, text)
         result = state.result
         self.result_box.setVisible(result is not None)
+        self.empty_result.setVisible(result is None)
         if result is not None:
             others = (
                 f" · also {', '.join(result.secondary_emotions)}"
                 if result.secondary_emotions
                 else ""
             )
-            self.result_text.setText(
-                f"Sentiment: {result.sentiment} ({result.sentiment_confidence})\n"
-                f"Emotion: {result.emotion} ({result.emotion_confidence}){others}"
+            self.sentiment_word.setText(result.sentiment)
+            self.sentiment_word.setProperty("polarity", result.sentiment.lower())
+            self.sentiment_word.style().unpolish(self.sentiment_word)
+            self.sentiment_word.style().polish(self.sentiment_word)
+            self.sentiment_detail.setText(f"confidence {result.sentiment_confidence}")
+            self.emotion_word.setText(result.emotion)
+            self.emotion_detail.setText(
+                f"confidence {result.emotion_confidence}{others}"
+            )
+            self.result_box.setAccessibleName(
+                f"Result. Sentiment: {result.sentiment} "
+                f"({result.sentiment_confidence}). Emotion: {result.emotion} "
+                f"({result.emotion_confidence}){others}"
             )
             self.result_provenance.setText("\n".join(result.provenance))
             self.language_box.show_language(
@@ -201,6 +302,7 @@ class AnalyzePage(Page):
                 result.language_warns,
             )
             self.scores.show_scores(result.scores)
+            self._reflow_verdicts()
         error = state.error
         self.error_box.setVisible(error is not None)
         if error is not None:

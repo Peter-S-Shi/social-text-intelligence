@@ -209,6 +209,13 @@ class ReviewController:
     def next_unreviewed(self) -> bool:
         return self._go(lambda s: s.next_unreviewed_row)
 
+    def go_to(self, row: int) -> bool:
+        """Open ``row`` from the queue (by its row identity, not its list position)."""
+
+        return self._go(
+            lambda s: row if any(e.row_number == row for e in s.queue) else None
+        )
+
     def set_draft(self, draft: ReviewDraft) -> None:
         if self._state.is_open and not self._state.busy:
             self._set(draft=draft)

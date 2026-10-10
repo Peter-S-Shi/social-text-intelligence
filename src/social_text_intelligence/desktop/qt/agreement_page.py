@@ -26,6 +26,7 @@ from .components import (
     Page,
     PageHeader,
     ReflowRow,
+    relax_width,
 )
 from .platform import DesktopPlatform
 from .widgets import NoticeBox, add_all, label
@@ -40,7 +41,7 @@ LEGEND = (
 class FigureCard(Card):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__("", parent)
-        self.value = label(role="figure", wrap=False)
+        self.value = label(role="display", wrap=False)
         self.caption = label(role="muted")
         add_all(self.layout_, self.value, self.caption)
 
@@ -98,6 +99,7 @@ class AgreementPage(Page):
         self.header.add_action(self.export_button)
         self.native_box = QCheckBox(NATIVE_LABEL)
         self.native_box.setObjectName("export-native")
+        relax_width(self.native_box)
         self.notice = NoticeBox()
         self.notice.setVisible(False)
         self.empty = EmptyState()
@@ -106,7 +108,7 @@ class AgreementPage(Page):
         self.waiting.setObjectName("agreement-waiting")
 
         self.figure_cards = tuple(FigureCard() for _ in range(3))
-        self.figures = ReflowRow(min_width=230)
+        self.figures = ReflowRow(min_width=310)
         for card in self.figure_cards:
             self.figures.add(card)
 
