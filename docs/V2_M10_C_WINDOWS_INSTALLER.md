@@ -174,6 +174,24 @@ they do not establish Windows installation, accessibility, VM acceptance or
 legal compliance. Development-host preservation proves the tested sentinel
 bytes survive; it is not a claim that every possible user dataset was tested.
 
+## Verification and independent exit review
+
+Installer implementation `35df2929fdb3830952638ad40dbcc608113909f3` passed the
+full Windows suite: **1,186 passed / 6 skipped**. Its
+[fresh CI run](https://github.com/Peter-S-Shi/social-text-intelligence/actions/runs/38102500170)
+passed Python 3.11/3.12/3.13: **1,184 passed / 8 skipped each**, plus **12 Node
+tests**. Ruff, strict MyPy (240 source files), compileall and pip check PASS.
+The later governance/lifecycle assertion revision `be39a07` changes no installer
+or product implementation; its focused installer/lifecycle suite is **15 PASS**.
+No duplicate global CI is required for the documentation-only closeout.
+
+Independent Spec and Standards reviews found stale no-installer language in
+macro documents. Historical statements were scoped to their milestones, current
+statements corrected, and a regression added. Both final reviews **PASS with
+0 unresolved findings**; the actual changed governance files passed the
+post-merge one-second truth audit **100% YES**. This is review of engineering and
+records, not owner/clean-machine/legal acceptance.
+
 ## Remaining action
 
 Execute the clean isolated matrix and missing-model/download-cancel UI checks
