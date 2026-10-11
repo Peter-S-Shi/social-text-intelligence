@@ -182,7 +182,9 @@ question.
 
 Options for the owner:
 
-- accept the model with attribution;
+- accept the model with attribution. Attribution satisfies the BSD notice
+  terms only; it does **not** by itself establish a right to redistribute a
+  model derived from those corpora. That remains the owner/legal question;
 - retrain with the deterministic `py3langid.train` pipeline on corpora with
   verified permissive terms;
 - replace the component.
@@ -206,6 +208,23 @@ implementation commit `2a374e2e4539aec6f6f5727d86e056bcb5a786a4`
   COMMIT_MATCH for qtbase and qtsvg and VERSION_ONLY for qtimageformats.
 - **Packet:** both wheel SBOMs preserved; materials valid; four blockers
   (B1 narrowed, B3–B5); `distribution_permitted: false`.
+- **Packet regression (found and fixed before merge):**
+  - The packet built with `2a374e2` audited **34** components instead of
+    36: `PySide6_Essentials` and `shiboken6` and their installed notices
+    were missing. The loose-file collection leaves them no PYZ entry, and
+    owner discovery read PYZ names only.
+  - Tool commit `6ae5fdf` adds owners of loose Python sources shipped
+    under `_internal` and records them as `loose_python_packages`.
+    Unregistered loose files still become unmapped-owner blockers.
+  - On a fresh copy of the same `2a374e2` bundle, the regenerated packet
+    audits **36** components. Both bindings are version-matched (6.11.2)
+    with their installed notices, and no ownership blockers remain
+    ([receipt](evidence/m10-e1/e1-packet-correction-receipt.json)).
+  - Executables are byte-identical. `--verify`, `--license-info`,
+    `--verify-runtime` and `--smoke` pass. The replacement mechanism and
+    every gate are unchanged.
+  - The earlier [build receipt](evidence/m10-e1/e1-build-receipt.json)
+    describes the original, uncorrected packet.
 
 Frozen checks on that bundle:
 
@@ -223,6 +242,10 @@ Replacement on this bundle:
   6.11.1.
 
 Removing the renderer did not affect any of these Widgets checks.
+
+The M10-C compiled installer is historical: it wraps the M10-B bundle and was
+**not** rebuilt with the M10-E1 bundle or packet. Any new installer must be
+rebuilt from an M10-E1-or-later bundle and revalidated.
 
 `QT_REPLACEMENT.md` and `SOURCE_ACCESS.md` were rewritten after this build.
 That is a text-only change to the legal packet. The receipt describes the

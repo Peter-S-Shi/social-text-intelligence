@@ -342,6 +342,7 @@ def test_m10e1_narrows_blockers_without_granting_distribution() -> None:
         "replacement-evidence.json",
         "qt-provenance-m10b-bundle.json",
         "rust-compiled-crates.json",
+        "e1-packet-correction-receipt.json",
     ):
         assert (ROOT / "docs/evidence/m10-e1" / evidence).is_file()
         data = json.loads(

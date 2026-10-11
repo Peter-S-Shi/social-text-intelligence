@@ -1,0 +1,68 @@
+{
+ "schema_version": 1,
+ "scope": "Material stage regenerated with the corrected packet tool over a fresh copy of the actual M10-E1 frozen bundle (legal/ excluded from the copy); binaries are unchanged and not published.",
+ "binary_application_sha": "2a374e2e4539aec6f6f5727d86e056bcb5a786a4",
+ "license_tool_sha": "6ae5fdf0500d3d9699b2fbc064a35ccf0b77ee5a",
+ "executable_hashes_preserved": true,
+ "regression_found": {
+  "original_packet_components": 34,
+  "missing_from_original_packet": [
+   "PySide6_Essentials",
+   "shiboken6"
+  ],
+  "cause": "module_collection_mode='py' leaves PySide6/shiboken6 with no PYZ entry, and owner discovery read PYZ names only."
+ },
+ "corrected_packet": {
+  "inventory_sha256": "3344c665b3774c90ea732175eba766418fb230c0f0b7c668fec803b45f0fe2d1",
+  "components": 36,
+  "loose_python_packages": [
+   "PySide6",
+   "shiboken6",
+   "torch",
+   "transformers"
+  ],
+  "bindings": [
+   {
+    "name": "PySide6_Essentials",
+    "version": "6.11.2",
+    "audited_version": "6.11.2",
+    "license_notices": [
+     "pyside6_essentials-6.11.2.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
+    ]
+   },
+   {
+    "name": "shiboken6",
+    "version": "6.11.2",
+    "audited_version": "6.11.2",
+    "license_notices": [
+     "shiboken6-6.11.2.dist-info/licenses/LicenseRef-Qt-Commercial.txt"
+    ]
+   }
+  ],
+  "materials": 5268,
+  "qt_libraries_verified": true,
+  "blockers": [
+   "B1: Qt library binaries match the official Qt build SBOMs, linked to the delivered source archives by commit or, where an SBOM names none, by release version only; PySide6/shiboken6 binding binaries have no producer build record, and the release source-delivery route needs owner/legal confirmation.",
+   "B3: Microsoft runtime redistribution grant and custom CPython runtime/native build provenance are not verified.",
+   "B4: Static Rust/native and vendored dependency license coverage is not certified by package-level metadata or source-superset notices.",
+   "B5: py3langid embedded model training-corpus redistribution terms remain open."
+  ]
+ },
+ "observed": {
+  "compliance_verify": {
+   "materials_valid": true
+  },
+  "license_info": {
+   "exit": 0,
+   "qt_version": "6.11.2",
+   "materials_present": true
+  },
+  "verify_runtime": {
+   "exit": 0
+  },
+  "smoke": {
+   "exit": 0
+  }
+ },
+ "distribution_permitted": false
+}

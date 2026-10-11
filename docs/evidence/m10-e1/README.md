@@ -10,6 +10,9 @@
 - [M10-E1 build receipt](e1-build-receipt.json): the actual build's layout,
   staged SBOM hashes, Qt provenance result, preserved wheel SBOMs and the
   generated blockers.
+- [Packet correction receipt](e1-packet-correction-receipt.json): the
+  pre-merge fix restoring PySide6-Essentials/shiboken6 to the component
+  audit, regenerated over the same actual bundle.
 - [Compiled Rust crates](rust-compiled-crates.json): crate@version lower bounds
   recovered from the three Rust extensions.
 
