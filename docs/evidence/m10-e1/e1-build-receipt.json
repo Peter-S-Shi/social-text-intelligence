@@ -1,0 +1,244 @@
+{
+ "schema_version": 1,
+ "scope": "Sanitized receipt of the actual local M10-E1 Windows frozen build; binaries, SBOMs and source archives are not published.",
+ "application_sha": "2a374e2e4539aec6f6f5727d86e056bcb5a786a4",
+ "build_evidence": {
+  "schema_version": 1,
+  "application_sha": "2a374e2e4539aec6f6f5727d86e056bcb5a786a4",
+  "python": "3.12.14",
+  "platform": "windows-x64",
+  "spec_sha256": "8b0ef7b907da3bd8f3ccf12e9fd13537bdbdb024da814a93521713316dd41682",
+  "requirements_sha256": "4c4fe3004b94cb94ad46f64f81a7afc2fbedfe6ee1db77946633c7f1e4f1aeed",
+  "layout": {
+   "files": 5269,
+   "bytes": 745543213
+  },
+  "models_bundled": false,
+  "release_ready": false
+ },
+ "inventory_sha256": "63d5b3ca59068c5b9fd3bda41180ae63d2d0d42fe41403b739fb840ac1808941",
+ "inventory_bytes": 1520537,
+ "frozen_module_count": 6646,
+ "frozen_pyside_shiboken_modules": 0,
+ "native_component_count": 102,
+ "software_renderer_present": false,
+ "qt_build_sboms": [
+  {
+   "component": "QtBase build SBOM",
+   "filename": "qtbase-6.11.2.spdx.json",
+   "sha256": "a5c6018dd0b4096e66f697ce98b83f0ac3f8c9424720e090a1d5b00125179a24",
+   "upstream": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z"
+  },
+  {
+   "component": "QtSvg build SBOM",
+   "filename": "qtsvg-6.11.2.spdx.json",
+   "sha256": "eabd595e394dfb7a9d2fd3735096fe5390377f2bee5349b02a4311ff9471e8c5",
+   "upstream": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z"
+  },
+  {
+   "component": "QtImageFormats build SBOM",
+   "filename": "qtimageformats-6.11.2.spdx.json",
+   "sha256": "1678c477dcdf320fb04b8de1b6305278081f86b45ed72eda677fde0de9ec8b8e",
+   "upstream": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtimageformats.win64_msvc2022_64/6.11.2-0-202608131017qtimageformats-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z"
+  }
+ ],
+ "qt_binary_provenance": {
+  "schema_version": 1,
+  "modules": [
+   {
+    "module": "qtbase",
+    "version": "ef55f427+HEAD",
+    "sbom": "qtbase-6.11.2.spdx.json",
+    "sbom_sha256": "a5c6018dd0b4096e66f697ce98b83f0ac3f8c9424720e090a1d5b00125179a24",
+    "built_commit": "ef55f427f2c8b410d34f8a7681020a3000cf6866",
+    "source_archive_tag": "ef55f427f2c8b410d34f8a7681020a3000cf6866",
+    "source_link": "COMMIT_MATCH"
+   },
+   {
+    "module": "qtsvg",
+    "version": "17ca512+HEAD",
+    "sbom": "qtsvg-6.11.2.spdx.json",
+    "sbom_sha256": "eabd595e394dfb7a9d2fd3735096fe5390377f2bee5349b02a4311ff9471e8c5",
+    "built_commit": "17ca512f903f935282ebeca496aac5d11ba4199a",
+    "source_archive_tag": "17ca512f903f935282ebeca496aac5d11ba4199a",
+    "source_link": "COMMIT_MATCH"
+   },
+   {
+    "module": "qtimageformats",
+    "version": "6.11.2",
+    "sbom": "qtimageformats-6.11.2.spdx.json",
+    "sbom_sha256": "1678c477dcdf320fb04b8de1b6305278081f86b45ed72eda677fde0de9ec8b8e",
+    "built_commit": null,
+    "source_archive_tag": "47b6139dda3b84d1d3ec15caf8d04eff8d744c8d",
+    "source_link": "VERSION_ONLY"
+   }
+  ],
+  "binaries": [
+   {
+    "path": "_internal/PySide6/plugins/generic/qtuiotouchplugin.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "9e135fc088b985ad4a45b63b11a42d9fe2c454e4",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/iconengines/qsvgicon.dll",
+    "module": "qtsvg",
+    "unsigned_sha1": "9a4c601dfdfc5525f094dad507c046cd55c8f1a5",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qgif.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "239da19c4bae5eedb8de397f664b0ca85025d7e7",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qicns.dll",
+    "module": "qtimageformats",
+    "unsigned_sha1": "f68f7f19cc7e8016a13197fe7bbe673879831390",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qico.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "4979a803b55ef608d60ff21db8c4ed391af604ac",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qjpeg.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "7d62195bc32b53452e4e2bd4fa1a7b187c91b063",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qsvg.dll",
+    "module": "qtsvg",
+    "unsigned_sha1": "3cf340f32dfeab4bffb66ee982d4ab929fcf71d4",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qtga.dll",
+    "module": "qtimageformats",
+    "unsigned_sha1": "6e0a051504ea390fcf54ff230948b7ee5ff3f5a2",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qtiff.dll",
+    "module": "qtimageformats",
+    "unsigned_sha1": "17f1c101638a21b5991fbdd2a6ca9573f16b2a04",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qwbmp.dll",
+    "module": "qtimageformats",
+    "unsigned_sha1": "992f793b12ab0cae204f21ee48c9a20990221308",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/imageformats/qwebp.dll",
+    "module": "qtimageformats",
+    "unsigned_sha1": "a9b1a357e10d60d99aeb0285d9b1482d9589ce22",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/networkinformation/qnetworklistmanager.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "be1271d9a9d6c65b68c9fa8873b19c82b4bd7f41",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/platforms/qdirect2d.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "b2f2f1bebf2393411e57fa27a4af64f24dc2072d",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/platforms/qminimal.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "7b6923b2c3188f010dae267b9e6a6432090fff08",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/platforms/qoffscreen.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "bbc1294de922f05c66f816cf41a5f426754e5f6e",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/platforms/qwindows.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "d7f9bca6412cad6ea286434998b9e46480732a99",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/styles/qmodernwindowsstyle.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "128068058bbd182e3af186b154121b70638773df",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/tls/qcertonlybackend.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "b4abf82e493ba24cdf6aa3e35f97cbf15b051adc",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/tls/qopensslbackend.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "4d52be465f6e8f5d73104b2f7b75464b3b0400c3",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/plugins/tls/qschannelbackend.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "8ded13fbf4cf0e7b973284fdcda73bf101110ea0",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/Qt6Core.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "d4a8e8edf440b0d7c5f2116f00a75551d57760ed",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/Qt6Gui.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "d7af8cf2a0dbd88bfc87fdf35b55504f07bac85b",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/Qt6Network.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "8a65f95408a00c0c023ed8328cdba012e33337b4",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/Qt6Svg.dll",
+    "module": "qtsvg",
+    "unsigned_sha1": "e733fce6ad65dffa8030ccd63882b05c0395bcb0",
+    "status": "VERIFIED"
+   },
+   {
+    "path": "_internal/PySide6/Qt6Widgets.dll",
+    "module": "qtbase",
+    "unsigned_sha1": "a8e7d2122c0e3d7a53834d1f2a8950dfa2faf4b2",
+    "status": "VERIFIED"
+   }
+  ],
+  "uncovered_qt_binaries": [],
+  "qt_libraries_verified": true,
+  "bindings_covered": false,
+  "distribution_permitted": false
+ },
+ "wheel_sboms_preserved": [
+  "hf_xet-1.5.2.dist-info/sboms/hf_xet.cyclonedx.json",
+  "safetensors-0.8.0.dist-info/sboms/safetensors-python.cyclonedx.json"
+ ],
+ "blockers": [
+  "B1: Qt library binaries match the official Qt build SBOMs and tagged source archives; PySide6/shiboken6 binding binaries have no producer build record, and the release source-delivery route needs owner/legal confirmation.",
+  "B3: Microsoft runtime redistribution grant and custom CPython runtime/native build provenance are not verified.",
+  "B4: Static Rust/native and vendored dependency license coverage is not certified by package-level metadata or source-superset notices.",
+  "B5: py3langid embedded model training-corpus redistribution terms remain open."
+ ],
+ "distribution_permitted": false
+}

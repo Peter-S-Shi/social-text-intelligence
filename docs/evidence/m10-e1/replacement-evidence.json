@@ -1,0 +1,888 @@
+{
+ "schema_version": 1,
+ "host": "actual Windows x64 development host (not a clean machine)",
+ "base_bundle": "M10-B verified frozen bundle; application revision c93191ee4d0677f7e78a99fca8b89460b503e7f5",
+ "method": "Each experiment used a separate fresh copy of the base bundle; only the listed files changed; executables unchanged.",
+ "import_gap_analysis": {
+  "method": "Every DLL/PYD import from qt6*.dll compared with the export names of the bundled Qt DLLs (full export-name table, not pefile's truncated list).",
+  "results": {
+   "original_6_11_2": {
+    "files_with_gaps": 0,
+    "gaps": {}
+   },
+   "qt_only_6_11_1": {
+    "files_with_gaps": 1,
+    "gaps": {
+     "PySide6\\QtCore.pyd -> qt6core.dll": {
+      "missing": 1,
+      "sample": [
+       "??0QObjectPrivate@@QEAA@W4QtPrivate_6_11_2@@@Z"
+      ]
+     }
+    }
+   },
+   "qt_only_6_12_0": {
+    "files_with_gaps": 2,
+    "gaps": {
+     "PySide6\\QtCore.pyd -> qt6core.dll": {
+      "missing": 1,
+      "sample": [
+       "??0QObjectPrivate@@QEAA@W4QtPrivate_6_11_2@@@Z"
+      ]
+     },
+     "PySide6\\QtGui.pyd -> qt6gui.dll": {
+      "missing": 1,
+      "sample": [
+       "??0QAccessibleInterface@@QEAA@XZ"
+      ]
+     }
+    }
+   }
+  },
+  "cause": "QtCore.pyd (PySide6 6.11.2) imports the Qt private-API constructor ??0QObjectPrivate@@QEAA@W4QtPrivate_6_11_2@@@Z, whose parameter type is tagged with the exact Qt version. Qt 6.11.1 and 6.12.0 export only their own tag, so a Qt-only swap cannot load the 6.11.2 bindings. 6.12.0 additionally lacks ??0QAccessibleInterface@@QEAA@XZ imported by QtGui.pyd."
+ },
+ "experiments": [
+  {
+   "id": "M10-B-R1 (retained)",
+   "change": "Qt-only DLL/plugin swap to PySide6-Essentials 6.11.1 wheel, bindings 6.11.2",
+   "license_info_exit": 2,
+   "result": "FAIL (explained by versioned private-API import)"
+  },
+  {
+   "id": "M10-B-R2 (retained)",
+   "change": "Qt-only DLL/plugin swap to PySide6-Essentials 6.12.0 wheel, bindings 6.11.2",
+   "license_info_exit": 2,
+   "result": "FAIL (explained by versioned private-API import)"
+  },
+  {
+   "id": "E3",
+   "change": "Qt-only swap to separately downloaded official Qt 6.11.2 MSVC2022 x64 binaries (Qt-signed archive files)",
+   "replacement_sources": [
+    {
+     "archive": "qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+     "sha1": "1fca9483183d426c1a3a984f1382382fa51f48de",
+     "sha256": "fd984b7264361b4dd3fd2a417702ca1258e4086268f2ee6a69b9a393d9c3f6bb"
+    },
+    {
+     "archive": "qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+     "sha1": "f458d7f238795d61a3e53fa5211cf2d6b1aa08ef",
+     "sha256": "417f44499c835b2303f3ff78043179bb23442f33d5d2816fbf7e8dbf275b1c89"
+    },
+    {
+     "archive": "qtimageformats-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+     "sha1": "00fb138473510e065753e6576e8cc4ab4625d662",
+     "sha256": "d6822c2160ebb675525173deb84bbfb68b4be046ee7f126af74a400a285b933d"
+    },
+    {
+     "archive": "opengl32sw-64-mesa_11_2_2-signed_sha256.7z",
+     "sha1": "753a1934e93a7402ce1584b71212f38c45770d3c",
+     "sha256": "59a086716cfd4bdec035698d501ba45526f8d2ecb5c0c428a356d8be0b5d2c79"
+    }
+   ],
+   "changed_files": [
+    {
+     "path": "_internal/PySide6/opengl32sw.dll",
+     "before_sha256": "34b444c016289b560662ff896deceb7f4b2c0723aed3d319ae167c9186ce42b3",
+     "after_sha256": "b04de4541863bc7d8879040a78889c4849c1b1da2784c4630f734c146c2998ce"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Core.dll",
+     "before_sha256": "d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653",
+     "after_sha256": "22c113a5644b875b2c85482723cd5d2e6a3a4029169778fcc78adde08ef3b6aa"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Gui.dll",
+     "before_sha256": "ae29b005f51b6850bf57fa06fced0dc8c7039fd6fafc3bfbcfe76e38adc7abf1",
+     "after_sha256": "19265a4e76efc12ef5f5bcf59be6c6a5b9b59ec4c89660797738bd2da7f719cc"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Network.dll",
+     "before_sha256": "dd3512d1c5ed062d30c98426cd0a850f13e0cf31437afb5b0b474132b9c52922",
+     "after_sha256": "75ff0896a618f4f5b602f391eb4917a55fd738b2e751d2cf18244a0de3619184"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Svg.dll",
+     "before_sha256": "1eac8f7415b311a88cb3cb4e25c3098d0e059c24c831fbbb13f43a80f0df06b7",
+     "after_sha256": "1052c17a9df0eb82023e0e4c369bbd0af58e4c5fea3c27a4b5ee83b60c015492"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Widgets.dll",
+     "before_sha256": "ff0df9e2e6827e035f0731a4cedfc6333f4602bca00775e56346f27032406b74",
+     "after_sha256": "e6d0b7e2e697de6ad985b97f9ed8b381c1c2172fcae87b6ab08455b3b7330f32"
+    },
+    {
+     "path": "_internal/PySide6/plugins/generic/qtuiotouchplugin.dll",
+     "before_sha256": "aa9080fa8b1c3cf4d3790c1eecf4a1f5c796ce58f31f80910357578f20fd80ac",
+     "after_sha256": "a0b971771417d60c6c2dedf66d06f6e99bd3236aa1aa6949c7e4e08d51fb69f9"
+    },
+    {
+     "path": "_internal/PySide6/plugins/iconengines/qsvgicon.dll",
+     "before_sha256": "5bb97b6f114682ae0b5f42b23b6818aece6499bad88dac80a138efa8a88c12bc",
+     "after_sha256": "7879ba1d2f293ad09c515de736add8c1023b0a4e80e2301d1283555efc2e8828"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qgif.dll",
+     "before_sha256": "d301d7e9a68327692e4c76faa6b125517730b22c68f4de7f09fda9d4ac0ddee1",
+     "after_sha256": "de1c1ea34cbc4156ce452023470e2145af4855128756d081d56e9a0997d0dda8"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qicns.dll",
+     "before_sha256": "49db148fea9f01e9953fd0a771d16cfaf364599f07aab3634d4f5c7c25abd78a",
+     "after_sha256": "2a5651332d5bc3d47bd171ad68feb5bb9d14471cf9223227cac557706df11771"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qico.dll",
+     "before_sha256": "1684fd56f1758167f7b3ac011264ae5859b3cf6113e381626ec3dc1d3122fe52",
+     "after_sha256": "af98cacb134525fab15cf2146a4e6b90266f14493e72e4d51df89a5caadea157"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qjpeg.dll",
+     "before_sha256": "6517345ac19f5c489daeadc029d0018bbdc09d8e1031c60d714557972f22c6d4",
+     "after_sha256": "a8854ac38d2bb83e8018bdcbfc93420a876251b3d2a79933e1a3c9a8ed2a24cb"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qsvg.dll",
+     "before_sha256": "4b7d65ba39be58cb469b54b5fdee2987871d67e5050cd70724016e09966e54f6",
+     "after_sha256": "486b395e23e258d03d54cdba045f129e9b1321f9ff12f99fe58293e0351b8caf"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qtga.dll",
+     "before_sha256": "6b0381150070fcd4224597fe73c68b47055b30b418aa14794c94c5007d14ca5d",
+     "after_sha256": "a9a4e7031f7dc4b57888dd2a7571c01091fa291ba99dc9344957b84a24c747a2"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qtiff.dll",
+     "before_sha256": "3d6ea04da215ee2a9459399fb9f6d73cad8787944b9d450399025bcd39d020b5",
+     "after_sha256": "000a6ed1cd0b9f0fea0e2778c1ff42064aa1c68bb6dd40a3bbd6fda8afe3ba77"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qwbmp.dll",
+     "before_sha256": "1a4596509987e9557edda69ed13cdd0d33f4ebda72e464ddc00a566bec05f151",
+     "after_sha256": "b3bfd939b254b6159e04e5043e348d0be3b8d2c8da8301ec5f8cc7276a9ef479"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qwebp.dll",
+     "before_sha256": "6b2c53cc4423140c29a6a1eb6dd908016e09d794b5739a05a3a39c8c49a0df8a",
+     "after_sha256": "8f8f6614fa95ed25aee9e7f7cde64716171028f7cd06cce9b1ad5854e13446ed"
+    },
+    {
+     "path": "_internal/PySide6/plugins/networkinformation/qnetworklistmanager.dll",
+     "before_sha256": "e571a4b4e582738cd1bc4889cb2896635c2543baff408442701b6706a1b4a86e",
+     "after_sha256": "2f7c43bb4ec05e9f23a326ac69e84a6df071cdf7cc0bf87cde98f81958ad9bae"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qdirect2d.dll",
+     "before_sha256": "56f41ad523d016fe2cf2c90fae158e21766d1fcd021bced1a3704c6da0f00c98",
+     "after_sha256": "332a48a83d8b9911175b8a2a21e2f83acefb47105c2375a6058130c239faeeac"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qminimal.dll",
+     "before_sha256": "768a9c6dbb1c86abbefa2ff9d7e98cdfb4fdc9292eb8d64195bb6d23939a5344",
+     "after_sha256": "3a41a14b6f168db68fb441621a787f894b275e57f667d0b00e3b1e7fa6952fe9"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qoffscreen.dll",
+     "before_sha256": "e776251668440169ed18a2fe1b236762d514ef5244639cbb559b5a77ddd38954",
+     "after_sha256": "95391476bba1d0b50cc822b93d7509341024cc7c18cd615f82e471a3e3a61caa"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qwindows.dll",
+     "before_sha256": "bf6dbc3009f386fa22f0ced560bea6bbf3e0e0b4442d2fb855db67cffce49dbf",
+     "after_sha256": "d94c584a18829d11fbf3aefd07e7b1e189e0cf063a0515826960037efa7465df"
+    },
+    {
+     "path": "_internal/PySide6/plugins/styles/qmodernwindowsstyle.dll",
+     "before_sha256": "a7a6424c23bf371bd28a404a196b210971726f6f2a87b63aac185a5e6e40da71",
+     "after_sha256": "f6b88d403d7175f5b830d4958264690e5c8bbaf0148e1ccf42d52704b0480792"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qcertonlybackend.dll",
+     "before_sha256": "67be4d333a0f489d02714169a6ec54eaa80efa649d733fcbeb81881ecb02b4f3",
+     "after_sha256": "ff0f1a60ec60fc23ec74ff5d325ddef05c1ed68fc89466bffc1d874c7c544adb"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qopensslbackend.dll",
+     "before_sha256": "7a0727417b8e21e64d9a7cf0f390bc85b3e337b4eef5ac977f49659d97e6b552",
+     "after_sha256": "0248155d03aa5722e2c644393d1cc7ff1ada42a6ddd9808db7a0823d55f87adf"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qschannelbackend.dll",
+     "before_sha256": "14abc5b245c0f2e03f7bc0b474a8db2ecb441c7300a8a8b16fb865eaf2674619",
+     "after_sha256": "761178263b47a5f05e151806bb5854d9e5c9cbc67d08187724d80f9e317471f8"
+    }
+   ],
+   "observed": {
+    "license_info": {
+     "exit": 0,
+     "qt_version": "6.11.2"
+    },
+    "verify_runtime": {
+     "exit": 0,
+     "ready": true
+    },
+    "smoke": {
+     "exit": 0,
+     "window": true,
+     "project_rows": 2,
+     "invalid_rows": 1,
+     "reopened": true
+    },
+    "unresolved_qt_imports": 0
+   },
+   "result": "PASS",
+   "limit": "Same compiled code as the wheel (only Authenticode signatures differ); proves file-level replacement, not a modified-source build."
+  },
+  {
+   "id": "E2",
+   "change": "Coherent swap of every PySide6/shiboken6 native file to the upstream 6.11.1 PySide6-Essentials and shiboken6 wheels (PYZ Python layer left at 6.11.2)",
+   "replacement_sources": [
+    {
+     "wheel": "pyside6_essentials-6.11.1-cp310-abi3-win_amd64.whl",
+     "sha256": "63311bd48e32c584599ab04b9ef7c324082374cd2c9fa533f978fb893bb47e40"
+    },
+    {
+     "wheel": "shiboken6-6.11.1-cp310-abi3-win_amd64.whl",
+     "sha256": "c2c6863aa80ec18c0f82cea3417837b279cdc60024ac17123461dc9042577df7"
+    }
+   ],
+   "changed_files": [
+    {
+     "path": "_internal/PySide6/MSVCP140.dll",
+     "before_sha256": "4c667b706893593812cd111b369ba6a77f54d1f1b1ae87cf3bf37692663cfba2",
+     "after_sha256": "708dd7bbc7bd23bce9e93f7837a70c2dd7ad55cff43801e92c0f7fcd7dda47cd"
+    },
+    {
+     "path": "_internal/PySide6/MSVCP140_1.dll",
+     "before_sha256": "d419d24b0a76366f5c9d908b0e45fe70e9e9154bb8ad5f3de42070f2337f857b",
+     "after_sha256": "b2113956aa3fcb9decfe65be1ee7829f8e3ae0899633ae89fe04888ada201594"
+    },
+    {
+     "path": "_internal/PySide6/MSVCP140_2.dll",
+     "before_sha256": "89917964abb6ca16a260cab258e180c3abc239b5af00eed659d0edf0efdd339c",
+     "after_sha256": "1b806b427ffb573deff8478cf6fe336465fe2c67e0919bb95f452b6f31d25736"
+    },
+    {
+     "path": "_internal/PySide6/opengl32sw.dll",
+     "before_sha256": "34b444c016289b560662ff896deceb7f4b2c0723aed3d319ae167c9186ce42b3",
+     "after_sha256": "4a7d90f91fdecb5df7b426bc2d05974b8d7ffa450af2d1f93f3eca05800718da"
+    },
+    {
+     "path": "_internal/PySide6/plugins/generic/qtuiotouchplugin.dll",
+     "before_sha256": "aa9080fa8b1c3cf4d3790c1eecf4a1f5c796ce58f31f80910357578f20fd80ac",
+     "after_sha256": "1ee2810eef83dbb2740d4f796f8149dc5752ffd3dd60e39796a9a4d6a6a0ae38"
+    },
+    {
+     "path": "_internal/PySide6/plugins/iconengines/qsvgicon.dll",
+     "before_sha256": "5bb97b6f114682ae0b5f42b23b6818aece6499bad88dac80a138efa8a88c12bc",
+     "after_sha256": "dd60826f1959faa7ea137e00959717450da9f2e0c151054daeff1e9d1226fab2"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qgif.dll",
+     "before_sha256": "d301d7e9a68327692e4c76faa6b125517730b22c68f4de7f09fda9d4ac0ddee1",
+     "after_sha256": "8b8dea2abaed333f1fbbdf3c8867ceb6040722c88a1fb81ea451f8b8bc9e8ee0"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qicns.dll",
+     "before_sha256": "49db148fea9f01e9953fd0a771d16cfaf364599f07aab3634d4f5c7c25abd78a",
+     "after_sha256": "6a5aed435989d54234c16581e66f6a59137bfccd180565a217a8676bcda6dc8d"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qico.dll",
+     "before_sha256": "1684fd56f1758167f7b3ac011264ae5859b3cf6113e381626ec3dc1d3122fe52",
+     "after_sha256": "f81378dd51392ff0d3ae094d5e59dfc4fa664a0ef4d756d6ed40584f90af2758"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qjpeg.dll",
+     "before_sha256": "6517345ac19f5c489daeadc029d0018bbdc09d8e1031c60d714557972f22c6d4",
+     "after_sha256": "97af9ceaf3ebefefeb7aede27ae07b73ae1d2ed479427beebf61c58654361d43"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qsvg.dll",
+     "before_sha256": "4b7d65ba39be58cb469b54b5fdee2987871d67e5050cd70724016e09966e54f6",
+     "after_sha256": "d4100055c3a4d6c1bca5e303e3d2049bde54d4e916442ee0a3e9b4dfa7d416fc"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qtga.dll",
+     "before_sha256": "6b0381150070fcd4224597fe73c68b47055b30b418aa14794c94c5007d14ca5d",
+     "after_sha256": "50f0e6ff9b7fca9386ccad52eb5e83466774e6282c9532b03b11e5a64951dffb"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qtiff.dll",
+     "before_sha256": "3d6ea04da215ee2a9459399fb9f6d73cad8787944b9d450399025bcd39d020b5",
+     "after_sha256": "087a3425962e838c35c9073bdf8de13712466e9b9590717666af7839db068dba"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qwbmp.dll",
+     "before_sha256": "1a4596509987e9557edda69ed13cdd0d33f4ebda72e464ddc00a566bec05f151",
+     "after_sha256": "28a6447d44169acbf2eab38c475dc0aa9e32abb3f29f72257726497353b9bf63"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qwebp.dll",
+     "before_sha256": "6b2c53cc4423140c29a6a1eb6dd908016e09d794b5739a05a3a39c8c49a0df8a",
+     "after_sha256": "3e2bf546a3885cbe3e2b64058b1c58377d3c8822f51b37ba967f61e8054d7719"
+    },
+    {
+     "path": "_internal/PySide6/plugins/networkinformation/qnetworklistmanager.dll",
+     "before_sha256": "e571a4b4e582738cd1bc4889cb2896635c2543baff408442701b6706a1b4a86e",
+     "after_sha256": "aeef84e74d3114f62f4650305b403ef9f81e8c05bc67c86683d999c5c1243926"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qdirect2d.dll",
+     "before_sha256": "56f41ad523d016fe2cf2c90fae158e21766d1fcd021bced1a3704c6da0f00c98",
+     "after_sha256": "f099af483b0d71a6a028bc15ad98a407e4c820400e6626cdc8e66b5f5e4cfed2"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qminimal.dll",
+     "before_sha256": "768a9c6dbb1c86abbefa2ff9d7e98cdfb4fdc9292eb8d64195bb6d23939a5344",
+     "after_sha256": "97d81b9ee7cbbeb68e46eefce24d4b929b7a24cc646cebe3d4d03e2734f97935"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qoffscreen.dll",
+     "before_sha256": "e776251668440169ed18a2fe1b236762d514ef5244639cbb559b5a77ddd38954",
+     "after_sha256": "426266e8ba0ea07c416616ad9973702fe126d4559cb2ee11e1c9bdbae85ba755"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qwindows.dll",
+     "before_sha256": "bf6dbc3009f386fa22f0ced560bea6bbf3e0e0b4442d2fb855db67cffce49dbf",
+     "after_sha256": "54d736de022f707e9f7f555e4c9f9e993253cd5b0ee2364e6a9458c180828c42"
+    },
+    {
+     "path": "_internal/PySide6/plugins/styles/qmodernwindowsstyle.dll",
+     "before_sha256": "a7a6424c23bf371bd28a404a196b210971726f6f2a87b63aac185a5e6e40da71",
+     "after_sha256": "9af96b09ebaf7ff13e22c70bf69b9c3f226f069375d1a9f9efd63e944e43f5fb"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qcertonlybackend.dll",
+     "before_sha256": "67be4d333a0f489d02714169a6ec54eaa80efa649d733fcbeb81881ecb02b4f3",
+     "after_sha256": "45b9f59593a1567f7d6725ddfa53f667f8f26b7795b1e2d0e1080a4025bafc02"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qopensslbackend.dll",
+     "before_sha256": "7a0727417b8e21e64d9a7cf0f390bc85b3e337b4eef5ac977f49659d97e6b552",
+     "after_sha256": "c7222880a7defe7a5c84f5871cdc7e34df22f3de6646026683042fab5c22b561"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qschannelbackend.dll",
+     "before_sha256": "14abc5b245c0f2e03f7bc0b474a8db2ecb441c7300a8a8b16fb865eaf2674619",
+     "after_sha256": "d09487a64be0e1d4545a8230e7fe05d163375610adf175407a6742944f16deb9"
+    },
+    {
+     "path": "_internal/PySide6/pyside6.abi3.dll",
+     "before_sha256": "d0b5c701fb3a8ea839e72b602058f3960935156ebeca084893c54c99e54dd707",
+     "after_sha256": "d4072be872b31f3748de5e6c28cb2976dafbf063d3ccfa38e5dabda29babcdaf"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Core.dll",
+     "before_sha256": "d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653",
+     "after_sha256": "65fe6224b6c47a15b058738031d31dce9928c4d7a58e1b8db6434f6f5cddd702"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Gui.dll",
+     "before_sha256": "ae29b005f51b6850bf57fa06fced0dc8c7039fd6fafc3bfbcfe76e38adc7abf1",
+     "after_sha256": "cd071161ad325ff2de92b0e33d71334ef20712544796949623ce92dfb3957e90"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Network.dll",
+     "before_sha256": "dd3512d1c5ed062d30c98426cd0a850f13e0cf31437afb5b0b474132b9c52922",
+     "after_sha256": "dfd0dd852274a5fe9b3c7d2dd9fffe7e2117d28c10fc862174d6675d42395177"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Svg.dll",
+     "before_sha256": "1eac8f7415b311a88cb3cb4e25c3098d0e059c24c831fbbb13f43a80f0df06b7",
+     "after_sha256": "a7352e8062d02e2108e37db4050fb3315d3c03c7d36acdc24b98b9a6c129c1de"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Widgets.dll",
+     "before_sha256": "ff0df9e2e6827e035f0731a4cedfc6333f4602bca00775e56346f27032406b74",
+     "after_sha256": "5a9f37dedd3dc5bcc1a4bb8ea919c49fc62df751a1450accc34379eb6710eab6"
+    },
+    {
+     "path": "_internal/PySide6/QtCore.pyd",
+     "before_sha256": "74f96322c5e9cea73aefd2ed5870e5275336b31f552fcd32f12fc81d23f1bc6f",
+     "after_sha256": "be52341a5df1f76ecca2fb1e94eb429dfa46f0b659ed6536f25119b565b21ea8"
+    },
+    {
+     "path": "_internal/PySide6/QtGui.pyd",
+     "before_sha256": "7bef20046045199c037b7cbfedaa1c5464730fa948b2c9ec8afbf718e63774d4",
+     "after_sha256": "f0549716b10a8b4fbd5c6c041f36af215223809f919f4c4722d44cc199d5c593"
+    },
+    {
+     "path": "_internal/PySide6/QtNetwork.pyd",
+     "before_sha256": "c5038bb71fc9d57330fa2d8eeec65aab69fcf02687cc8f54dbfb5995cfec6a71",
+     "after_sha256": "3953a86c9545ad8fa1cf1dec27085dd357838464cd6e2131c9963caad6234b67"
+    },
+    {
+     "path": "_internal/PySide6/QtWidgets.pyd",
+     "before_sha256": "f12f4ca641998e5706d5f7b0023147d573f0f2d2361e26dadf31bdbf05fbfd1d",
+     "after_sha256": "85cb6c2181b4b09887a7d8507dd950844d1b8f74a9c4002c7b71169f75bf6fda"
+    },
+    {
+     "path": "_internal/PySide6/translations/qt_help_ca.qm",
+     "before_sha256": "fe40962c814a9f489e18d033e4aaabe435232c9bcf760830c6165af507cca80e",
+     "after_sha256": "8c98b5ee246e18397d0de7bd76b2891773a975553ec5dcdce42f8a696e5b34de"
+    },
+    {
+     "path": "_internal/PySide6/translations/qtbase_ca.qm",
+     "before_sha256": "5298532fc52ffbc4e2c549f277151a61e741921c834286f7c04d3753677b6b04",
+     "after_sha256": "005b0aa0c9a5b930dfdd870661958a8069bbec862d75f98bce20bf7401bea13d"
+    },
+    {
+     "path": "_internal/PySide6/VCRUNTIME140.dll",
+     "before_sha256": "f893ae75a1a24eea174d982f94bc80ce2448201eaa919a73c0653a5657685de4",
+     "after_sha256": "c6e841078cd352299a58925991e2552f7251b046253ba895b3ad50cd5cd32ec6"
+    },
+    {
+     "path": "_internal/PySide6/VCRUNTIME140_1.dll",
+     "before_sha256": "48aa2783793ea18ab3c2c71d420d4fff9814e662a1ff810053c6e5250061a716",
+     "after_sha256": "b322e382ea249b50009f14a9a71ad16729eb6e4b58a8d3b3be6ac66ea6342a22"
+    },
+    {
+     "path": "_internal/shiboken6/MSVCP140.dll",
+     "before_sha256": "fd4a8c046fa3fea9ca6132f50cf8a56cf1e783b2d3093ba5c85fa063bc6b3845",
+     "after_sha256": "005f2324c7ff79bbe9a44992b0708abb4c871bd24bcc7a34aca5eab4439c1f4a"
+    },
+    {
+     "path": "_internal/shiboken6/Shiboken.pyd",
+     "before_sha256": "2f6f3a694f675b1dafdae26903191613c02866ab48e02591ae34ca1a3b1284f1",
+     "after_sha256": "0e2c5318c5ac60a016a12230bbb1f6a9d990c45cbf4a7c4af24aefb5ab7dc40a"
+    },
+    {
+     "path": "_internal/shiboken6/shiboken6.abi3.dll",
+     "before_sha256": "de3c6b2ed5f75c9ac0de4a6844b653b3b9d09263ce68c2b5fc25a96c5c3e8469",
+     "after_sha256": "47f4f9b44c95037565dd14f4be04f350f20c53c05483b750e0be867c39a7441e"
+    },
+    {
+     "path": "_internal/shiboken6/VCRUNTIME140.dll",
+     "before_sha256": "de617641d82eac15595d2e39394163ac33e49bb032cf2c2ea0044ed39d3675e9",
+     "after_sha256": "8d9c679c825c5fff298d66c41af30f35c289fc101868dfc9635547bada0daba6"
+    },
+    {
+     "path": "_internal/shiboken6/VCRUNTIME140_1.dll",
+     "before_sha256": "fa577d54bd10a91e52472da784a619da6cf241af45f0a0c48b27e91fa0fe6104",
+     "after_sha256": "e4d7ea5f4f4ff6d0c208e693853617cdef0ad71cfe5dd5c3ae16c8a6b64c18ea"
+    }
+   ],
+   "missing_counterparts": [],
+   "observed": {
+    "license_info": {
+     "exit": 0,
+     "qt_version": "6.11.1"
+    },
+    "verify_runtime": {
+     "exit": 0,
+     "ready": true
+    },
+    "smoke": {
+     "exit": 0,
+     "window": true,
+     "project_rows": 2,
+     "invalid_rows": 1,
+     "reopened": true
+    },
+    "unresolved_qt_imports": 0
+   },
+   "result": "PASS"
+  },
+  {
+   "id": "E3b",
+   "bundle": "M10-E1 build",
+   "change": "Qt-only swap to the same separately downloaded official Qt 6.11.2 files as E3",
+   "changed_files": [
+    {
+     "path": "_internal/PySide6/Qt6Core.dll",
+     "before_sha256": "d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653",
+     "after_sha256": "22c113a5644b875b2c85482723cd5d2e6a3a4029169778fcc78adde08ef3b6aa"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Gui.dll",
+     "before_sha256": "ae29b005f51b6850bf57fa06fced0dc8c7039fd6fafc3bfbcfe76e38adc7abf1",
+     "after_sha256": "19265a4e76efc12ef5f5bcf59be6c6a5b9b59ec4c89660797738bd2da7f719cc"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Network.dll",
+     "before_sha256": "dd3512d1c5ed062d30c98426cd0a850f13e0cf31437afb5b0b474132b9c52922",
+     "after_sha256": "75ff0896a618f4f5b602f391eb4917a55fd738b2e751d2cf18244a0de3619184"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Svg.dll",
+     "before_sha256": "1eac8f7415b311a88cb3cb4e25c3098d0e059c24c831fbbb13f43a80f0df06b7",
+     "after_sha256": "1052c17a9df0eb82023e0e4c369bbd0af58e4c5fea3c27a4b5ee83b60c015492"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Widgets.dll",
+     "before_sha256": "ff0df9e2e6827e035f0731a4cedfc6333f4602bca00775e56346f27032406b74",
+     "after_sha256": "e6d0b7e2e697de6ad985b97f9ed8b381c1c2172fcae87b6ab08455b3b7330f32"
+    },
+    {
+     "path": "_internal/PySide6/plugins/generic/qtuiotouchplugin.dll",
+     "before_sha256": "aa9080fa8b1c3cf4d3790c1eecf4a1f5c796ce58f31f80910357578f20fd80ac",
+     "after_sha256": "a0b971771417d60c6c2dedf66d06f6e99bd3236aa1aa6949c7e4e08d51fb69f9"
+    },
+    {
+     "path": "_internal/PySide6/plugins/iconengines/qsvgicon.dll",
+     "before_sha256": "5bb97b6f114682ae0b5f42b23b6818aece6499bad88dac80a138efa8a88c12bc",
+     "after_sha256": "7879ba1d2f293ad09c515de736add8c1023b0a4e80e2301d1283555efc2e8828"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qgif.dll",
+     "before_sha256": "d301d7e9a68327692e4c76faa6b125517730b22c68f4de7f09fda9d4ac0ddee1",
+     "after_sha256": "de1c1ea34cbc4156ce452023470e2145af4855128756d081d56e9a0997d0dda8"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qicns.dll",
+     "before_sha256": "49db148fea9f01e9953fd0a771d16cfaf364599f07aab3634d4f5c7c25abd78a",
+     "after_sha256": "2a5651332d5bc3d47bd171ad68feb5bb9d14471cf9223227cac557706df11771"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qico.dll",
+     "before_sha256": "1684fd56f1758167f7b3ac011264ae5859b3cf6113e381626ec3dc1d3122fe52",
+     "after_sha256": "af98cacb134525fab15cf2146a4e6b90266f14493e72e4d51df89a5caadea157"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qjpeg.dll",
+     "before_sha256": "6517345ac19f5c489daeadc029d0018bbdc09d8e1031c60d714557972f22c6d4",
+     "after_sha256": "a8854ac38d2bb83e8018bdcbfc93420a876251b3d2a79933e1a3c9a8ed2a24cb"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qsvg.dll",
+     "before_sha256": "4b7d65ba39be58cb469b54b5fdee2987871d67e5050cd70724016e09966e54f6",
+     "after_sha256": "486b395e23e258d03d54cdba045f129e9b1321f9ff12f99fe58293e0351b8caf"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qtga.dll",
+     "before_sha256": "6b0381150070fcd4224597fe73c68b47055b30b418aa14794c94c5007d14ca5d",
+     "after_sha256": "a9a4e7031f7dc4b57888dd2a7571c01091fa291ba99dc9344957b84a24c747a2"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qtiff.dll",
+     "before_sha256": "3d6ea04da215ee2a9459399fb9f6d73cad8787944b9d450399025bcd39d020b5",
+     "after_sha256": "000a6ed1cd0b9f0fea0e2778c1ff42064aa1c68bb6dd40a3bbd6fda8afe3ba77"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qwbmp.dll",
+     "before_sha256": "1a4596509987e9557edda69ed13cdd0d33f4ebda72e464ddc00a566bec05f151",
+     "after_sha256": "b3bfd939b254b6159e04e5043e348d0be3b8d2c8da8301ec5f8cc7276a9ef479"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qwebp.dll",
+     "before_sha256": "6b2c53cc4423140c29a6a1eb6dd908016e09d794b5739a05a3a39c8c49a0df8a",
+     "after_sha256": "8f8f6614fa95ed25aee9e7f7cde64716171028f7cd06cce9b1ad5854e13446ed"
+    },
+    {
+     "path": "_internal/PySide6/plugins/networkinformation/qnetworklistmanager.dll",
+     "before_sha256": "e571a4b4e582738cd1bc4889cb2896635c2543baff408442701b6706a1b4a86e",
+     "after_sha256": "2f7c43bb4ec05e9f23a326ac69e84a6df071cdf7cc0bf87cde98f81958ad9bae"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qdirect2d.dll",
+     "before_sha256": "56f41ad523d016fe2cf2c90fae158e21766d1fcd021bced1a3704c6da0f00c98",
+     "after_sha256": "332a48a83d8b9911175b8a2a21e2f83acefb47105c2375a6058130c239faeeac"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qminimal.dll",
+     "before_sha256": "768a9c6dbb1c86abbefa2ff9d7e98cdfb4fdc9292eb8d64195bb6d23939a5344",
+     "after_sha256": "3a41a14b6f168db68fb441621a787f894b275e57f667d0b00e3b1e7fa6952fe9"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qoffscreen.dll",
+     "before_sha256": "e776251668440169ed18a2fe1b236762d514ef5244639cbb559b5a77ddd38954",
+     "after_sha256": "95391476bba1d0b50cc822b93d7509341024cc7c18cd615f82e471a3e3a61caa"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qwindows.dll",
+     "before_sha256": "bf6dbc3009f386fa22f0ced560bea6bbf3e0e0b4442d2fb855db67cffce49dbf",
+     "after_sha256": "d94c584a18829d11fbf3aefd07e7b1e189e0cf063a0515826960037efa7465df"
+    },
+    {
+     "path": "_internal/PySide6/plugins/styles/qmodernwindowsstyle.dll",
+     "before_sha256": "a7a6424c23bf371bd28a404a196b210971726f6f2a87b63aac185a5e6e40da71",
+     "after_sha256": "f6b88d403d7175f5b830d4958264690e5c8bbaf0148e1ccf42d52704b0480792"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qcertonlybackend.dll",
+     "before_sha256": "67be4d333a0f489d02714169a6ec54eaa80efa649d733fcbeb81881ecb02b4f3",
+     "after_sha256": "ff0f1a60ec60fc23ec74ff5d325ddef05c1ed68fc89466bffc1d874c7c544adb"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qopensslbackend.dll",
+     "before_sha256": "7a0727417b8e21e64d9a7cf0f390bc85b3e337b4eef5ac977f49659d97e6b552",
+     "after_sha256": "0248155d03aa5722e2c644393d1cc7ff1ada42a6ddd9808db7a0823d55f87adf"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qschannelbackend.dll",
+     "before_sha256": "14abc5b245c0f2e03f7bc0b474a8db2ecb441c7300a8a8b16fb865eaf2674619",
+     "after_sha256": "761178263b47a5f05e151806bb5854d9e5c9cbc67d08187724d80f9e317471f8"
+    }
+   ],
+   "observed": {
+    "verify_runtime": {
+     "exit": 0,
+     "ready": true
+    },
+    "smoke": {
+     "exit": 0,
+     "window": true,
+     "project_rows": 2,
+     "invalid_rows": 1,
+     "reopened": true
+    },
+    "unresolved_qt_imports": 0,
+    "license_info": {
+     "exit": 0,
+     "qt_version": "6.11.2"
+    }
+   },
+   "result": "PASS"
+  },
+  {
+   "id": "E2b",
+   "bundle": "M10-E1 build",
+   "change": "Coherent swap of every PySide6/shiboken6 file, including the loose Python layer (__init__.py) and translations, to the upstream 6.11.1 wheels",
+   "changed_files": [
+    {
+     "path": "_internal/PySide6/__init__.py",
+     "before_sha256": "bf8ddd12eae52e8508f295d80459bb3478a015a663892850c74126812e12b7db",
+     "after_sha256": "ee513be3d04acac25549c4a9162338af1f1c2cad8fd3c60a6b252bd24964b438"
+    },
+    {
+     "path": "_internal/PySide6/MSVCP140.dll",
+     "before_sha256": "4c667b706893593812cd111b369ba6a77f54d1f1b1ae87cf3bf37692663cfba2",
+     "after_sha256": "708dd7bbc7bd23bce9e93f7837a70c2dd7ad55cff43801e92c0f7fcd7dda47cd"
+    },
+    {
+     "path": "_internal/PySide6/MSVCP140_1.dll",
+     "before_sha256": "d419d24b0a76366f5c9d908b0e45fe70e9e9154bb8ad5f3de42070f2337f857b",
+     "after_sha256": "b2113956aa3fcb9decfe65be1ee7829f8e3ae0899633ae89fe04888ada201594"
+    },
+    {
+     "path": "_internal/PySide6/MSVCP140_2.dll",
+     "before_sha256": "89917964abb6ca16a260cab258e180c3abc239b5af00eed659d0edf0efdd339c",
+     "after_sha256": "1b806b427ffb573deff8478cf6fe336465fe2c67e0919bb95f452b6f31d25736"
+    },
+    {
+     "path": "_internal/PySide6/plugins/generic/qtuiotouchplugin.dll",
+     "before_sha256": "aa9080fa8b1c3cf4d3790c1eecf4a1f5c796ce58f31f80910357578f20fd80ac",
+     "after_sha256": "1ee2810eef83dbb2740d4f796f8149dc5752ffd3dd60e39796a9a4d6a6a0ae38"
+    },
+    {
+     "path": "_internal/PySide6/plugins/iconengines/qsvgicon.dll",
+     "before_sha256": "5bb97b6f114682ae0b5f42b23b6818aece6499bad88dac80a138efa8a88c12bc",
+     "after_sha256": "dd60826f1959faa7ea137e00959717450da9f2e0c151054daeff1e9d1226fab2"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qgif.dll",
+     "before_sha256": "d301d7e9a68327692e4c76faa6b125517730b22c68f4de7f09fda9d4ac0ddee1",
+     "after_sha256": "8b8dea2abaed333f1fbbdf3c8867ceb6040722c88a1fb81ea451f8b8bc9e8ee0"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qicns.dll",
+     "before_sha256": "49db148fea9f01e9953fd0a771d16cfaf364599f07aab3634d4f5c7c25abd78a",
+     "after_sha256": "6a5aed435989d54234c16581e66f6a59137bfccd180565a217a8676bcda6dc8d"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qico.dll",
+     "before_sha256": "1684fd56f1758167f7b3ac011264ae5859b3cf6113e381626ec3dc1d3122fe52",
+     "after_sha256": "f81378dd51392ff0d3ae094d5e59dfc4fa664a0ef4d756d6ed40584f90af2758"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qjpeg.dll",
+     "before_sha256": "6517345ac19f5c489daeadc029d0018bbdc09d8e1031c60d714557972f22c6d4",
+     "after_sha256": "97af9ceaf3ebefefeb7aede27ae07b73ae1d2ed479427beebf61c58654361d43"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qsvg.dll",
+     "before_sha256": "4b7d65ba39be58cb469b54b5fdee2987871d67e5050cd70724016e09966e54f6",
+     "after_sha256": "d4100055c3a4d6c1bca5e303e3d2049bde54d4e916442ee0a3e9b4dfa7d416fc"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qtga.dll",
+     "before_sha256": "6b0381150070fcd4224597fe73c68b47055b30b418aa14794c94c5007d14ca5d",
+     "after_sha256": "50f0e6ff9b7fca9386ccad52eb5e83466774e6282c9532b03b11e5a64951dffb"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qtiff.dll",
+     "before_sha256": "3d6ea04da215ee2a9459399fb9f6d73cad8787944b9d450399025bcd39d020b5",
+     "after_sha256": "087a3425962e838c35c9073bdf8de13712466e9b9590717666af7839db068dba"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qwbmp.dll",
+     "before_sha256": "1a4596509987e9557edda69ed13cdd0d33f4ebda72e464ddc00a566bec05f151",
+     "after_sha256": "28a6447d44169acbf2eab38c475dc0aa9e32abb3f29f72257726497353b9bf63"
+    },
+    {
+     "path": "_internal/PySide6/plugins/imageformats/qwebp.dll",
+     "before_sha256": "6b2c53cc4423140c29a6a1eb6dd908016e09d794b5739a05a3a39c8c49a0df8a",
+     "after_sha256": "3e2bf546a3885cbe3e2b64058b1c58377d3c8822f51b37ba967f61e8054d7719"
+    },
+    {
+     "path": "_internal/PySide6/plugins/networkinformation/qnetworklistmanager.dll",
+     "before_sha256": "e571a4b4e582738cd1bc4889cb2896635c2543baff408442701b6706a1b4a86e",
+     "after_sha256": "aeef84e74d3114f62f4650305b403ef9f81e8c05bc67c86683d999c5c1243926"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qdirect2d.dll",
+     "before_sha256": "56f41ad523d016fe2cf2c90fae158e21766d1fcd021bced1a3704c6da0f00c98",
+     "after_sha256": "f099af483b0d71a6a028bc15ad98a407e4c820400e6626cdc8e66b5f5e4cfed2"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qminimal.dll",
+     "before_sha256": "768a9c6dbb1c86abbefa2ff9d7e98cdfb4fdc9292eb8d64195bb6d23939a5344",
+     "after_sha256": "97d81b9ee7cbbeb68e46eefce24d4b929b7a24cc646cebe3d4d03e2734f97935"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qoffscreen.dll",
+     "before_sha256": "e776251668440169ed18a2fe1b236762d514ef5244639cbb559b5a77ddd38954",
+     "after_sha256": "426266e8ba0ea07c416616ad9973702fe126d4559cb2ee11e1c9bdbae85ba755"
+    },
+    {
+     "path": "_internal/PySide6/plugins/platforms/qwindows.dll",
+     "before_sha256": "bf6dbc3009f386fa22f0ced560bea6bbf3e0e0b4442d2fb855db67cffce49dbf",
+     "after_sha256": "54d736de022f707e9f7f555e4c9f9e993253cd5b0ee2364e6a9458c180828c42"
+    },
+    {
+     "path": "_internal/PySide6/plugins/styles/qmodernwindowsstyle.dll",
+     "before_sha256": "a7a6424c23bf371bd28a404a196b210971726f6f2a87b63aac185a5e6e40da71",
+     "after_sha256": "9af96b09ebaf7ff13e22c70bf69b9c3f226f069375d1a9f9efd63e944e43f5fb"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qcertonlybackend.dll",
+     "before_sha256": "67be4d333a0f489d02714169a6ec54eaa80efa649d733fcbeb81881ecb02b4f3",
+     "after_sha256": "45b9f59593a1567f7d6725ddfa53f667f8f26b7795b1e2d0e1080a4025bafc02"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qopensslbackend.dll",
+     "before_sha256": "7a0727417b8e21e64d9a7cf0f390bc85b3e337b4eef5ac977f49659d97e6b552",
+     "after_sha256": "c7222880a7defe7a5c84f5871cdc7e34df22f3de6646026683042fab5c22b561"
+    },
+    {
+     "path": "_internal/PySide6/plugins/tls/qschannelbackend.dll",
+     "before_sha256": "14abc5b245c0f2e03f7bc0b474a8db2ecb441c7300a8a8b16fb865eaf2674619",
+     "after_sha256": "d09487a64be0e1d4545a8230e7fe05d163375610adf175407a6742944f16deb9"
+    },
+    {
+     "path": "_internal/PySide6/pyside6.abi3.dll",
+     "before_sha256": "d0b5c701fb3a8ea839e72b602058f3960935156ebeca084893c54c99e54dd707",
+     "after_sha256": "d4072be872b31f3748de5e6c28cb2976dafbf063d3ccfa38e5dabda29babcdaf"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Core.dll",
+     "before_sha256": "d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653",
+     "after_sha256": "65fe6224b6c47a15b058738031d31dce9928c4d7a58e1b8db6434f6f5cddd702"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Gui.dll",
+     "before_sha256": "ae29b005f51b6850bf57fa06fced0dc8c7039fd6fafc3bfbcfe76e38adc7abf1",
+     "after_sha256": "cd071161ad325ff2de92b0e33d71334ef20712544796949623ce92dfb3957e90"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Network.dll",
+     "before_sha256": "dd3512d1c5ed062d30c98426cd0a850f13e0cf31437afb5b0b474132b9c52922",
+     "after_sha256": "dfd0dd852274a5fe9b3c7d2dd9fffe7e2117d28c10fc862174d6675d42395177"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Svg.dll",
+     "before_sha256": "1eac8f7415b311a88cb3cb4e25c3098d0e059c24c831fbbb13f43a80f0df06b7",
+     "after_sha256": "a7352e8062d02e2108e37db4050fb3315d3c03c7d36acdc24b98b9a6c129c1de"
+    },
+    {
+     "path": "_internal/PySide6/Qt6Widgets.dll",
+     "before_sha256": "ff0df9e2e6827e035f0731a4cedfc6333f4602bca00775e56346f27032406b74",
+     "after_sha256": "5a9f37dedd3dc5bcc1a4bb8ea919c49fc62df751a1450accc34379eb6710eab6"
+    },
+    {
+     "path": "_internal/PySide6/QtCore.pyd",
+     "before_sha256": "74f96322c5e9cea73aefd2ed5870e5275336b31f552fcd32f12fc81d23f1bc6f",
+     "after_sha256": "be52341a5df1f76ecca2fb1e94eb429dfa46f0b659ed6536f25119b565b21ea8"
+    },
+    {
+     "path": "_internal/PySide6/QtGui.pyd",
+     "before_sha256": "7bef20046045199c037b7cbfedaa1c5464730fa948b2c9ec8afbf718e63774d4",
+     "after_sha256": "f0549716b10a8b4fbd5c6c041f36af215223809f919f4c4722d44cc199d5c593"
+    },
+    {
+     "path": "_internal/PySide6/QtNetwork.pyd",
+     "before_sha256": "c5038bb71fc9d57330fa2d8eeec65aab69fcf02687cc8f54dbfb5995cfec6a71",
+     "after_sha256": "3953a86c9545ad8fa1cf1dec27085dd357838464cd6e2131c9963caad6234b67"
+    },
+    {
+     "path": "_internal/PySide6/QtWidgets.pyd",
+     "before_sha256": "f12f4ca641998e5706d5f7b0023147d573f0f2d2361e26dadf31bdbf05fbfd1d",
+     "after_sha256": "85cb6c2181b4b09887a7d8507dd950844d1b8f74a9c4002c7b71169f75bf6fda"
+    },
+    {
+     "path": "_internal/PySide6/translations/qt_help_ca.qm",
+     "before_sha256": "fe40962c814a9f489e18d033e4aaabe435232c9bcf760830c6165af507cca80e",
+     "after_sha256": "8c98b5ee246e18397d0de7bd76b2891773a975553ec5dcdce42f8a696e5b34de"
+    },
+    {
+     "path": "_internal/PySide6/translations/qtbase_ca.qm",
+     "before_sha256": "5298532fc52ffbc4e2c549f277151a61e741921c834286f7c04d3753677b6b04",
+     "after_sha256": "005b0aa0c9a5b930dfdd870661958a8069bbec862d75f98bce20bf7401bea13d"
+    },
+    {
+     "path": "_internal/PySide6/VCRUNTIME140.dll",
+     "before_sha256": "f893ae75a1a24eea174d982f94bc80ce2448201eaa919a73c0653a5657685de4",
+     "after_sha256": "c6e841078cd352299a58925991e2552f7251b046253ba895b3ad50cd5cd32ec6"
+    },
+    {
+     "path": "_internal/PySide6/VCRUNTIME140_1.dll",
+     "before_sha256": "48aa2783793ea18ab3c2c71d420d4fff9814e662a1ff810053c6e5250061a716",
+     "after_sha256": "b322e382ea249b50009f14a9a71ad16729eb6e4b58a8d3b3be6ac66ea6342a22"
+    },
+    {
+     "path": "_internal/shiboken6/__init__.py",
+     "before_sha256": "86c675af8f2d10e80222d9148d22ba625fce1844009660c3290f418b777b7855",
+     "after_sha256": "9fd83992a32996fc595c4286c7d9d79cf15c6e3b512fd3b742c6307ffa5a9278"
+    },
+    {
+     "path": "_internal/shiboken6/MSVCP140.dll",
+     "before_sha256": "fd4a8c046fa3fea9ca6132f50cf8a56cf1e783b2d3093ba5c85fa063bc6b3845",
+     "after_sha256": "005f2324c7ff79bbe9a44992b0708abb4c871bd24bcc7a34aca5eab4439c1f4a"
+    },
+    {
+     "path": "_internal/shiboken6/Shiboken.pyd",
+     "before_sha256": "2f6f3a694f675b1dafdae26903191613c02866ab48e02591ae34ca1a3b1284f1",
+     "after_sha256": "0e2c5318c5ac60a016a12230bbb1f6a9d990c45cbf4a7c4af24aefb5ab7dc40a"
+    },
+    {
+     "path": "_internal/shiboken6/shiboken6.abi3.dll",
+     "before_sha256": "de3c6b2ed5f75c9ac0de4a6844b653b3b9d09263ce68c2b5fc25a96c5c3e8469",
+     "after_sha256": "47f4f9b44c95037565dd14f4be04f350f20c53c05483b750e0be867c39a7441e"
+    },
+    {
+     "path": "_internal/shiboken6/VCRUNTIME140.dll",
+     "before_sha256": "de617641d82eac15595d2e39394163ac33e49bb032cf2c2ea0044ed39d3675e9",
+     "after_sha256": "8d9c679c825c5fff298d66c41af30f35c289fc101868dfc9635547bada0daba6"
+    },
+    {
+     "path": "_internal/shiboken6/VCRUNTIME140_1.dll",
+     "before_sha256": "fa577d54bd10a91e52472da784a619da6cf241af45f0a0c48b27e91fa0fe6104",
+     "after_sha256": "e4d7ea5f4f4ff6d0c208e693853617cdef0ad71cfe5dd5c3ae16c8a6b64c18ea"
+    }
+   ],
+   "missing_counterparts": [],
+   "observed": {
+    "verify_runtime": {
+     "exit": 0,
+     "ready": true
+    },
+    "smoke": {
+     "exit": 0,
+     "window": true,
+     "project_rows": 2,
+     "invalid_rows": 1,
+     "reopened": true
+    },
+    "unresolved_qt_imports": 0,
+    "license_info": {
+     "exit": 0,
+     "qt_version": "6.11.1"
+    }
+   },
+   "result": "PASS"
+  }
+ ],
+ "modified_source_rebuild": "NOT RUN (no MSVC toolchain on host); B6 remains OPEN",
+ "distribution_permitted": false,
+ "e1_bundle": "M10-E1 build of application revision 2a374e2e4539aec6f6f5727d86e056bcb5a786a4 (loose PySide6/shiboken6 Python layer, no software renderer)"
+}
