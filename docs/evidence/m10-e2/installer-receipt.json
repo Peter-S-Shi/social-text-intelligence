@@ -1,0 +1,12 @@
+{
+ "schema_version": 1,
+ "scope": "Local internal installer compiled from the final M10-E2 bundle; not published.",
+ "compiled_installer_sha256": "e74895d020128cc527a5032aa055041f899ae6619070e61b0cc8593ba4e80554",
+ "frozen_application_sha": "d3934be6bcde181c081d64773a0399bf9e761e85",
+ "privileges_required_lowest": true,
+ "system_runtime_check": true,
+ "microsoft_runtime_files_in_script": 0,
+ "host_install_lifecycle": "NOT RUN (an existing per-user STI installation occupies the fixed location; the validator requires a fresh namespace)",
+ "missing_runtime_branch": "NOT RUN (the development host has the runtime installed; needs a clean machine or VM)",
+ "distribution_permitted": false
+}

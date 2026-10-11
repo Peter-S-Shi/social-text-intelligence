@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
+**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); M10-E2 blocker closure engineering established (B3 CLOSED by an official CPython runtime and no Microsoft runtime redistribution; B1 and B4 narrowed but OPEN; B5 and B6 OPEN pending owner/legal decisions and the owner toolchain); distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -109,7 +109,7 @@ deferral does not waive Q5 real-domain evidence for model capability claims.
 M10-A establishes the proven M7 Windows PyInstaller onedir route as a repeatable
 [packaging foundation](docs/V2_M10_A_PACKAGING_FOUNDATION.md), with offline
 startup/dependency checks and temporary-data smoke, keeping weights external.
-M10-C installer engineering is established; next execute isolated clean-machine validation and close B1 and B3–B6 (see M10-E1) before distribution clearance.
+M10-C installer engineering is established; next execute isolated clean-machine validation and close B1 and B4–B6 (see M10-E2) before distribution clearance.
 The optional 30-minute owner packaged-app smoke is planned **NOT RUN**.
 Clean-machine proof, LGPL/compliance, signing and release gates remain open;
 formal Windows UAT/accessibility and M9.4 owner synthesis are not completed.
@@ -408,7 +408,7 @@ reparse refusal, logged-file uninstall, reinstall and synthetic byte preservatio
 PASS. [The installer record](docs/V2_M10_C_WINDOWS_INSTALLER.md) contains the
 repeatable isolated Windows protocol and precise NOT RUN matrix. Clean-machine
 acceptance and missing-model/download-cancel UI checks remain NOT RUN. The next
-action is to execute that isolated matrix and close the blockers; after M10-E1, B1 and B3–B6 remain BLOCKED.
+action is to execute that isolated matrix and close the blockers; after M10-E2, B1 and B4–B6 remain BLOCKED.
 Owner 30-minute smoke remains planned NOT RUN; no signing, publication, formal
 UAT or release readiness is claimed. M9.2–M9.4 remain DEFERRED and Q5 unchanged.
 
@@ -431,4 +431,24 @@ remains NOT RUN, and Q5 is unchanged.
 The [M10-E1 record](docs/V2_M10_E1_DISTRIBUTION_UNBLOCKING.md) verifies the shipped Qt binaries against the official Qt build SBOMs and the tagged source archives. It explains the M10-B replacement failures as Qt's version-tagged private API, and demonstrates same-version and coherent-set replacement. It keeps the binding layer replaceable and stops shipping the unused software renderer.
 
 Blocker status: B2 is resolved by removal; B1, B4 and B6 are narrowed but OPEN; B3 and B5 need owner/legal decisions. Next: those owner decisions, the defined E4 modified-source Qt rebuild, the B4 crate notices and the isolated clean-machine matrix. No binary is published.
+
+### M10-E2 — Blocker closure engineering; B3 closed, distribution still BLOCKED
+
+The [M10-E2 record](docs/V2_M10_E2_BLOCKER_CLOSURE.md) closes B3:
+
+- the build runs under, and ships, the official PSF CPython 3.13.16 runtime,
+  checked file by file;
+- no Microsoft Visual C++ runtime file is redistributed;
+- the per-user installer requires the system runtime and never elevates.
+
+It also:
+
+- verifies all 96 Qt translations and the pyside-setup tag correspondence;
+- removes the unused `hf_xet` and `protoc.exe`;
+- adds an exact tokenizers `Cargo.lock` receipt;
+- prepares the E4 modified-Qt rebuild without installing any toolchain.
+
+Next: owner/legal decisions for B1 and B5, the owner's MSVC toolchain for E4
+(B6), the B4 notice texts and the clean-machine matrix. No binary is
+published.
 

@@ -23,6 +23,10 @@ on Windows is the foundation target. The manifest pins the installed dependency
 closure and PyInstaller/hook versions; it is not a hash-verified supply-chain lock
 or a claim of byte-identical reproducibility across machines.
 
+These are the original M10-A instructions. Since M10-E2 the build requires the
+pinned official CPython 3.13.16 runtime; see the
+[current build steps](V2_M10_E2_BLOCKER_CLOSURE.md#3-final-build-installer-and-validation).
+
 Create a dedicated build environment in a disposable generic location:
 
 ```powershell

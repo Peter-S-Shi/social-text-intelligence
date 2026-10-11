@@ -150,7 +150,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "**COMPLETE on `main` — owner overall PASS (2026-10-10).**"
         in status
     )
-    assert "| Next required action | Execute the isolated M10-C" in status
+    assert "| Next required action | Owner/legal decisions recorded by M10-E2" in status
+    assert "clean-machine matrix" in status
     assert "planned NOT RUN" in status
     assert (
         "| M5.5 — Native Insights, Context Notes, and Representative Cases | "
@@ -348,6 +349,37 @@ def test_m10e1_narrows_blockers_without_granting_distribution() -> None:
         data = json.loads(
             (ROOT / "docs/evidence/m10-e1" / evidence).read_text(encoding="utf-8")
         )
+        assert data["distribution_permitted"] is False
+
+
+def test_m10e2_closes_only_evidenced_blockers_and_keeps_gates() -> None:
+    status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
+    record = (ROOT / "docs/V2_M10_E2_BLOCKER_CLOSURE.md").read_text(encoding="utf-8")
+    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+        surface = (ROOT / name).read_text(encoding="utf-8")
+        assert "M10-E2 blocker closure engineering" in surface
+        assert "B1 and B3–B6 remain BLOCKED" not in surface
+    assert "| M10-E2 — Distribution Blocker Closure Engineering |" in status
+    for row in (
+        "| B1 | **OPEN",
+        "| B2 | **CLOSED**",
+        "| B3 | **CLOSED**",
+        "| B4 | **OPEN",
+        "| B5 | **OPEN — owner/legal decision**",
+        "| B6 | **OPEN**",
+    ):
+        assert row in record
+    assert "owner risk acceptance is not legal clearance" in record
+    receipt = json.loads(
+        (ROOT / "docs/evidence/m10-e2/e2-build-receipt.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert [item[:3] for item in receipt["blockers"]] == ["B1:", "B4:", "B5:"]
+    assert receipt["python_runtime"]["verified"] is True
+    assert all(receipt["absent_by_design"].values())
+    for evidence in sorted((ROOT / "docs/evidence/m10-e2").glob("*.json")):
+        data = json.loads(evidence.read_text(encoding="utf-8"))
         assert data["distribution_permitted"] is False
 
 
