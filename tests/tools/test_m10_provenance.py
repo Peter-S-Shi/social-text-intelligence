@@ -294,11 +294,11 @@ def test_blockers_narrow_only_with_evidence_and_never_grant_permission() -> None
 
 def test_bundled_cpython_must_be_the_pinned_official_runtime(tmp_path: Path) -> None:
     compliance = load()
-    base = tmp_path / "official"
-    base.mkdir()
-    (base / "LICENSE.txt").write_text("synthetic licence")
-    internal = tmp_path / "bundle" / "_internal"
+    bundle = tmp_path / "bundle"
+    internal = bundle / "_internal"
     internal.mkdir(parents=True)
+    (bundle / "legal").mkdir()
+    (bundle / "legal" / "PYTHON-LICENSE.txt").write_text("synthetic licence")
     (internal / "python313.dll").write_bytes(b"synthetic runtime")
     (internal / "_ssl.pyd").write_bytes(b"synthetic extension")
     manifest = {
@@ -309,28 +309,37 @@ def test_bundled_cpython_must_be_the_pinned_official_runtime(tmp_path: Path) -> 
             "LICENSE.txt": hashlib.sha256(b"synthetic licence").hexdigest(),
         },
     }
-    receipt = compliance.verify_python_runtime(tmp_path / "bundle", manifest, base)
-    assert receipt["verified"] is True
+    assert compliance.verify_python_runtime(bundle, manifest)["verified"] is True
+    (bundle / "legal" / "PYTHON-LICENSE.txt").write_text("edited licence")
+    receipt = compliance.verify_python_runtime(bundle, manifest)
+    assert receipt["licence_matches"] is False
+    assert receipt["verified"] is False
+    (bundle / "legal" / "PYTHON-LICENSE.txt").write_text("synthetic licence")
     (internal / "_ssl.pyd").write_bytes(b"rebuilt extension")
-    assert (
-        compliance.verify_python_runtime(tmp_path / "bundle", manifest, base)[
-            "verified"
-        ]
-        is False
-    )
+    assert compliance.verify_python_runtime(bundle, manifest)["verified"] is False
     (internal / "_ssl.pyd").write_bytes(b"synthetic extension")
     (internal / "_unpinned.pyd").write_bytes(b"extra")
-    receipt = compliance.verify_python_runtime(tmp_path / "bundle", manifest, base)
+    receipt = compliance.verify_python_runtime(bundle, manifest)
     assert receipt["unpinned_cpython_files"] == ["_unpinned.pyd"]
     assert receipt["verified"] is False
+
+
+@pytest.mark.parametrize(
+    "name", ["concrt140.dll", "vccorlib140.dll", "msvcp140_atomic_wait.dll"]
+)
+def test_every_microsoft_runtime_family_is_owned_as_b3(name: str) -> None:
+    compliance = load()
+    assert compliance.native_owner("_internal/" + name) == "Microsoft runtime (B3)"
 
 
 def test_spec_keeps_the_binding_layer_replaceable_and_omits_redistributables() -> None:
     spec = (ROOT / "tools/m10/sti_desktop.spec").read_text(encoding="utf-8")
     assert 'module_collection_mode={"PySide6": "py", "shiboken6": "py"}' in spec
+    # The spec reuses the build's Microsoft-runtime pattern rather than a copy.
     for omitted in (
-        r'r"opengl32sw\.dll|protoc\.exe"',
-        r'r"|(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll"',
+        r'OMITTED = re.compile(r"opengl32sw\.dll|protoc\.exe", re.I)',
+        "from build import MICROSOFT_RUNTIME",
+        "MICROSOFT_RUNTIME.fullmatch(name)",
         '"hf_xet"]',
     ):
         assert omitted in spec

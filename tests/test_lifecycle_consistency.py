@@ -94,7 +94,7 @@ def test_m10c_engineering_does_not_close_acceptance_or_distribution_gates() -> N
             assert stale not in surface
     assert "| M10-C clean-machine acceptance | **NOT RUN**" in status
     assert "B1–B6 remain BLOCKED" in record
-    assert "B2 is resolved by removal and B1 and\nB3–B6 remain BLOCKED" in record
+    assert "B2 and B3 are closed and B1 and\nB4–B6 remain BLOCKED" in record
     assert "M9.2–M9.4 remain DEFERRED" in record
     assert "clean-machine acceptance remains NOT RUN" in record
     assert "Actual missing-model analysis UI" in record
@@ -150,7 +150,10 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "**COMPLETE on `main` — owner overall PASS (2026-10-10).**"
         in status
     )
-    assert "| Next required action | Owner/legal decisions recorded by M10-E2" in status
+    assert (
+        "| Next required action | Formal owner release decision on the M10-D dossier "
+        "remains pending. Owner/legal decisions recorded by M10-E2" in status
+    )
     assert "clean-machine matrix" in status
     assert "planned NOT RUN" in status
     assert (

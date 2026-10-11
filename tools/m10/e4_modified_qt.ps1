@@ -40,7 +40,9 @@ function Stop-Prerequisite([string] $Message) {
 # 1. Prerequisites — read-only checks, nothing is created before they pass.
 $cl = Get-Command cl.exe -ErrorAction SilentlyContinue
 if (-not $cl) { Stop-Prerequisite 'cl.exe (MSVC) is not on PATH.' }
-$banner = (& cl.exe 2>&1 | Select-Object -First 1) -join ''
+# cl.exe prints its banner on stderr; let cmd merge it so Windows PowerShell 5.1
+# does not turn the banner into a terminating NativeCommandError.
+$banner = (cmd.exe /d /c "cl.exe 2>&1" | Select-Object -First 1) -join ''
 if ($banner -notmatch 'Version 19\.44\.') { Stop-Prerequisite "cl.exe is not MSVC 19.44 ($banner)." }
 foreach ($tool in 'cmake.exe', 'ninja.exe', 'rc.exe') {
   if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { Stop-Prerequisite "$tool is not on PATH." }

@@ -375,9 +375,9 @@ def distribution_blockers(
 
 
 def verify_python_runtime(
-    bundle: Path, manifest: dict[str, object], base: Path
+    bundle: Path, manifest: dict[str, object]
 ) -> dict[str, object]:
-    """Bundled CPython natives and licence must be the pinned official files."""
+    """Bundled CPython natives and the shipped licence must be the pinned files."""
     files = manifest["files"]
     assert isinstance(files, dict)
     expected = {Path(name).name.lower(): sha for name, sha in files.items()}
@@ -392,7 +392,7 @@ def verify_python_runtime(
                 unpinned.append(path.name)
             else:
                 rows.append({"file": path.name, "matches": digest(path) == pinned})
-    licence = base / "LICENSE.txt"
+    licence = bundle / "legal" / "PYTHON-LICENSE.txt"
     licence_matches = licence.is_file() and digest(licence) == files.get("LICENSE.txt")
     return {
         "version": manifest.get("version"),
@@ -441,7 +441,7 @@ def native_owner(relative: str) -> str:
         return "Software renderer (B2)" if name == "opengl32sw.dll" else "Qt/PySide6"
     if "shiboken6/" in path:
         return "shiboken6"
-    if "msvcp" in name or "vcruntime" in name:
+    if name.startswith(("msvcp", "vcruntime", "concrt", "vccorlib")):
         return "Microsoft runtime (B3)"
     for prefix, owner in (
         ("numpy", "NumPy/OpenBLAS"),
@@ -597,7 +597,6 @@ def assemble(
     python_runtime = verify_python_runtime(
         bundle,
         json.loads((project / "distribution/python-runtime.json").read_text()),
-        Path(sys.base_prefix),
     )
     blockers = distribution_blockers(
         provenance,

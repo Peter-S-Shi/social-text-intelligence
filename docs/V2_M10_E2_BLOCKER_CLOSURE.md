@@ -37,7 +37,7 @@ which lacks later security fixes.
 | --- | --- | --- | --- |
 | B1 | **OPEN — narrowed to an owner/legal position** | All 121 shipped Qt files are VERIFIED against official Qt build SBOMs: 25 binaries and all 96 translation files (§2.3). The delivered `pyside-setup` source equals the upstream `v6.11.2` tag tree (§2.3) | Owner/legal: (a) accept the upstream-tagged release source and its build scripts as the Corresponding Source for the unmodified upstream binding binaries, **or** rebuild the bindings with the E4 toolchain; and (b) confirm the same-page source route (M10-E1 §4) |
 | B2 | **CLOSED** (retained from M10-E1) | The software renderer is still absent from the final build | — |
-| B3 | **CLOSED** | The runtime is the official PSF CPython 3.13.16, checked file by file at build time. No Microsoft Visual C++ runtime file is shipped; the per-user installer requires the system runtime and never elevates. The packet no longer derives a B3 blocker (§2.1–2.2) | Optional owner decision R2 in §2.2. Operational checks belong to the clean-machine gate |
+| B3 | **CLOSED** (licence and provenance; route validation pending the clean-machine matrix) | The runtime is the official PSF CPython 3.13.16, checked file by file at build time. No Microsoft Visual C++ runtime file is shipped; the per-user installer requires the system runtime and never elevates. The packet no longer derives a B3 blocker (§2.1–2.2) | Optional owner decision R2 in §2.2. Operational checks belong to the clean-machine gate |
 | B4 | **OPEN — narrowed** | `hf_xet` (73 compiled crates, including AWS-LC) and PyTorch's `protoc.exe` are removed. tokenizers has an exact `Cargo.lock` receipt (149 locked crates). NumPy's bundled-library licences are confirmed (§2.4) | Engineering, with owner download approval: tokenizers crate licence texts, and the Intel OpenMP licence for PyTorch's `libiomp5md`/`libiompstubs5md`. PyTorch's static third-party content stays at the upstream-notice level |
 | B5 | **OPEN — owner/legal decision** | Verified distribution rights are separated from the unresolved corpus terms (§2.5) | Owner/legal decides on the model; replacement options are in §2.5. Attribution or owner risk acceptance alone is not clearance |
 | B6 | **OPEN** | Coherent-set replacement still PASSES on the new bundle. E4 is prepared and checked against real evidence (§2.6) | Owner installs VS 2022 Build Tools (MSVC v143 14.44) and a Windows 11 SDK and accepts the licence; engineering then runs `tools/m10/e4_modified_qt.ps1` |
@@ -82,7 +82,7 @@ Imports in the shipped binaries need `vcruntime140.dll`, `vcruntime140_1.dll`
 and `msvcp140.dll`, plus `msvcp140_1.dll`/`msvcp140_2.dll` for PySide6. Nothing
 imported `MSVCP140_ATOMIC_WAIT.dll`.
 
-**Microsoft's terms** (M10-E1 §2.3, fetched from Microsoft Learn):
+**Microsoft's terms** (Microsoft Learn pages read 2026-10-11 during M10-E1, §2.3):
 
 - Redistribution of the runtime is limited to licensed Visual Studio users.
 - Files must come from a licensed installation's `VC\redist` folder.
@@ -264,6 +264,18 @@ language check is a single English-or-not warning (M5.6). The narrowest options:
   translation verification, CPython verification, evidence-derived B3, and E4.
 - **Static checks:** Ruff and strict MyPy pass. Full-suite and CI results are in
   `PROJECT_STATUS.md`.
+- **Independent review fixes** (Standards and Spec, before the final build):
+  - Delay-load imports are now read and relinked; before, a delay-loaded
+    vendored runtime would have passed the check.
+  - The E4 script no longer fails under Windows PowerShell 5.1 when `cl.exe`
+    is present. This was checked with stub compilers reporting 19.38 and
+    19.44.
+  - The CPython licence check reads the shipped copy.
+  - `concrt140`/`vccorlib140` are owned as Microsoft runtime.
+  - The spec reuses the build's runtime pattern, and the E4 checker shares
+    the build's PE parser.
+  - The component register no longer lists the unshipped `hf-xet` and
+    `pytest`.
 - **Not run:** frozen model inference. Source-mode inference without `hf_xet`
   passed.
 

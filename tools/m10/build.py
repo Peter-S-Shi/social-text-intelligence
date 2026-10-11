@@ -12,6 +12,7 @@ import re
 import struct
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -55,36 +56,78 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+IMPORT_DIRECTORY, DELAY_IMPORT_DIRECTORY = 1, 13
+
+
+@dataclass(frozen=True)
+class PeImage:
+    """Minimal read-only view of a PE image's headers and section mapping."""
+
+    data: bytes
+    wide: bool
+    image_base: int
+    directory_count: int
+    directories: int
+    sections: tuple[tuple[int, int, int, int], ...]
+
+    @classmethod
+    def parse(cls, data: bytes) -> PeImage:
+        try:
+            header = struct.unpack_from("<I", data, 0x3C)[0]
+            if data[:2] != b"MZ" or data[header : header + 4] != b"PE\0\0":
+                raise ValueError("Not a PE image.")
+            count, optional_size = struct.unpack_from("<H12xH", data, header + 6)
+            optional = header + 24
+            wide = struct.unpack_from("<H", data, optional)[0] == 0x20B
+            image_base = struct.unpack_from(
+                "<Q" if wide else "<I", data, optional + (24 if wide else 28)
+            )[0]
+            directories = optional + (112 if wide else 96)
+            directory_count = struct.unpack_from("<I", data, directories - 4)[0]
+            sections = tuple(
+                struct.unpack_from("<8xIIII", data, optional + optional_size + 40 * i)
+                for i in range(count)
+            )
+        except struct.error as error:
+            raise ValueError("Not a PE image.") from error
+        return cls(data, wide, image_base, directory_count, directories, sections)
+
+    def directory(self, index: int) -> int:
+        """RVA of a data directory, or 0 when the image has none."""
+        if index >= self.directory_count:
+            return 0
+        return int(struct.unpack_from("<I", self.data, self.directories + 8 * index)[0])
+
+    def offset(self, rva: int) -> int:
+        # Only file-backed bytes can be read; virtual-only tails are not mapped.
+        for _, address, raw_size, raw in self.sections:
+            if address <= rva < address + raw_size:
+                return raw + rva - address
+        raise ValueError("RVA outside every section.")
+
+    def string(self, at: int) -> str:
+        return self.data[at : self.data.index(b"\0", at)].decode("ascii")
+
+
 def import_names(data: bytes) -> list[tuple[int, str]]:
-    """(file offset, DLL name) of every entry in a PE image's import directory."""
+    """(file offset, DLL name) of every ordinary and delay-loaded import."""
     try:
-        header = struct.unpack_from("<I", data, 0x3C)[0]
-        if data[:2] != b"MZ" or data[header : header + 4] != b"PE\0\0":
-            raise ValueError("Not a PE image.")
-        sections, optional_size = struct.unpack_from("<H12xH", data, header + 6)
-        optional = header + 24
-        magic = struct.unpack_from("<H", data, optional)[0]
-        directories = optional + (112 if magic == 0x20B else 96)
-        imports = struct.unpack_from("<I", data, directories + 8)[0]
-        table = [
-            struct.unpack_from("<8xIIII", data, optional + optional_size + 40 * index)
-            for index in range(sections)
-        ]
-
-        def offset(rva: int) -> int:
-            for size, address, raw_size, raw in table:
-                if address <= rva < address + max(size, raw_size):
-                    return raw + rva - address
-            raise ValueError("Import RVA outside every section.")
-
+        image = PeImage.parse(data)
         names = []
-        if imports:
-            descriptor = offset(imports)
-            while any(struct.unpack_from("<5I", data, descriptor)):
-                at = offset(struct.unpack_from("<I", data, descriptor + 12)[0])
-                end = data.index(b"\0", at)
-                names.append((at, data[at:end].decode("ascii")))
-                descriptor += 20
+        rva = image.directory(IMPORT_DIRECTORY)
+        descriptor = image.offset(rva) if rva else -1
+        while rva and any(struct.unpack_from("<5I", data, descriptor)):
+            at = image.offset(struct.unpack_from("<I", data, descriptor + 12)[0])
+            names.append((at, image.string(at)))
+            descriptor += 20
+        rva = image.directory(DELAY_IMPORT_DIRECTORY)
+        descriptor = image.offset(rva) if rva else -1
+        while rva and any(struct.unpack_from("<8I", data, descriptor)):
+            attributes, name = struct.unpack_from("<II", data, descriptor)
+            # Old-style descriptors hold virtual addresses instead of RVAs.
+            at = image.offset(name if attributes & 1 else name - image.image_base)
+            names.append((at, image.string(at)))
+            descriptor += 32
         return names
     except (struct.error, UnicodeDecodeError) as error:
         raise ValueError("Unreadable PE import directory.") from error

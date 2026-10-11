@@ -27,8 +27,8 @@ def load() -> ModuleType:
 VENDORED = "msvcp140-" + "0" * 32 + ".dll"
 
 
-def synthetic_pe(*dll_names: str) -> bytes:
-    """PE32+ image with one section holding an import directory for dll_names."""
+def synthetic_pe(*dll_names: str, delayed: tuple[str, ...] = ()) -> bytes:
+    """PE32+ image with one section holding ordinary and delay-load imports."""
     optional, section_rva, raw = 0x40 + 24, 0x1000, 0x400
     image = bytearray(raw)
     image[:2] = b"MZ"
@@ -39,10 +39,23 @@ def synthetic_pe(*dll_names: str) -> bytes:
     struct.pack_into("<H", image, optional, 0x20B)
     struct.pack_into("<I", image, optional + 108, 16)
     descriptors = 20 * (len(dll_names) + 1)
+    delay_descriptors = 32 * (len(delayed) + 1)
     struct.pack_into("<II", image, optional + 112 + 8, section_rva, descriptors)
-    body = bytearray(descriptors)
+    if delayed:
+        struct.pack_into(
+            "<II",
+            image,
+            optional + 112 + 8 * 13,
+            section_rva + descriptors,
+            delay_descriptors,
+        )
+    body = bytearray(descriptors + delay_descriptors)
     for index, name in enumerate(dll_names):
         struct.pack_into("<I", body, 20 * index + 12, section_rva + len(body))
+        body += name.encode() + b"\0"
+    for index, name in enumerate(delayed):
+        at = descriptors + 32 * index
+        struct.pack_into("<II", body, at, 1, section_rva + len(body))
         body += name.encode() + b"\0"
     section = optional + 240
     struct.pack_into(
@@ -84,11 +97,28 @@ def test_bundled_microsoft_runtime_files_are_refused(tmp_path: Path, name: str) 
         build.verify_no_microsoft_runtime(tmp_path)
 
 
-def test_an_unrelinked_vendored_import_is_refused(tmp_path: Path) -> None:
+@pytest.mark.parametrize("delay", [False, True])
+def test_an_unrelinked_vendored_import_is_refused(tmp_path: Path, delay: bool) -> None:
     build = load()
-    (tmp_path / "numpy.pyd").write_bytes(synthetic_pe(VENDORED))
+    image = (
+        synthetic_pe("kernel32.dll", delayed=(VENDORED,))
+        if delay
+        else synthetic_pe(VENDORED)
+    )
+    (tmp_path / "numpy.pyd").write_bytes(image)
     with pytest.raises(ValueError, match="vendored"):
         build.verify_no_microsoft_runtime(tmp_path)
+
+
+def test_delay_loaded_vendored_imports_are_relinked_too(tmp_path: Path) -> None:
+    build = load()
+    library = tmp_path / "numpy.pyd"
+    library.write_bytes(synthetic_pe("kernel32.dll", delayed=(VENDORED,)))
+    receipts = build.relink_vendored_runtime(tmp_path)
+    assert receipts[0]["replaced_imports"] == VENDORED
+    names = [name for _, name in build.import_names(library.read_bytes())]
+    assert names == ["kernel32.dll", "msvcp140.dll"]
+    build.verify_no_microsoft_runtime(tmp_path)
 
 
 def test_build_interpreter_must_match_the_pinned_runtime(tmp_path: Path) -> None:

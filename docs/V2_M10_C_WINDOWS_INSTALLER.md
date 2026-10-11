@@ -6,8 +6,9 @@ The bounded internal installer workflow is established on `main`. Development-ho
 installation observations PASS; **clean-machine acceptance remains NOT RUN**.
 This is installer engineering completion, not completion of the clean-machine,
 legal, signing, distribution or release gates. M10-B **B1–B6 remain BLOCKED** as
-recorded at M10-C; after [M10-E1](V2_M10_E1_DISTRIBUTION_UNBLOCKING.md), B2 is resolved by removal and B1 and
-B3–B6 remain BLOCKED.
+recorded at M10-C; after [M10-E2](V2_M10_E2_BLOCKER_CLOSURE.md), B2 and B3 are closed and B1 and
+B4–B6 remain BLOCKED. This M10-C installer is historical: it wraps the
+M10-B bundle and was not rebuilt; M10-E2 compiled a new internal installer.
 M9.2–M9.4 remain DEFERRED; Q5 still prohibits unsupported model-capability claims.
 M7's CONDITIONAL exit and M8's open risk dispositions are unchanged. The optional
 owner 30-minute packaged-app smoke remains planned **NOT RUN**. No binaries are
@@ -198,7 +199,7 @@ records, not owner/clean-machine/legal acceptance.
 
 Execute the clean isolated matrix and missing-model/download-cancel UI checks
 on an available authorized VM; preserve unsuccessful/unavailable results.
-Close **B1 and B3–B6** (current dispositions in [M10-E1](V2_M10_E1_DISTRIBUTION_UNBLOCKING.md)) before any
+Close **B1 and B4–B6** (current dispositions in [M10-E2](V2_M10_E2_BLOCKER_CLOSURE.md)) before any
 legal/distribution clearance. Signing/SmartScreen,
 owner smoke, formal UAT/accessibility and release decisions remain open. No
 M9 evidence requirement or M7/M8 risk has been waived.

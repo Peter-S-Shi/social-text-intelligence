@@ -1,5 +1,6 @@
 # Windows onedir production foundation. Build via tools/m10/build.py.
 import re
+import sys
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
@@ -38,20 +39,20 @@ check = Analysis([str(config / "entry_check.py")], **common)
 # (M10-E1, B2); Microsoft Visual C++ runtime DLLs, which come from the system
 # runtime the installer requires (M10-E2, B3); and PyTorch's protoc.exe build
 # tool, which nothing executes at run time (M10-E2, B4).
-OMITTED = re.compile(
-    r"opengl32sw\.dll|protoc\.exe"
-    r"|(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll",
-    re.I,
-)
+sys.path.insert(0, str(config))
+from build import MICROSOFT_RUNTIME  # noqa: E402  (shared with the build checks)
+
+OMITTED = re.compile(r"opengl32sw\.dll|protoc\.exe", re.I)
+
+
+def shipped(entry):
+    name = Path(entry[0]).name
+    return not (OMITTED.fullmatch(name) or MICROSOFT_RUNTIME.fullmatch(name))
+
+
 for analysis in (desktop, check):
-    analysis.binaries = [
-        entry for entry in analysis.binaries
-        if not OMITTED.fullmatch(Path(entry[0]).name)
-    ]
-    analysis.datas = [
-        entry for entry in analysis.datas
-        if not OMITTED.fullmatch(Path(entry[0]).name)
-    ]
+    analysis.binaries = [entry for entry in analysis.binaries if shipped(entry)]
+    analysis.datas = [entry for entry in analysis.datas if shipped(entry)]
 # COLLECT deduplicates the shared onedir files. Keep each Analysis intact:
 # MERGE creates cross-executable extraction dependencies, unsuitable here.
 exe_d = EXE(PYZ(desktop.pure), desktop.scripts, [], exclude_binaries=True,
