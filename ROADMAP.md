@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); M10-E2 blocker closure engineering established (B3 CLOSED by an official CPython runtime and no Microsoft runtime redistribution; B1 and B4 narrowed but OPEN; B5 and B6 OPEN pending owner/legal decisions and the owner toolchain); distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
+**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); M10-E2 blocker closure engineering established (B3 CLOSED by an official CPython runtime and no Microsoft runtime redistribution; B1 and B4 narrowed but OPEN; B5 and B6 OPEN pending owner/legal decisions and the owner toolchain); Core + Optional Components distribution plan recorded, awaiting owner approval (R1 kept for the VC++ runtime; R2 parked in draft PR #62; py3langid proposed to leave the installer); distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -451,4 +451,18 @@ It also:
 Next: owner/legal decisions for B1 and B5, the owner's MSVC toolchain for E4
 (B6), the B4 notice texts and the clean-machine matrix. No binary is
 published.
+
+### Core + Optional Components plan (awaiting owner approval)
+
+The [plan](docs/V2_M10_CORE_OPTIONAL_PLAN.md) sets the distribution strategy:
+
+- Qt/PySide6 and the rest of the essential stack stay in the installer.
+- The VC++ runtime stays an external prerequisite (R1); R2 is parked in draft
+  PR #62.
+- py3langid leaves the installer. The established "Language check unavailable"
+  state covers it, and an optional user-authorized model download is a later
+  option.
+
+B1, B4 and B6 finish through narrow tasks (S2–S4), then the clean-machine matrix
+(S5).
 
