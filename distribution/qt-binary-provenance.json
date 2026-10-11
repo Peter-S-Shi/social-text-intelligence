@@ -24,6 +24,13 @@
       "sha256": "1678c477dcdf320fb04b8de1b6305278081f86b45ed72eda677fde0de9ec8b8e",
       "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtimageformats.win64_msvc2022_64/6.11.2-0-202608131017qtimageformats-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
       "archive_sha256": "d6822c2160ebb675525173deb84bbfb68b4be046ee7f126af74a400a285b933d"
+    },
+    {
+      "component": "QtTranslations build SBOM",
+      "filename": "qttranslations-6.11.2.spdx.json",
+      "sha256": "44b904f44127ce246c3fada6d759fd2759ae0dfa03375f1a413aa0c0ba2a60ee",
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+      "archive_sha256": "1c9516ce25d286ecf97e7aaaa5c8fa395823f21af5fa3dcb7bd06f648453dd77"
     }
   ]
 }

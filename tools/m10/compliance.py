@@ -211,9 +211,12 @@ def read_build_sbom(
         name = item.get("fileName", "").removeprefix("./").lower()
         for checksum in item.get("checksums", []):
             if checksum.get("algorithm") == "SHA1":
-                if name in entries:
-                    raise ValueError("Two Qt build SBOMs describe the same file.")
-                entries[name] = SbomEntry(checksum["checksumValue"].lower(), module)
+                entry = SbomEntry(checksum["checksumValue"].lower(), module)
+                # An SBOM may list one file twice; only a conflicting entry is
+                # ambiguous.
+                if entries.get(name, entry) != entry:
+                    raise ValueError("Two Qt build SBOM entries conflict for a file.")
+                entries[name] = entry
     return {
         "module": module,
         "version": version,
@@ -228,7 +231,7 @@ def read_build_sbom(
 def verify_qt_provenance(
     bundle: Path, documents: Sequence[Path], archives: Sequence[Path]
 ) -> dict[str, object]:
-    """Match every shipped Qt library binary to an official Qt build SBOM entry.
+    """Match every shipped Qt library binary and translation to an official SBOM.
 
     PySide6/shiboken6 binding binaries and runtime DLLs have no Qt build SBOM and
     stay outside this check; any other uncovered Qt-tree binary is reported.
@@ -241,17 +244,23 @@ def verify_qt_provenance(
     rows = []
     uncovered = []
     for path in sorted(qt.rglob("*")):
-        if not path.is_file() or path.suffix.lower() != ".dll":
-            continue
         relative = path.relative_to(qt).as_posix()
-        if relative.lower().startswith(("pyside6.", "msvcp", "vcruntime")):
-            continue
         key = relative.lower()
-        entry = entries.get(key if key.startswith("plugins/") else "bin/" + key)
+        translation = key.startswith("translations/") and key.endswith(".qm")
+        if not path.is_file() or not (translation or key.endswith(".dll")):
+            continue
+        if key.startswith(("pyside6.", "msvcp", "vcruntime")):
+            continue
+        entry = entries.get(
+            key if key.startswith(("plugins/", "translations/")) else "bin/" + key
+        )
         if entry is None:
             uncovered.append(relative)
             continue
-        observed = unsigned_sha1(path.read_bytes())
+        data = path.read_bytes()
+        observed = (
+            hashlib.sha1(data).hexdigest() if translation else unsigned_sha1(data)
+        )
         status = "VERIFIED" if observed == entry.sha1 else "MISMATCH"
         if status == "VERIFIED" and links[entry.module] not in {
             "COMMIT_MATCH",
@@ -324,18 +333,24 @@ B1_UNVERIFIED = (
     "are not established by upstream release archives alone."
 )
 B1_BINDINGS = (
-    "B1: Qt library binaries match the official Qt build SBOMs, linked to the "
-    "delivered source archives by commit or, where an SBOM names none, by release "
-    "version only; PySide6/shiboken6 binding binaries have no producer build "
-    "record, and the release source-delivery route needs owner/legal confirmation."
+    "B1: Qt library binaries and translations match the official Qt build SBOMs, "
+    "linked to the delivered source archives by commit or, where an SBOM names "
+    "none, by release version only; PySide6/shiboken6 binding binaries have no "
+    "producer build record, and the release source-delivery route needs "
+    "owner/legal confirmation."
 )
 B2 = (
     "B2: opengl32sw software renderer build provenance and compiled Mesa/LLVM "
     "component attribution are unverified."
 )
+B3_MICROSOFT = (
+    "B3: Microsoft Visual C++ runtime files are bundled without a recorded "
+    "redistribution licence route."
+)
+B3_PYTHON = (
+    "B3: Bundled CPython runtime files do not match the pinned official runtime."
+)
 BLOCKERS = [
-    "B3: Microsoft runtime redistribution grant and custom CPython runtime/native "
-    "build provenance are not verified.",
     "B4: Static Rust/native and vendored dependency license coverage is not "
     "certified by package-level metadata or source-superset notices.",
     "B5: py3langid embedded model training-corpus redistribution terms remain open.",
@@ -343,13 +358,53 @@ BLOCKERS = [
 
 
 def distribution_blockers(
-    provenance: dict[str, object], software_renderer: bool
+    provenance: dict[str, object],
+    software_renderer: bool,
+    microsoft_runtime: bool = True,
+    python_runtime_verified: bool = False,
 ) -> list[str]:
     """Each blocker stays until its own evidence closes it; none grants permission."""
     blockers = [B1_BINDINGS if provenance["qt_libraries_verified"] else B1_UNVERIFIED]
     if software_renderer:
         blockers.append(B2)
+    if microsoft_runtime:
+        blockers.append(B3_MICROSOFT)
+    if not python_runtime_verified:
+        blockers.append(B3_PYTHON)
     return blockers + BLOCKERS
+
+
+def verify_python_runtime(
+    bundle: Path, manifest: dict[str, object], base: Path
+) -> dict[str, object]:
+    """Bundled CPython natives and licence must be the pinned official files."""
+    files = manifest["files"]
+    assert isinstance(files, dict)
+    expected = {Path(name).name.lower(): sha for name, sha in files.items()}
+    internal = bundle / "_internal"
+    rows, unpinned = [], []
+    for path in sorted(internal.iterdir()) if internal.is_dir() else []:
+        if not path.is_file() or path.suffix.lower() not in {".pyd", ".dll"}:
+            continue
+        if native_owner("_internal/" + path.name).startswith("CPython"):
+            pinned = expected.get(path.name.lower())
+            if pinned is None:
+                unpinned.append(path.name)
+            else:
+                rows.append({"file": path.name, "matches": digest(path) == pinned})
+    licence = base / "LICENSE.txt"
+    licence_matches = licence.is_file() and digest(licence) == files.get("LICENSE.txt")
+    return {
+        "version": manifest.get("version"),
+        "build": manifest.get("build"),
+        "checked": rows,
+        "unpinned_cpython_files": unpinned,
+        "licence_matches": licence_matches,
+        "verified": bool(rows)
+        and all(row["matches"] for row in rows)
+        and not unpinned
+        and licence_matches,
+    }
 
 
 def installed_notices(name: str, output: Path) -> list[dict[str, str]]:
@@ -534,14 +589,24 @@ def assemble(
         for path in sorted(bundle.rglob("*"))
         if path.is_file()
     ]
-    blockers = distribution_blockers(
-        provenance, (bundle / "_internal/PySide6/opengl32sw.dll").exists()
-    )
     native = [
         dict(item, owner=native_owner(str(item["path"])))
         for item in files
         if Path(str(item["path"])).suffix.lower() in {".dll", ".pyd", ".exe"}
     ]
+    python_runtime = verify_python_runtime(
+        bundle,
+        json.loads((project / "distribution/python-runtime.json").read_text()),
+        Path(sys.base_prefix),
+    )
+    blockers = distribution_blockers(
+        provenance,
+        (bundle / "_internal/PySide6/opengl32sw.dll").exists(),
+        microsoft_runtime=any(
+            item["owner"] == "Microsoft runtime (B3)" for item in native
+        ),
+        python_runtime_verified=bool(python_runtime["verified"]),
+    )
     if any(item["owner"] == "UNRESOLVED native ownership" for item in native):
         blockers.append(
             "Unresolved native ownership exists; inspect native_components."
@@ -565,6 +630,7 @@ def assemble(
         "source_delivery": source_receipts,
         "qt_build_sboms": sbom_receipts,
         "qt_binary_provenance": provenance,
+        "python_runtime": python_runtime,
         "qt_source_notices": source_notices,
         "notice_scope": "source superset; not a compiled static-link SBOM",
         "materials": files,

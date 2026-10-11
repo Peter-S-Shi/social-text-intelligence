@@ -41,7 +41,7 @@ def test_incomplete_license_packet_is_rejected_without_output(tmp_path: Path) ->
     assert not output.exists()
 
 
-def packet(root: Path) -> Path:
+def packet(root: Path, *extra: str) -> Path:
     root.mkdir()
     files = [
         "sti-desktop.exe",
@@ -50,6 +50,7 @@ def packet(root: Path) -> Path:
         "legal/GNU-GPL-3.0.txt",
         "legal/SOURCE_ACCESS.md",
         "legal/QT_REPLACEMENT.md",
+        *extra,
     ]
     sources = []
     for index in range(5):
@@ -108,6 +109,36 @@ def test_prepare_stages_verified_packet_without_claiming_installation(
         bundle / "legal/inventory.json"
     ).read_bytes()
     assert (output / "payload/installer/INNO-LICENSE.txt").is_file()
+
+
+@pytest.mark.parametrize(
+    "runtime", ["_internal/vcruntime140.dll", "_internal/PySide6/MSVCP140_2.dll"]
+)
+def test_microsoft_runtime_files_never_enter_the_installer(
+    tmp_path: Path, runtime: str
+) -> None:
+    bundle = packet(tmp_path / "bundle", runtime)
+    output = tmp_path / "untouched"
+    result = invoke(bundle, output)
+    assert result.returncode == 2
+    assert "Microsoft Visual C++ runtime" in result.stdout
+    assert not output.exists()
+
+
+def test_installer_requires_the_system_runtime_without_elevating(
+    tmp_path: Path,
+) -> None:
+    bundle = packet(tmp_path / "bundle")
+    output = tmp_path / "prepared"
+    assert invoke(bundle, output).returncode == 0
+    script = (output / "installer.iss").read_text(encoding="utf-8-sig")
+    assert "PrivilegesRequired=lowest" in script
+    assert "function InitializeSetup(): Boolean;" in script
+    assert "Result := VCRuntimeInstalled();" in script
+    assert "(Major = 14) and (Minor >= 44)" in script
+    # The Microsoft installer is linked, never bundled or launched elevated.
+    assert "vc_redist.x64.exe" not in script.lower()
+    assert "runascurrentuser" not in script.lower()
 
 
 def test_source_receipt_cannot_escape_archive_directory(tmp_path: Path) -> None:

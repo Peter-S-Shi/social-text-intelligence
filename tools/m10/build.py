@@ -8,12 +8,20 @@ import importlib.metadata
 import json
 import os
 import platform
+import re
+import struct
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = Path(__file__).resolve().parent
+# Visual C++ runtime DLLs are Microsoft redistributables; the bundle relies on the
+# system runtime instead (M10-E2, blocker B3).
+MICROSOFT_RUNTIME = re.compile(
+    r"(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll", re.I
+)
+VENDORED_RUNTIME = re.compile(r"msvcp140-[0-9a-f]{32}\.dll", re.I)
 
 
 def prepare_output(output: Path) -> Path:
@@ -42,11 +50,116 @@ def audit_bundle(root: Path) -> dict[str, int]:
     return {"files": len(files), "bytes": sum(path.stat().st_size for path in files)}
 
 
+def digest(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def import_names(data: bytes) -> list[tuple[int, str]]:
+    """(file offset, DLL name) of every entry in a PE image's import directory."""
+    try:
+        header = struct.unpack_from("<I", data, 0x3C)[0]
+        if data[:2] != b"MZ" or data[header : header + 4] != b"PE\0\0":
+            raise ValueError("Not a PE image.")
+        sections, optional_size = struct.unpack_from("<H12xH", data, header + 6)
+        optional = header + 24
+        magic = struct.unpack_from("<H", data, optional)[0]
+        directories = optional + (112 if magic == 0x20B else 96)
+        imports = struct.unpack_from("<I", data, directories + 8)[0]
+        table = [
+            struct.unpack_from("<8xIIII", data, optional + optional_size + 40 * index)
+            for index in range(sections)
+        ]
+
+        def offset(rva: int) -> int:
+            for size, address, raw_size, raw in table:
+                if address <= rva < address + max(size, raw_size):
+                    return raw + rva - address
+            raise ValueError("Import RVA outside every section.")
+
+        names = []
+        if imports:
+            descriptor = offset(imports)
+            while any(struct.unpack_from("<5I", data, descriptor)):
+                at = offset(struct.unpack_from("<I", data, descriptor + 12)[0])
+                end = data.index(b"\0", at)
+                names.append((at, data[at:end].decode("ascii")))
+                descriptor += 20
+        return names
+    except (struct.error, UnicodeDecodeError) as error:
+        raise ValueError("Unreadable PE import directory.") from error
+
+
+def relink_vendored_runtime(bundle: Path) -> list[dict[str, str]]:
+    """Point delvewheel-renamed msvcp140 imports back at the system runtime.
+
+    The rename is the same in-place import-name edit delvewheel made; the vendored
+    Microsoft copy itself is not shipped. Every edit is returned as a receipt.
+    """
+    receipts = []
+    for path in sorted(bundle.rglob("*")):
+        if not path.is_file() or path.suffix.lower() not in {".pyd", ".dll"}:
+            continue
+        data = bytearray(path.read_bytes())
+        names = [
+            item
+            for item in import_names(bytes(data))
+            if VENDORED_RUNTIME.fullmatch(item[1])
+        ]
+        if not names:
+            continue
+        before = hashlib.sha256(data).hexdigest()
+        for at, name in names:
+            data[at : at + len(name)] = b"msvcp140.dll".ljust(len(name), b"\0")
+        path.write_bytes(data)
+        receipts.append(
+            {
+                "path": path.relative_to(bundle).as_posix(),
+                "replaced_imports": ", ".join(name for _, name in names),
+                "before_sha256": before,
+                "after_sha256": digest(path),
+            }
+        )
+    return receipts
+
+
+def verify_no_microsoft_runtime(bundle: Path) -> None:
+    for path in bundle.rglob("*"):
+        if path.is_file() and MICROSOFT_RUNTIME.fullmatch(path.name):
+            raise ValueError("A Microsoft Visual C++ runtime file was bundled.")
+        if (
+            path.is_file()
+            and path.suffix.lower() in {".pyd", ".dll", ".exe"}
+            and any(
+                VENDORED_RUNTIME.fullmatch(name)
+                for _, name in import_names(path.read_bytes())
+            )
+        ):
+            raise ValueError("A binary still imports a vendored runtime copy.")
+
+
+def runtime_mismatches(base: Path, manifest: dict[str, object]) -> list[str]:
+    """Files of the build interpreter that differ from the pinned official runtime."""
+    files = manifest["files"]
+    assert isinstance(files, dict)
+    mismatched = []
+    for relative, expected in sorted(files.items()):
+        path = base / relative
+        if not path.is_file() or digest(path) != expected:
+            mismatched.append(relative)
+    return mismatched
+
+
 def verify_build_environment() -> None:
     if sys.platform != "win32" or platform.machine().lower() not in {"amd64", "x86_64"}:
         raise ValueError("The production build requires Windows x64.")
-    if sys.version_info[:2] != (3, 12):
-        raise ValueError("The production build requires Python 3.12.")
+    if sys.version_info[:2] != (3, 13):
+        raise ValueError("The production build requires Python 3.13.")
+    manifest = json.loads((ROOT / "distribution/python-runtime.json").read_text())
+    if runtime_mismatches(Path(sys.base_prefix), manifest):
+        raise ValueError(
+            "The build interpreter must be the pinned official CPython runtime."
+        )
     for line in (CONFIG / "requirements-build.txt").read_text().splitlines():
         if not line or line.startswith("#"):
             continue
@@ -129,6 +242,8 @@ def main() -> int:
             env=build_environment(output),
         )
         bundle = output / "dist" / "sti-desktop"
+        relinked = relink_vendored_runtime(bundle)
+        verify_no_microsoft_runtime(bundle)
         subprocess.run(
             [
                 sys.executable,
@@ -159,6 +274,11 @@ def main() -> int:
                 (CONFIG / "requirements-build.txt").read_bytes()
             ).hexdigest(),
             "layout": layout,
+            "python_runtime": json.loads(
+                (ROOT / "distribution/python-runtime.json").read_text()
+            )["build"],
+            "microsoft_runtime_redistributed": False,
+            "relinked_runtime_imports": relinked,
             "models_bundled": False,
             "release_ready": False,
         }

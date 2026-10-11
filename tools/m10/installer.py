@@ -11,6 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from build import MICROSOFT_RUNTIME
 from compliance import digest, verify_packet
 
 CONFIG = Path(__file__).resolve().parent
@@ -90,6 +91,11 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
             or path.name.lower() in {".env", "pytorch_model.bin"}
         ):
             raise ValueError("Model weights or user data cannot enter the installer.")
+        if path.is_file() and MICROSOFT_RUNTIME.fullmatch(path.name):
+            raise ValueError(
+                "Microsoft Visual C++ runtime files cannot enter the installer; "
+                "it requires the system runtime instead."
+            )
     if digest(CONFIG / "INNO-LICENSE.txt") != LICENSE_SHA256:
         raise ValueError("The versioned installer license text changed.")
     output.mkdir(parents=True, exist_ok=False)
