@@ -1,0 +1,31 @@
+DRAFT - NOT APPROVED. Pending owner/legal review (M10-E3). Internal engineering builds only.
+
+Social Text Intelligence - terms for included Microsoft runtime files
+
+This installer includes the Microsoft Visual C++ runtime files msvcp140.dll,
+msvcp140_1.dll, msvcp140_2.dll, msvcp140_atomic_wait.dll, vcruntime140.dll and
+vcruntime140_1.dll ("Microsoft Runtime Files"). They are provided by Microsoft
+Corporation and are included unmodified, only so that Social Text Intelligence
+can run. By installing or using Social Text Intelligence you agree that:
+
+1. You may use the Microsoft Runtime Files only as part of Social Text
+   Intelligence. You may not share, publish, rent, lease or otherwise distribute
+   them separately, or provide them as a stand-alone offering.
+2. You may not reverse engineer, decompile or disassemble the Microsoft Runtime
+   Files, except and only to the extent that applicable law expressly permits
+   this despite this limitation.
+3. You may not remove, minimize, block or modify any notices of Microsoft or its
+   suppliers in the Microsoft Runtime Files, or work around any technical
+   limitations in them.
+4. You will comply with all export and trade laws and regulations that apply to
+   the Microsoft Runtime Files.
+5. The Microsoft Runtime Files are provided "as is". Microsoft gives no express
+   warranties, guarantees or conditions and, to the extent permitted by local
+   law, excludes the implied warranties of merchantability, fitness for a
+   particular purpose and non-infringement. To the extent permitted by
+   applicable law, Microsoft and its suppliers are not liable for any damages
+   related to the Microsoft Runtime Files.
+6. Microsoft and its suppliers reserve all rights not expressly granted. These
+   terms do not limit any rights you have under the licences of the open-source
+   components of Social Text Intelligence, which are listed in the "Licenses and
+   sources" folder.

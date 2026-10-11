@@ -82,36 +82,83 @@ administrator rights. On the M10-E2 R1 bundle on the development host:
 For R2, the same probe must report `application` for all six (§5, step 3). This
 has not been run, because no R2 bundle exists yet.
 
-## 4. Licensing facts read (Microsoft pages, 2026-10-11)
+## 4. Licensing facts (read 2026-10-11)
 
-- **Visual Studio 2022 redistribution list** (learn.microsoft.com, the "REDIST.txt"
-  that the Community, Professional and Enterprise 2022 licence terms point to):
-  - Licensed users may distribute the **unmodified** files under `VC\redist` and
-    its subfolders.
-  - The `debug_nonredist` folders are excluded.
-- **"Redistributing Visual C++ files"** (learn.microsoft.com):
-  - Distribution is limited to licensed Visual Studio users.
-  - App-local installation into the folder that holds the executable is supported.
-  - For servicing reasons, Microsoft does not recommend it.
-- **"Deployment in Visual C++"** (learn.microsoft.com):
-  - Microsoft cannot update locally deployed copies.
-  - The application owner must redeploy them (§5 procedure).
-- **Visual Studio Community 2022 licence terms:** not read yet. The page embeds the
-  licence as a Word document, `Visual-Studio-2022-Community-License-EN.docx` on
-  visualstudio.microsoft.com, which needs a file download. The eligibility rules
-  (individual or organization use, and the enterprise thresholds) and the
-  "Distributable Code" conditions are therefore **unverified**. They are not
-  stated here from memory.
-- **Availability:** Microsoft's "older downloads" page (2026-07-13) says older
-  versions require an active Visual Studio subscription.
-  - That page lists Professional 2022, Enterprise 2022 and Build Tools 2022, but
-    not Community 2022.
-  - The current free Community edition is Visual Studio 2026 (version 18).
-  - Its runtime has its own licence entry: "Microsoft Visual C++ V14
-    Redistributable and Runtime 2026".
-  - Whether Community 2022 can still be obtained without a subscription is
-    unconfirmed (§6).
+The owner chose **Visual Studio Community 2026**. Microsoft's "older downloads"
+page (2026-07-13) says older versions need an active subscription and does not
+list Community 2022. With owner approval, the two licence documents linked from
+the Visual Studio licence directory were downloaded and read. They are kept
+locally and not committed:
 
+| Document | Last updated | SHA-256 |
+| --- | --- | --- |
+| Microsoft Software License Terms, Visual Studio Community 2026 (`VS2026_Comm_ENU.1033`) | 2025-10-01 | `02ac0763…e1fb` |
+| Microsoft Visual C++ V14 Redistributable and Runtime (`Cpp_v14_ENU.1033`) | 2025-10-01 | `08651651…c783` |
+
+**Community 2026: who may use it** (§2 of the licence, paraphrased):
+
+- **Individual:** an individual working on their own applications may use it to
+  develop and test them, "either to sell or for any other purpose".
+- **Organization:** any number of users may use it for OSI-licensed open-source
+  applications, classroom training, academic research and certain other uses.
+  Otherwise, up to five concurrent users may use it if the organization is not an
+  enterprise.
+- **Enterprise:** an organization whose group has more than 250 PCs or users, or
+  more than US$1 million in annual revenue. An enterprise may use it only for the
+  listed uses.
+- **Preview builds:** Insiders/preview components are for internal evaluation only
+  and must not be distributed.
+
+**Distributable Code** (§7 of the licence):
+
+- The object code on the Distributable List (`aka.ms/vs/18/redistribution`) may be
+  distributed with applications the licensee develops.
+- That list (learn.microsoft.com, Visual Studio 2026 Redistribution, 2025-11-11)
+  allows any file under `VC\redist`, **unmodified**. The `debug_nonredist` folders
+  are excluded. The Visual Studio 2026 runtime folder is `Microsoft.VC145.CRT`,
+  which the tooling finds as `Microsoft.VC1xx.CRT`.
+- **The distributor must:**
+  1. add significant primary functionality (STI does);
+  2. require distributors and external end users to agree to terms that protect the
+     Distributable Code at least as much as the licence;
+  3. indemnify, defend and hold Microsoft harmless from claims related to the
+     distribution or use of the application, except claims based solely on the
+     Distributable Code.
+- **The distributor must not:**
+  - distribute preview components;
+  - use Microsoft trademarks in the application's name or to suggest Microsoft
+    endorsement;
+  - make the Distributable Code's source subject to an "Excluded License" (a
+    copyleft licence).
+
+**The V14 Redistributable and Runtime terms** are the end-user terms of the
+runtime itself:
+
+- use is allowed on any number of devices;
+- no reverse engineering, removal of notices or separate distribution;
+- the trade-law terms apply;
+- the software is provided "as is" with limited damages.
+
+**Other Microsoft pages** (learn.microsoft.com):
+
+- App-local deployment into the executable's folder is supported but not
+  recommended, for servicing reasons.
+- Microsoft cannot update local copies; the application owner must redeploy them.
+- On Windows 10/11 the system UCRT is always used.
+
+**Engineering response to requirement 2:**
+
+- An R2 installer now shows `tools/m10/R2_END_USER_TERMS.txt` as an
+  acceptance-required licence page (Inno `LicenseFile`). R1 installers show none.
+- That text is a **draft** derived from the protections above and is marked
+  "NOT APPROVED".
+- Whether it is sufficient is an owner/legal decision. So is how it sits next to
+  the LGPL's §4 requirement to allow reverse engineering for debugging
+  modifications of the Qt combination: the draft limits reverse engineering only
+  for the Microsoft files.
+
+Indemnifying Microsoft (requirement 3) is an obligation the owner takes on; it
+cannot be engineered.
 ## 5. Reproducible pinning, packaging and security-update procedure
 
 The procedure is version-pinned at every step. Nothing is downloaded or installed
@@ -146,7 +193,8 @@ by the tooling.
    frozen bundle. All six modules must load from the application directory, even
    where a system runtime exists.
 4. **Installer.** `installer.py` admits runtime files only when the packet says R2
-   and they match the pin. It then renders `RequireSystemRuntime = False`. The
+   and they match the pin. It then renders `RequireSystemRuntime = False` and the
+   end-user terms page (§4), and records the terms' SHA-256 in its receipt. The
    per-user, never-elevating setup (`PrivilegesRequired=lowest`) stays unchanged.
 5. **Clean-machine validation:** `validate_installer.ps1 -EnvironmentKind DisposableVM`.
    For an R2 receipt it first asserts:
@@ -166,31 +214,38 @@ by the tooling.
 
 ## 6. Owner inputs needed before R2 can complete
 
-1. **Licence text download (approval).** Download the Community licence document
-   named in §4, a small .docx from visualstudio.microsoft.com, so its eligibility
-   and "Distributable Code" conditions can be recorded verbatim. If the owner
-   picks Visual Studio 2026, its licence and the 2026 runtime terms are needed
-   instead.
-2. **Product choice and eligibility (owner confirmation).**
-   - Community 2022 appears to be subscription-only now (§4).
-   - **Recommendation:** use the current Visual Studio Community 2026 if its terms
-     fit the owner's situation. Its runtime is the newest serviced v14 line and is
-     binary compatible with the 14.44 minimum.
-   - Otherwise, confirm a way to obtain Community 2022 legitimately.
-   - Either way, the owner confirms eligibility under the licence actually
-     installed. That confirmation is recorded as `owner_licence_confirmation`.
-     The tooling never infers it.
-3. **Installation (owner action).** The owner installs that edition with the
-   "Desktop development with C++" workload and accepts its licence. This same
-   installation also provides the MSVC compiler and Windows SDK for the E4 Qt
-   rebuild (B6). Installing it is not, by itself, B3 clearance.
-4. **Isolated Windows environment (owner action).** This development host runs
-   Windows 11 Home, which has neither Windows Sandbox nor Hyper-V. Provide one of:
-   - a VirtualBox/VMware VM or a second PC with a fresh Windows 10/11 x64 install;
-   - a standard user account;
-   - a checked absence of the VC++ runtime;
-   - the `C:\STI-M10C-VM.txt` marker required by `validate_installer.ps1`.
+Decided in this milestone: product **Visual Studio Community 2026**; licence
+documents downloaded and read (§4).
 
+Still needed:
+
+1. **Eligibility and obligations (owner/legal confirmation).**
+   - Confirm that the owner's use falls under the individual licence, or under a
+     non-enterprise organization of up to five users.
+   - Accept the indemnity obligation.
+   - Approve, or replace, the draft end-user terms (§4), including how they sit
+     next to the LGPL.
+   - These are recorded together as `owner_licence_confirmation` in
+     `distribution/vc-runtime.json`, with edition, channel (Stable, not
+     Insiders), date and the approved terms' SHA-256. Until that record exists, an
+     R2 packet derives B3 as open. The tooling never infers it.
+2. **Installation (owner action).**
+   - Install Visual Studio Community 2026 from the Stable channel with the
+     "Desktop development with C++" workload, and accept its licence.
+   - The same installation can also provide the E4 Qt rebuild toolchain (B6). E4
+     pins the Visual Studio 2022 compiler (MSVC v143, `cl` 19.44) that matches the
+     official Qt build. Visual Studio 2026 offers it as the optional individual
+     component "MSVC v143 – VS 2022 C++ x64/x86 build tools"; also add a Windows 11
+     SDK. Whether that exact component is offered still has to be checked in the
+     installer.
+   - Installing it is not, by itself, B3 clearance.
+3. **Isolated Windows environment (owner action).** This development host runs
+   Windows 11 Home, which has neither Windows Sandbox nor Hyper-V. Provide a
+   VirtualBox/VMware VM, or a second PC, that has all of the following:
+   - a fresh Windows 10/11 x64 install;
+   - a standard (non-administrator) user;
+   - a confirmed absence of the VC++ runtime;
+   - the `C:\STI-M10C-VM.txt` marker required by `validate_installer.ps1`.
 ## 7. Blocker status (unchanged by this milestone)
 
 | Blocker | Status |
@@ -214,11 +269,19 @@ are unchanged.
   - the import-closure guard;
   - app-local placement only beside the executables;
   - R2 B3 derivation;
-  - installer prerequisite rendering for R1 and R2.
+  - installer prerequisite and terms-page rendering for R1 and R2.
 - **Real signatures:** the signature and version reader was exercised on real
   Microsoft-signed system DLLs. They read as Valid, organization Microsoft
   Corporation.
 - **Host probe:** run on the R1 bundle (§3).
+- **R1 regression rebuild:** the new packaging inputs were built on the default
+  route at `0f7afd5`. Results:
+  - 5,256 files, the same as M10-E2;
+  - `microsoft_runtime_route` R1 with no runtime file;
+  - the build-time closure is identical to §2;
+  - the packet is valid, with B1/B4/B5 derived;
+  - the frozen `--license-info`, `--verify-runtime` and `--smoke` checks exit 0;
+  - the DLL-origin probe passes, with all six from Windows.
 - **Not run:**
   - an R2 build, because no licensed VC\Redist files exist on this host;
   - the R2 host probe;

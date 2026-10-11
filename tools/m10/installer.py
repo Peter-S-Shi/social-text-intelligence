@@ -146,6 +146,13 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         .replace("@@REQUIRE_SYSTEM_RUNTIME@@", "False" if app_local else "True")
     )
     script = script.replace("@@WARNING@@", quoted(str(CONFIG / "INSTALLER_NOTICE.txt")))
+    # The Visual Studio "Distributable Code" terms require end users to agree to
+    # terms protecting app-local Microsoft files (route R2): a licence page.
+    terms = CONFIG / "R2_END_USER_TERMS.txt"
+    script = script.replace(
+        "@@END_USER_TERMS@@",
+        f'LicenseFile="{quoted(str(terms))}"' if app_local else "",
+    )
     (output / "installer.iss").write_text(script, encoding="utf-8-sig")
     receipt: dict[str, object] = {
         "schema_version": 1,
@@ -160,6 +167,7 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         "inno_license_sha256": LICENSE_SHA256,
         "models_bundled": False,
         "microsoft_runtime_route": "R2" if app_local else "R1",
+        "end_user_terms_sha256": digest(terms) if app_local else None,
         "distribution_permitted": False,
         "legal_blockers": ["B1", "B2", "B3", "B4", "B5", "B6"],
         "clean_machine_validation": "NOT RUN",

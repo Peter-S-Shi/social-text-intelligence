@@ -16,6 +16,7 @@ OutputBaseFilename=STI-0.10.0-internal-x64
 Compression=none
 UninstallDisplayIcon={app}\sti-desktop.exe
 InfoBeforeFile=@@WARNING@@
+@@END_USER_TERMS@@
 CloseApplications=no
 RestartApplications=no
 SetupLogging=yes

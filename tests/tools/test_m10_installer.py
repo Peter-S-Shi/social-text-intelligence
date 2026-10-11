@@ -136,6 +136,7 @@ def test_installer_requires_the_system_runtime_without_elevating(
     assert "PrivilegesRequired=lowest" in script
     assert "function InitializeSetup(): Boolean;" in script
     assert "RequireSystemRuntime = True;" in script
+    assert "LicenseFile=" not in script
     assert "Result := (not RequireSystemRuntime) or VCRuntimeInstalled();" in script
     assert "(Major = 14) and (Minor >= 44)" in script
     # The Microsoft installer is linked, never bundled or launched elevated.
@@ -192,6 +193,7 @@ def test_pinned_app_local_runtime_needs_no_prerequisite(tmp_path: Path) -> None:
     assert json.loads(result.stdout)["microsoft_runtime_route"] == "R2"
     script = (output / "installer.iss").read_text(encoding="utf-8-sig")
     assert "RequireSystemRuntime = False;" in script
+    assert "R2_END_USER_TERMS.txt" in script
     assert "PrivilegesRequired=lowest" in script
     assert (output / "payload/vcruntime140.dll").is_file()
 
