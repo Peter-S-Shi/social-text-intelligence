@@ -15,10 +15,13 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import vc_runtime
+
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = Path(__file__).resolve().parent
-# Visual C++ runtime DLLs are Microsoft redistributables; the bundle relies on the
-# system runtime instead (M10-E2, blocker B3).
+# Visual C++ runtime DLLs are Microsoft redistributables. Route R1 relies on the
+# system runtime (M10-E2, blocker B3); route R2 ships only the pinned copies from
+# a licensed Visual Studio VC\Redist folder beside the executables (M10-E3).
 MICROSOFT_RUNTIME = re.compile(
     r"(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll", re.I
 )
@@ -134,10 +137,11 @@ def import_names(data: bytes) -> list[tuple[int, str]]:
 
 
 def relink_vendored_runtime(bundle: Path) -> list[dict[str, str]]:
-    """Point delvewheel-renamed msvcp140 imports back at the system runtime.
+    """Point delvewheel-renamed msvcp140 imports back at the shared msvcp140.dll.
 
-    The rename is the same in-place import-name edit delvewheel made; the vendored
-    Microsoft copy itself is not shipped. Every edit is returned as a receipt.
+    That is the system runtime (R1) or the pinned app-local copy (R2). The rename is
+    the same in-place import-name edit delvewheel made; the vendored Microsoft copy
+    itself is not shipped. Every edit is returned as a receipt.
     """
     receipts = []
     for path in sorted(bundle.rglob("*")):
@@ -166,9 +170,17 @@ def relink_vendored_runtime(bundle: Path) -> list[dict[str, str]]:
     return receipts
 
 
-def verify_no_microsoft_runtime(bundle: Path) -> None:
+def verify_no_microsoft_runtime(
+    bundle: Path, app_local: dict[str, str] | None = None
+) -> None:
+    """No runtime file at all (R1), or exactly the pinned ones beside the exes (R2)."""
+    pinned = {name.lower(): sha for name, sha in (app_local or {}).items()}
     for path in bundle.rglob("*"):
-        if path.is_file() and MICROSOFT_RUNTIME.fullmatch(path.name):
+        if (
+            path.is_file()
+            and MICROSOFT_RUNTIME.fullmatch(path.name)
+            and (path.parent != bundle or pinned.get(path.name.lower()) != digest(path))
+        ):
             raise ValueError("A Microsoft Visual C++ runtime file was bundled.")
         if (
             path.is_file()
@@ -179,6 +191,41 @@ def verify_no_microsoft_runtime(bundle: Path) -> None:
             )
         ):
             raise ValueError("A binary still imports a vendored runtime copy.")
+
+
+def runtime_imports(bundle: Path) -> dict[str, int]:
+    """Microsoft runtime DLL names the bundle's native files import, with counts."""
+    counts: dict[str, int] = {}
+    for path in sorted(bundle.rglob("*")):
+        if path.is_file() and path.suffix.lower() in {".pyd", ".dll", ".exe"}:
+            for name in {n.lower() for _, n in import_names(path.read_bytes())}:
+                if MICROSOFT_RUNTIME.fullmatch(name):
+                    counts[name] = counts.get(name, 0) + 1
+    return counts
+
+
+def stage_app_local_runtime(
+    bundle: Path, folder: Path, manifest: dict[str, object]
+) -> list[dict[str, str]]:
+    """Copy the verified pinned runtime beside the executables (route R2).
+
+    The application directory is searched by the standard order, by
+    LOAD_LIBRARY_SEARCH_DEFAULT_DIRS (Python extension modules) and by
+    LOAD_WITH_ALTERED_SEARCH_PATH (the bootloader's python313.dll load).
+    """
+    receipts = vc_runtime.verify_source(folder, manifest)
+    imported = set(runtime_imports(bundle))
+    required = {name.lower() for name in vc_runtime.required_files(manifest)}
+    if not imported <= required:
+        raise ValueError("The bundle imports a runtime file outside the pinned set.")
+    for item in receipts:
+        target = bundle / item["file"]
+        if target.exists():
+            raise ValueError("A runtime file already exists in the bundle.")
+        target.write_bytes((folder / item["file"]).read_bytes())
+        if digest(target) != item["sha256"]:
+            raise ValueError("A staged runtime file differs from its pin.")
+    return receipts
 
 
 def runtime_mismatches(base: Path, manifest: dict[str, object]) -> list[str]:
@@ -263,8 +310,28 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-dir", type=Path, required=True)
+    parser.add_argument(
+        "--runtime-route",
+        choices=("r1", "r2"),
+        default="r1",
+        help="r1: system Visual C++ runtime; r2: pinned app-local runtime",
+    )
+    parser.add_argument(
+        "--vs-install",
+        type=Path,
+        help="r2 only: the licensed Visual Studio installation to copy from",
+    )
     args = parser.parse_args()
     try:
+        if (args.runtime_route == "r2") != (args.vs_install is not None):
+            raise ValueError("--vs-install is required for, and only for, route r2.")
+        app_local: dict[str, str] | None = None
+        if args.runtime_route == "r2":
+            vc_manifest = vc_runtime.load_manifest()
+            version, folder = vc_runtime.redist_directory(args.vs_install)
+            if version != vc_manifest["redist_version"]:
+                raise ValueError("The installed redistributable is not the pinned one.")
+            vc_runtime.verify_source(folder, vc_manifest)
         verify_build_environment()
         sha = source_revision()
         output = prepare_output(args.output)
@@ -287,6 +354,12 @@ def main() -> int:
         bundle = output / "dist" / "sti-desktop"
         relinked = relink_vendored_runtime(bundle)
         verify_no_microsoft_runtime(bundle)
+        imported = runtime_imports(bundle)
+        staged: list[dict[str, str]] = []
+        if args.runtime_route == "r2":
+            staged = stage_app_local_runtime(bundle, folder, vc_manifest)
+            app_local = {item["file"]: item["sha256"] for item in staged}
+            verify_no_microsoft_runtime(bundle, app_local)
         subprocess.run(
             [
                 sys.executable,
@@ -320,7 +393,10 @@ def main() -> int:
             "python_runtime": json.loads(
                 (ROOT / "distribution/python-runtime.json").read_text()
             )["build"],
-            "microsoft_runtime_redistributed": False,
+            "microsoft_runtime_route": args.runtime_route.upper(),
+            "microsoft_runtime_redistributed": bool(staged),
+            "microsoft_runtime_imports": imported,
+            "app_local_runtime": staged,
             "relinked_runtime_imports": relinked,
             "models_bundled": False,
             "release_ready": False,

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "route": "R2 app-local (M10-E3)",
+  "product": "Microsoft Visual C++ v14 runtime, x64 (Microsoft.VC1xx.CRT)",
+  "source": "VC\\Redist\\MSVC\\<redist_version>\\x64\\Microsoft.VC1xx.CRT of the owner's licensed Visual Studio installation, unmodified",
+  "placement": "application directory, beside sti-desktop.exe and sti-check.exe",
+  "minimum_version": "14.44",
+  "required_files": [
+    "msvcp140.dll",
+    "msvcp140_1.dll",
+    "msvcp140_2.dll",
+    "msvcp140_atomic_wait.dll",
+    "vcruntime140.dll",
+    "vcruntime140_1.dll"
+  ],
+  "redist_version": null,
+  "files": {},
+  "file_versions": {},
+  "owner_licence_confirmation": null
+}

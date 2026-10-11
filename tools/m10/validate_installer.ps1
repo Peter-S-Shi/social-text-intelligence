@@ -48,6 +48,14 @@ Assert (-not ($Output -match '["\r\n]')) 'Invalid output path.'
 $manifest = Get-Content -LiteralPath $Receipt -Raw | ConvertFrom-Json
 Assert ($manifest.compiled -eq $true) 'Compiled installer receipt is required.'
 Assert ((Hash $Installer) -eq $manifest.installer_sha256) 'Installer checksum differs from receipt.'
+$route = if ($manifest.PSObject.Properties.Name -contains 'microsoft_runtime_route') { $manifest.microsoft_runtime_route } else { 'R1' }
+$elevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$systemRuntime = (Test-Path -LiteralPath (Join-Path $env:SystemRoot 'System32\vcruntime140.dll')) -or (Test-Path -LiteralPath 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64')
+if ($EnvironmentKind -eq 'DisposableVM' -and $route -eq 'R2') {
+    # M10-E3 acceptance baseline: no system Visual C++ runtime and no elevation.
+    Assert (-not $systemRuntime) 'R2 clean-machine validation needs a VM without the system Visual C++ runtime.'
+    Assert (-not $elevated) 'R2 clean-machine validation must run as a standard (non-administrator) user.'
+}
 $local = [Environment]::GetFolderPath('LocalApplicationData')
 $install = [IO.Path]::GetFullPath((Join-Path $local 'Programs\Social Text Intelligence'))
 $appData = Join-Path $local 'SocialTextIntelligence'
@@ -90,6 +98,9 @@ try {
     Assert ($null -ne $window) 'First launch did not expose the native application window.'
     Assert ($window.CloseMainWindow()) 'Native window did not accept close.'
     Assert ($started.WaitForExit(15000)) 'First-launch process did not close safely.'
+
+    $origins = (& (Join-Path $PSScriptRoot 'runtime_origins.ps1') -Application $install -Route $route) | Out-String | ConvertFrom-Json
+    Assert ($LASTEXITCODE -eq 0 -and $origins.origins_ok) 'Visual C++ runtime modules loaded from an unexpected location.'
 
     $runtime = (& (Join-Path $install 'sti-check.exe') --verify-runtime) | ConvertFrom-Json
     Assert ($LASTEXITCODE -eq 0 -and $runtime.ready -and -not $runtime.models_loaded) 'Installed runtime readiness failed.'
@@ -145,6 +156,8 @@ try {
         schema_version=1; environment=$EnvironmentKind; installer_sha256=$manifest.installer_sha256
         frozen_application_sha=$manifest.frozen_application_sha; installed_payload_matches=$true
         start_menu_target='PASS'; first_native_launch='PASS'; runtime=$runtime; license=$license
+        microsoft_runtime_route=$route; runtime_module_origins=$origins
+        system_runtime_present=$systemRuntime; elevated=$elevated
         synthetic_native_smoke=$smoke; missing_model_analysis_interaction='NOT RUN'
         download_authorization_interaction='NOT RUN'; reparse_uninstall_refusal='PASS'
         external_sentinel_preserved=$true; uninstall_owned_files_and_license_removal='PASS'

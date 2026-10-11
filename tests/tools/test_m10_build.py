@@ -16,6 +16,8 @@ import pytest
 
 def load() -> ModuleType:
     path = Path(__file__).parents[2] / "tools/m10/build.py"
+    if str(path.parent) not in sys.path:
+        sys.path.insert(0, str(path.parent))  # build.py imports vc_runtime
     spec = importlib.util.spec_from_file_location("m10_build", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -221,3 +223,91 @@ def test_build_environment_excludes_ambient_native_tools(
     assert environment["HF_HOME"] == str(tmp_path / "output" / "build-hub-cache")
     assert environment["HF_HUB_OFFLINE"] == "1"
     assert environment["TRANSFORMERS_OFFLINE"] == "1"
+
+
+RUNTIME = synthetic_pe("kernel32.dll")
+
+
+def test_app_local_runtime_is_accepted_only_pinned_beside_the_executables(
+    tmp_path: Path,
+) -> None:
+    build = load()
+    runtime = tmp_path / "vcruntime140.dll"
+    runtime.write_bytes(RUNTIME)
+    pin = {"vcruntime140.dll": hashlib.sha256(RUNTIME).hexdigest()}
+    build.verify_no_microsoft_runtime(tmp_path, pin)
+    with pytest.raises(ValueError, match="Microsoft"):
+        build.verify_no_microsoft_runtime(tmp_path)
+    runtime.write_bytes(synthetic_pe("user32.dll"))
+    with pytest.raises(ValueError, match="Microsoft"):
+        build.verify_no_microsoft_runtime(tmp_path, pin)
+    runtime.unlink()
+    nested = tmp_path / "_internal" / "vcruntime140.dll"
+    nested.parent.mkdir()
+    nested.write_bytes(RUNTIME)
+    with pytest.raises(ValueError, match="Microsoft"):
+        build.verify_no_microsoft_runtime(tmp_path, pin)
+
+
+def test_runtime_imports_count_each_importing_binary(tmp_path: Path) -> None:
+    build = load()
+    (tmp_path / "a.pyd").write_bytes(synthetic_pe("VCRUNTIME140.dll", "kernel32.dll"))
+    (tmp_path / "b.dll").write_bytes(
+        synthetic_pe("vcruntime140.dll", delayed=("MSVCP140_ATOMIC_WAIT.dll",))
+    )
+    assert build.runtime_imports(tmp_path) == {
+        "vcruntime140.dll": 2,
+        "msvcp140_atomic_wait.dll": 1,
+    }
+
+
+def stage_fixture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *imports: str
+) -> tuple[ModuleType, Path, Path, dict[str, object]]:
+    build = load()
+    folder = tmp_path / "Microsoft.VC143.CRT"
+    folder.mkdir()
+    (folder / "vcruntime140.dll").write_bytes(RUNTIME)
+    bundle = tmp_path / "bundle"
+    bundle.mkdir()
+    (bundle / "x.pyd").write_bytes(synthetic_pe(*imports))
+    manifest: dict[str, object] = {
+        "required_files": ["vcruntime140.dll"],
+        "minimum_version": "14.44",
+        "files": {"vcruntime140.dll": hashlib.sha256(RUNTIME).hexdigest()},
+    }
+    facts = [
+        {
+            "path": str(folder / "vcruntime140.dll"),
+            "status": "Valid",
+            "signer": "CN=Microsoft Corporation, O=Microsoft Corporation, C=US",
+            "version": "14.44.35208.0",
+        }
+    ]
+    monkeypatch.setattr(build.vc_runtime, "file_facts", lambda paths: facts)
+    return build, bundle, folder, manifest
+
+
+def test_pinned_runtime_is_staged_beside_the_executables(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    build, bundle, folder, manifest = stage_fixture(
+        tmp_path, monkeypatch, "vcruntime140.dll"
+    )
+    receipts = build.stage_app_local_runtime(bundle, folder, manifest)
+    assert [item["file"] for item in receipts] == ["vcruntime140.dll"]
+    assert (bundle / "vcruntime140.dll").read_bytes() == RUNTIME
+    build.verify_no_microsoft_runtime(
+        bundle, {"vcruntime140.dll": receipts[0]["sha256"]}
+    )
+
+
+def test_a_runtime_import_outside_the_pinned_set_stops_staging(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    build, bundle, folder, manifest = stage_fixture(
+        tmp_path, monkeypatch, "vcruntime140.dll", "concrt140.dll"
+    )
+    with pytest.raises(ValueError, match="outside the pinned set"):
+        build.stage_app_local_runtime(bundle, folder, manifest)
+    assert not (bundle / "vcruntime140.dll").exists()

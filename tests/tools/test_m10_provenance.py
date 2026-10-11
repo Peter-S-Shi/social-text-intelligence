@@ -324,6 +324,51 @@ def test_bundled_cpython_must_be_the_pinned_official_runtime(tmp_path: Path) -> 
     assert receipt["verified"] is False
 
 
+def test_app_local_runtime_narrows_b3_only_when_pinned_and_confirmed(
+    tmp_path: Path,
+) -> None:
+    compliance = load()
+    bundle = tmp_path / "bundle"
+    bundle.mkdir()
+    (bundle / "vcruntime140.dll").write_bytes(b"synthetic runtime")
+    manifest: dict[str, object] = {
+        "redist_version": "14.44.35208",
+        "files": {"vcruntime140.dll": hashlib.sha256(b"synthetic runtime").hexdigest()},
+        "owner_licence_confirmation": None,
+    }
+    status = compliance.verify_app_local_runtime(bundle, manifest)
+    assert status["route"] == "R2"
+    assert status["matches_pin"] is True
+    assert status["cleared"] is False
+    blockers = compliance.distribution_blockers(
+        {"qt_libraries_verified": True},
+        software_renderer=False,
+        microsoft_runtime=True,
+        python_runtime_verified=True,
+        app_local_pinned=True,
+    )
+    assert compliance.B3_APP_LOCAL in blockers
+    manifest["owner_licence_confirmation"] = {"edition": "synthetic"}
+    assert compliance.verify_app_local_runtime(bundle, manifest)["cleared"] is True
+    (bundle / "vcruntime140.dll").write_bytes(b"other runtime")
+    status = compliance.verify_app_local_runtime(bundle, manifest)
+    assert status["matches_pin"] is False
+    assert status["cleared"] is False
+
+
+def test_no_runtime_file_is_route_r1(tmp_path: Path) -> None:
+    compliance = load()
+    status = compliance.verify_app_local_runtime(tmp_path, {"files": {}})
+    assert status == {
+        "route": "R1",
+        "shipped": [],
+        "redist_version": None,
+        "matches_pin": False,
+        "licence_confirmation": None,
+        "cleared": False,
+    }
+
+
 @pytest.mark.parametrize(
     "name", ["concrt140.dll", "vccorlib140.dll", "msvcp140_atomic_wait.dll"]
 )

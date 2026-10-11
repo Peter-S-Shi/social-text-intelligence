@@ -152,7 +152,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
     assert (
         "| Next required action | Formal owner release decision on the M10-D dossier "
-        "remains pending. Owner/legal decisions recorded by M10-E2" in status
+        "remains pending. M10-E3 (R2, [record]" in status
     )
     assert "clean-machine matrix" in status
     assert "planned NOT RUN" in status
@@ -385,6 +385,31 @@ def test_m10e2_closes_only_evidenced_blockers_and_keeps_gates() -> None:
         data = json.loads(evidence.read_text(encoding="utf-8"))
         assert data["distribution_permitted"] is False
 
+
+
+def test_m10e3_r2_is_recorded_in_progress_without_changing_blockers() -> None:
+    status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
+    record = (ROOT / "docs/V2_M10_E3_APP_LOCAL_RUNTIME.md").read_text(
+        encoding="utf-8"
+    )
+    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+        surface = (ROOT / name).read_text(encoding="utf-8")
+        assert "M10-E3 app-local Visual C++ runtime (R2) IN PROGRESS" in surface
+    assert "| M10-E3 — App-local Visual C++ Runtime (R2) | **IN PROGRESS" in status
+    assert "**R2 IN PROGRESS — not complete.**" in record
+    for row in (
+        "| B1 | **OPEN**",
+        "| B2 | **CLOSED**",
+        "| B3 | **CLOSED for the R1 baseline**",
+        "| B4 | **OPEN**",
+        "| B5 | **OPEN — owner/legal decision**",
+        "| B6 | **OPEN**",
+    ):
+        assert row in record
+    manifest = json.loads(
+        (ROOT / "distribution/vc-runtime.json").read_text(encoding="utf-8")
+    )
+    assert manifest["owner_licence_confirmation"] is None
 
 def test_m10d_dossier_stratifies_readiness_and_leaves_release_pending() -> None:
     status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")

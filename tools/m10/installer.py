@@ -67,6 +67,12 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         raise ValueError("A version-1 license inventory object is required.")
     if not verify_packet(bundle, inventory)["materials_valid"]:
         raise ValueError("The complete license packet failed byte/set verification.")
+    runtime = inventory.get("microsoft_runtime", {"route": "R1", "shipped": []})
+    app_local = set(runtime["shipped"]) if runtime["route"] == "R2" else set()
+    if app_local and not runtime["matches_pin"]:
+        raise ValueError(
+            "App-local runtime files must match the pinned VC\\Redist set."
+        )
     sources = inventory.get("source_delivery", [])
     names = [item["filename"] for item in sources]
     if len(set(names)) != 5 or any(
@@ -91,10 +97,14 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
             or path.name.lower() in {".env", "pytorch_model.bin"}
         ):
             raise ValueError("Model weights or user data cannot enter the installer.")
-        if path.is_file() and MICROSOFT_RUNTIME.fullmatch(path.name):
+        if (
+            path.is_file()
+            and MICROSOFT_RUNTIME.fullmatch(path.name)
+            and path.relative_to(bundle).as_posix() not in app_local
+        ):
             raise ValueError(
-                "Microsoft Visual C++ runtime files cannot enter the installer; "
-                "it requires the system runtime instead."
+                "Microsoft Visual C++ runtime files cannot enter the installer "
+                "unless they are the pinned app-local set (route R2)."
             )
     if digest(CONFIG / "INNO-LICENSE.txt") != LICENSE_SHA256:
         raise ValueError("The versioned installer license text changed.")
@@ -133,6 +143,7 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         .replace("@@COLLISIONS@@", "\n".join(checks))
         .replace("@@UNINSTALL_CHECKS@@", "\n".join(uninstall_checks))
         .replace("@@OUTPUT@@", quoted(str(output / "compiled")))
+        .replace("@@REQUIRE_SYSTEM_RUNTIME@@", "False" if app_local else "True")
     )
     script = script.replace("@@WARNING@@", quoted(str(CONFIG / "INSTALLER_NOTICE.txt")))
     (output / "installer.iss").write_text(script, encoding="utf-8-sig")
@@ -148,6 +159,7 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         "inno_version": INNO_VERSION,
         "inno_license_sha256": LICENSE_SHA256,
         "models_bundled": False,
+        "microsoft_runtime_route": "R2" if app_local else "R1",
         "distribution_permitted": False,
         "legal_blockers": ["B1", "B2", "B3", "B4", "B5", "B6"],
         "clean_machine_validation": "NOT RUN",

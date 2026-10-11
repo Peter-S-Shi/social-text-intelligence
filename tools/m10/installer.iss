@@ -35,10 +35,13 @@ function GetFileAttributesW(Name: string): Cardinal;
 const
   VCRuntimeKey = 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64';
   VCRuntimePage = 'https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist';
+  RequireSystemRuntime = @@REQUIRE_SYSTEM_RUNTIME@@;
 
-{ STI does not redistribute Microsoft Visual C++ runtime files (M10-E2, B3). It
-  needs the system Visual C++ 2015-2022 x64 runtime 14.44 or later, which only
-  its official Microsoft installer provides. This per-user setup never elevates. }
+{ Route R1 (M10-E2, B3) ships no Microsoft Visual C++ runtime file and needs the
+  system Visual C++ 2015-2022 x64 runtime 14.44 or later, which only its official
+  Microsoft installer provides. Route R2 (M10-E3) ships the pinned app-local
+  runtime beside the executables and needs no prerequisite. This per-user setup
+  never elevates. }
 function VCRuntimeInstalled(): Boolean;
 var Installed, Major, Minor: Cardinal;
 begin
@@ -52,7 +55,7 @@ end;
 function InitializeSetup(): Boolean;
 var ErrorCode: Integer;
 begin
-  Result := VCRuntimeInstalled();
+  Result := (not RequireSystemRuntime) or VCRuntimeInstalled();
   if not Result then begin
     Log('Microsoft Visual C++ 2015-2022 x64 runtime 14.44 or later is not installed.');
     if SuppressibleMsgBox('Social Text Intelligence needs the Microsoft Visual C++ '

@@ -41,7 +41,7 @@ def test_incomplete_license_packet_is_rejected_without_output(tmp_path: Path) ->
     assert not output.exists()
 
 
-def packet(root: Path, *extra: str) -> Path:
+def packet(root: Path, *extra: str, runtime: dict[str, object] | None = None) -> Path:
     root.mkdir()
     files = [
         "sti-desktop.exe",
@@ -76,6 +76,7 @@ def packet(root: Path, *extra: str) -> Path:
                 "source_delivery": sources,
                 "distribution_permitted": False,
                 "blockers": ["Synthetic unresolved gate"],
+                **({"microsoft_runtime": runtime} if runtime else {}),
             }
         )
     )
@@ -134,7 +135,8 @@ def test_installer_requires_the_system_runtime_without_elevating(
     script = (output / "installer.iss").read_text(encoding="utf-8-sig")
     assert "PrivilegesRequired=lowest" in script
     assert "function InitializeSetup(): Boolean;" in script
-    assert "Result := VCRuntimeInstalled();" in script
+    assert "RequireSystemRuntime = True;" in script
+    assert "Result := (not RequireSystemRuntime) or VCRuntimeInstalled();" in script
     assert "(Major = 14) and (Minor >= 44)" in script
     # The Microsoft installer is linked, never bundled or launched elevated.
     assert "vc_redist.x64.exe" not in script.lower()
@@ -175,4 +177,41 @@ def test_malformed_inventory_fails_without_traceback_or_writes(
     result = invoke(bundle, output)
     assert result.returncode == 2
     assert result.stderr == ""
+    assert not output.exists()
+
+
+APP_LOCAL = ["msvcp140.dll", "vcruntime140.dll"]
+
+
+def test_pinned_app_local_runtime_needs_no_prerequisite(tmp_path: Path) -> None:
+    runtime = {"route": "R2", "shipped": APP_LOCAL, "matches_pin": True}
+    bundle = packet(tmp_path / "bundle", *APP_LOCAL, runtime=runtime)
+    output = tmp_path / "prepared"
+    result = invoke(bundle, output)
+    assert result.returncode == 0, result.stdout
+    assert json.loads(result.stdout)["microsoft_runtime_route"] == "R2"
+    script = (output / "installer.iss").read_text(encoding="utf-8-sig")
+    assert "RequireSystemRuntime = False;" in script
+    assert "PrivilegesRequired=lowest" in script
+    assert (output / "payload/vcruntime140.dll").is_file()
+
+
+@pytest.mark.parametrize(
+    ("runtime", "extra"),
+    [
+        ({"route": "R2", "shipped": APP_LOCAL, "matches_pin": False}, APP_LOCAL),
+        (
+            {"route": "R2", "shipped": APP_LOCAL, "matches_pin": True},
+            [*APP_LOCAL, "_internal/msvcp140_2.dll"],
+        ),
+    ],
+)
+def test_unpinned_or_extra_runtime_files_are_refused(
+    tmp_path: Path, runtime: dict[str, object], extra: list[str]
+) -> None:
+    bundle = packet(tmp_path / "bundle", *extra, runtime=runtime)
+    output = tmp_path / "untouched"
+    result = invoke(bundle, output)
+    assert result.returncode == 2
+    assert "runtime" in result.stdout
     assert not output.exists()

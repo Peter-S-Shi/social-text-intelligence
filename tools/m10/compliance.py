@@ -347,6 +347,10 @@ B3_MICROSOFT = (
     "B3: Microsoft Visual C++ runtime files are bundled without a recorded "
     "redistribution licence route."
 )
+B3_APP_LOCAL = (
+    "B3: App-local Microsoft Visual C++ runtime files match the pinned VC\\Redist "
+    "copies, but the owner's Visual Studio licence confirmation is not recorded."
+)
 B3_PYTHON = (
     "B3: Bundled CPython runtime files do not match the pinned official runtime."
 )
@@ -362,13 +366,14 @@ def distribution_blockers(
     software_renderer: bool,
     microsoft_runtime: bool = True,
     python_runtime_verified: bool = False,
+    app_local_pinned: bool = False,
 ) -> list[str]:
     """Each blocker stays until its own evidence closes it; none grants permission."""
     blockers = [B1_BINDINGS if provenance["qt_libraries_verified"] else B1_UNVERIFIED]
     if software_renderer:
         blockers.append(B2)
     if microsoft_runtime:
-        blockers.append(B3_MICROSOFT)
+        blockers.append(B3_APP_LOCAL if app_local_pinned else B3_MICROSOFT)
     if not python_runtime_verified:
         blockers.append(B3_PYTHON)
     return blockers + BLOCKERS
@@ -404,6 +409,35 @@ def verify_python_runtime(
         and all(row["matches"] for row in rows)
         and not unpinned
         and licence_matches,
+    }
+
+
+def verify_app_local_runtime(
+    bundle: Path, manifest: dict[str, object]
+) -> dict[str, object]:
+    """Route and pin status of any shipped Visual C++ runtime file (M10-E3, R2)."""
+    pinned = manifest.get("files") or {}
+    assert isinstance(pinned, dict)
+    shipped = sorted(
+        path.relative_to(bundle).as_posix()
+        for path in bundle.rglob("*")
+        if path.is_file()
+        and native_owner(path.relative_to(bundle).as_posix())
+        == "Microsoft runtime (B3)"
+    )
+    matches = (
+        bool(shipped)
+        and sorted(shipped) == sorted(pinned)
+        and all(digest(bundle / name) == pinned[name] for name in shipped)
+    )
+    confirmation = manifest.get("owner_licence_confirmation")
+    return {
+        "route": "R2" if shipped else "R1",
+        "shipped": shipped,
+        "redist_version": manifest.get("redist_version") if shipped else None,
+        "matches_pin": matches,
+        "licence_confirmation": confirmation if shipped else None,
+        "cleared": matches and isinstance(confirmation, dict),
     }
 
 
@@ -598,13 +632,16 @@ def assemble(
         bundle,
         json.loads((project / "distribution/python-runtime.json").read_text()),
     )
+    microsoft_runtime = verify_app_local_runtime(
+        bundle, json.loads((project / "distribution/vc-runtime.json").read_text())
+    )
     blockers = distribution_blockers(
         provenance,
         (bundle / "_internal/PySide6/opengl32sw.dll").exists(),
-        microsoft_runtime=any(
-            item["owner"] == "Microsoft runtime (B3)" for item in native
-        ),
+        microsoft_runtime=bool(microsoft_runtime["shipped"])
+        and not microsoft_runtime["cleared"],
         python_runtime_verified=bool(python_runtime["verified"]),
+        app_local_pinned=bool(microsoft_runtime["matches_pin"]),
     )
     if any(item["owner"] == "UNRESOLVED native ownership" for item in native):
         blockers.append(
@@ -630,6 +667,7 @@ def assemble(
         "qt_build_sboms": sbom_receipts,
         "qt_binary_provenance": provenance,
         "python_runtime": python_runtime,
+        "microsoft_runtime": microsoft_runtime,
         "qt_source_notices": source_notices,
         "notice_scope": "source superset; not a compiled static-link SBOM",
         "materials": files,
