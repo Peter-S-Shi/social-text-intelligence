@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "bundle": "M10-E2 first build 8e7c07032af064ebd510324ec47897d88161a13e (the final build differs only in shipped legal text)",
+ "bundle": "M10-E2 final build ba2887bd84ad8dfafbe580b0bbb4b8aa4cdcb4ce",
  "change": "Coherent swap of every PySide6/shiboken6 file to the upstream 6.11.1 wheels (no Microsoft runtime files present to swap)",
  "replacement_sources": [
   {

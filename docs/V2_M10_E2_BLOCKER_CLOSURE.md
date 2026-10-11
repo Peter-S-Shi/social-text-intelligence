@@ -241,18 +241,21 @@ language check is a single English-or-not warning (M5.6). The narrowest options:
 
 ## 3. Final build, installer and validation
 
-- **Final Windows build** at `d3934be6bcde181c081d64773a0399bf9e761e85`, under
+- **Final Windows build** at `ba2887bd84ad8dfafbe580b0bbb4b8aa4cdcb4ce`, under
   CPython 3.13.16 with the 43 pinned packages:
   - layout: 5,256 files / 728,293,371 bytes; 6,675 PYZ modules; 87 native
     binaries; model weights not bundled;
   - packet: valid, with blockers B1 (narrowed), B4 and B5;
-  - the first build at `8e7c070` gave the same results, differing only in the
-    shipped legal text.
+  - the earlier builds at `8e7c070` and `d3934be` gave the same results; the
+    final build adds the review fixes (delay-load relink, shared checks and the
+    trimmed component register);
+  - the coherent 6.11.1 replacement was repeated on this final bundle and
+    passed.
 - **Frozen checks:** `--license-info`, `--verify-runtime` and `--smoke` exit 0
   (native Windows Qt window). The opt-in frozen pair: **2 passed**. DLL closure
   and Qt import check: none unresolved.
 - **Installer:** compiled with the pinned Inno Setup 6.7.3 from the final bundle
-  ([receipt](evidence/m10-e2/installer-receipt.json)): 730,747,668 bytes,
+  ([receipt](evidence/m10-e2/installer-receipt.json)): 730,747,718 bytes,
   per-user, runtime check present, no Microsoft runtime entries.
   - **Host install lifecycle: NOT RUN.** An existing per-user STI installation
     occupies the fixed location, and the validator needs a fresh namespace, so

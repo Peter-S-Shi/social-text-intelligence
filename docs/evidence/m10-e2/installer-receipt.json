@@ -1,8 +1,9 @@
 {
  "schema_version": 1,
  "scope": "Local internal installer compiled from the final M10-E2 bundle; not published.",
- "compiled_installer_sha256": "e74895d020128cc527a5032aa055041f899ae6619070e61b0cc8593ba4e80554",
- "frozen_application_sha": "d3934be6bcde181c081d64773a0399bf9e761e85",
+ "compiled_installer_sha256": "8bfe12ec2e17b44e78d37e63b8e32a8b65f482bd21a30e271f356a43a717f146",
+ "compiled_installer_bytes": 730747718,
+ "frozen_application_sha": "ba2887bd84ad8dfafbe580b0bbb4b8aa4cdcb4ce",
  "privileges_required_lowest": true,
  "system_runtime_check": true,
  "microsoft_runtime_files_in_script": 0,

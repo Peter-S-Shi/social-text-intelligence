@@ -3,10 +3,10 @@
  "scope": "Sanitized receipt of the actual local M10-E2 Windows frozen build; binaries, SBOMs and source archives are not published.",
  "build_evidence": {
   "schema_version": 1,
-  "application_sha": "d3934be6bcde181c081d64773a0399bf9e761e85",
+  "application_sha": "ba2887bd84ad8dfafbe580b0bbb4b8aa4cdcb4ce",
   "python": "3.13.16",
   "platform": "windows-x64",
-  "spec_sha256": "1bbfc88902b3dcfe45504db3eb031238ff03492c63ada9ef8407c61e84b5dc74",
+  "spec_sha256": "807d34bb4ae1c81d6ee1079815211e66fbee5b6ba3a90b4d35a3779ff5f89c40",
   "requirements_sha256": "4c4fe3004b94cb94ad46f64f81a7afc2fbedfe6ee1db77946633c7f1e4f1aeed",
   "layout": {
    "files": 5256,
@@ -31,7 +31,7 @@
   "models_bundled": false,
   "release_ready": false
  },
- "inventory_sha256": "4fb7105a489e192582cb776bd5a0b5938bc4f3393c27a31ef1c178abf07fe3c5",
+ "inventory_sha256": "ba27b1b7a534d4ef7506888705ffa397f23cc22c2656bd2fd9c64d8f4de728ac",
  "frozen_module_count": 6675,
  "loose_python_packages": [
   "PySide6",
