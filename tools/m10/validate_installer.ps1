@@ -50,7 +50,12 @@ Assert ($manifest.compiled -eq $true) 'Compiled installer receipt is required.'
 Assert ((Hash $Installer) -eq $manifest.installer_sha256) 'Installer checksum differs from receipt.'
 $route = if ($manifest.PSObject.Properties.Name -contains 'microsoft_runtime_route') { $manifest.microsoft_runtime_route } else { 'R1' }
 $elevated = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-$systemRuntime = (Test-Path -LiteralPath (Join-Path $env:SystemRoot 'System32\vcruntime140.dll')) -or (Test-Path -LiteralPath 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64')
+# Any reachable copy counts: System32, a PATH folder, or a registered runtime.
+$runtimeFiles = @('msvcp140.dll','msvcp140_1.dll','msvcp140_2.dll','msvcp140_atomic_wait.dll','vcruntime140.dll','vcruntime140_1.dll')
+$searchFolders = @(Join-Path $env:SystemRoot 'System32') + @($env:PATH -split ';' | Where-Object { $_ })
+$systemRuntime = [bool](@($searchFolders | ForEach-Object { $folder = $_; $runtimeFiles | Where-Object { Test-Path -LiteralPath (Join-Path $folder $_) } }).Count) -or
+    (Test-Path -LiteralPath 'HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64') -or
+    (Test-Path -LiteralPath 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\x64')
 if ($EnvironmentKind -eq 'DisposableVM' -and $route -eq 'R2') {
     # M10-E3 acceptance baseline: no system Visual C++ runtime and no elevation.
     Assert (-not $systemRuntime) 'R2 clean-machine validation needs a VM without the system Visual C++ runtime.'

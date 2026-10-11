@@ -3,7 +3,7 @@
   "route": "R2 app-local (M10-E3)",
   "product": "Microsoft Visual C++ v14 runtime, x64 (Microsoft.VC1xx.CRT)",
   "source": "VC\\Redist\\MSVC\\<redist_version>\\x64\\Microsoft.VC1xx.CRT of the owner's licensed Visual Studio installation, unmodified",
-  "placement": "application directory, beside sti-desktop.exe and sti-check.exe",
+  "placement": "_internal, beside python313.dll",
   "minimum_version": "14.44",
   "required_files": [
     "msvcp140.dll",

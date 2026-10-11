@@ -21,10 +21,12 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG = Path(__file__).resolve().parent
 # Visual C++ runtime DLLs are Microsoft redistributables. Route R1 relies on the
 # system runtime (M10-E2, blocker B3); route R2 ships only the pinned copies from
-# a licensed Visual Studio VC\Redist folder beside the executables (M10-E3).
+# a licensed Visual Studio VC\Redist folder in _internal, beside python313.dll
+# (M10-E3).
 MICROSOFT_RUNTIME = re.compile(
     r"(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll", re.I
 )
+APP_LOCAL_DIRECTORY = "_internal"
 VENDORED_RUNTIME = re.compile(r"msvcp140-[0-9a-f]{32}\.dll", re.I)
 
 
@@ -173,13 +175,16 @@ def relink_vendored_runtime(bundle: Path) -> list[dict[str, str]]:
 def verify_no_microsoft_runtime(
     bundle: Path, app_local: dict[str, str] | None = None
 ) -> None:
-    """No runtime file at all (R1), or exactly the pinned ones beside the exes (R2)."""
+    """No runtime file at all (R1), or exactly the pinned ones in _internal (R2)."""
     pinned = {name.lower(): sha for name, sha in (app_local or {}).items()}
     for path in bundle.rglob("*"):
         if (
             path.is_file()
             and MICROSOFT_RUNTIME.fullmatch(path.name)
-            and (path.parent != bundle or pinned.get(path.name.lower()) != digest(path))
+            and (
+                path.parent != bundle / APP_LOCAL_DIRECTORY
+                or pinned.get(path.name.lower()) != digest(path)
+            )
         ):
             raise ValueError("A Microsoft Visual C++ runtime file was bundled.")
         if (
@@ -207,11 +212,12 @@ def runtime_imports(bundle: Path) -> dict[str, int]:
 def stage_app_local_runtime(
     bundle: Path, folder: Path, manifest: dict[str, object]
 ) -> list[dict[str, str]]:
-    """Copy the verified pinned runtime beside the executables (route R2).
+    """Copy the verified pinned runtime into _internal (route R2).
 
-    The application directory is searched by the standard order, by
-    LOAD_LIBRARY_SEARCH_DEFAULT_DIRS (Python extension modules) and by
-    LOAD_WITH_ALTERED_SEARCH_PATH (the bootloader's python313.dll load).
+    The bootloader loads _internal/python313.dll with LOAD_WITH_ALTERED_SEARCH_PATH,
+    which searches that DLL's own folder instead of the executable's folder. Later
+    loads reuse the already-loaded modules or find _internal, the bootloader's DLL
+    directory. runtime_origins.ps1 measures where each module really came from.
     """
     receipts = vc_runtime.verify_source(folder, manifest)
     imported = set(runtime_imports(bundle))
@@ -219,7 +225,7 @@ def stage_app_local_runtime(
     if not imported <= required:
         raise ValueError("The bundle imports a runtime file outside the pinned set.")
     for item in receipts:
-        target = bundle / item["file"]
+        target = bundle / APP_LOCAL_DIRECTORY / item["file"]
         if target.exists():
             raise ValueError("A runtime file already exists in the bundle.")
         target.write_bytes((folder / item["file"]).read_bytes())
@@ -329,6 +335,8 @@ def main() -> int:
         if args.runtime_route == "r2":
             vc_manifest = vc_runtime.load_manifest()
             version, folder = vc_runtime.redist_directory(args.vs_install)
+            if vc_manifest["redist_version"] is None:
+                raise ValueError("The app-local runtime is not pinned yet (run --pin).")
             if version != vc_manifest["redist_version"]:
                 raise ValueError("The installed redistributable is not the pinned one.")
             vc_runtime.verify_source(folder, vc_manifest)
@@ -411,7 +419,7 @@ def main() -> int:
         return 2
     except (
         OSError,
-        subprocess.CalledProcessError,
+        subprocess.SubprocessError,
         importlib.metadata.PackageNotFoundError,
     ):
         print("Build failed; check pinned dependencies and the private build log.")

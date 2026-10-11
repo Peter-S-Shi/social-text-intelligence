@@ -51,36 +51,48 @@ way, a dependency upgrade cannot silently widen the closure.
 
 ## 3. Loader locations
 
-The six DLLs are placed in the **application directory**, beside both
-executables. That one location satisfies every load path in the bundle:
+The six DLLs are placed in **`_internal\`**, beside `python313.dll`. They are not
+placed beside the executables. The independent Spec review caught that the first
+draft of this milestone got this wrong.
 
-| Load path | Search behaviour | Application directory searched |
+| Load path | Search behaviour | Where the runtime is found |
 | --- | --- | --- |
-| Bootloader loads `_internal/python313.dll` | `LOAD_WITH_ALTERED_SEARCH_PATH`: the DLL's folder, then the standard order | Yes (standard order) |
-| CPython loads `.pyd` extensions (PySide6, shiboken6, NumPy, tokenizers, ...) | `LOAD_LIBRARY_SEARCH_DEFAULT_DIRS` plus the DLL's folder | Yes (`LOAD_LIBRARY_SEARCH_APPLICATION_DIR`) |
-| Qt plugins and PyTorch's `torch/lib` DLLs | Default directories plus `os.add_dll_directory` folders | Yes |
-| `ctypes` by-name loads (PyTorch's runtime probe) | Default directories | Yes |
+| Bootloader loads `_internal\python313.dll`, which imports `vcruntime140.dll` | `LOAD_WITH_ALTERED_SEARCH_PATH`: the DLL's own folder **replaces** the executable's folder; then System32, the Windows folder, the current directory and `PATH` | `_internal\` (the DLL's own folder) |
+| CPython loads `.pyd` extensions (PySide6, shiboken6, NumPy, tokenizers, ...) | `LOAD_LIBRARY_SEARCH_DEFAULT_DIRS` plus the extension's folder | An already-loaded module with the same name is reused; a first load relies on `_internal\` being a DLL directory, as set by the PyInstaller bootloader |
+| Qt plugins, PyTorch `torch\lib`, `ctypes` by-name loads | Default directories plus `os.add_dll_directory` folders | Same as above |
 
-After the first load, the loader reuses an already-loaded module by name. So each
-DLL has exactly one instance in the process.
+**Placement beside the executables would fail.** It would not be searched for
+`python313.dll`'s imports. A clean machine would then reach it only through the
+current directory, which is the application folder only when STI is started from
+the Start Menu shortcut.
 
-The application directory is the location Microsoft documents for app-local
-deployment. It is searched without relying on any search path that the bootloader
-or a package sets up at run time. The per-package copies that the PySide6 and
-PyTorch wheels carry are still removed by the spec: they do not come from
-`VC\Redist`.
+**Only measurement decides the second and third rows.** They rest on the
+bootloader's DLL directory, so the loader reasoning is a hypothesis.
+`tools/m10/runtime_origins.ps1` measures it:
 
-**Probe:** `tools/m10/runtime_origins.ps1` launches `sti-desktop.exe` and lists each
-loaded Visual C++ runtime module with its folder. It changes no files and needs no
-administrator rights. On the M10-E2 R1 bundle on the development host:
+- It launches `sti-desktop.exe` with a **neutral working directory**, so a copy
+  that is reachable only through the current directory cannot pass.
+- It waits for the main window.
+- It requires all six DLLs to be loaded, each from `_internal\` (R2) or from
+  System32 (R1).
+- It closes only the process it started.
 
-- the window appeared;
-- all six DLLs were already loaded at that point, so startup alone covers the whole
-  closure, PyTorch included;
-- every one came from Windows (`origins_ok: true` for R1).
+A wrong location is caught even on a host that has the system runtime: the
+system copy would be loaded instead of the app-local one.
 
-For R2, the same probe must report `application` for all six (§5, step 3). This
-has not been run, because no R2 bundle exists yet.
+**Measured on the R1 bundle on the development host:**
+
+- At window time all six DLLs were loaded. Startup alone covers the whole
+  closure, PyTorch included.
+- Every one came from System32: `origins_ok` was true for R1.
+- The same bundle checked as R2 correctly failed.
+
+The R2 probe on an R2 bundle has not been run, because no licensed files exist yet.
+
+`sti-check.exe` uses the same bootloader and the same `_internal\`. Its loading
+is exercised by its three frozen checks on the clean machine. `--smoke` imports
+Qt and opens a window. Its modules are not separately listed, because the process
+exits within seconds.
 
 ## 4. Licensing facts (read 2026-10-11)
 
@@ -181,8 +193,8 @@ by the tooling.
    The build:
    - refuses an installation whose redistributable version differs from the pin;
    - re-checks signatures and hashes;
-   - verifies the import closure (§2) and copies the six files unmodified beside
-     the executables;
+   - verifies the import closure (§2) and copies the six files unmodified into
+     `_internal\`;
    - accepts no runtime file anywhere else.
 
    The packet (`legal/inventory.json`, `microsoft_runtime`) records the route, the
@@ -190,16 +202,16 @@ by the tooling.
    confirmation is recorded in the manifest. `build-evidence.json` records the
    route, the measured imports and the staged receipts.
 3. **Probe on the host:** run `tools/m10/runtime_origins.ps1 -Route R2` on the
-   frozen bundle. All six modules must load from the application directory, even
-   where a system runtime exists.
-4. **Installer.** `installer.py` admits runtime files only when the packet says R2
-   and they match the pin. It then renders `RequireSystemRuntime = False` and the
+   frozen bundle. All six modules must load from `_internal\`, even where a
+   system runtime exists.
+4. **Installer.** `installer.py` re-hashes any runtime file against the committed
+   pin. It admits them only as the complete pinned set in `_internal\`. It then renders `RequireSystemRuntime = False` and the
    end-user terms page (§4), and records the terms' SHA-256 in its receipt. The
    per-user, never-elevating setup (`PrivilegesRequired=lowest`) stays unchanged.
 5. **Clean-machine validation:** `validate_installer.ps1 -EnvironmentKind DisposableVM`.
    For an R2 receipt it first asserts:
-   - there is no `System32\vcruntime140.dll` and no
-     `HKLM\...\VC\Runtimes\x64` key;
+   - none of the six DLLs is in System32 or a `PATH` folder;
+   - neither the native nor the WOW6432Node `VC\Runtimes\x64` key exists;
    - the user is not an administrator.
 
    Then it installs, launches, checks module origins, runs the frozen checks,
@@ -226,9 +238,12 @@ Still needed:
    - Approve, or replace, the draft end-user terms (§4), including how they sit
      next to the LGPL.
    - These are recorded together as `owner_licence_confirmation` in
-     `distribution/vc-runtime.json`, with edition, channel (Stable, not
-     Insiders), date and the approved terms' SHA-256. Until that record exists, an
-     R2 packet derives B3 as open. The tooling never infers it.
+     `distribution/vc-runtime.json`. The record must name the edition, the channel
+     (Stable, not Insiders), `confirmed_on`, `confirmed_by`, the pinned
+     `redist_version` and the approved terms' SHA-256. B3 stays open for an R2
+     packet unless every field is present and the version and hash match the
+     current pin and terms. Re-pinning new bytes clears the record. The tooling
+     never infers it.
 2. **Installation (owner action).**
    - Install Visual Studio Community 2026 from the Stable channel with the
      "Desktop development with C++" workload, and accept its licence.
@@ -262,18 +277,32 @@ are unchanged.
 
 ## 8. Validation in this milestone
 
-- **Unit tests** (`tests/tools`): 110 passed, 2 skipped (frozen-bundle tests need
+- **Full local suite:** 1,249 passed, 6 opt-in skipped; Ruff and strict MyPy pass.
+- **Unit tests** (`tests/tools`): 114 passed, 2 skipped (frozen-bundle tests need
   an explicit bundle). New tests cover:
   - signer, lookalike-signer, version and byte refusal;
   - pin recording that leaves the confirmation unset;
   - the import-closure guard;
-  - app-local placement only beside the executables;
+  - app-local placement only in `_internal\`, and the installer re-hashing against the pin;
+  - the confirmation fields and the reset on re-pin;
   - R2 B3 derivation;
   - installer prerequisite and terms-page rendering for R1 and R2.
 - **Real signatures:** the signature and version reader was exercised on real
   Microsoft-signed system DLLs. They read as Valid, organization Microsoft
   Corporation.
-- **Host probe:** run on the R1 bundle (§3).
+- **Host probe:** run on the R1 bundle (§3). It now uses a neutral working
+  directory and retries the close request; three consecutive runs passed.
+- **Independent review fixes** (Spec and Standards, after the first two commits):
+  - the placement moved from beside the executables to `_internal\` (§3);
+  - the probe requires the full six-DLL set and does not rely on the working
+    directory;
+  - an empty or stale licence confirmation no longer clears B3;
+  - re-pinning new bytes clears the confirmation;
+  - the installer re-verifies the runtime files against the committed pin instead
+    of trusting the packet's flag;
+  - the clean-machine baseline checks all six DLLs, `PATH` and both registry
+    views;
+  - a PowerShell timeout no longer surfaces as a traceback.
 - **R1 regression rebuild:** the new packaging inputs were built on the default
   route at `0f7afd5`. Results:
   - 5,256 files, the same as M10-E2;

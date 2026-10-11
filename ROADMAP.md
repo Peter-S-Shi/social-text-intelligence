@@ -458,7 +458,7 @@ The owner's acceptance target is an install and launch with no VC++ runtime and
 no administrator rights. R1's prerequisite cannot meet it, so the [M10-E3
 record](docs/V2_M10_E3_APP_LOCAL_RUNTIME.md) prepares route R2:
 
-- the measured six-DLL closure, placed beside both executables;
+- the measured six-DLL closure, placed in `_internal` beside `python313.dll`;
 - pinning from a licensed `VC\Redist` with signature, version and hash checks;
 - an R2 build route that refuses any import outside the closure;
 - packet and installer handling, a DLL-origin probe and a clean, non-admin VM

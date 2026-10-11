@@ -120,6 +120,23 @@ def test_a_missing_required_file_or_changed_bytes_are_refused(
         vc.verify_source(folder, pinned)
 
 
+def test_repinning_new_bytes_drops_an_earlier_licence_confirmation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    vc = load()
+    folder = installation(tmp_path / "vs")
+    monkeypatch.setattr(vc, "file_facts", lambda paths: facts(folder))
+    path = manifest(tmp_path / "vc-runtime.json")
+    pinned = vc.pin(tmp_path / "vs", path)
+    pinned["owner_licence_confirmation"] = {"edition": "synthetic"}
+    path.write_text(json.dumps(pinned), encoding="utf-8")
+    assert vc.pin(tmp_path / "vs", path)["owner_licence_confirmation"] == {
+        "edition": "synthetic"
+    }
+    (folder / "msvcp140.dll").write_bytes(b"synthetic serviced runtime")
+    assert vc.pin(tmp_path / "vs", path)["owner_licence_confirmation"] is None
+
+
 def test_an_unpinned_manifest_cannot_stage_anything(tmp_path: Path) -> None:
     vc = load()
     folder = installation(tmp_path / "vs")

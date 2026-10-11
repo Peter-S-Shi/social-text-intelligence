@@ -228,11 +228,12 @@ def test_build_environment_excludes_ambient_native_tools(
 RUNTIME = synthetic_pe("kernel32.dll")
 
 
-def test_app_local_runtime_is_accepted_only_pinned_beside_the_executables(
+def test_app_local_runtime_is_accepted_only_pinned_in_internal(
     tmp_path: Path,
 ) -> None:
     build = load()
-    runtime = tmp_path / "vcruntime140.dll"
+    runtime = tmp_path / "_internal" / "vcruntime140.dll"
+    runtime.parent.mkdir()
     runtime.write_bytes(RUNTIME)
     pin = {"vcruntime140.dll": hashlib.sha256(RUNTIME).hexdigest()}
     build.verify_no_microsoft_runtime(tmp_path, pin)
@@ -242,9 +243,8 @@ def test_app_local_runtime_is_accepted_only_pinned_beside_the_executables(
     with pytest.raises(ValueError, match="Microsoft"):
         build.verify_no_microsoft_runtime(tmp_path, pin)
     runtime.unlink()
-    nested = tmp_path / "_internal" / "vcruntime140.dll"
-    nested.parent.mkdir()
-    nested.write_bytes(RUNTIME)
+    # Beside the executables is not where python313.dll's loader looks first.
+    (tmp_path / "vcruntime140.dll").write_bytes(RUNTIME)
     with pytest.raises(ValueError, match="Microsoft"):
         build.verify_no_microsoft_runtime(tmp_path, pin)
 
@@ -269,8 +269,8 @@ def stage_fixture(
     folder.mkdir()
     (folder / "vcruntime140.dll").write_bytes(RUNTIME)
     bundle = tmp_path / "bundle"
-    bundle.mkdir()
-    (bundle / "x.pyd").write_bytes(synthetic_pe(*imports))
+    (bundle / "_internal").mkdir(parents=True)
+    (bundle / "_internal/x.pyd").write_bytes(synthetic_pe(*imports))
     manifest: dict[str, object] = {
         "required_files": ["vcruntime140.dll"],
         "minimum_version": "14.44",
@@ -288,7 +288,7 @@ def stage_fixture(
     return build, bundle, folder, manifest
 
 
-def test_pinned_runtime_is_staged_beside_the_executables(
+def test_pinned_runtime_is_staged_beside_python313(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     build, bundle, folder, manifest = stage_fixture(
@@ -296,7 +296,7 @@ def test_pinned_runtime_is_staged_beside_the_executables(
     )
     receipts = build.stage_app_local_runtime(bundle, folder, manifest)
     assert [item["file"] for item in receipts] == ["vcruntime140.dll"]
-    assert (bundle / "vcruntime140.dll").read_bytes() == RUNTIME
+    assert (bundle / "_internal/vcruntime140.dll").read_bytes() == RUNTIME
     build.verify_no_microsoft_runtime(
         bundle, {"vcruntime140.dll": receipts[0]["sha256"]}
     )
@@ -310,4 +310,4 @@ def test_a_runtime_import_outside_the_pinned_set_stops_staging(
     )
     with pytest.raises(ValueError, match="outside the pinned set"):
         build.stage_app_local_runtime(bundle, folder, manifest)
-    assert not (bundle / "vcruntime140.dll").exists()
+    assert not (bundle / "_internal/vcruntime140.dll").exists()

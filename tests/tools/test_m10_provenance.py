@@ -324,19 +324,35 @@ def test_bundled_cpython_must_be_the_pinned_official_runtime(tmp_path: Path) -> 
     assert receipt["verified"] is False
 
 
+TERMS = "0" * 64
+
+
+def confirmation(**override: str) -> dict[str, str]:
+    record = {
+        "edition": "synthetic edition",
+        "channel": "synthetic channel",
+        "confirmed_on": "2000-01-01",
+        "confirmed_by": "owner",
+        "redist_version": "14.44.35208",
+        "end_user_terms_sha256": TERMS,
+    }
+    return {**record, **override}
+
+
 def test_app_local_runtime_narrows_b3_only_when_pinned_and_confirmed(
     tmp_path: Path,
 ) -> None:
     compliance = load()
     bundle = tmp_path / "bundle"
-    bundle.mkdir()
-    (bundle / "vcruntime140.dll").write_bytes(b"synthetic runtime")
+    (bundle / "_internal").mkdir(parents=True)
+    (bundle / "_internal/vcruntime140.dll").write_bytes(b"synthetic runtime")
     manifest: dict[str, object] = {
+        "required_files": ["vcruntime140.dll"],
         "redist_version": "14.44.35208",
         "files": {"vcruntime140.dll": hashlib.sha256(b"synthetic runtime").hexdigest()},
         "owner_licence_confirmation": None,
     }
-    status = compliance.verify_app_local_runtime(bundle, manifest)
+    status = compliance.verify_app_local_runtime(bundle, manifest, TERMS)
     assert status["route"] == "R2"
     assert status["matches_pin"] is True
     assert status["cleared"] is False
@@ -348,17 +364,41 @@ def test_app_local_runtime_narrows_b3_only_when_pinned_and_confirmed(
         app_local_pinned=True,
     )
     assert compliance.B3_APP_LOCAL in blockers
-    manifest["owner_licence_confirmation"] = {"edition": "synthetic"}
-    assert compliance.verify_app_local_runtime(bundle, manifest)["cleared"] is True
-    (bundle / "vcruntime140.dll").write_bytes(b"other runtime")
-    status = compliance.verify_app_local_runtime(bundle, manifest)
+    manifest["owner_licence_confirmation"] = confirmation()
+    assert compliance.verify_app_local_runtime(bundle, manifest, TERMS)["cleared"]
+    for weak in (
+        {},
+        confirmation(edition=" "),
+        confirmation(redist_version="14.50.0"),
+        confirmation(end_user_terms_sha256="1" * 64),
+    ):
+        manifest["owner_licence_confirmation"] = weak
+        status = compliance.verify_app_local_runtime(bundle, manifest, TERMS)
+        assert status["cleared"] is False
+    manifest["owner_licence_confirmation"] = confirmation()
+    (bundle / "_internal/vcruntime140.dll").write_bytes(b"other runtime")
+    status = compliance.verify_app_local_runtime(bundle, manifest, TERMS)
     assert status["matches_pin"] is False
     assert status["cleared"] is False
 
 
+def test_runtime_outside_internal_or_an_incomplete_pin_never_matches(
+    tmp_path: Path,
+) -> None:
+    compliance = load()
+    (tmp_path / "vcruntime140.dll").write_bytes(b"synthetic runtime")
+    manifest: dict[str, object] = {
+        "required_files": ["vcruntime140.dll", "msvcp140.dll"],
+        "files": {"vcruntime140.dll": hashlib.sha256(b"synthetic runtime").hexdigest()},
+    }
+    assert not compliance.verify_app_local_runtime(tmp_path, manifest, TERMS)[
+        "matches_pin"
+    ]
+
+
 def test_no_runtime_file_is_route_r1(tmp_path: Path) -> None:
     compliance = load()
-    status = compliance.verify_app_local_runtime(tmp_path, {"files": {}})
+    status = compliance.verify_app_local_runtime(tmp_path, {"files": {}}, TERMS)
     assert status == {
         "route": "R1",
         "shipped": [],

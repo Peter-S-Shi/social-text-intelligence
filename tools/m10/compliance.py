@@ -412,12 +412,35 @@ def verify_python_runtime(
     }
 
 
+CONFIRMATION_FIELDS = ("edition", "channel", "confirmed_on", "confirmed_by")
+
+
+def licence_confirmed(
+    confirmation: object, manifest: dict[str, object], terms_sha256: str
+) -> bool:
+    """The owner's record must name the pinned bytes and the approved terms."""
+    return (
+        isinstance(confirmation, dict)
+        and all(
+            isinstance(confirmation.get(key), str) and confirmation[key].strip()
+            for key in CONFIRMATION_FIELDS
+        )
+        and confirmation.get("redist_version") == manifest.get("redist_version")
+        and confirmation.get("end_user_terms_sha256") == terms_sha256
+    )
+
+
 def verify_app_local_runtime(
-    bundle: Path, manifest: dict[str, object]
+    bundle: Path, manifest: dict[str, object], terms_sha256: str
 ) -> dict[str, object]:
-    """Route and pin status of any shipped Visual C++ runtime file (M10-E3, R2)."""
+    """Route and pin status of any shipped Visual C++ runtime file (M10-E3, R2).
+
+    The pinned set lives in _internal, beside python313.dll; anything else fails.
+    """
     pinned = manifest.get("files") or {}
-    assert isinstance(pinned, dict)
+    if not isinstance(pinned, dict):
+        raise ValueError("The runtime pin must be a mapping of file names.")
+    expected = {f"_internal/{name}": sha for name, sha in pinned.items()}
     shipped = sorted(
         path.relative_to(bundle).as_posix()
         for path in bundle.rglob("*")
@@ -427,8 +450,9 @@ def verify_app_local_runtime(
     )
     matches = (
         bool(shipped)
-        and sorted(shipped) == sorted(pinned)
-        and all(digest(bundle / name) == pinned[name] for name in shipped)
+        and sorted(shipped) == sorted(expected)
+        and sorted(pinned) == sorted(manifest.get("required_files") or [])
+        and all(digest(bundle / name) == expected[name] for name in shipped)
     )
     confirmation = manifest.get("owner_licence_confirmation")
     return {
@@ -437,7 +461,7 @@ def verify_app_local_runtime(
         "redist_version": manifest.get("redist_version") if shipped else None,
         "matches_pin": matches,
         "licence_confirmation": confirmation if shipped else None,
-        "cleared": matches and isinstance(confirmation, dict),
+        "cleared": matches and licence_confirmed(confirmation, manifest, terms_sha256),
     }
 
 
@@ -633,7 +657,9 @@ def assemble(
         json.loads((project / "distribution/python-runtime.json").read_text()),
     )
     microsoft_runtime = verify_app_local_runtime(
-        bundle, json.loads((project / "distribution/vc-runtime.json").read_text())
+        bundle,
+        json.loads((project / "distribution/vc-runtime.json").read_text()),
+        digest(project / "tools/m10/R2_END_USER_TERMS.txt"),
     )
     blockers = distribution_blockers(
         provenance,

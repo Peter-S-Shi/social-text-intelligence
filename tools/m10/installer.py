@@ -15,6 +15,7 @@ from build import MICROSOFT_RUNTIME
 from compliance import digest, verify_packet
 
 CONFIG = Path(__file__).resolve().parent
+PIN = CONFIG.parents[1] / "distribution/vc-runtime.json"
 INNO_VERSION = "6.7.3"
 ISCC_SHA256 = "0a8757031b33777e4c9cbffee40f11a5062b36d25cbe144c1db73b6102b80ad7"
 LICENSE_SHA256 = "3df23505b7ec00dc007a1e1e9ba32ee3895e7ce90043bcd1ac1b9b47155921a7"
@@ -34,6 +35,33 @@ def quoted(value: str) -> str:
     if any(ord(char) < 32 for char in value):
         raise ValueError("Control characters are not accepted in build paths.")
     return value.replace('"', '""').replace("{", "{{")
+
+
+def app_local_runtime(bundle: Path) -> set[str]:
+    """Runtime files the bundle ships, accepted only as the full pinned R2 set.
+
+    Re-hashed here against the committed pin, independent of the packet's flags.
+    """
+    shipped = {
+        path.relative_to(bundle).as_posix()
+        for path in bundle.rglob("*")
+        if path.is_file() and MICROSOFT_RUNTIME.fullmatch(path.name)
+    }
+    if not shipped:
+        return shipped
+    pin = json.loads(PIN.read_text(encoding="utf-8"))
+    files = pin.get("files") or {}
+    expected = {f"_internal/{name}": sha for name, sha in files.items()}
+    if (
+        sorted(files) != sorted(pin.get("required_files") or [])
+        or shipped != set(expected)
+        or any(digest(bundle / name) != expected[name] for name in shipped)
+    ):
+        raise ValueError(
+            "Microsoft Visual C++ runtime files cannot enter the installer "
+            "unless they are the complete pinned app-local set (route R2)."
+        )
+    return shipped
 
 
 def prepare(bundle: Path, output: Path) -> dict[str, object]:
@@ -67,12 +95,7 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         raise ValueError("A version-1 license inventory object is required.")
     if not verify_packet(bundle, inventory)["materials_valid"]:
         raise ValueError("The complete license packet failed byte/set verification.")
-    runtime = inventory.get("microsoft_runtime", {"route": "R1", "shipped": []})
-    app_local = set(runtime["shipped"]) if runtime["route"] == "R2" else set()
-    if app_local and not runtime["matches_pin"]:
-        raise ValueError(
-            "App-local runtime files must match the pinned VC\\Redist set."
-        )
+    app_local = app_local_runtime(bundle)
     sources = inventory.get("source_delivery", [])
     names = [item["filename"] for item in sources]
     if len(set(names)) != 5 or any(
@@ -97,15 +120,6 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
             or path.name.lower() in {".env", "pytorch_model.bin"}
         ):
             raise ValueError("Model weights or user data cannot enter the installer.")
-        if (
-            path.is_file()
-            and MICROSOFT_RUNTIME.fullmatch(path.name)
-            and path.relative_to(bundle).as_posix() not in app_local
-        ):
-            raise ValueError(
-                "Microsoft Visual C++ runtime files cannot enter the installer "
-                "unless they are the pinned app-local set (route R2)."
-            )
     if digest(CONFIG / "INNO-LICENSE.txt") != LICENSE_SHA256:
         raise ValueError("The versioned installer license text changed.")
     output.mkdir(parents=True, exist_ok=False)

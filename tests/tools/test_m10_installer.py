@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import subprocess
 import sys
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
@@ -181,39 +183,87 @@ def test_malformed_inventory_fails_without_traceback_or_writes(
     assert not output.exists()
 
 
-APP_LOCAL = ["msvcp140.dll", "vcruntime140.dll"]
+def load_installer() -> ModuleType:
+    sys.path.insert(0, str(SCRIPT.parent))
+    spec = importlib.util.spec_from_file_location("m10_installer", SCRIPT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
-def test_pinned_app_local_runtime_needs_no_prerequisite(tmp_path: Path) -> None:
-    runtime = {"route": "R2", "shipped": APP_LOCAL, "matches_pin": True}
-    bundle = packet(tmp_path / "bundle", *APP_LOCAL, runtime=runtime)
-    output = tmp_path / "prepared"
-    result = invoke(bundle, output)
-    assert result.returncode == 0, result.stdout
-    assert json.loads(result.stdout)["microsoft_runtime_route"] == "R2"
-    script = (output / "installer.iss").read_text(encoding="utf-8-sig")
+APP_LOCAL = ["_internal/msvcp140.dll", "_internal/vcruntime140.dll"]
+FIXTURE = b"Synthetic infrastructure fixture, not actual license/source."
+
+
+def pin(path: Path, required: list[str]) -> Path:
+    digest = hashlib.sha256(FIXTURE).hexdigest()
+    path.write_text(
+        json.dumps(
+            {
+                "required_files": required,
+                "files": {
+                    name: digest for name in ["msvcp140.dll", "vcruntime140.dll"]
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_pinned_app_local_runtime_needs_no_prerequisite(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    installer = load_installer()
+    monkeypatch.setattr(
+        installer,
+        "PIN",
+        pin(tmp_path / "pin.json", ["msvcp140.dll", "vcruntime140.dll"]),
+    )
+    bundle = packet(tmp_path / "bundle", *APP_LOCAL)
+    receipt = installer.prepare(bundle, tmp_path / "prepared")
+    assert receipt["microsoft_runtime_route"] == "R2"
+    assert receipt["end_user_terms_sha256"]
+    script = (tmp_path / "prepared/installer.iss").read_text(encoding="utf-8-sig")
     assert "RequireSystemRuntime = False;" in script
     assert "R2_END_USER_TERMS.txt" in script
     assert "PrivilegesRequired=lowest" in script
-    assert (output / "payload/vcruntime140.dll").is_file()
+    assert (tmp_path / "prepared/payload/_internal/vcruntime140.dll").is_file()
 
 
 @pytest.mark.parametrize(
-    ("runtime", "extra"),
+    ("required", "extra"),
     [
-        ({"route": "R2", "shipped": APP_LOCAL, "matches_pin": False}, APP_LOCAL),
+        # The pin must cover the whole required closure.
+        (["msvcp140.dll", "vcruntime140.dll", "msvcp140_2.dll"], APP_LOCAL),
+        # Files must sit in _internal, and nothing beyond the pinned set.
+        (["msvcp140.dll", "vcruntime140.dll"], ["msvcp140.dll", "vcruntime140.dll"]),
         (
-            {"route": "R2", "shipped": APP_LOCAL, "matches_pin": True},
+            ["msvcp140.dll", "vcruntime140.dll"],
             [*APP_LOCAL, "_internal/msvcp140_2.dll"],
         ),
     ],
 )
-def test_unpinned_or_extra_runtime_files_are_refused(
-    tmp_path: Path, runtime: dict[str, object], extra: list[str]
+def test_unpinned_misplaced_or_extra_runtime_files_are_refused(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    required: list[str],
+    extra: list[str],
 ) -> None:
-    bundle = packet(tmp_path / "bundle", *extra, runtime=runtime)
-    output = tmp_path / "untouched"
-    result = invoke(bundle, output)
+    installer = load_installer()
+    monkeypatch.setattr(installer, "PIN", pin(tmp_path / "pin.json", required))
+    bundle = packet(tmp_path / "bundle", *extra)
+    with pytest.raises(ValueError, match="complete pinned app-local set"):
+        installer.prepare(bundle, tmp_path / "untouched")
+    assert not (tmp_path / "untouched").exists()
+
+
+def test_the_committed_unpinned_manifest_refuses_any_runtime_file(
+    tmp_path: Path,
+) -> None:
+    bundle = packet(tmp_path / "bundle", *APP_LOCAL)
+    result = invoke(bundle, tmp_path / "untouched")
     assert result.returncode == 2
     assert "runtime" in result.stdout
-    assert not output.exists()

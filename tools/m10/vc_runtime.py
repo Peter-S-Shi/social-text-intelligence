@@ -35,7 +35,8 @@ def load_manifest(path: Path = MANIFEST) -> dict[str, object]:
 
 def required_files(manifest: dict[str, object]) -> list[str]:
     names = manifest["required_files"]
-    assert isinstance(names, list)
+    if not isinstance(names, list) or not names:
+        raise ValueError("The runtime manifest must list its required files.")
     return [str(name) for name in names]
 
 
@@ -112,9 +113,13 @@ def pin(vs_install: Path, manifest_path: Path = MANIFEST) -> dict[str, object]:
     version, folder = redist_directory(vs_install)
     paths = [folder / name for name in required_files(manifest)]
     receipts = check_files(folder, manifest, file_facts(paths))
+    files = {item["file"]: item["sha256"] for item in receipts}
+    if files != manifest.get("files"):
+        # A licence confirmation covers the bytes it was given for, never new ones.
+        manifest["owner_licence_confirmation"] = None
     manifest.update(
         redist_version=version,
-        files={item["file"]: item["sha256"] for item in receipts},
+        files=files,
         file_versions={item["file"]: item["file_version"] for item in receipts},
     )
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
