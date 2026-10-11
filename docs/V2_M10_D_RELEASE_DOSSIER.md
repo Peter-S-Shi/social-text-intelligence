@@ -55,8 +55,10 @@ under open obligations:
    While upstream tarballs for QtBase, PySide6, and Shiboken6 are collected and
    checksummed, exact PyPI wheel patch sets, compiler flags, and reproducible
    producer recipes for the deployed binaries are unverified. Distributing
-   binaries without verified exact corresponding build recipes leaves LGPL v3 §6
-   written-offer and corresponding-source obligations unresolved.
+   binaries without verified exact corresponding build recipes leaves obligations
+   under LGPL v3 §4(d)–(e)—and GNU GPL v3 §6 where incorporated or applicable
+   (e.g., regarding conveyance of Corresponding Source or accompanying Installation
+   Information)—unresolved, rather than establishing a legally proven violation.
 2. **B2 — Software Renderer Attribution (`opengl32sw.dll`) (OPEN, blocks distribution)**:
    The included Mesa/LLVM-based software OpenGL fallback DLL lacks verified
    compiled-content component attribution and upstream build provenance.
@@ -73,15 +75,17 @@ under open obligations:
    The bundled Naive Bayes language identification model carries historical training
    data terms that remain unreviewed for public commercial/packaged redistribution.
 6. **B6 — Unresolved Qt DLL Replacement Compatibility (OPEN, blocks distribution)**:
-   LGPL v3 §4(d)(1) requires conveying installation information or mechanisms
-   enabling users to run modified versions of the library. Real Windows replacement
-   experiments substituting Qt DLLs from upstream PySide6 6.11.1 and 6.12.0 wheels
-   while retaining the original 6.11.2 Python bindings and loader resulted in
-   immediate startup failure (`exit 2`). These experiments established no
-   compatible replacement in practice, but did not demonstrate that compliant
-   replacement is impossible (e.g., through rebuilding matching bindings or
-   coherent ABI toolchains). Because compatible replacement remains unverified
-   and unproven, B6 remains an unresolved distribution blocker.
+   LGPL v3 §4(d)(1) concerns linking with the Library via a suitable shared-library
+   mechanism that operates properly with an interface-compatible modified version
+   of the Library, while §4(e) separately addresses conditional Installation
+   Information obligations. Real Windows replacement experiments substituting Qt
+   DLLs from upstream PySide6 6.11.1 and 6.12.0 wheels while retaining the original
+   6.11.2 Python bindings and loader resulted in immediate startup failure
+   (`exit 2`). These experiments established no compatible replacement in practice,
+   but did not demonstrate that compliant replacement is impossible (e.g., through
+   rebuilding matching bindings or coherent ABI toolchains). Because compatible
+   dynamic replacement remains unverified and unproven, B6 remains an unresolved
+   distribution blocker.
 
 ---
 
