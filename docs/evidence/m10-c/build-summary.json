@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "prepared": true,
+  "compiled": true,
+  "frozen_application_sha": "c93191ee4d0677f7e78a99fca8b89460b503e7f5",
+  "input_inventory_sha256": "896f53e8337b5208bd714df369f8eb07a9471c69c2f202cf172921083efda607",
+  "installer_template_sha256": "88494351bc36f65aaed096faa3d9d1aa7c974644b4aed3ab04bd6f7bb9eed73d",
+  "installer_generator_sha256": "0e4f337ca2d985591b26e7d36a5845b11d696ad806c30b4b85d1617db88e5b5e",
+  "installer_notice_sha256": "f0fe49376c00464802b0379f9efec243ba9993519da47b41f9c8ead34fadb6f0",
+  "inno_version": "6.7.3",
+  "inno_license_sha256": "3df23505b7ec00dc007a1e1e9ba32ee3895e7ce90043bcd1ac1b9b47155921a7",
+  "models_bundled": false,
+  "distribution_permitted": false,
+  "legal_blockers": [
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "B6"
+  ],
+  "clean_machine_validation": "NOT RUN",
+  "owner_30_minute_smoke": "NOT RUN",
+  "installer_sha256": "f2fbfb8836f054f74c951869dba44f8c0c17ea515ba570fe5c6216c529960831",
+  "payload_file_count": 5267,
+  "implementation_sha": "35df2929fdb3830952638ad40dbcc608113909f3"
+}

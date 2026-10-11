@@ -78,6 +78,26 @@ def _tracked_markdown_files() -> tuple[Path, ...]:
     return tuple(ROOT / item for item in completed.stdout.splitlines() if item)
 
 
+def test_m10c_engineering_does_not_close_acceptance_or_distribution_gates() -> None:
+    status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
+    record = (ROOT / "docs/V2_M10_C_WINDOWS_INSTALLER.md").read_text(encoding="utf-8")
+    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+        surface = (ROOT / name).read_text(encoding="utf-8")
+        assert "M10-C installer engineering established" in surface
+        for stale in (
+            "no installer, binary distribution",
+            "no installer or distributed build exists",
+            "no installer exists",
+            "Next scope is a later M10 engineering gate",
+        ):
+            assert stale not in surface
+    assert "| M10-C clean-machine acceptance | **NOT RUN**" in status
+    assert "B1–B6 remain BLOCKED" in record
+    assert "M9.2–M9.4 remain DEFERRED" in record
+    assert "clean-machine acceptance remains NOT RUN" in record
+    assert "Actual missing-model analysis UI" in record
+
+
 def test_current_surfaces_share_one_lifecycle_truth() -> None:
     combined = "\n".join(path.read_text(encoding="utf-8") for path in CURRENT_SURFACES)
     for phrase in STALE_CURRENT_PHRASES:
@@ -128,7 +148,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "**COMPLETE on `main` — owner overall PASS (2026-10-10).**"
         in status
     )
-    assert "| Next required action | Resolve the M10-B" in status
+    assert "| Next required action | Execute the isolated M10-C" in status
     assert "planned NOT RUN" in status
     assert (
         "| M5.5 — Native Insights, Context Notes, and Representative Cases | "
@@ -292,5 +312,5 @@ def test_m10_foundation_does_not_waive_acceptance_or_distribution_gates() -> Non
     assert "Q5 representative-domain evidence remains required" in status
     assert "Optional owner packaged-app smoke" in status
     assert "30-minute owner smoke: NOT RUN" in status
-    assert "no installer, distribution, LGPL compliance or release readiness" in status
+    assert "no distribution, LGPL compliance or release readiness" in status
     assert "DEFERRED, not accepted or waived" in status

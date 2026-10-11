@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "environment": "DevelopmentHost",
+  "installer_sha256": "f2fbfb8836f054f74c951869dba44f8c0c17ea515ba570fe5c6216c529960831",
+  "frozen_application_sha": "c93191ee4d0677f7e78a99fca8b89460b503e7f5",
+  "installed_payload_matches": true,
+  "start_menu_target": "PASS",
+  "first_native_launch": "PASS",
+  "runtime": {
+    "ready": true,
+    "models_loaded": false
+  },
+  "license": {
+    "qt_version": "6.11.2",
+    "materials_present": true,
+    "distribution_permitted": false,
+    "models_loaded": false
+  },
+  "synthetic_native_smoke": {
+    "window": true,
+    "models_unbundled": true,
+    "project_rows": 2,
+    "invalid_rows": 1,
+    "reopened": true
+  },
+  "missing_model_analysis_interaction": "NOT RUN",
+  "download_authorization_interaction": "NOT RUN",
+  "reparse_uninstall_refusal": "PASS",
+  "external_sentinel_preserved": true,
+  "uninstall_owned_files_and_license_removal": "PASS",
+  "shortcuts_removed": "PASS",
+  "reinstall": "PASS",
+  "preservation_sentinels": "PASS",
+  "clean_machine_acceptance": "NOT RUN - requires independently witnessed fresh VM baseline",
+  "formal_windows_uat": "NOT RUN",
+  "owner_30_minute_smoke": "NOT RUN",
+  "distribution_permitted": false,
+  "legal_blockers": [
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "B6"
+  ]
+}
