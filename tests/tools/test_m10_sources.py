@@ -45,6 +45,7 @@ def test_loose_python_libraries_keep_their_owners_in_the_audit(
         "PySide6/__init__.py",
         "shiboken6/__init__.py",
         "PySide6/QtCore.pyd",
+        "bytecode_only/__init__.pyc",
         "loose_helper.py",
     ):
         (internal / relative).parent.mkdir(parents=True, exist_ok=True)
@@ -52,14 +53,17 @@ def test_loose_python_libraries_keep_their_owners_in_the_audit(
     (tmp_path / "legal").mkdir()
     (tmp_path / "legal" / "outside_internal.py").write_text("# not a runtime file")
     loose = compliance.loose_python_packages(tmp_path)
-    assert loose == {"PySide6", "shiboken6", "loose_helper"}
+    assert loose == {"PySide6", "shiboken6", "bytecode_only", "loose_helper"}
     mapping = {"PySide6": ["PySide6_Essentials"], "shiboken6": ["shiboken6"]}
     pyz_only, _ = compliance.module_owners({"torch"}, mapping, set())
     assert "PySide6_Essentials" not in pyz_only
-    owners, unknown = compliance.python_owners(tmp_path, {"torch"}, mapping, set())
+    owners, unknown, reported = compliance.python_owners(
+        tmp_path, {"torch"}, mapping, set()
+    )
     assert {"PySide6_Essentials", "shiboken6"} <= owners
+    assert reported == loose
     # Unregistered loose files still surface as blockers instead of vanishing.
-    assert unknown == ["loose_helper", "torch"]
+    assert unknown == ["bytecode_only", "loose_helper", "torch"]
 
 
 def source_archive(path: Path) -> str:

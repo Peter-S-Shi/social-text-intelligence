@@ -11,8 +11,7 @@ import shutil
 import struct
 import sys
 import tarfile
-from collections.abc import Mapping, Sequence
-from collections.abc import Set as AbstractSet
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -413,33 +412,34 @@ def native_owner(relative: str) -> str:
 def loose_python_packages(bundle: Path) -> set[str]:
     """Top-level names of Python sources shipped as files rather than in the PYZ.
 
-    `module_collection_mode="py"` (PySide6/shiboken6) and hook-collected sources
-    leave no PYZ entry; their owners still need a version-matched audit.
+    `module_collection_mode="py"`/`"pyc"` (PySide6/shiboken6) and hook-collected
+    sources leave no PYZ entry; their owners still need a version-matched audit.
     """
     internal = bundle / "_internal"
     return {
-        path.relative_to(internal).parts[0].removesuffix(".py")
-        for path in internal.rglob("*.py")
-        if path.is_file()
+        path.relative_to(internal).parts[0].removesuffix(path.suffix)
+        for path in internal.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".py", ".pyc"}
     }
 
 
 def python_owners(
-    bundle: Path,
-    pyz_modules: set[str],
-    mapping: Mapping[str, list[str]],
-    stdlib: AbstractSet[str],
-) -> tuple[set[str], list[str]]:
-    """Owners of every delivered Python module, in the PYZ or as loose files."""
-    return module_owners(
-        pyz_modules | loose_python_packages(bundle), dict(mapping), set(stdlib)
-    )
+    bundle: Path, pyz_modules: set[str], mapping: dict[str, list[str]], stdlib: set[str]
+) -> tuple[set[str], list[str], set[str]]:
+    """Owners of every delivered Python module, in the PYZ or as loose files.
+
+    Fails closed: an owner without a version-matched register entry stops packet
+    assembly, and a loose name with no owner becomes an unmapped-owner blocker.
+    """
+    loose = loose_python_packages(bundle)
+    owners, unknown = module_owners(pyz_modules | loose, mapping, stdlib)
+    return owners, unknown, loose
 
 
 def module_owners(
     modules: set[str], mapping: dict[str, list[str]], stdlib: set[str]
 ) -> tuple[set[str], list[str]]:
-    """Resolve PYZ ownership, including PyInstaller's installed fake module."""
+    """Resolve module ownership, including PyInstaller's installed fake module."""
     owners: set[str] = {"PyInstaller"}
     unknown = []
     for top in sorted({name.split(".")[0] for name in modules}):
@@ -499,8 +499,7 @@ def assemble(
         modules.update(embedded.toc)
     stdlib = sys.stdlib_module_names | {"social_text_intelligence"}
     mapping.pop("social_text_intelligence", None)
-    loose = loose_python_packages(bundle)
-    names, unmapped = python_owners(bundle, modules, mapping, stdlib)
+    names, unmapped, loose = python_owners(bundle, modules, dict(mapping), stdlib)
     register = json.loads(
         (project / "distribution/component-register.json").read_text()
     )
