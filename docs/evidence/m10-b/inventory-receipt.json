@@ -1,0 +1,3109 @@
+{
+  "schema_version": 1,
+  "scope": "Sanitized receipt of actual local Windows frozen artifact; binaries and source archives are not published. Full file/module inventory accompanies local artifact.",
+  "binary_application_sha": "c93191ee4d0677f7e78a99fca8b89460b503e7f5",
+  "license_tool_sha": "e6fdd85abd7c36cf368a871fd7f5a323e20670d2",
+  "binary_inputs_unchanged": true,
+  "executable_hashes_preserved": true,
+  "material_assembly_git_in_path": false,
+  "inventory_sha256": "896f53e8337b5208bd714df369f8eb07a9471c69c2f202cf172921083efda607",
+  "inventory_bytes": 1513576,
+  "physical_layout": {
+    "files": 5265,
+    "bytes": 761696609
+  },
+  "inventory_file_self_excluded_from_receipts": true,
+  "frozen_module_count": 6648,
+  "frozen_module_top_names": [
+    "PySide6",
+    "__future__",
+    "_aix_support",
+    "_compat_pickle",
+    "_compression",
+    "_distutils_hack",
+    "_py_abc",
+    "_pydatetime",
+    "_pydecimal",
+    "_pyi_rth_utils",
+    "_sitebuiltins",
+    "_strptime",
+    "_threading_local",
+    "anyio",
+    "argparse",
+    "ast",
+    "asyncio",
+    "base64",
+    "bdb",
+    "bisect",
+    "bz2",
+    "cProfile",
+    "calendar",
+    "certifi",
+    "click",
+    "cmd",
+    "code",
+    "codeop",
+    "colorama",
+    "colorsys",
+    "concurrent",
+    "configparser",
+    "contextlib",
+    "contextvars",
+    "copy",
+    "csv",
+    "ctypes",
+    "dataclasses",
+    "datetime",
+    "decimal",
+    "difflib",
+    "dis",
+    "doctest",
+    "email",
+    "filecmp",
+    "fileinput",
+    "filelock",
+    "fnmatch",
+    "fractions",
+    "fsspec",
+    "ftplib",
+    "functorch",
+    "getopt",
+    "getpass",
+    "gettext",
+    "glob",
+    "gzip",
+    "h11",
+    "hashlib",
+    "hf_xet",
+    "hmac",
+    "html",
+    "http",
+    "httpcore",
+    "httpx",
+    "huggingface_hub",
+    "idna",
+    "importlib",
+    "inspect",
+    "ipaddress",
+    "jinja2",
+    "json",
+    "logging",
+    "lzma",
+    "markdown_it",
+    "markupsafe",
+    "mdurl",
+    "mimetypes",
+    "mpmath",
+    "multiprocessing",
+    "netrc",
+    "networkx",
+    "nturl2path",
+    "numbers",
+    "numpy",
+    "opcode",
+    "optparse",
+    "packaging",
+    "pathlib",
+    "pdb",
+    "pickle",
+    "pickletools",
+    "pkgutil",
+    "platform",
+    "pprint",
+    "profile",
+    "pstats",
+    "pty",
+    "py",
+    "py3langid",
+    "py_compile",
+    "pydoc",
+    "pydoc_data",
+    "queue",
+    "quopri",
+    "random",
+    "regex",
+    "rich",
+    "rlcompleter",
+    "runpy",
+    "safetensors",
+    "secrets",
+    "selectors",
+    "setuptools",
+    "shiboken6",
+    "shlex",
+    "shutil",
+    "signal",
+    "site",
+    "smtplib",
+    "social_text_intelligence",
+    "socket",
+    "socketserver",
+    "sqlite3",
+    "ssl",
+    "statistics",
+    "string",
+    "stringprep",
+    "subprocess",
+    "sympy",
+    "sysconfig",
+    "tarfile",
+    "tempfile",
+    "textwrap",
+    "threading",
+    "timeit",
+    "token",
+    "tokenize",
+    "tokenizers",
+    "tomllib",
+    "torch",
+    "torchgen",
+    "tqdm",
+    "trace",
+    "tracemalloc",
+    "transformers",
+    "tty",
+    "typing",
+    "typing_extensions",
+    "unittest",
+    "urllib",
+    "uuid",
+    "wave",
+    "webbrowser",
+    "wsgiref",
+    "xml",
+    "xmlrpc",
+    "yaml",
+    "zipfile",
+    "zipimport"
+  ],
+  "native_component_count": 103,
+  "native_components": [
+    {
+      "path": "_internal/_asyncio.pyd",
+      "sha256": "6265f1eb09c6f382f22605db3a10c906c2c3f09a9a9d9eafa8bc274e63ade96f",
+      "bytes": 74192,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_bz2.pyd",
+      "sha256": "26bdf6be9d5103bc3d288c71b4b1d69888d20e7b24ef5fc01604185354f266f9",
+      "bytes": 88016,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_ctypes.pyd",
+      "sha256": "ffa594342bd280d72845d160d9b6a4b5129242e134e2d65c32f98188f772da99",
+      "bytes": 131024,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_decimal.pyd",
+      "sha256": "b2f69ce91756cac13b5ca29933440bb8501feabfda39a2d70872e0bc7a9b9ef4",
+      "bytes": 263120,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_elementtree.pyd",
+      "sha256": "8150bc13b3b3e9cf083cc4da044fbfe701d5cb90b64fc7307837df9013916a4d",
+      "bytes": 136656,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_hashlib.pyd",
+      "sha256": "75f84c83b8590db1ea38e1eeaf9372ae517456300876a4702e7b13429193daa3",
+      "bytes": 69584,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_lzma.pyd",
+      "sha256": "adfe23c157c2936dc972f1e87b37c18a2e596f60b9f87fbde7e3b9f51b79bfd6",
+      "bytes": 167376,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_multiprocessing.pyd",
+      "sha256": "7de7166f7eaeb2796375866c5325d0f0246c5945df378ee85d288b3e53add25f",
+      "bytes": 38864,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_overlapped.pyd",
+      "sha256": "4d31874e2c68e2773ad4b8c1ed59ffbd4bec20de464f59ba9097616ffd87ca7c",
+      "bytes": 58832,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_queue.pyd",
+      "sha256": "ef2f820bd04e0891db044661a34574b5348b90569136952d9d904e63cd1dc60b",
+      "bytes": 35280,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_socket.pyd",
+      "sha256": "25d30500c159546dcf7accb5d729beceecc55c68d8b15d3bab2b1d02eb4e998c",
+      "bytes": 86480,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_sqlite3.pyd",
+      "sha256": "46b54f7e354f27bd109b060724daff4503e018bc53109347819a50f39483d650",
+      "bytes": 126928,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_ssl.pyd",
+      "sha256": "b47377e70d3da420a460c67e12d6032756b2c04e39951bc517efbb658511cea3",
+      "bytes": 179664,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_uuid.pyd",
+      "sha256": "3f60fb6e95552f1bc4e23453f4fce8ffabd5114b718d75c3535c5e21ab03b82a",
+      "bytes": 28624,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/_wmi.pyd",
+      "sha256": "9659c82510e899b128c427bbe00dfb01b2bce2c2c9fc52bcd9ca26e8252da5da",
+      "bytes": 40400,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/hf_xet/hf_xet.pyd",
+      "sha256": "1d7086190c8f67568f670d4e1e1493097ce31058a634d9ce5c7f2922875e13e6",
+      "bytes": 9393664,
+      "owner": "hf-xet/Rust dependencies (B4)"
+    },
+    {
+      "path": "_internal/libcrypto-3-x64.dll",
+      "sha256": "8a65f692c5003ac4bfa884369d753d9f50a5408ae5ef5afc66517d1c80b02175",
+      "bytes": 8002512,
+      "owner": "CPython/runtime bundled dependencies (B3)"
+    },
+    {
+      "path": "_internal/libffi-8.dll",
+      "sha256": "90f4afecab4c0cbb1596d8117b75f47860c5830fda06dc930cbd7d6a317a1ae3",
+      "bytes": 42960,
+      "owner": "CPython/runtime bundled dependencies (B3)"
+    },
+    {
+      "path": "_internal/libssl-3-x64.dll",
+      "sha256": "49bc4e70a83523d44544396a14c8681d5f86735f446a354fb0702164e5fe018c",
+      "bytes": 1598416,
+      "owner": "CPython/runtime bundled dependencies (B3)"
+    },
+    {
+      "path": "_internal/markupsafe/_speedups.cp312-win_amd64.pyd",
+      "sha256": "6107cd12e027357194947a9e4881aecf468790d2cb6ef4dd6ec77f5736232098",
+      "bytes": 13312,
+      "owner": "MarkupSafe"
+    },
+    {
+      "path": "_internal/msvcp140.dll",
+      "sha256": "def46aa6a8f72f27bafac0c43334419486a4d1dcdb6c479a8ef7034b3e1fa4cb",
+      "bytes": 553552,
+      "owner": "Microsoft runtime (B3)"
+    },
+    {
+      "path": "_internal/MSVCP140_ATOMIC_WAIT.dll",
+      "sha256": "e7963645e0d1db08e300614d4c5fa7194bd8173e9ab7a5558859e6b232ed3241",
+      "bytes": 48800,
+      "owner": "Microsoft runtime (B3)"
+    },
+    {
+      "path": "_internal/numpy/_core/_multiarray_tests.cp312-win_amd64.pyd",
+      "sha256": "2a6bb596e7f9f5336ea06ce3ddffa232001dfcf89cb00c6eb146390447179e7a",
+      "bytes": 65536,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/_core/_multiarray_umath.cp312-win_amd64.pyd",
+      "sha256": "a764477b092cead9514d848d68a302966038c6735a0c746b940a2adc422589cb",
+      "bytes": 3894784,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/fft/_pocketfft_umath.cp312-win_amd64.pyd",
+      "sha256": "2c82437aa10d0647f5ccbf27cfd93b062f06bad64d1bed5c96abeec60b078e48",
+      "bytes": 276480,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/linalg/_umath_linalg.cp312-win_amd64.pyd",
+      "sha256": "99b8aabee0f2b5bb857cb2f15046680a40ed12cd39599a075cd0ae0d17dc1dc5",
+      "bytes": 112128,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/_bounded_integers.cp312-win_amd64.pyd",
+      "sha256": "01b3e2ad35f0d6695396690a7d41c378fbb15de9ea0504ada340a300eb9d1721",
+      "bytes": 207360,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/_common.cp312-win_amd64.pyd",
+      "sha256": "b14fd8e85b26eb0246f4eaa91b470b1f8e4d48eaca399212c290460391be5baa",
+      "bytes": 167424,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/_generator.cp312-win_amd64.pyd",
+      "sha256": "f054f21f924e2b176f376c52b921d8742497e900639fb3a0d4e91fe6a796e461",
+      "bytes": 587264,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/_mt19937.cp312-win_amd64.pyd",
+      "sha256": "21dce5ec93e81e513c743a038bf80f7592e535ac56ed0cac1e70a81d9da43b55",
+      "bytes": 85504,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/_pcg64.cp312-win_amd64.pyd",
+      "sha256": "d601e321609b25c0a023b16148b17cc69ac7d379635d4485d1ae93e5e18984f5",
+      "bytes": 96256,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/_philox.cp312-win_amd64.pyd",
+      "sha256": "4489180aead91920f59001b3219600668a9533273b98be46f426e986c57b9f67",
+      "bytes": 79872,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/_sfc64.cp312-win_amd64.pyd",
+      "sha256": "a4ed6791cb365afa297acf562587e94a3eb448330a02bd86a112606a6f2e272b",
+      "bytes": 61440,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/bit_generator.cp312-win_amd64.pyd",
+      "sha256": "23dd33798ccc76e896c0361b0712b9944d87d96ef21a8568d86bc0daf300a8d8",
+      "bytes": 165888,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy/random/mtrand.cp312-win_amd64.pyd",
+      "sha256": "73239d2ff22f632bfc948087b10a3088918d25fb1f62dff76f52d8bed3878819",
+      "bytes": 493056,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy.libs/libscipy_openblas64_-b788215d9d47792bcba3a2e2a7114320.dll",
+      "sha256": "b788215d9d47792bcba3a2e2a71143205a57282828a483f1fb071ca2c159f616",
+      "bytes": 20405760,
+      "owner": "NumPy/OpenBLAS"
+    },
+    {
+      "path": "_internal/numpy.libs/msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll",
+      "sha256": "a4c2229bdc2a2a630acdc095b4d86008e5c3e3bc7773174354f3da4f5beb9cde",
+      "bytes": 575056,
+      "owner": "Microsoft runtime (B3)"
+    },
+    {
+      "path": "_internal/pyexpat.pyd",
+      "sha256": "8f9c6e498805c6bebb5816fbbabb6298552f5111b1b4d1d171aca8e11cb8c5dc",
+      "bytes": 225232,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/PySide6/MSVCP140.dll",
+      "sha256": "4c667b706893593812cd111b369ba6a77f54d1f1b1ae87cf3bf37692663cfba2",
+      "bytes": 549176,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/MSVCP140_1.dll",
+      "sha256": "d419d24b0a76366f5c9d908b0e45fe70e9e9154bb8ad5f3de42070f2337f857b",
+      "bytes": 27448,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/MSVCP140_2.dll",
+      "sha256": "89917964abb6ca16a260cab258e180c3abc239b5af00eed659d0edf0efdd339c",
+      "bytes": 271672,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/opengl32sw.dll",
+      "sha256": "34b444c016289b560662ff896deceb7f4b2c0723aed3d319ae167c9186ce42b3",
+      "bytes": 20639544,
+      "owner": "Software renderer (B2)"
+    },
+    {
+      "path": "_internal/PySide6/plugins/generic/qtuiotouchplugin.dll",
+      "sha256": "aa9080fa8b1c3cf4d3790c1eecf4a1f5c796ce58f31f80910357578f20fd80ac",
+      "bytes": 101176,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/iconengines/qsvgicon.dll",
+      "sha256": "5bb97b6f114682ae0b5f42b23b6818aece6499bad88dac80a138efa8a88c12bc",
+      "bytes": 72504,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qgif.dll",
+      "sha256": "d301d7e9a68327692e4c76faa6b125517730b22c68f4de7f09fda9d4ac0ddee1",
+      "bytes": 47928,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qicns.dll",
+      "sha256": "49db148fea9f01e9953fd0a771d16cfaf364599f07aab3634d4f5c7c25abd78a",
+      "bytes": 57144,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qico.dll",
+      "sha256": "1684fd56f1758167f7b3ac011264ae5859b3cf6113e381626ec3dc1d3122fe52",
+      "bytes": 46904,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qjpeg.dll",
+      "sha256": "6517345ac19f5c489daeadc029d0018bbdc09d8e1031c60d714557972f22c6d4",
+      "bytes": 591672,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qsvg.dll",
+      "sha256": "4b7d65ba39be58cb469b54b5fdee2987871d67e5050cd70724016e09966e54f6",
+      "bytes": 39736,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qtga.dll",
+      "sha256": "6b0381150070fcd4224597fe73c68b47055b30b418aa14794c94c5007d14ca5d",
+      "bytes": 38200,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qtiff.dll",
+      "sha256": "3d6ea04da215ee2a9459399fb9f6d73cad8787944b9d450399025bcd39d020b5",
+      "bytes": 445752,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qwbmp.dll",
+      "sha256": "1a4596509987e9557edda69ed13cdd0d33f4ebda72e464ddc00a566bec05f151",
+      "bytes": 36664,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/imageformats/qwebp.dll",
+      "sha256": "6b2c53cc4423140c29a6a1eb6dd908016e09d794b5739a05a3a39c8c49a0df8a",
+      "bytes": 564536,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/networkinformation/qnetworklistmanager.dll",
+      "sha256": "e571a4b4e582738cd1bc4889cb2896635c2543baff408442701b6706a1b4a86e",
+      "bytes": 79160,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/platforms/qdirect2d.dll",
+      "sha256": "56f41ad523d016fe2cf2c90fae158e21766d1fcd021bced1a3704c6da0f00c98",
+      "bytes": 1071416,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/platforms/qminimal.dll",
+      "sha256": "768a9c6dbb1c86abbefa2ff9d7e98cdfb4fdc9292eb8d64195bb6d23939a5344",
+      "bytes": 61752,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/platforms/qoffscreen.dll",
+      "sha256": "e776251668440169ed18a2fe1b236762d514ef5244639cbb559b5a77ddd38954",
+      "bytes": 110904,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/platforms/qwindows.dll",
+      "sha256": "bf6dbc3009f386fa22f0ced560bea6bbf3e0e0b4442d2fb855db67cffce49dbf",
+      "bytes": 991032,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/styles/qmodernwindowsstyle.dll",
+      "sha256": "a7a6424c23bf371bd28a404a196b210971726f6f2a87b63aac185a5e6e40da71",
+      "bytes": 240440,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/tls/qcertonlybackend.dll",
+      "sha256": "67be4d333a0f489d02714169a6ec54eaa80efa649d733fcbeb81881ecb02b4f3",
+      "bytes": 104760,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/tls/qopensslbackend.dll",
+      "sha256": "7a0727417b8e21e64d9a7cf0f390bc85b3e337b4eef5ac977f49659d97e6b552",
+      "bytes": 314168,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/plugins/tls/qschannelbackend.dll",
+      "sha256": "14abc5b245c0f2e03f7bc0b474a8db2ecb441c7300a8a8b16fb865eaf2674619",
+      "bytes": 247608,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/pyside6.abi3.dll",
+      "sha256": "d0b5c701fb3a8ea839e72b602058f3960935156ebeca084893c54c99e54dd707",
+      "bytes": 255288,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/Qt6Core.dll",
+      "sha256": "d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653",
+      "bytes": 10363704,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/Qt6Gui.dll",
+      "sha256": "ae29b005f51b6850bf57fa06fced0dc8c7039fd6fafc3bfbcfe76e38adc7abf1",
+      "bytes": 9546552,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/Qt6Network.dll",
+      "sha256": "dd3512d1c5ed062d30c98426cd0a850f13e0cf31437afb5b0b474132b9c52922",
+      "bytes": 1751352,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/Qt6Svg.dll",
+      "sha256": "1eac8f7415b311a88cb3cb4e25c3098d0e059c24c831fbbb13f43a80f0df06b7",
+      "bytes": 609080,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/Qt6Widgets.dll",
+      "sha256": "ff0df9e2e6827e035f0731a4cedfc6333f4602bca00775e56346f27032406b74",
+      "bytes": 6497080,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/QtCore.pyd",
+      "sha256": "74f96322c5e9cea73aefd2ed5870e5275336b31f552fcd32f12fc81d23f1bc6f",
+      "bytes": 3345720,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/QtGui.pyd",
+      "sha256": "7bef20046045199c037b7cbfedaa1c5464730fa948b2c9ec8afbf718e63774d4",
+      "bytes": 3901240,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/QtNetwork.pyd",
+      "sha256": "c5038bb71fc9d57330fa2d8eeec65aab69fcf02687cc8f54dbfb5995cfec6a71",
+      "bytes": 1009464,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/QtWidgets.pyd",
+      "sha256": "f12f4ca641998e5706d5f7b0023147d573f0f2d2361e26dadf31bdbf05fbfd1d",
+      "bytes": 4857656,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/VCRUNTIME140.dll",
+      "sha256": "f893ae75a1a24eea174d982f94bc80ce2448201eaa919a73c0653a5657685de4",
+      "bytes": 116024,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/PySide6/VCRUNTIME140_1.dll",
+      "sha256": "48aa2783793ea18ab3c2c71d420d4fff9814e662a1ff810053c6e5250061a716",
+      "bytes": 41272,
+      "owner": "Qt/PySide6"
+    },
+    {
+      "path": "_internal/python3.dll",
+      "sha256": "afa6cc673944dcb13c91474d51e3c707c7ecc6ab0cc6005bc91e92eb02f488f1",
+      "bytes": 71120,
+      "owner": "CPython/runtime bundled dependencies (B3)"
+    },
+    {
+      "path": "_internal/python312.dll",
+      "sha256": "c19758a4dfccc35b5f4da513945dfab85e70bed8cdbf4bc25587662fa7f457d2",
+      "bytes": 6984656,
+      "owner": "CPython/runtime bundled dependencies (B3)"
+    },
+    {
+      "path": "_internal/regex/_regex.cp312-win_amd64.pyd",
+      "sha256": "3f3b3bea3dffe92380d06ecefc9b531b866cfc6bd91f96ab476b88540274a38e",
+      "bytes": 726016,
+      "owner": "regex"
+    },
+    {
+      "path": "_internal/safetensors/_safetensors_rust.pyd",
+      "sha256": "80a2b3f7658854ade855c5fb6192ee38fe2c7fbfd38d1c7c1f4d2c44f67125e4",
+      "bytes": 734720,
+      "owner": "safetensors/Rust dependencies (B4)"
+    },
+    {
+      "path": "_internal/select.pyd",
+      "sha256": "93feb301214cf43c51a22f8bde604b34b825be8b63f94f2a84be37e789e8cc40",
+      "bytes": 33744,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/shiboken6/MSVCP140.dll",
+      "sha256": "fd4a8c046fa3fea9ca6132f50cf8a56cf1e783b2d3093ba5c85fa063bc6b3845",
+      "bytes": 549176,
+      "owner": "shiboken6"
+    },
+    {
+      "path": "_internal/shiboken6/Shiboken.pyd",
+      "sha256": "2f6f3a694f675b1dafdae26903191613c02866ab48e02591ae34ca1a3b1284f1",
+      "bytes": 33592,
+      "owner": "shiboken6"
+    },
+    {
+      "path": "_internal/shiboken6/shiboken6.abi3.dll",
+      "sha256": "de3c6b2ed5f75c9ac0de4a6844b653b3b9d09263ce68c2b5fc25a96c5c3e8469",
+      "bytes": 394040,
+      "owner": "shiboken6"
+    },
+    {
+      "path": "_internal/shiboken6/VCRUNTIME140.dll",
+      "sha256": "de617641d82eac15595d2e39394163ac33e49bb032cf2c2ea0044ed39d3675e9",
+      "bytes": 116024,
+      "owner": "shiboken6"
+    },
+    {
+      "path": "_internal/shiboken6/VCRUNTIME140_1.dll",
+      "sha256": "fa577d54bd10a91e52472da784a619da6cf241af45f0a0c48b27e91fa0fe6104",
+      "bytes": 41272,
+      "owner": "shiboken6"
+    },
+    {
+      "path": "_internal/sqlite3.dll",
+      "sha256": "42e046b4d09ae9f5c1d37185d46e704bcbd57a073f69b2e34936aae5dfe4a848",
+      "bytes": 1622480,
+      "owner": "CPython/runtime bundled dependencies (B3)"
+    },
+    {
+      "path": "_internal/tokenizers/tokenizers.pyd",
+      "sha256": "7acb83f5b89136597e0d14b788d82917bf2870df94575bf77e12731c4e49c4df",
+      "bytes": 7395328,
+      "owner": "tokenizers/Rust dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/_C.cp312-win_amd64.pyd",
+      "sha256": "e436e07e4794ffbe04ff1ee84a0e2c15e83d6dee4cd916c77cb5322086363f63",
+      "bytes": 9728,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/bin/protoc.exe",
+      "sha256": "6f81a40f30cf6aceb906855fa943df86f842eaba211413a13a5e88564fc338ff",
+      "bytes": 2800128,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/c10.dll",
+      "sha256": "f7a31f005bf90149972a93049224a7ea780f289bfd54ff2f3009c4015b47409a",
+      "bytes": 1094656,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/libiomp5md.dll",
+      "sha256": "ee527c978999653eb18edc3ef372b4e95d4ad9a7691b6d08817be9d38c7d0a02",
+      "bytes": 1617536,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/libiompstubs5md.dll",
+      "sha256": "6920b610c0bd16b3acfc247791e986bfc36f247994ef0f6713fbbe1fb0e49214",
+      "bytes": 44160,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/shm.dll",
+      "sha256": "1836cfb7eb2fa71d9f56249a1b7ad86b7b69254f475c16f41e063aaa4ea05809",
+      "bytes": 15360,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/torch.dll",
+      "sha256": "8a6cf8bbf54cb7653c8140b524de673e7785e16053df53921da04845e995c9db",
+      "bytes": 9728,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/torch_cpu.dll",
+      "sha256": "beead1d98b0d1dd23bbc570f54e919b55adb7618baf5b434bce4c8d83e21ffb3",
+      "bytes": 305081856,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/torch_global_deps.dll",
+      "sha256": "b56491e5719a8d17e4ce0da11cfc0cf2ab02af5be2568126aef52e9970b3aa8e",
+      "bytes": 9728,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/torch_python.dll",
+      "sha256": "99c9b6ccfa750e7f5281347ddc1468544b3ce5f92851a0236713b1614505333a",
+      "bytes": 19521024,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/torch/lib/uv.dll",
+      "sha256": "fa569e682fc5fb7a8eb94c6829af9f30a569748dbbc6bce39735d48bc960bcf8",
+      "bytes": 195072,
+      "owner": "PyTorch/native dependencies (B4)"
+    },
+    {
+      "path": "_internal/unicodedata.pyd",
+      "sha256": "2ae50402855a599054d3b546f22c4dd6bbdfd86446aa8c775b68eeb36d3aab36",
+      "bytes": 1142736,
+      "owner": "CPython standard-library extensions (B3)"
+    },
+    {
+      "path": "_internal/vcruntime140.dll",
+      "sha256": "d5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066",
+      "bytes": 124544,
+      "owner": "Microsoft runtime (B3)"
+    },
+    {
+      "path": "_internal/vcruntime140_1.dll",
+      "sha256": "1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f",
+      "bytes": 49792,
+      "owner": "Microsoft runtime (B3)"
+    },
+    {
+      "path": "_internal/yaml/_yaml.cp312-win_amd64.pyd",
+      "sha256": "4fd0e84f50261ed0886cffcdd8008b055af3352546e649c3d741b50eae1f9b5f",
+      "bytes": 253952,
+      "owner": "PyYAML"
+    },
+    {
+      "path": "sti-check.exe",
+      "sha256": "bd0f394e23c0c903d0e94acd7aa20abeace644d897bb6018268b8c003c6283c9",
+      "bytes": 56404751,
+      "owner": "STI/PyInstaller bootloader"
+    },
+    {
+      "path": "sti-desktop.exe",
+      "sha256": "2d84be1136de1e9aa6064cf7307a59777345433a0dc89a974456c4f15e1bc404",
+      "bytes": 56401133,
+      "owner": "STI/PyInstaller bootloader"
+    }
+  ],
+  "components": [
+    {
+      "name": "anyio",
+      "version": "4.14.2",
+      "license_notices": [
+        {
+          "upstream_path": "anyio-4.14.2.dist-info/licenses/LICENSE",
+          "file": "5361ac9dc58f2ef5fd2e9b09c68297c17f04950909bbc8023bdb82eacf22c2b0.txt",
+          "sha256": "5361ac9dc58f2ef5fd2e9b09c68297c17f04950909bbc8023bdb82eacf22c2b0"
+        }
+      ],
+      "audit": {
+        "name": "anyio",
+        "version": "4.14.2",
+        "selected_license": "MIT",
+        "upstream": "https://github.com/agronholm/anyio",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "certifi",
+      "version": "2026.6.17",
+      "license_notices": [
+        {
+          "upstream_path": "certifi-2026.6.17.dist-info/licenses/LICENSE",
+          "file": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7.txt",
+          "sha256": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7"
+        }
+      ],
+      "audit": {
+        "name": "certifi",
+        "version": "2026.6.17",
+        "selected_license": "MPL-2.0",
+        "upstream": "https://github.com/certifi/python-certifi",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "click",
+      "version": "8.4.2",
+      "license_notices": [
+        {
+          "upstream_path": "click-8.4.2.dist-info/licenses/LICENSE.txt",
+          "file": "9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d.txt",
+          "sha256": "9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d"
+        }
+      ],
+      "audit": {
+        "name": "click",
+        "version": "8.4.2",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/pallets/click/",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "license_notices": [
+        {
+          "upstream_path": "colorama-0.4.6.dist-info/licenses/LICENSE.txt",
+          "file": "cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318.txt",
+          "sha256": "cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318"
+        }
+      ],
+      "audit": {
+        "name": "colorama",
+        "version": "0.4.6",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/tartley/colorama",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "filelock",
+      "version": "3.31.0",
+      "license_notices": [
+        {
+          "upstream_path": "filelock-3.31.0.dist-info/licenses/LICENSE",
+          "file": "608c89d5060ae9921adccf3236695bc654a9946e12323ef6c021dfa04e294d48.txt",
+          "sha256": "608c89d5060ae9921adccf3236695bc654a9946e12323ef6c021dfa04e294d48"
+        }
+      ],
+      "audit": {
+        "name": "filelock",
+        "version": "3.31.0",
+        "selected_license": "MIT",
+        "upstream": "https://github.com/tox-dev/py-filelock",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.6.0",
+      "license_notices": [
+        {
+          "upstream_path": "fsspec-2026.6.0.dist-info/licenses/LICENSE",
+          "file": "2dc35496ce53a7307915c008a844aad53e772b49b34cdd00445067691407ec94.txt",
+          "sha256": "2dc35496ce53a7307915c008a844aad53e772b49b34cdd00445067691407ec94"
+        }
+      ],
+      "audit": {
+        "name": "fsspec",
+        "version": "2026.6.0",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/fsspec/filesystem_spec",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "license_notices": [
+        {
+          "upstream_path": "h11-0.16.0.dist-info/licenses/LICENSE.txt",
+          "file": "37db5bb85926db28a427a25867f10b1232003aea1be69ccb851138adb8e6f361.txt",
+          "sha256": "37db5bb85926db28a427a25867f10b1232003aea1be69ccb851138adb8e6f361"
+        }
+      ],
+      "audit": {
+        "name": "h11",
+        "version": "0.16.0",
+        "selected_license": "MIT",
+        "upstream": "https://github.com/python-hyper/h11",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "hf-xet",
+      "version": "1.5.2",
+      "license_notices": [
+        {
+          "upstream_path": "hf_xet-1.5.2.dist-info/licenses/LICENSE",
+          "file": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6.txt",
+          "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6"
+        }
+      ],
+      "audit": {
+        "name": "hf-xet",
+        "version": "1.5.2",
+        "selected_license": "Apache-2.0",
+        "upstream": "https://github.com/huggingface/xet-core",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "license_notices": [
+        {
+          "upstream_path": "httpcore-1.0.9.dist-info/licenses/LICENSE.md",
+          "file": "fdcb59154c74cbaba16a11242f7740bea9f23d6feb5547917d8c5f94a80392a5.txt",
+          "sha256": "fdcb59154c74cbaba16a11242f7740bea9f23d6feb5547917d8c5f94a80392a5"
+        }
+      ],
+      "audit": {
+        "name": "httpcore",
+        "version": "1.0.9",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://www.encode.io/httpcore/",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "license_notices": [
+        {
+          "upstream_path": "httpx-0.28.1.dist-info/licenses/LICENSE.md",
+          "file": "4ec59d544f12b5f539a3a716fd321ac58ccd8030b465221f2c880200cdf28d8d.txt",
+          "sha256": "4ec59d544f12b5f539a3a716fd321ac58ccd8030b465221f2c880200cdf28d8d"
+        }
+      ],
+      "audit": {
+        "name": "httpx",
+        "version": "0.28.1",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/encode/httpx",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "huggingface_hub",
+      "version": "1.24.0",
+      "license_notices": [
+        {
+          "upstream_path": "huggingface_hub-1.24.0.dist-info/licenses/LICENSE",
+          "file": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+        }
+      ],
+      "audit": {
+        "name": "huggingface_hub",
+        "version": "1.24.0",
+        "selected_license": "Apache-2.0",
+        "upstream": "https://github.com/huggingface/huggingface_hub",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "idna",
+      "version": "3.18",
+      "license_notices": [
+        {
+          "upstream_path": "idna-3.18.dist-info/licenses/LICENSE.md",
+          "file": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04.txt",
+          "sha256": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04"
+        }
+      ],
+      "audit": {
+        "name": "idna",
+        "version": "3.18",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/kjd/idna",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.6",
+      "license_notices": [
+        {
+          "upstream_path": "jinja2-3.1.6.dist-info/licenses/LICENSE.txt",
+          "file": "3b49dcee4105eb37bac10faf1be260408fe85d252b8e9df2e0979fc1e094437b.txt",
+          "sha256": "3b49dcee4105eb37bac10faf1be260408fe85d252b8e9df2e0979fc1e094437b"
+        }
+      ],
+      "audit": {
+        "name": "Jinja2",
+        "version": "3.1.6",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/pallets/jinja/",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0",
+      "license_notices": [
+        {
+          "upstream_path": "markdown_it_py-4.2.0.dist-info/licenses/LICENSE",
+          "file": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484.txt",
+          "sha256": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484"
+        },
+        {
+          "upstream_path": "markdown_it_py-4.2.0.dist-info/licenses/LICENSE.markdown-it",
+          "file": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473.txt",
+          "sha256": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473"
+        }
+      ],
+      "audit": {
+        "name": "markdown-it-py",
+        "version": "4.2.0",
+        "selected_license": "MIT",
+        "upstream": "https://github.com/executablebooks/markdown-it-py",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.3",
+      "license_notices": [
+        {
+          "upstream_path": "markupsafe-3.0.3.dist-info/licenses/LICENSE.txt",
+          "file": "4631ec0db5fd90a547e336817264c6798214338146f8ac94b4a57f96ee8c9ec4.txt",
+          "sha256": "4631ec0db5fd90a547e336817264c6798214338146f8ac94b4a57f96ee8c9ec4"
+        }
+      ],
+      "audit": {
+        "name": "MarkupSafe",
+        "version": "3.0.3",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/pallets/markupsafe/",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "license_notices": [
+        {
+          "upstream_path": "mdurl-0.1.2.dist-info/LICENSE",
+          "file": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955.txt",
+          "sha256": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955"
+        }
+      ],
+      "audit": {
+        "name": "mdurl",
+        "version": "0.1.2",
+        "selected_license": "MIT",
+        "upstream": "https://github.com/executablebooks/mdurl",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "license_notices": [
+        {
+          "upstream_path": "mpmath-1.3.0.dist-info/LICENSE",
+          "file": "c26cae81da4508e5e249985777a33821f183223ebb74d7f8cfbf90fe7eef2fb7.txt",
+          "sha256": "c26cae81da4508e5e249985777a33821f183223ebb74d7f8cfbf90fe7eef2fb7"
+        }
+      ],
+      "audit": {
+        "name": "mpmath",
+        "version": "1.3.0",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/fredrik-johansson/mpmath",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "networkx",
+      "version": "3.6.1",
+      "license_notices": [
+        {
+          "upstream_path": "networkx-3.6.1.dist-info/licenses/LICENSE.txt",
+          "file": "3cf7c3a179d817b23b8b8568211769fefdf93797d207d984b8b2fa24d0220b33.txt",
+          "sha256": "3cf7c3a179d817b23b8b8568211769fefdf93797d207d984b8b2fa24d0220b33"
+        }
+      ],
+      "audit": {
+        "name": "networkx",
+        "version": "3.6.1",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://networkx.org/",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.1",
+      "license_notices": [
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/LICENSE.txt",
+          "file": "a804dff0ead9fadc5293456410bcbfc32bf024be9c4513459663fb7b442d2341.txt",
+          "sha256": "a804dff0ead9fadc5293456410bcbfc32bf024be9c4513459663fb7b442d2341"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt",
+          "file": "d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150.txt",
+          "sha256": "d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING",
+          "file": "aea41976c720f91bd19725c16916a1ace40eb1ea42620d340e587a5de4bbcea0.txt",
+          "sha256": "aea41976c720f91bd19725c16916a1ace40eb1ea42620d340e587a5de4bbcea0"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/highway/LICENSE",
+          "file": "d208152e2777ffd0126eacc1bd21c0320d69e4e6b622d21a2a12a47e8ef73763.txt",
+          "sha256": "d208152e2777ffd0126eacc1bd21c0320d69e4e6b622d21a2a12a47e8ef73763"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt",
+          "file": "b0fd592d4ead563148e3977e7b589169d46a5ef2ff133c755a81af880a3fc919.txt",
+          "sha256": "b0fd592d4ead563148e3977e7b589169d46a5ef2ff133c755a81af880a3fc919"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+          "file": "a732977853530066790c42817087f4829b518dd98d340c916acbfd227e39d3cb.txt",
+          "sha256": "a732977853530066790c42817087f4829b518dd98d340c916acbfd227e39d3cb"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/_core/src/umath/svml/LICENSE",
+          "file": "585483905b13d4b42f800c55ba99e89d6e2e33ccd5f503e201c07531d148ff41.txt",
+          "sha256": "585483905b13d4b42f800c55ba99e89d6e2e33ccd5f503e201c07531d148ff41"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+          "file": "8db000e158c162e7249787852d8c69764706502ccee725c06641b31c1e95c8af.txt",
+          "sha256": "8db000e158c162e7249787852d8c69764706502ccee725c06641b31c1e95c8af"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt",
+          "file": "19060ef465e1797d682ee0fc3081bd25ab1395e995e43d25c9d13c95d9a3cd6b.txt",
+          "sha256": "19060ef465e1797d682ee0fc3081bd25ab1395e995e43d25c9d13c95d9a3cd6b"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/ma/LICENSE",
+          "file": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7.txt",
+          "sha256": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/random/LICENSE.md",
+          "file": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a.txt",
+          "sha256": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+          "file": "cf5619f25b112d5ce7c896efffc8e610bcb345dfadcc19f2c1460aa48fff2c9e.txt",
+          "sha256": "cf5619f25b112d5ce7c896efffc8e610bcb345dfadcc19f2c1460aa48fff2c9e"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+          "file": "92c10699884321f1c2947fe2a70ab23b0fbf1507f756d89dd08f38c61fc3d4fa.txt",
+          "sha256": "92c10699884321f1c2947fe2a70ab23b0fbf1507f756d89dd08f38c61fc3d4fa"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+          "file": "41190663b77bee5302386495a07b7eabfbfa571aa0ae2f11da6764162062fc4f.txt",
+          "sha256": "41190663b77bee5302386495a07b7eabfbfa571aa0ae2f11da6764162062fc4f"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+          "file": "322ac46d870c8aeead6c53adcccc839296fb3c8e456eae155081297daf7f8013.txt",
+          "sha256": "322ac46d870c8aeead6c53adcccc839296fb3c8e456eae155081297daf7f8013"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+          "file": "28cad82ce1379dc529df30da78ec012d7d0d1d576b03ddcb93388aee53659f59.txt",
+          "sha256": "28cad82ce1379dc529df30da78ec012d7d0d1d576b03ddcb93388aee53659f59"
+        },
+        {
+          "upstream_path": "numpy-2.5.1.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md",
+          "file": "454ec7350e478e037061850b67395753b425b1cb0a34bbc26290b020bf89d763.txt",
+          "sha256": "454ec7350e478e037061850b67395753b425b1cb0a34bbc26290b020bf89d763"
+        },
+        {
+          "upstream_path": "numpy/_core/include/numpy/random/LICENSE.txt",
+          "file": "d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150.txt",
+          "sha256": "d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150"
+        },
+        {
+          "upstream_path": "numpy/ma/LICENSE",
+          "file": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7.txt",
+          "sha256": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7"
+        },
+        {
+          "upstream_path": "numpy/random/LICENSE.md",
+          "file": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a.txt",
+          "sha256": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a"
+        }
+      ],
+      "audit": {
+        "name": "numpy",
+        "version": "2.5.1",
+        "selected_license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+        "upstream": "https://numpy.org",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "packaging",
+      "version": "26.2",
+      "license_notices": [
+        {
+          "upstream_path": "packaging-26.2.dist-info/licenses/LICENSE",
+          "file": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48.txt",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48"
+        },
+        {
+          "upstream_path": "packaging-26.2.dist-info/licenses/LICENSE.APACHE",
+          "file": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594.txt",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        },
+        {
+          "upstream_path": "packaging-26.2.dist-info/licenses/LICENSE.BSD",
+          "file": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5.txt",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5"
+        },
+        {
+          "upstream_path": "packaging/licenses/__init__.py",
+          "file": "fc9c745d1883ff9f296a5b169f22eb2ee879f59a4608f20f5cb29d668f4e26f4.txt",
+          "sha256": "fc9c745d1883ff9f296a5b169f22eb2ee879f59a4608f20f5cb29d668f4e26f4"
+        },
+        {
+          "upstream_path": "packaging/licenses/__pycache__/__init__.cpython-312.pyc",
+          "file": "941755416d4b54cf7acb3d93e5114e860f5864b0120bf337782a6c6c743e9dd0.txt",
+          "sha256": "941755416d4b54cf7acb3d93e5114e860f5864b0120bf337782a6c6c743e9dd0"
+        },
+        {
+          "upstream_path": "packaging/licenses/__pycache__/_spdx.cpython-312.pyc",
+          "file": "9becdeb185763b89254e7e067c9628a69c45090b71856f52a797d5f9fa80e627.txt",
+          "sha256": "9becdeb185763b89254e7e067c9628a69c45090b71856f52a797d5f9fa80e627"
+        },
+        {
+          "upstream_path": "packaging/licenses/_spdx.py",
+          "file": "596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314.txt",
+          "sha256": "596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314"
+        }
+      ],
+      "audit": {
+        "name": "packaging",
+        "version": "26.2",
+        "selected_license": "Apache-2.0 OR BSD-2-Clause",
+        "upstream": "https://github.com/pypa/packaging",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "py3langid",
+      "version": "0.4.0",
+      "license_notices": [
+        {
+          "upstream_path": "py3langid-0.4.0.dist-info/licenses/LICENSE",
+          "file": "1694ffed7731df5c6e3d95ad5aa2398bf64f9377636ead34a23f385dd3598a0c.txt",
+          "sha256": "1694ffed7731df5c6e3d95ad5aa2398bf64f9377636ead34a23f385dd3598a0c"
+        }
+      ],
+      "audit": {
+        "name": "py3langid",
+        "version": "0.4.0",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/adbar/py3langid",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "pyinstaller",
+      "version": "6.22.3",
+      "license_notices": [
+        {
+          "upstream_path": "pyinstaller-6.22.3.dist-info/licenses/COPYING.txt",
+          "file": "0598064c7d2718e38d7914a7d08343b2fa008e3bea9ebba2aa7a6ffa5900dd64.txt",
+          "sha256": "0598064c7d2718e38d7914a7d08343b2fa008e3bea9ebba2aa7a6ffa5900dd64"
+        }
+      ],
+      "audit": {
+        "name": "pyinstaller",
+        "version": "6.22.3",
+        "selected_license": "GPL-2.0-or-later with PyInstaller bootloader exception; Apache-2.0 runtime hooks and fake modules",
+        "upstream": "https://pyinstaller.org",
+        "installed_evidence": "6.22.3 COPYING.txt and PyInstaller/fake-modules/_pyi_rth_utils/__init__.py Apache-2.0 header; material hashes in frozen inventory",
+        "obligations": "Preserve COPYING.txt including Apache-2.0, GPL terms and the actual bootloader exception; preserve runtime-helper copyright attribution. The exception is not a blanket waiver for separately distributed or modified PyInstaller.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "PySide6_Essentials",
+      "version": "6.11.2",
+      "license_notices": [
+        {
+          "upstream_path": "pyside6_essentials-6.11.2.dist-info/licenses/LicenseRef-Qt-Commercial.txt",
+          "file": "4f54763ac0fe2abd8f7f8d8fe370a94a08ebf84786aa0b91045bd6628deb08a3.txt",
+          "sha256": "4f54763ac0fe2abd8f7f8d8fe370a94a08ebf84786aa0b91045bd6628deb08a3"
+        }
+      ],
+      "audit": {
+        "name": "PySide6_Essentials",
+        "version": "6.11.2",
+        "selected_license": "LGPL-3.0-only",
+        "upstream": "https://pyside.org",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "pytest",
+      "version": "8.4.2",
+      "license_notices": [
+        {
+          "upstream_path": "pytest-8.4.2.dist-info/licenses/AUTHORS",
+          "file": "c2017d6288262cf9c39aecc8e51df3422a9f2bbca1e4b55d28491022070c7577.txt",
+          "sha256": "c2017d6288262cf9c39aecc8e51df3422a9f2bbca1e4b55d28491022070c7577"
+        },
+        {
+          "upstream_path": "pytest-8.4.2.dist-info/licenses/LICENSE",
+          "file": "ca836a5f9ecca3b2f350230faa20a48fb8b145653b5568d784862df864706b9b.txt",
+          "sha256": "ca836a5f9ecca3b2f350230faa20a48fb8b145653b5568d784862df864706b9b"
+        }
+      ],
+      "audit": {
+        "name": "pytest",
+        "version": "8.4.2",
+        "selected_license": "MIT",
+        "upstream": "https://docs.pytest.org/en/latest/",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "license_notices": [
+        {
+          "upstream_path": "pyyaml-6.0.3.dist-info/licenses/LICENSE",
+          "file": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4.txt",
+          "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4"
+        }
+      ],
+      "audit": {
+        "name": "PyYAML",
+        "version": "6.0.3",
+        "selected_license": "MIT",
+        "upstream": "https://github.com/yaml/pyyaml",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "regex",
+      "version": "2026.7.10",
+      "license_notices": [
+        {
+          "upstream_path": "regex-2026.7.10.dist-info/licenses/LICENSE.txt",
+          "file": "3d220c06594b826bbabf110312f60f385f99e57e529fa4b9e536f79091f8b4c7.txt",
+          "sha256": "3d220c06594b826bbabf110312f60f385f99e57e529fa4b9e536f79091f8b4c7"
+        }
+      ],
+      "audit": {
+        "name": "regex",
+        "version": "2026.7.10",
+        "selected_license": "Apache-2.0 AND CNRI-Python",
+        "upstream": "https://github.com/mrabarnett/mrab-regex",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0",
+      "license_notices": [
+        {
+          "upstream_path": "rich-15.0.0.dist-info/licenses/LICENSE",
+          "file": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15.txt",
+          "sha256": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15"
+        }
+      ],
+      "audit": {
+        "name": "rich",
+        "version": "15.0.0",
+        "selected_license": "MIT",
+        "upstream": "https://github.com/Textualize/rich",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "license_notices": [
+        {
+          "upstream_path": "safetensors-0.8.0.dist-info/licenses/LICENSE",
+          "file": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6.txt",
+          "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6"
+        }
+      ],
+      "audit": {
+        "name": "safetensors",
+        "version": "0.8.0",
+        "selected_license": "Apache-2.0",
+        "upstream": "https://github.com/huggingface/safetensors",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "setuptools",
+      "version": "83.0.0",
+      "license_notices": [
+        {
+          "upstream_path": "setuptools-83.0.0.dist-info/licenses/LICENSE",
+          "file": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741.txt",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/autocommand-2.2.2.dist-info/LICENSE",
+          "file": "ade78d04982d69972d444a8e14a94f87a2334dd3855cc80348ea8e240aa0df2d.txt",
+          "sha256": "ade78d04982d69972d444a8e14a94f87a2334dd3855cc80348ea8e240aa0df2d"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
+          "file": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741.txt",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
+          "file": "458502e12d97bbf64438606a20044aa85eb05fb0a8a807bb35dbec253fd1fc04.txt",
+          "sha256": "458502e12d97bbf64438606a20044aa85eb05fb0a8a807bb35dbec253fd1fc04"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
+          "file": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741.txt",
+          "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
+          "file": "9755a18519666e5f0f4cae3daad3d7012bcae48a600b31237d75e9fe134e6683.txt",
+          "sha256": "9755a18519666e5f0f4cae3daad3d7012bcae48a600b31237d75e9fe134e6683"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
+          "file": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d.txt",
+          "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
+          "file": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46.txt",
+          "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE",
+          "file": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48.txt",
+          "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.APACHE",
+          "file": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594.txt",
+          "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/packaging-26.0.dist-info/licenses/LICENSE.BSD",
+          "file": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5.txt",
+          "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/packaging/licenses/__init__.py",
+          "file": "4f05cb1d9097c1281d17044b3f15bad364fa99289eba74851cce9fa7ca605bbf.txt",
+          "sha256": "4f05cb1d9097c1281d17044b3f15bad364fa99289eba74851cce9fa7ca605bbf"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/packaging/licenses/__pycache__/__init__.cpython-312.pyc",
+          "file": "429dd4c6a510e1cf667fc2d91b15c266e97ae5df7782e6081ab1b7fdcfc30f90.txt",
+          "sha256": "429dd4c6a510e1cf667fc2d91b15c266e97ae5df7782e6081ab1b7fdcfc30f90"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/packaging/licenses/__pycache__/_spdx.cpython-312.pyc",
+          "file": "d2812696c66896a59065e2267b70afc04e3b9aed1259bb0c94471566cec0375a.txt",
+          "sha256": "d2812696c66896a59065e2267b70afc04e3b9aed1259bb0c94471566cec0375a"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/packaging/licenses/_spdx.py",
+          "file": "596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314.txt",
+          "sha256": "596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
+          "file": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6.txt",
+          "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
+          "file": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe.txt",
+          "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
+          "file": "30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654.txt",
+          "sha256": "30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654"
+        },
+        {
+          "upstream_path": "setuptools/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE",
+          "file": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d.txt",
+          "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d"
+        },
+        {
+          "upstream_path": "setuptools/config/NOTICE",
+          "file": "2dddf08818297a3b89d43d95ff659d8da85741108c9136dfa3a4d856c0623bd8.txt",
+          "sha256": "2dddf08818297a3b89d43d95ff659d8da85741108c9136dfa3a4d856c0623bd8"
+        },
+        {
+          "upstream_path": "setuptools/config/_validate_pyproject/NOTICE",
+          "file": "09c9bcea95ca086f8bc5bed174e40bc835b297d40fb5f86bbbb570fe0a5581a7.txt",
+          "sha256": "09c9bcea95ca086f8bc5bed174e40bc835b297d40fb5f86bbbb570fe0a5581a7"
+        }
+      ],
+      "audit": {
+        "name": "setuptools",
+        "version": "83.0.0",
+        "selected_license": "MIT",
+        "upstream": "https://github.com/pypa/setuptools",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "shiboken6",
+      "version": "6.11.2",
+      "license_notices": [
+        {
+          "upstream_path": "shiboken6-6.11.2.dist-info/licenses/LicenseRef-Qt-Commercial.txt",
+          "file": "4f54763ac0fe2abd8f7f8d8fe370a94a08ebf84786aa0b91045bd6628deb08a3.txt",
+          "sha256": "4f54763ac0fe2abd8f7f8d8fe370a94a08ebf84786aa0b91045bd6628deb08a3"
+        }
+      ],
+      "audit": {
+        "name": "shiboken6",
+        "version": "6.11.2",
+        "selected_license": "LGPL-3.0-only",
+        "upstream": "https://pyside.org",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "license_notices": [
+        {
+          "upstream_path": "sympy-1.14.0.dist-info/licenses/AUTHORS",
+          "file": "82b1038521b0696c63c90b31ed4a0a2c9c4c16871c648b157b07ca44b6f18f8d.txt",
+          "sha256": "82b1038521b0696c63c90b31ed4a0a2c9c4c16871c648b157b07ca44b6f18f8d"
+        },
+        {
+          "upstream_path": "sympy-1.14.0.dist-info/licenses/LICENSE",
+          "file": "07a5e9819f727b4986ad2829c7a29a6320d42575f720eb24d71b7fef573a0286.txt",
+          "sha256": "07a5e9819f727b4986ad2829c7a29a6320d42575f720eb24d71b7fef573a0286"
+        },
+        {
+          "upstream_path": "sympy/parsing/latex/LICENSE.txt",
+          "file": "007bc30a58fa40a996e772047120de4eaf31f5110e4f9c3b5f93fcdfbe2eaca1.txt",
+          "sha256": "007bc30a58fa40a996e772047120de4eaf31f5110e4f9c3b5f93fcdfbe2eaca1"
+        }
+      ],
+      "audit": {
+        "name": "sympy",
+        "version": "1.14.0",
+        "selected_license": "BSD-3-Clause",
+        "upstream": "https://github.com/sympy/sympy",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.22.2",
+      "license_notices": [],
+      "audit": {
+        "name": "tokenizers",
+        "version": "0.22.2",
+        "selected_license": "Apache-2.0",
+        "upstream": "https://github.com/huggingface/tokenizers",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "torch",
+      "version": "2.13.0",
+      "license_notices": [
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/LICENSE",
+          "file": "0fc92425d130d9c87a5eb7427082e3afdbff6ef169bc678e15abba4c2d37c934.txt",
+          "sha256": "0fc92425d130d9c87a5eb7427082e3afdbff6ef169bc678e15abba4c2d37c934"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/FP16/LICENSE",
+          "file": "68349589306bdfa3631ac7f84633956bf21b6a448ed5e43383ea75a8a5f54e4c.txt",
+          "sha256": "68349589306bdfa3631ac7f84633956bf21b6a448ed5e43383ea75a8a5f54e4c"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/FXdiv/LICENSE",
+          "file": "9e7b48284b1aef91999d1967d093711bab8f3bbbaf31e0670ab7a3af077c0a2b.txt",
+          "sha256": "9e7b48284b1aef91999d1967d093711bab8f3bbbaf31e0670ab7a3af077c0a2b"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/NNPACK/LICENSE",
+          "file": "a4dadeb3d59219de6cdf5cb6bf920760103eed9ae5af2e71b0e8462645397b66.txt",
+          "sha256": "a4dadeb3d59219de6cdf5cb6bf920760103eed9ae5af2e71b0e8462645397b66"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/NVTX/LICENSE.txt",
+          "file": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8.txt",
+          "sha256": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/NVTX/docs/LICENSE.txt",
+          "file": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8.txt",
+          "sha256": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/NVTX/python/LICENSE.txt",
+          "file": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8.txt",
+          "sha256": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/NVTX/tools/docs/github-markdown-css/LICENSE",
+          "file": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f.txt",
+          "sha256": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/VulkanMemoryAllocator/LICENSE.txt",
+          "file": "e5fc8b0b0357a75d63649c8f2552576aaa6941c361a013710bb53afc64d3a8aa.txt",
+          "sha256": "e5fc8b0b0357a75d63649c8f2552576aaa6941c361a013710bb53afc64d3a8aa"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/XNNPACK/LICENSE",
+          "file": "4805a18e3c617424da5b7f6d8b9fde3df2fb6a5e26a6b6663a6cdb66db664d8c.txt",
+          "sha256": "4805a18e3c617424da5b7f6d8b9fde3df2fb6a5e26a6b6663a6cdb66db664d8c"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/aiter/3rdparty/composable_kernel/LICENSE",
+          "file": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f.txt",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/aiter/3rdparty/composable_kernel/docs/LICENSE.rst",
+          "file": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06.txt",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/aiter/LICENSE",
+          "file": "844e3a38ca6f748e10eb63f07eb343ddca3b5a0a6bb40b0f621fcc54ea03deb3.txt",
+          "sha256": "844e3a38ca6f748e10eb63f07eb343ddca3b5a0a6bb40b0f621fcc54ea03deb3"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/benchmark/LICENSE",
+          "file": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5.txt",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/composable_kernel/LICENSE",
+          "file": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f.txt",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/composable_kernel/docs/LICENSE.rst",
+          "file": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06.txt",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/cpp-httplib/LICENSE",
+          "file": "bb546eae5924d8ee842e0e567e6d533c5824bdebccf605f99a5b3429034e6697.txt",
+          "sha256": "bb546eae5924d8ee842e0e567e6d533c5824bdebccf605f99a5b3429034e6697"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/cpuinfo/LICENSE",
+          "file": "8477bdd6a4d9f5178e5dfda1e32239c7b09c9d6da3804ae3e5c1a80210c0dd21.txt",
+          "sha256": "8477bdd6a4d9f5178e5dfda1e32239c7b09c9d6da3804ae3e5c1a80210c0dd21"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/cpuinfo/deps/clog/LICENSE",
+          "file": "8c29231fd0034d4b1caaae8c0a63bce71f95cd8c4b0494c8588930b75c3d2155.txt",
+          "sha256": "8c29231fd0034d4b1caaae8c0a63bce71f95cd8c4b0494c8588930b75c3d2155"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/cudnn_frontend/LICENSE.txt",
+          "file": "b6fe452605fe29245f0cbafa724b42df94a5e170bedb9d45bc9cfaa4883ad907.txt",
+          "sha256": "b6fe452605fe29245f0cbafa724b42df94a5e170bedb9d45bc9cfaa4883ad907"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/cutlass/LICENSE.txt",
+          "file": "48eb34a9124af8fdd2ad1858a64be9827ebc42e5389c6dd4b5a93e411ac7e693.txt",
+          "sha256": "48eb34a9124af8fdd2ad1858a64be9827ebc42e5389c6dd4b5a93e411ac7e693"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/cutlass/python/LICENSE.txt",
+          "file": "932c16f6c4f0187eda3af18df07300f8807eda85ca974bf46c5ed11fd91e5c2f.txt",
+          "sha256": "932c16f6c4f0187eda3af18df07300f8807eda85ca974bf46c5ed11fd91e5c2f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/LICENSE",
+          "file": "5d5d5b022ecf828c796a64ad7afcfd62971bf58a52b71668cd48137ca02824c5.txt",
+          "sha256": "5d5d5b022ecf828c796a64ad7afcfd62971bf58a52b71668cd48137ca02824c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/external/composable_kernel/LICENSE",
+          "file": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f.txt",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/external/composable_kernel/docs/LICENSE.rst",
+          "file": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06.txt",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/external/cpuinfo/LICENSE",
+          "file": "8477bdd6a4d9f5178e5dfda1e32239c7b09c9d6da3804ae3e5c1a80210c0dd21.txt",
+          "sha256": "8477bdd6a4d9f5178e5dfda1e32239c7b09c9d6da3804ae3e5c1a80210c0dd21"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/external/cpuinfo/deps/clog/LICENSE",
+          "file": "8c29231fd0034d4b1caaae8c0a63bce71f95cd8c4b0494c8588930b75c3d2155.txt",
+          "sha256": "8c29231fd0034d4b1caaae8c0a63bce71f95cd8c4b0494c8588930b75c3d2155"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/external/cutlass/LICENSE.txt",
+          "file": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8.txt",
+          "sha256": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/external/cutlass/python/LICENSE.txt",
+          "file": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68.txt",
+          "sha256": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/external/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/external/hipify_torch/LICENSE.txt",
+          "file": "e63d8a0f5ab5cc02d848c6ef51b7bea58644a07223aa0acdb905260a1031b2e6.txt",
+          "sha256": "e63d8a0f5ab5cc02d848c6ef51b7bea58644a07223aa0acdb905260a1031b2e6"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/fbgemm_gpu/docs/src/general/LICENSE.rst",
+          "file": "4f8f489489bc1ac9608b13243e6dbeb28070cefd6da94de0784cc919afbf10f6.txt",
+          "sha256": "4f8f489489bc1ac9608b13243e6dbeb28070cefd6da94de0784cc919afbf10f6"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/fbgemm_gpu/experimental/hstu/LICENSE",
+          "file": "f915822057ab8cea4648efaf58b1a1eab265d51b4b56fc976ff11cd9bacd319a.txt",
+          "sha256": "f915822057ab8cea4648efaf58b1a1eab265d51b4b56fc976ff11cd9bacd319a"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/fbgemm_gpu/src/quantize_ops/mx/LICENSE",
+          "file": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b.txt",
+          "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fbgemm/fbgemm_gpu/test/quantize/mx/LICENSE",
+          "file": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b.txt",
+          "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/LICENSE",
+          "file": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add.txt",
+          "sha256": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/csrc/composable_kernel/LICENSE",
+          "file": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f.txt",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/csrc/composable_kernel/docs/LICENSE.rst",
+          "file": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06.txt",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/csrc/cutlass/LICENSE.txt",
+          "file": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8.txt",
+          "sha256": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/csrc/cutlass/python/LICENSE.txt",
+          "file": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68.txt",
+          "sha256": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/flash_attn/cute/LICENSE",
+          "file": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add.txt",
+          "sha256": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/third_party/aiter/3rdparty/composable_kernel/LICENSE",
+          "file": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f.txt",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/third_party/aiter/3rdparty/composable_kernel/docs/LICENSE.rst",
+          "file": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06.txt",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flash-attention/third_party/aiter/LICENSE",
+          "file": "844e3a38ca6f748e10eb63f07eb343ddca3b5a0a6bb40b0f621fcc54ea03deb3.txt",
+          "sha256": "844e3a38ca6f748e10eb63f07eb343ddca3b5a0a6bb40b0f621fcc54ea03deb3"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flatbuffers/LICENSE",
+          "file": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5.txt",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flatbuffers/dart/LICENSE",
+          "file": "35cf0c0dca02767d12b9a8c12ae1b6a1c08045f220df4a52b0e01563a568fe6b.txt",
+          "sha256": "35cf0c0dca02767d12b9a8c12ae1b6a1c08045f220df4a52b0e01563a568fe6b"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/flatbuffers/swift/LICENSE",
+          "file": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5.txt",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/fmt/LICENSE",
+          "file": "25b5db04aa6070c12ac518b91cbd0a59725c050ecb091456e6ebc3d3eeb369cf.txt",
+          "sha256": "25b5db04aa6070c12ac518b91cbd0a59725c050ecb091456e6ebc3d3eeb369cf"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/gemmlowp/gemmlowp/LICENSE",
+          "file": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5.txt",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/gloo/LICENSE",
+          "file": "6247f690b423835966eba51cad47b4c7d6a72ca226733dd1c473e4624fe6bb23.txt",
+          "sha256": "6247f690b423835966eba51cad47b4c7d6a72ca226733dd1c473e4624fe6bb23"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/ideep/LICENSE",
+          "file": "e1b43a11adfb7a5bd52089243a273ab85f0a695d0437bb34a418969501392573.txt",
+          "sha256": "e1b43a11adfb7a5bd52089243a273ab85f0a695d0437bb34a418969501392573"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/ideep/mkl-dnn/LICENSE",
+          "file": "b1dd911e534a75dd4dfd8dbc11a3193bd177c8390e7fcf462f98d2c8c235e112.txt",
+          "sha256": "b1dd911e534a75dd4dfd8dbc11a3193bd177c8390e7fcf462f98d2c8c235e112"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/ideep/mkl-dnn/third_party/gtest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/ideep/mkl-dnn/third_party/opencl/LICENSE",
+          "file": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5.txt",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/LICENSE",
+          "file": "97729794764240cc12e0e22fe31b0cea824741c601bd09bd91b832e285e1f8c5.txt",
+          "sha256": "97729794764240cc12e0e22fe31b0cea824741c601bd09bd91b832e285e1f8c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/LICENSE",
+          "file": "f08a94bfb0bdc1d7f1cb59badaf0f8c551b10db871185622dbf1fd036affa9cb.txt",
+          "sha256": "f08a94bfb0bdc1d7f1cb59badaf0f8c551b10db871185622dbf1fd036affa9cb"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/DCGM/LICENSE",
+          "file": "afdc94cf2ce0ee28688f28a4ac05c945e15772bdce245509e0f7a10f3f886351.txt",
+          "sha256": "afdc94cf2ce0ee28688f28a4ac05c945e15772bdce245509e0f7a10f3f886351"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/DCGM/testing/python3/libs_3rdparty/colorama/LICENSE.txt",
+          "file": "9ad71830669f2e1c684236831d2450892178e7a0801bda03aa1eafe3a0fd87ed.txt",
+          "sha256": "9ad71830669f2e1c684236831d2450892178e7a0801bda03aa1eafe3a0fd87ed"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/cpr/LICENSE",
+          "file": "92bfc9664aff7685ef84abedd292d94d851a6c4502d1ddd45b7e833ba7952814.txt",
+          "sha256": "92bfc9664aff7685ef84abedd292d94d851a6c4502d1ddd45b7e833ba7952814"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/cpr/test/LICENSE",
+          "file": "a694e69af9d08c8fb14e728ad4864c8b585ae9583d7707344e4dad5a35edae92.txt",
+          "sha256": "a694e69af9d08c8fb14e728ad4864c8b585ae9583d7707344e4dad5a35edae92"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/fmt/LICENSE.rst",
+          "file": "4e79fcc686dacf1a83eeddf1813ce28bbac5bd67a8b067d740c8fcd8c8405e1d.txt",
+          "sha256": "4e79fcc686dacf1a83eeddf1813ce28bbac5bd67a8b067d740c8fcd8c8405e1d"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/json/test/thirdparty/doctest/LICENSE.txt",
+          "file": "33cc9304b7e84187407cdbd7677216bdf460eb51364d42328bdb812a521e30c4.txt",
+          "sha256": "33cc9304b7e84187407cdbd7677216bdf460eb51364d42328bdb812a521e30c4"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/json/third_party/cpplint/LICENSE",
+          "file": "17a82fba896445d028046d97aac3a3d0f6ccdd811a1d48d0a454512d422591b7.txt",
+          "sha256": "17a82fba896445d028046d97aac3a3d0f6ccdd811a1d48d0a454512d422591b7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/pfs/LICENSE",
+          "file": "378270e2aff76eb93637baf4bdbb7313940c897d25d5086b80db27fada9d37b2.txt",
+          "sha256": "378270e2aff76eb93637baf4bdbb7313940c897d25d5086b80db27fada9d37b2"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/civetweb/examples/rest/cJSON/LICENSE",
+          "file": "a36dda207c36db5818729c54e7ad4e8b0c6fba847491ba64f372c1a2037b6d5c.txt",
+          "sha256": "a36dda207c36db5818729c54e7ad4e8b0c6fba847491ba64f372c1a2037b6d5c"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/civetweb/src/third_party/duktape-1.5.2/LICENSE.txt",
+          "file": "f95a124945067d1143f1c6de9a990f2db2426456408ee0f0bfe6de2f568a899f.txt",
+          "sha256": "f95a124945067d1143f1c6de9a990f2db2426456408ee0f0bfe6de2f568a899f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/civetweb/src/third_party/duktape-1.8.0/LICENSE.txt",
+          "file": "5358498534dac625c89a69c10becf3dcc40f9af58e6b69ee358ebdf6934f49c6.txt",
+          "sha256": "5358498534dac625c89a69c10becf3dcc40f9af58e6b69ee358ebdf6934f49c6"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/3rdparty/googletest/googlemock/scripts/generator/LICENSE",
+          "file": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2.txt",
+          "sha256": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/dynolog/third_party/prometheus-cpp/LICENSE",
+          "file": "6d7ce74f3baf30e712b96afdd88d9e3b6caff93a1281d220ba0f654f60fe1a90.txt",
+          "sha256": "6d7ce74f3baf30e712b96afdd88d9e3b6caff93a1281d220ba0f654f60fe1a90"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/fmt/LICENSE",
+          "file": "25b5db04aa6070c12ac518b91cbd0a59725c050ecb091456e6ebc3d3eeb369cf.txt",
+          "sha256": "25b5db04aa6070c12ac518b91cbd0a59725c050ecb091456e6ebc3d3eeb369cf"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/kineto/libkineto/third_party/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/llvm-openmp/LICENSE.txt",
+          "file": "eb3eab74fe9245818659556acf23e81b8c8a24915a4a244a23804f3fcdf1fd9c.txt",
+          "sha256": "eb3eab74fe9245818659556acf23e81b8c8a24915a4a244a23804f3fcdf1fd9c"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mimalloc/LICENSE",
+          "file": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9.txt",
+          "sha256": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/miniz-3.0.2/LICENSE",
+          "file": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3.txt",
+          "sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mslk/LICENSE",
+          "file": "322bba2f33f594948052de342fd7d5bd26892e2a92ba75fbb5a433eff0b229c7.txt",
+          "sha256": "322bba2f33f594948052de342fd7d5bd26892e2a92ba75fbb5a433eff0b229c7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mslk/external/composable_kernel/LICENSE",
+          "file": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f.txt",
+          "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mslk/external/composable_kernel/docs/LICENSE.rst",
+          "file": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06.txt",
+          "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mslk/external/cutlass/LICENSE.txt",
+          "file": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8.txt",
+          "sha256": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mslk/external/cutlass/python/LICENSE.txt",
+          "file": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68.txt",
+          "sha256": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mslk/external/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mslk/external/hipify_torch/LICENSE.txt",
+          "file": "e63d8a0f5ab5cc02d848c6ef51b7bea58644a07223aa0acdb905260a1031b2e6.txt",
+          "sha256": "e63d8a0f5ab5cc02d848c6ef51b7bea58644a07223aa0acdb905260a1031b2e6"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/mslk/mslk/attention/flash_attn/LICENSE",
+          "file": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add.txt",
+          "sha256": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/onnx/LICENSE",
+          "file": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5.txt",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/onnx/third_party/pybind11/LICENSE",
+          "file": "5494773a5dcf654c0c3c844fbb11cfc4f898ea0ea44cf467f29e5c99097da6e7.txt",
+          "sha256": "5494773a5dcf654c0c3c844fbb11cfc4f898ea0ea44cf467f29e5c99097da6e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/protobuf/LICENSE",
+          "file": "f4df8b2457697851385d9ebb93267832c1dfa24e0e61881952f6b0c452663dc9.txt",
+          "sha256": "f4df8b2457697851385d9ebb93267832c1dfa24e0e61881952f6b0c452663dc9"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/protobuf/third_party/benchmark/LICENSE",
+          "file": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5.txt",
+          "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/protobuf/third_party/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/protobuf/third_party/googletest/googlemock/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/protobuf/third_party/googletest/googlemock/scripts/generator/LICENSE",
+          "file": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2.txt",
+          "sha256": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/protobuf/third_party/googletest/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/psimd/LICENSE",
+          "file": "6bc97741b2f00a1d0a2f8e9be4c8af7ff837f968fe8e494864caf57026cfdbcb.txt",
+          "sha256": "6bc97741b2f00a1d0a2f8e9be4c8af7ff837f968fe8e494864caf57026cfdbcb"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/pthreadpool/LICENSE",
+          "file": "2aae36e3c88f88b5e8afff5ca8d05480745ba7ad7e8d62867293c604efc0ce46.txt",
+          "sha256": "2aae36e3c88f88b5e8afff5ca8d05480745ba7ad7e8d62867293c604efc0ce46"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/pybind11/LICENSE",
+          "file": "5494773a5dcf654c0c3c844fbb11cfc4f898ea0ea44cf467f29e5c99097da6e7.txt",
+          "sha256": "5494773a5dcf654c0c3c844fbb11cfc4f898ea0ea44cf467f29e5c99097da6e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/python-peachpy/LICENSE.rst",
+          "file": "b74018ea5fe273c10868dec1c5b832865fa4cf5bc44715a004d172e0a49a3f23.txt",
+          "sha256": "b74018ea5fe273c10868dec1c5b832865fa4cf5bc44715a004d172e0a49a3f23"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/sleef/LICENSE.txt",
+          "file": "beb8e42e9d6b4284e03304d05a81a0755200a965fc8d0a5e0aea1e84cf805d6e.txt",
+          "sha256": "beb8e42e9d6b4284e03304d05a81a0755200a965fc8d0a5e0aea1e84cf805d6e"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/LICENSE.txt",
+          "file": "a51531fad20e44cae492c601bc0997d961c17a74f25f9473ff62eb70e108277d.txt",
+          "sha256": "a51531fad20e44cae492c601bc0997d961c17a74f25f9473ff62eb70e108277d"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/third_party/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/third_party/googletest/googlemock/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/third_party/googletest/googlemock/scripts/generator/LICENSE",
+          "file": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2.txt",
+          "sha256": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/third_party/googletest/googletest/LICENSE",
+          "file": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+          "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/third_party/libnop/LICENSE",
+          "file": "abd3ed80490d1d168f12f6ced5a558398640e6d375382c7b85d290689a222822.txt",
+          "sha256": "abd3ed80490d1d168f12f6ced5a558398640e6d375382c7b85d290689a222822"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/third_party/libuv/LICENSE",
+          "file": "7aab26dd7e0e6661accc1fd9fc19410e01b466aa0ac36ea668b2013152a8ca23.txt",
+          "sha256": "7aab26dd7e0e6661accc1fd9fc19410e01b466aa0ac36ea668b2013152a8ca23"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/third_party/pybind11/LICENSE",
+          "file": "15619fd6ee80e905a159b8139f7791f5ae1dce142d5101d099404cc5cf1007ba.txt",
+          "sha256": "15619fd6ee80e905a159b8139f7791f5ae1dce142d5101d099404cc5cf1007ba"
+        },
+        {
+          "upstream_path": "torch-2.13.0.dist-info/licenses/third_party/tensorpipe/third_party/pybind11/tools/clang/LICENSE.txt",
+          "file": "dcd8a8d43f2dc19ba6f879f3a7e96f59e66ecb195099f700dfdcfb50641c10c9.txt",
+          "sha256": "dcd8a8d43f2dc19ba6f879f3a7e96f59e66ecb195099f700dfdcfb50641c10c9"
+        }
+      ],
+      "audit": {
+        "name": "torch",
+        "version": "2.13.0",
+        "selected_license": "Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT",
+        "upstream": "https://pytorch.org",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "tqdm",
+      "version": "4.69.0",
+      "license_notices": [
+        {
+          "upstream_path": "tqdm-4.69.0.dist-info/licenses/LICENCE",
+          "file": "fcff87c3a47ce8028a8512aa182d4fcf0ad1c90544ee75cf9b343684cac194de.txt",
+          "sha256": "fcff87c3a47ce8028a8512aa182d4fcf0ad1c90544ee75cf9b343684cac194de"
+        }
+      ],
+      "audit": {
+        "name": "tqdm",
+        "version": "4.69.0",
+        "selected_license": "MPL-2.0 AND MIT",
+        "upstream": "https://tqdm.github.io",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "transformers",
+      "version": "5.14.1",
+      "license_notices": [
+        {
+          "upstream_path": "transformers-5.14.1.dist-info/licenses/LICENSE",
+          "file": "77fd4710def9ec3c0f6225800e0235f15a425abd4a8b03559127fcd782612049.txt",
+          "sha256": "77fd4710def9ec3c0f6225800e0235f15a425abd4a8b03559127fcd782612049"
+        }
+      ],
+      "audit": {
+        "name": "transformers",
+        "version": "5.14.1",
+        "selected_license": "Apache-2.0",
+        "upstream": "https://github.com/huggingface/transformers",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "license_notices": [
+        {
+          "upstream_path": "typing_extensions-4.16.0.dist-info/licenses/LICENSE",
+          "file": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf.txt",
+          "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+        }
+      ],
+      "audit": {
+        "name": "typing_extensions",
+        "version": "4.16.0",
+        "selected_license": "PSF-2.0",
+        "upstream": "https://github.com/python/typing_extensions",
+        "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+        "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+        "status": "IDENTIFIED; embedded/native coverage remains conditional"
+      }
+    }
+  ],
+  "source_delivery": [
+    {
+      "component": "QtBase",
+      "filename": "qtbase-everywhere-src-6.11.2.tar.xz",
+      "sha256": "5b2e00eccaf5a4d8c14134ffa0ea8dfd0a35ae1ffc7f8d87fa4305a1ed23cf22",
+      "upstream": "https://download.qt.io/archive/qt/6.11/6.11.2/submodules/qtbase-everywhere-src-6.11.2.tar.xz"
+    },
+    {
+      "component": "QtSvg",
+      "filename": "qtsvg-everywhere-src-6.11.2.tar.xz",
+      "sha256": "d594337feca84c26fb67fe87b85e6a5c12fda404b611d905f9d138210c311876",
+      "upstream": "https://download.qt.io/archive/qt/6.11/6.11.2/submodules/qtsvg-everywhere-src-6.11.2.tar.xz"
+    },
+    {
+      "component": "QtImageFormats",
+      "filename": "qtimageformats-everywhere-src-6.11.2.tar.xz",
+      "sha256": "cecd8900f34b6550076309bc94f62f828008b633a4239e0a08c86788f41001f8",
+      "upstream": "https://download.qt.io/archive/qt/6.11/6.11.2/submodules/qtimageformats-everywhere-src-6.11.2.tar.xz"
+    },
+    {
+      "component": "QtTranslations",
+      "filename": "qttranslations-everywhere-src-6.11.2.tar.xz",
+      "sha256": "021684c1a7937a9fabc3b056a6698ad5978794caf9ac190fd6cc11399e67c014",
+      "upstream": "https://download.qt.io/archive/qt/6.11/6.11.2/submodules/qttranslations-everywhere-src-6.11.2.tar.xz"
+    },
+    {
+      "component": "PySide6-Essentials and shiboken6",
+      "filename": "pyside-setup-everywhere-src-6.11.2.tar.xz",
+      "sha256": "cba47efbaad1bedd529725cbc14e21f156c7a19366f07b3edfbb076ffd7afdf8",
+      "upstream": "https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.11.2-src/pyside-setup-everywhere-src-6.11.2.tar.xz"
+    }
+  ],
+  "qt_source_notice_count": 224,
+  "qt_source_notice_unique_files": 190,
+  "material_receipts_except_qt_source_notice_superset": [
+    {
+      "path": "legal/GNU-GPL-3.0.txt",
+      "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+      "bytes": 35147
+    },
+    {
+      "path": "legal/GNU-LGPL-3.0.txt",
+      "sha256": "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+      "bytes": 7651
+    },
+    {
+      "path": "legal/packages/anyio/5361ac9dc58f2ef5fd2e9b09c68297c17f04950909bbc8023bdb82eacf22c2b0.txt",
+      "sha256": "5361ac9dc58f2ef5fd2e9b09c68297c17f04950909bbc8023bdb82eacf22c2b0",
+      "bytes": 1081
+    },
+    {
+      "path": "legal/packages/certifi/e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7.txt",
+      "sha256": "e93716da6b9c0d5a4a1df60fe695b370f0695603d21f6f83f053e42cfc10caf7",
+      "bytes": 989
+    },
+    {
+      "path": "legal/packages/click/9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d.txt",
+      "sha256": "9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d",
+      "bytes": 1475
+    },
+    {
+      "path": "legal/packages/colorama/cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318.txt",
+      "sha256": "cac35c02686e5d04a5a7140bfb3b36e73aed496656e891102e428886d7930318",
+      "bytes": 1491
+    },
+    {
+      "path": "legal/packages/filelock/608c89d5060ae9921adccf3236695bc654a9946e12323ef6c021dfa04e294d48.txt",
+      "sha256": "608c89d5060ae9921adccf3236695bc654a9946e12323ef6c021dfa04e294d48",
+      "bytes": 1088
+    },
+    {
+      "path": "legal/packages/fsspec/2dc35496ce53a7307915c008a844aad53e772b49b34cdd00445067691407ec94.txt",
+      "sha256": "2dc35496ce53a7307915c008a844aad53e772b49b34cdd00445067691407ec94",
+      "bytes": 1513
+    },
+    {
+      "path": "legal/packages/h11/37db5bb85926db28a427a25867f10b1232003aea1be69ccb851138adb8e6f361.txt",
+      "sha256": "37db5bb85926db28a427a25867f10b1232003aea1be69ccb851138adb8e6f361",
+      "bytes": 1124
+    },
+    {
+      "path": "legal/packages/hf-xet/1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6.txt",
+      "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+      "bytes": 11558
+    },
+    {
+      "path": "legal/packages/httpcore/fdcb59154c74cbaba16a11242f7740bea9f23d6feb5547917d8c5f94a80392a5.txt",
+      "sha256": "fdcb59154c74cbaba16a11242f7740bea9f23d6feb5547917d8c5f94a80392a5",
+      "bytes": 1518
+    },
+    {
+      "path": "legal/packages/httpx/4ec59d544f12b5f539a3a716fd321ac58ccd8030b465221f2c880200cdf28d8d.txt",
+      "sha256": "4ec59d544f12b5f539a3a716fd321ac58ccd8030b465221f2c880200cdf28d8d",
+      "bytes": 1508
+    },
+    {
+      "path": "legal/packages/huggingface-hub/c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    },
+    {
+      "path": "legal/packages/idna/1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04.txt",
+      "sha256": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04",
+      "bytes": 1541
+    },
+    {
+      "path": "legal/packages/jinja2/3b49dcee4105eb37bac10faf1be260408fe85d252b8e9df2e0979fc1e094437b.txt",
+      "sha256": "3b49dcee4105eb37bac10faf1be260408fe85d252b8e9df2e0979fc1e094437b",
+      "bytes": 1475
+    },
+    {
+      "path": "legal/packages/markdown-it-py/4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484.txt",
+      "sha256": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484",
+      "bytes": 1078
+    },
+    {
+      "path": "legal/packages/markdown-it-py/792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473.txt",
+      "sha256": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473",
+      "bytes": 1073
+    },
+    {
+      "path": "legal/packages/markupsafe/4631ec0db5fd90a547e336817264c6798214338146f8ac94b4a57f96ee8c9ec4.txt",
+      "sha256": "4631ec0db5fd90a547e336817264c6798214338146f8ac94b4a57f96ee8c9ec4",
+      "bytes": 1503
+    },
+    {
+      "path": "legal/packages/mdurl/7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955.txt",
+      "sha256": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955",
+      "bytes": 2338
+    },
+    {
+      "path": "legal/packages/mpmath/c26cae81da4508e5e249985777a33821f183223ebb74d7f8cfbf90fe7eef2fb7.txt",
+      "sha256": "c26cae81da4508e5e249985777a33821f183223ebb74d7f8cfbf90fe7eef2fb7",
+      "bytes": 1537
+    },
+    {
+      "path": "legal/packages/networkx/3cf7c3a179d817b23b8b8568211769fefdf93797d207d984b8b2fa24d0220b33.txt",
+      "sha256": "3cf7c3a179d817b23b8b8568211769fefdf93797d207d984b8b2fa24d0220b33",
+      "bytes": 1763
+    },
+    {
+      "path": "legal/packages/numpy/19060ef465e1797d682ee0fc3081bd25ab1395e995e43d25c9d13c95d9a3cd6b.txt",
+      "sha256": "19060ef465e1797d682ee0fc3081bd25ab1395e995e43d25c9d13c95d9a3cd6b",
+      "bytes": 2314
+    },
+    {
+      "path": "legal/packages/numpy/28cad82ce1379dc529df30da78ec012d7d0d1d576b03ddcb93388aee53659f59.txt",
+      "sha256": "28cad82ce1379dc529df30da78ec012d7d0d1d576b03ddcb93388aee53659f59",
+      "bytes": 1253
+    },
+    {
+      "path": "legal/packages/numpy/322ac46d870c8aeead6c53adcccc839296fb3c8e456eae155081297daf7f8013.txt",
+      "sha256": "322ac46d870c8aeead6c53adcccc839296fb3c8e456eae155081297daf7f8013",
+      "bytes": 1540
+    },
+    {
+      "path": "legal/packages/numpy/41190663b77bee5302386495a07b7eabfbfa571aa0ae2f11da6764162062fc4f.txt",
+      "sha256": "41190663b77bee5302386495a07b7eabfbfa571aa0ae2f11da6764162062fc4f",
+      "bytes": 1176
+    },
+    {
+      "path": "legal/packages/numpy/454ec7350e478e037061850b67395753b425b1cb0a34bbc26290b020bf89d763.txt",
+      "sha256": "454ec7350e478e037061850b67395753b425b1cb0a34bbc26290b020bf89d763",
+      "bytes": 340
+    },
+    {
+      "path": "legal/packages/numpy/585483905b13d4b42f800c55ba99e89d6e2e33ccd5f503e201c07531d148ff41.txt",
+      "sha256": "585483905b13d4b42f800c55ba99e89d6e2e33ccd5f503e201c07531d148ff41",
+      "bytes": 1573
+    },
+    {
+      "path": "legal/packages/numpy/8db000e158c162e7249787852d8c69764706502ccee725c06641b31c1e95c8af.txt",
+      "sha256": "8db000e158c162e7249787852d8c69764706502ccee725c06641b31c1e95c8af",
+      "bytes": 1523
+    },
+    {
+      "path": "legal/packages/numpy/92c10699884321f1c2947fe2a70ab23b0fbf1507f756d89dd08f38c61fc3d4fa.txt",
+      "sha256": "92c10699884321f1c2947fe2a70ab23b0fbf1507f756d89dd08f38c61fc3d4fa",
+      "bytes": 2986
+    },
+    {
+      "path": "legal/packages/numpy/a732977853530066790c42817087f4829b518dd98d340c916acbfd227e39d3cb.txt",
+      "sha256": "a732977853530066790c42817087f4829b518dd98d340c916acbfd227e39d3cb",
+      "bytes": 1542
+    },
+    {
+      "path": "legal/packages/numpy/a804dff0ead9fadc5293456410bcbfc32bf024be9c4513459663fb7b442d2341.txt",
+      "sha256": "a804dff0ead9fadc5293456410bcbfc32bf024be9c4513459663fb7b442d2341",
+      "bytes": 45831
+    },
+    {
+      "path": "legal/packages/numpy/aea41976c720f91bd19725c16916a1ace40eb1ea42620d340e587a5de4bbcea0.txt",
+      "sha256": "aea41976c720f91bd19725c16916a1ace40eb1ea42620d340e587a5de4bbcea0",
+      "bytes": 704
+    },
+    {
+      "path": "legal/packages/numpy/b0fd592d4ead563148e3977e7b589169d46a5ef2ff133c755a81af880a3fc919.txt",
+      "sha256": "b0fd592d4ead563148e3977e7b589169d46a5ef2ff133c755a81af880a3fc919",
+      "bytes": 1441
+    },
+    {
+      "path": "legal/packages/numpy/b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a.txt",
+      "sha256": "b4bc2f4fa1c95778f1ed3dd8f14706bece399475b978f9f34b5d3cd72521b48a",
+      "bytes": 3582
+    },
+    {
+      "path": "legal/packages/numpy/cf5619f25b112d5ce7c896efffc8e610bcb345dfadcc19f2c1460aa48fff2c9e.txt",
+      "sha256": "cf5619f25b112d5ce7c896efffc8e610bcb345dfadcc19f2c1460aa48fff2c9e",
+      "bytes": 2805
+    },
+    {
+      "path": "legal/packages/numpy/d208152e2777ffd0126eacc1bd21c0320d69e4e6b622d21a2a12a47e8ef73763.txt",
+      "sha256": "d208152e2777ffd0126eacc1bd21c0320d69e4e6b622d21a2a12a47e8ef73763",
+      "bytes": 21155
+    },
+    {
+      "path": "legal/packages/numpy/d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150.txt",
+      "sha256": "d544761558b510866c21f7e8a2d5716fca76e0b98117e3b6b86314db7244d150",
+      "bytes": 1039
+    },
+    {
+      "path": "legal/packages/numpy/d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7.txt",
+      "sha256": "d78dbb208b80d92b4d333e41a4baae50d12444f46e53199fa7726a91de6e2da7",
+      "bytes": 1616
+    },
+    {
+      "path": "legal/packages/packaging/0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594.txt",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "bytes": 10174
+    },
+    {
+      "path": "legal/packages/packaging/596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314.txt",
+      "sha256": "596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314",
+      "bytes": 51122
+    },
+    {
+      "path": "legal/packages/packaging/941755416d4b54cf7acb3d93e5114e860f5864b0120bf337782a6c6c743e9dd0.txt",
+      "sha256": "941755416d4b54cf7acb3d93e5114e860f5864b0120bf337782a6c6c743e9dd0",
+      "bytes": 5438
+    },
+    {
+      "path": "legal/packages/packaging/9becdeb185763b89254e7e067c9628a69c45090b71856f52a797d5f9fa80e627.txt",
+      "sha256": "9becdeb185763b89254e7e067c9628a69c45090b71856f52a797d5f9fa80e627",
+      "bytes": 49853
+    },
+    {
+      "path": "legal/packages/packaging/b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5.txt",
+      "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+      "bytes": 1344
+    },
+    {
+      "path": "legal/packages/packaging/cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48.txt",
+      "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+      "bytes": 197
+    },
+    {
+      "path": "legal/packages/packaging/fc9c745d1883ff9f296a5b169f22eb2ee879f59a4608f20f5cb29d668f4e26f4.txt",
+      "sha256": "fc9c745d1883ff9f296a5b169f22eb2ee879f59a4608f20f5cb29d668f4e26f4",
+      "bytes": 7293
+    },
+    {
+      "path": "legal/packages/py3langid/1694ffed7731df5c6e3d95ad5aa2398bf64f9377636ead34a23f385dd3598a0c.txt",
+      "sha256": "1694ffed7731df5c6e3d95ad5aa2398bf64f9377636ead34a23f385dd3598a0c",
+      "bytes": 1676
+    },
+    {
+      "path": "legal/packages/pyinstaller/0598064c7d2718e38d7914a7d08343b2fa008e3bea9ebba2aa7a6ffa5900dd64.txt",
+      "sha256": "0598064c7d2718e38d7914a7d08343b2fa008e3bea9ebba2aa7a6ffa5900dd64",
+      "bytes": 32604
+    },
+    {
+      "path": "legal/packages/pyside6-essentials/4f54763ac0fe2abd8f7f8d8fe370a94a08ebf84786aa0b91045bd6628deb08a3.txt",
+      "sha256": "4f54763ac0fe2abd8f7f8d8fe370a94a08ebf84786aa0b91045bd6628deb08a3",
+      "bytes": 470
+    },
+    {
+      "path": "legal/packages/pytest/c2017d6288262cf9c39aecc8e51df3422a9f2bbca1e4b55d28491022070c7577.txt",
+      "sha256": "c2017d6288262cf9c39aecc8e51df3422a9f2bbca1e4b55d28491022070c7577",
+      "bytes": 7369
+    },
+    {
+      "path": "legal/packages/pytest/ca836a5f9ecca3b2f350230faa20a48fb8b145653b5568d784862df864706b9b.txt",
+      "sha256": "ca836a5f9ecca3b2f350230faa20a48fb8b145653b5568d784862df864706b9b",
+      "bytes": 1091
+    },
+    {
+      "path": "legal/packages/pyyaml/8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4.txt",
+      "sha256": "8d3928f9dc4490fd635707cb88eb26bd764102a7282954307d3e5167a577e8a4",
+      "bytes": 1101
+    },
+    {
+      "path": "legal/packages/regex/3d220c06594b826bbabf110312f60f385f99e57e529fa4b9e536f79091f8b4c7.txt",
+      "sha256": "3d220c06594b826bbabf110312f60f385f99e57e529fa4b9e536f79091f8b4c7",
+      "bytes": 11792
+    },
+    {
+      "path": "legal/packages/rich/deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15.txt",
+      "sha256": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15",
+      "bytes": 1056
+    },
+    {
+      "path": "legal/packages/safetensors/1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6.txt",
+      "sha256": "1eb85fc97224598dad1852b5d6483bbcf0aa8608790dcc657a5a2a761ae9c8c6",
+      "bytes": 11558
+    },
+    {
+      "path": "legal/packages/setuptools/09c9bcea95ca086f8bc5bed174e40bc835b297d40fb5f86bbbb570fe0a5581a7.txt",
+      "sha256": "09c9bcea95ca086f8bc5bed174e40bc835b297d40fb5f86bbbb570fe0a5581a7",
+      "bytes": 18737
+    },
+    {
+      "path": "legal/packages/setuptools/09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46.txt",
+      "sha256": "09f1c8c9e941af3e584d59641ea9b87d83c0cb0fd007eb5ef391a7e2643c1a46",
+      "bytes": 1053
+    },
+    {
+      "path": "legal/packages/setuptools/0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594.txt",
+      "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "bytes": 10174
+    },
+    {
+      "path": "legal/packages/setuptools/29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6.txt",
+      "sha256": "29e0fd62e929850e86eb28c3fdccf0cefdf4fa94879011cffb3d0d4bed6d4db6",
+      "bytes": 1089
+    },
+    {
+      "path": "legal/packages/setuptools/2dddf08818297a3b89d43d95ff659d8da85741108c9136dfa3a4d856c0623bd8.txt",
+      "sha256": "2dddf08818297a3b89d43d95ff659d8da85741108c9136dfa3a4d856c0623bd8",
+      "bytes": 493
+    },
+    {
+      "path": "legal/packages/setuptools/30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654.txt",
+      "sha256": "30c23618679108f3e8ea1d2a658c7ca417bdfc891c98ef1a89fa4ff0c9828654",
+      "bytes": 1107
+    },
+    {
+      "path": "legal/packages/setuptools/429dd4c6a510e1cf667fc2d91b15c266e97ae5df7782e6081ab1b7fdcfc30f90.txt",
+      "sha256": "429dd4c6a510e1cf667fc2d91b15c266e97ae5df7782e6081ab1b7fdcfc30f90",
+      "bytes": 4059
+    },
+    {
+      "path": "legal/packages/setuptools/458502e12d97bbf64438606a20044aa85eb05fb0a8a807bb35dbec253fd1fc04.txt",
+      "sha256": "458502e12d97bbf64438606a20044aa85eb05fb0a8a807bb35dbec253fd1fc04",
+      "bytes": 10278
+    },
+    {
+      "path": "legal/packages/setuptools/4f05cb1d9097c1281d17044b3f15bad364fa99289eba74851cce9fa7ca605bbf.txt",
+      "sha256": "4f05cb1d9097c1281d17044b3f15bad364fa99289eba74851cce9fa7ca605bbf",
+      "bytes": 5819
+    },
+    {
+      "path": "legal/packages/setuptools/596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314.txt",
+      "sha256": "596ec35e2ca0ebcba9fd8343ff0a51625af548786257815f24b41f7e08613314",
+      "bytes": 51122
+    },
+    {
+      "path": "legal/packages/setuptools/5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d.txt",
+      "sha256": "5a57cb4db85e2a2dd88c290628908add57e3451449e0a9a71fdfb38776fd759d",
+      "bytes": 1076
+    },
+    {
+      "path": "legal/packages/setuptools/86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741.txt",
+      "sha256": "86da0f01aeae46348a3c3d465195dc1ceccde79f79e87769a64b8da04b2a4741",
+      "bytes": 1023
+    },
+    {
+      "path": "legal/packages/setuptools/9755a18519666e5f0f4cae3daad3d7012bcae48a600b31237d75e9fe134e6683.txt",
+      "sha256": "9755a18519666e5f0f4cae3daad3d7012bcae48a600b31237d75e9fe134e6683",
+      "bytes": 1076
+    },
+    {
+      "path": "legal/packages/setuptools/ade78d04982d69972d444a8e14a94f87a2334dd3855cc80348ea8e240aa0df2d.txt",
+      "sha256": "ade78d04982d69972d444a8e14a94f87a2334dd3855cc80348ea8e240aa0df2d",
+      "bytes": 7634
+    },
+    {
+      "path": "legal/packages/setuptools/b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5.txt",
+      "sha256": "b70e7e9b742f1cc6f948b34c16aa39ffece94196364bc88ff0d2180f0028fac5",
+      "bytes": 1344
+    },
+    {
+      "path": "legal/packages/setuptools/b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe.txt",
+      "sha256": "b80816b0d530b8accb4c2211783790984a6e3b61922c2b5ee92f3372ab2742fe",
+      "bytes": 1072
+    },
+    {
+      "path": "legal/packages/setuptools/cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48.txt",
+      "sha256": "cad1ef5bd340d73e074ba614d26f7deaca5c7940c3d8c34852e65c4909686c48",
+      "bytes": 197
+    },
+    {
+      "path": "legal/packages/setuptools/d2812696c66896a59065e2267b70afc04e3b9aed1259bb0c94471566cec0375a.txt",
+      "sha256": "d2812696c66896a59065e2267b70afc04e3b9aed1259bb0c94471566cec0375a",
+      "bytes": 49872
+    },
+    {
+      "path": "legal/packages/shiboken6/4f54763ac0fe2abd8f7f8d8fe370a94a08ebf84786aa0b91045bd6628deb08a3.txt",
+      "sha256": "4f54763ac0fe2abd8f7f8d8fe370a94a08ebf84786aa0b91045bd6628deb08a3",
+      "bytes": 470
+    },
+    {
+      "path": "legal/packages/sympy/007bc30a58fa40a996e772047120de4eaf31f5110e4f9c3b5f93fcdfbe2eaca1.txt",
+      "sha256": "007bc30a58fa40a996e772047120de4eaf31f5110e4f9c3b5f93fcdfbe2eaca1",
+      "bytes": 1075
+    },
+    {
+      "path": "legal/packages/sympy/07a5e9819f727b4986ad2829c7a29a6320d42575f720eb24d71b7fef573a0286.txt",
+      "sha256": "07a5e9819f727b4986ad2829c7a29a6320d42575f720eb24d71b7fef573a0286",
+      "bytes": 7885
+    },
+    {
+      "path": "legal/packages/sympy/82b1038521b0696c63c90b31ed4a0a2c9c4c16871c648b157b07ca44b6f18f8d.txt",
+      "sha256": "82b1038521b0696c63c90b31ed4a0a2c9c4c16871c648b157b07ca44b6f18f8d",
+      "bytes": 55779
+    },
+    {
+      "path": "legal/packages/torch/0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3.txt",
+      "sha256": "0115478d567121238cf6cc1c0c361926cf07a49d9e4c9e66da97fac6a01646b3",
+      "bytes": 1184
+    },
+    {
+      "path": "legal/packages/torch/0fc92425d130d9c87a5eb7427082e3afdbff6ef169bc678e15abba4c2d37c934.txt",
+      "sha256": "0fc92425d130d9c87a5eb7427082e3afdbff6ef169bc678e15abba4c2d37c934",
+      "bytes": 3548
+    },
+    {
+      "path": "legal/packages/torch/15619fd6ee80e905a159b8139f7791f5ae1dce142d5101d099404cc5cf1007ba.txt",
+      "sha256": "15619fd6ee80e905a159b8139f7791f5ae1dce142d5101d099404cc5cf1007ba",
+      "bytes": 1705
+    },
+    {
+      "path": "legal/packages/torch/17a82fba896445d028046d97aac3a3d0f6ccdd811a1d48d0a454512d422591b7.txt",
+      "sha256": "17a82fba896445d028046d97aac3a3d0f6ccdd811a1d48d0a454512d422591b7",
+      "bytes": 1529
+    },
+    {
+      "path": "legal/packages/torch/25b5db04aa6070c12ac518b91cbd0a59725c050ecb091456e6ebc3d3eeb369cf.txt",
+      "sha256": "25b5db04aa6070c12ac518b91cbd0a59725c050ecb091456e6ebc3d3eeb369cf",
+      "bytes": 1458
+    },
+    {
+      "path": "legal/packages/torch/2aae36e3c88f88b5e8afff5ca8d05480745ba7ad7e8d62867293c604efc0ce46.txt",
+      "sha256": "2aae36e3c88f88b5e8afff5ca8d05480745ba7ad7e8d62867293c604efc0ce46",
+      "bytes": 1404
+    },
+    {
+      "path": "legal/packages/torch/322bba2f33f594948052de342fd7d5bd26892e2a92ba75fbb5a433eff0b229c7.txt",
+      "sha256": "322bba2f33f594948052de342fd7d5bd26892e2a92ba75fbb5a433eff0b229c7",
+      "bytes": 1563
+    },
+    {
+      "path": "legal/packages/torch/3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8.txt",
+      "sha256": "3288ff56f62ade1ef032bd860b6d92482f83f1d3073ad5125b87228b9c11e0a8",
+      "bytes": 1888
+    },
+    {
+      "path": "legal/packages/torch/33cc9304b7e84187407cdbd7677216bdf460eb51364d42328bdb812a521e30c4.txt",
+      "sha256": "33cc9304b7e84187407cdbd7677216bdf460eb51364d42328bdb812a521e30c4",
+      "bytes": 1107
+    },
+    {
+      "path": "legal/packages/torch/35cf0c0dca02767d12b9a8c12ae1b6a1c08045f220df4a52b0e01563a568fe6b.txt",
+      "sha256": "35cf0c0dca02767d12b9a8c12ae1b6a1c08045f220df4a52b0e01563a568fe6b",
+      "bytes": 11542
+    },
+    {
+      "path": "legal/packages/torch/378270e2aff76eb93637baf4bdbb7313940c897d25d5086b80db27fada9d37b2.txt",
+      "sha256": "378270e2aff76eb93637baf4bdbb7313940c897d25d5086b80db27fada9d37b2",
+      "bytes": 10957
+    },
+    {
+      "path": "legal/packages/torch/3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5.txt",
+      "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+      "bytes": 11560
+    },
+    {
+      "path": "legal/packages/torch/46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7.txt",
+      "sha256": "46c35a3c9ac8ef63c16ca69b5cf0166df9fcdb789e318175c92a219de517b8e7",
+      "bytes": 1503
+    },
+    {
+      "path": "legal/packages/torch/4805a18e3c617424da5b7f6d8b9fde3df2fb6a5e26a6b6663a6cdb66db664d8c.txt",
+      "sha256": "4805a18e3c617424da5b7f6d8b9fde3df2fb6a5e26a6b6663a6cdb66db664d8c",
+      "bytes": 1591
+    },
+    {
+      "path": "legal/packages/torch/48eb34a9124af8fdd2ad1858a64be9827ebc42e5389c6dd4b5a93e411ac7e693.txt",
+      "sha256": "48eb34a9124af8fdd2ad1858a64be9827ebc42e5389c6dd4b5a93e411ac7e693",
+      "bytes": 1888
+    },
+    {
+      "path": "legal/packages/torch/4e79fcc686dacf1a83eeddf1813ce28bbac5bd67a8b067d740c8fcd8c8405e1d.txt",
+      "sha256": "4e79fcc686dacf1a83eeddf1813ce28bbac5bd67a8b067d740c8fcd8c8405e1d",
+      "bytes": 1435
+    },
+    {
+      "path": "legal/packages/torch/4f8f489489bc1ac9608b13243e6dbeb28070cefd6da94de0784cc919afbf10f6.txt",
+      "sha256": "4f8f489489bc1ac9608b13243e6dbeb28070cefd6da94de0784cc919afbf10f6",
+      "bytes": 155
+    },
+    {
+      "path": "legal/packages/torch/5358498534dac625c89a69c10becf3dcc40f9af58e6b69ee358ebdf6934f49c6.txt",
+      "sha256": "5358498534dac625c89a69c10becf3dcc40f9af58e6b69ee358ebdf6934f49c6",
+      "bytes": 1172
+    },
+    {
+      "path": "legal/packages/torch/5494773a5dcf654c0c3c844fbb11cfc4f898ea0ea44cf467f29e5c99097da6e7.txt",
+      "sha256": "5494773a5dcf654c0c3c844fbb11cfc4f898ea0ea44cf467f29e5c99097da6e7",
+      "bytes": 1713
+    },
+    {
+      "path": "legal/packages/torch/5d5d5b022ecf828c796a64ad7afcfd62971bf58a52b71668cd48137ca02824c5.txt",
+      "sha256": "5d5d5b022ecf828c796a64ad7afcfd62971bf58a52b71668cd48137ca02824c5",
+      "bytes": 1565
+    },
+    {
+      "path": "legal/packages/torch/6247f690b423835966eba51cad47b4c7d6a72ca226733dd1c473e4624fe6bb23.txt",
+      "sha256": "6247f690b423835966eba51cad47b4c7d6a72ca226733dd1c473e4624fe6bb23",
+      "bytes": 1555
+    },
+    {
+      "path": "legal/packages/torch/68349589306bdfa3631ac7f84633956bf21b6a448ed5e43383ea75a8a5f54e4c.txt",
+      "sha256": "68349589306bdfa3631ac7f84633956bf21b6a448ed5e43383ea75a8a5f54e4c",
+      "bytes": 1168
+    },
+    {
+      "path": "legal/packages/torch/6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68.txt",
+      "sha256": "6b9e8b964c2a90f7743107a23bccec9ebc6f5a47d4a8fa3d986aa6f51f86da68",
+      "bytes": 1574
+    },
+    {
+      "path": "legal/packages/torch/6bc97741b2f00a1d0a2f8e9be4c8af7ff837f968fe8e494864caf57026cfdbcb.txt",
+      "sha256": "6bc97741b2f00a1d0a2f8e9be4c8af7ff837f968fe8e494864caf57026cfdbcb",
+      "bytes": 1173
+    },
+    {
+      "path": "legal/packages/torch/6d7ce74f3baf30e712b96afdd88d9e3b6caff93a1281d220ba0f654f60fe1a90.txt",
+      "sha256": "6d7ce74f3baf30e712b96afdd88d9e3b6caff93a1281d220ba0f654f60fe1a90",
+      "bytes": 1225
+    },
+    {
+      "path": "legal/packages/torch/7aab26dd7e0e6661accc1fd9fc19410e01b466aa0ac36ea668b2013152a8ca23.txt",
+      "sha256": "7aab26dd7e0e6661accc1fd9fc19410e01b466aa0ac36ea668b2013152a8ca23",
+      "bytes": 1098
+    },
+    {
+      "path": "legal/packages/torch/81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06.txt",
+      "sha256": "81c3c62d810d7277f0583179df2a28a997b013f389f97778e9e7480114e0ca06",
+      "bytes": 340
+    },
+    {
+      "path": "legal/packages/torch/82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9.txt",
+      "sha256": "82ade5d7d9b029044b5fbbc326207fc47c2d44ee4dd71e8a559c36d728217de9",
+      "bytes": 1096
+    },
+    {
+      "path": "legal/packages/torch/844e3a38ca6f748e10eb63f07eb343ddca3b5a0a6bb40b0f621fcc54ea03deb3.txt",
+      "sha256": "844e3a38ca6f748e10eb63f07eb343ddca3b5a0a6bb40b0f621fcc54ea03deb3",
+      "bytes": 1121
+    },
+    {
+      "path": "legal/packages/torch/8477bdd6a4d9f5178e5dfda1e32239c7b09c9d6da3804ae3e5c1a80210c0dd21.txt",
+      "sha256": "8477bdd6a4d9f5178e5dfda1e32239c7b09c9d6da3804ae3e5c1a80210c0dd21",
+      "bytes": 1451
+    },
+    {
+      "path": "legal/packages/torch/8c29231fd0034d4b1caaae8c0a63bce71f95cd8c4b0494c8588930b75c3d2155.txt",
+      "sha256": "8c29231fd0034d4b1caaae8c0a63bce71f95cd8c4b0494c8588930b75c3d2155",
+      "bytes": 1410
+    },
+    {
+      "path": "legal/packages/torch/92bfc9664aff7685ef84abedd292d94d851a6c4502d1ddd45b7e833ba7952814.txt",
+      "sha256": "92bfc9664aff7685ef84abedd292d94d851a6c4502d1ddd45b7e833ba7952814",
+      "bytes": 1253
+    },
+    {
+      "path": "legal/packages/torch/932c16f6c4f0187eda3af18df07300f8807eda85ca974bf46c5ed11fd91e5c2f.txt",
+      "sha256": "932c16f6c4f0187eda3af18df07300f8807eda85ca974bf46c5ed11fd91e5c2f",
+      "bytes": 1574
+    },
+    {
+      "path": "legal/packages/torch/97729794764240cc12e0e22fe31b0cea824741c601bd09bd91b832e285e1f8c5.txt",
+      "sha256": "97729794764240cc12e0e22fe31b0cea824741c601bd09bd91b832e285e1f8c5",
+      "bytes": 1642
+    },
+    {
+      "path": "legal/packages/torch/9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b.txt",
+      "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+      "bytes": 1162
+    },
+    {
+      "path": "legal/packages/torch/99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f.txt",
+      "sha256": "99ec4452f4047b6c53016a502bf94451eb317eff5aab5f63cebc16f94020d64f",
+      "bytes": 1754
+    },
+    {
+      "path": "legal/packages/torch/9ad71830669f2e1c684236831d2450892178e7a0801bda03aa1eafe3a0fd87ed.txt",
+      "sha256": "9ad71830669f2e1c684236831d2450892178e7a0801bda03aa1eafe3a0fd87ed",
+      "bytes": 1754
+    },
+    {
+      "path": "legal/packages/torch/9e7b48284b1aef91999d1967d093711bab8f3bbbaf31e0670ab7a3af077c0a2b.txt",
+      "sha256": "9e7b48284b1aef91999d1967d093711bab8f3bbbaf31e0670ab7a3af077c0a2b",
+      "bytes": 1127
+    },
+    {
+      "path": "legal/packages/torch/a36dda207c36db5818729c54e7ad4e8b0c6fba847491ba64f372c1a2037b6d5c.txt",
+      "sha256": "a36dda207c36db5818729c54e7ad4e8b0c6fba847491ba64f372c1a2037b6d5c",
+      "bytes": 1084
+    },
+    {
+      "path": "legal/packages/torch/a4dadeb3d59219de6cdf5cb6bf920760103eed9ae5af2e71b0e8462645397b66.txt",
+      "sha256": "a4dadeb3d59219de6cdf5cb6bf920760103eed9ae5af2e71b0e8462645397b66",
+      "bytes": 1376
+    },
+    {
+      "path": "legal/packages/torch/a51531fad20e44cae492c601bc0997d961c17a74f25f9473ff62eb70e108277d.txt",
+      "sha256": "a51531fad20e44cae492c601bc0997d961c17a74f25f9473ff62eb70e108277d",
+      "bytes": 1565
+    },
+    {
+      "path": "legal/packages/torch/a694e69af9d08c8fb14e728ad4864c8b585ae9583d7707344e4dad5a35edae92.txt",
+      "sha256": "a694e69af9d08c8fb14e728ad4864c8b585ae9583d7707344e4dad5a35edae92",
+      "bytes": 35907
+    },
+    {
+      "path": "legal/packages/torch/abd3ed80490d1d168f12f6ced5a558398640e6d375382c7b85d290689a222822.txt",
+      "sha256": "abd3ed80490d1d168f12f6ced5a558398640e6d375382c7b85d290689a222822",
+      "bytes": 590
+    },
+    {
+      "path": "legal/packages/torch/afdc94cf2ce0ee28688f28a4ac05c945e15772bdce245509e0f7a10f3f886351.txt",
+      "sha256": "afdc94cf2ce0ee28688f28a4ac05c945e15772bdce245509e0f7a10f3f886351",
+      "bytes": 600
+    },
+    {
+      "path": "legal/packages/torch/b1dd911e534a75dd4dfd8dbc11a3193bd177c8390e7fcf462f98d2c8c235e112.txt",
+      "sha256": "b1dd911e534a75dd4dfd8dbc11a3193bd177c8390e7fcf462f98d2c8c235e112",
+      "bytes": 11814
+    },
+    {
+      "path": "legal/packages/torch/b6fe452605fe29245f0cbafa724b42df94a5e170bedb9d45bc9cfaa4883ad907.txt",
+      "sha256": "b6fe452605fe29245f0cbafa724b42df94a5e170bedb9d45bc9cfaa4883ad907",
+      "bytes": 1169
+    },
+    {
+      "path": "legal/packages/torch/b74018ea5fe273c10868dec1c5b832865fa4cf5bc44715a004d172e0a49a3f23.txt",
+      "sha256": "b74018ea5fe273c10868dec1c5b832865fa4cf5bc44715a004d172e0a49a3f23",
+      "bytes": 1458
+    },
+    {
+      "path": "legal/packages/torch/bb546eae5924d8ee842e0e567e6d533c5824bdebccf605f99a5b3429034e6697.txt",
+      "sha256": "bb546eae5924d8ee842e0e567e6d533c5824bdebccf605f99a5b3429034e6697",
+      "bytes": 1097
+    },
+    {
+      "path": "legal/packages/torch/beb8e42e9d6b4284e03304d05a81a0755200a965fc8d0a5e0aea1e84cf805d6e.txt",
+      "sha256": "beb8e42e9d6b4284e03304d05a81a0755200a965fc8d0a5e0aea1e84cf805d6e",
+      "bytes": 1361
+    },
+    {
+      "path": "legal/packages/torch/c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add.txt",
+      "sha256": "c364d38c8ee8070159ad68f56a8bab4917b8d020548da33a01e036505c8e4add",
+      "bytes": 1587
+    },
+    {
+      "path": "legal/packages/torch/c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8.txt",
+      "sha256": "c3b19baa37cf18bac07b65700824acadcfa617316f02af10d3852ed20f4f6ab8",
+      "bytes": 12706
+    },
+    {
+      "path": "legal/packages/torch/dcd8a8d43f2dc19ba6f879f3a7e96f59e66ecb195099f700dfdcfb50641c10c9.txt",
+      "sha256": "dcd8a8d43f2dc19ba6f879f3a7e96f59e66ecb195099f700dfdcfb50641c10c9",
+      "bytes": 2812
+    },
+    {
+      "path": "legal/packages/torch/e1b43a11adfb7a5bd52089243a273ab85f0a695d0437bb34a418969501392573.txt",
+      "sha256": "e1b43a11adfb7a5bd52089243a273ab85f0a695d0437bb34a418969501392573",
+      "bytes": 1081
+    },
+    {
+      "path": "legal/packages/torch/e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2.txt",
+      "sha256": "e438ef741bf3660b5c54f4452d7c0b387c8557207cc3e9cda499e461a94df2b2",
+      "bytes": 11589
+    },
+    {
+      "path": "legal/packages/torch/e5fc8b0b0357a75d63649c8f2552576aaa6941c361a013710bb53afc64d3a8aa.txt",
+      "sha256": "e5fc8b0b0357a75d63649c8f2552576aaa6941c361a013710bb53afc64d3a8aa",
+      "bytes": 1118
+    },
+    {
+      "path": "legal/packages/torch/e63d8a0f5ab5cc02d848c6ef51b7bea58644a07223aa0acdb905260a1031b2e6.txt",
+      "sha256": "e63d8a0f5ab5cc02d848c6ef51b7bea58644a07223aa0acdb905260a1031b2e6",
+      "bytes": 1133
+    },
+    {
+      "path": "legal/packages/torch/eb3eab74fe9245818659556acf23e81b8c8a24915a4a244a23804f3fcdf1fd9c.txt",
+      "sha256": "eb3eab74fe9245818659556acf23e81b8c8a24915a4a244a23804f3fcdf1fd9c",
+      "bytes": 17315
+    },
+    {
+      "path": "legal/packages/torch/f08a94bfb0bdc1d7f1cb59badaf0f8c551b10db871185622dbf1fd036affa9cb.txt",
+      "sha256": "f08a94bfb0bdc1d7f1cb59badaf0f8c551b10db871185622dbf1fd036affa9cb",
+      "bytes": 1107
+    },
+    {
+      "path": "legal/packages/torch/f4df8b2457697851385d9ebb93267832c1dfa24e0e61881952f6b0c452663dc9.txt",
+      "sha256": "f4df8b2457697851385d9ebb93267832c1dfa24e0e61881952f6b0c452663dc9",
+      "bytes": 1764
+    },
+    {
+      "path": "legal/packages/torch/f915822057ab8cea4648efaf58b1a1eab265d51b4b56fc976ff11cd9bacd319a.txt",
+      "sha256": "f915822057ab8cea4648efaf58b1a1eab265d51b4b56fc976ff11cd9bacd319a",
+      "bytes": 2164
+    },
+    {
+      "path": "legal/packages/torch/f95a124945067d1143f1c6de9a990f2db2426456408ee0f0bfe6de2f568a899f.txt",
+      "sha256": "f95a124945067d1143f1c6de9a990f2db2426456408ee0f0bfe6de2f568a899f",
+      "bytes": 1172
+    },
+    {
+      "path": "legal/packages/torch/fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f.txt",
+      "sha256": "fcf1a18be2e25ba82acf2c59821b030d8ee764e4e201db6ef3c51900d385515f",
+      "bytes": 1126
+    },
+    {
+      "path": "legal/packages/tqdm/fcff87c3a47ce8028a8512aa182d4fcf0ad1c90544ee75cf9b343684cac194de.txt",
+      "sha256": "fcff87c3a47ce8028a8512aa182d4fcf0ad1c90544ee75cf9b343684cac194de",
+      "bytes": 1985
+    },
+    {
+      "path": "legal/packages/transformers/77fd4710def9ec3c0f6225800e0235f15a425abd4a8b03559127fcd782612049.txt",
+      "sha256": "77fd4710def9ec3c0f6225800e0235f15a425abd4a8b03559127fcd782612049",
+      "bytes": 11418
+    },
+    {
+      "path": "legal/packages/typing-extensions/3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf.txt",
+      "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf",
+      "bytes": 13936
+    },
+    {
+      "path": "legal/PYTHON-LICENSE.txt",
+      "sha256": "886a0ead2d89030ee62dbff52b04e47ab91998341295bb9c56fb952b4e081c7a",
+      "bytes": 25066
+    },
+    {
+      "path": "legal/QT_NOTICE.md",
+      "sha256": "953ce1f3c0454b6df3df5de77e4f2439241c12e558d7e3eab1b6a78a43f49898",
+      "bytes": 1346
+    },
+    {
+      "path": "legal/QT_REPLACEMENT.md",
+      "sha256": "0cb9008de1fe25f20aecb777146aa75585152ca92cdfff316e764ef19aa5676d",
+      "bytes": 2127
+    },
+    {
+      "path": "legal/SOURCE_ACCESS.md",
+      "sha256": "1e4f0ec22a1e420804ce70f0d807f0bc9ab2d6f0c1d927443b2e3c979ba0d09d",
+      "bytes": 2377
+    },
+    {
+      "path": "legal/sources/pyside-setup-everywhere-src-6.11.2.tar.xz",
+      "sha256": "cba47efbaad1bedd529725cbc14e21f156c7a19366f07b3edfbb076ffd7afdf8",
+      "bytes": 18053248
+    },
+    {
+      "path": "legal/sources/qtbase-everywhere-src-6.11.2.tar.xz",
+      "sha256": "5b2e00eccaf5a4d8c14134ffa0ea8dfd0a35ae1ffc7f8d87fa4305a1ed23cf22",
+      "bytes": 50582668
+    },
+    {
+      "path": "legal/sources/qtimageformats-everywhere-src-6.11.2.tar.xz",
+      "sha256": "cecd8900f34b6550076309bc94f62f828008b633a4239e0a08c86788f41001f8",
+      "bytes": 2050424
+    },
+    {
+      "path": "legal/sources/qtsvg-everywhere-src-6.11.2.tar.xz",
+      "sha256": "d594337feca84c26fb67fe87b85e6a5c12fda404b611d905f9d138210c311876",
+      "bytes": 2341860
+    },
+    {
+      "path": "legal/sources/qttranslations-everywhere-src-6.11.2.tar.xz",
+      "sha256": "021684c1a7937a9fabc3b056a6698ad5978794caf9ac190fd6cc11399e67c014",
+      "bytes": 1691056
+    },
+    {
+      "path": "legal/STI-LICENSE.txt",
+      "sha256": "bc779eef15d69aea9c4c0ed47fe25f27df84744251552c04cc147ee56a214b01",
+      "bytes": 1094
+    },
+    {
+      "path": "legal/THIRD_PARTY_ATTRIBUTIONS.md",
+      "sha256": "7e61e4d0d6c4961ebef20aa93558d68a7b0b5f8def41918a407c26d2e119df1b",
+      "bytes": 495
+    },
+    {
+      "path": "legal/upstream/openssl-3.5.8-LICENSE.txt",
+      "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a",
+      "bytes": 10175
+    },
+    {
+      "path": "legal/upstream/tokenizers-0.22.2-LICENSE.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357
+    }
+  ],
+  "materials_valid": true,
+  "distribution_permitted": false,
+  "inventory_blockers": [
+    "B1: Exact Qt/PySide binary corresponding source, modifications and build recipes are not established by upstream release archives alone.",
+    "B2: opengl32sw software renderer build provenance and compiled Mesa/LLVM component attribution are unverified.",
+    "B3: Microsoft runtime redistribution grant and custom CPython runtime/native build provenance are not verified.",
+    "B4: Static Rust/native and vendored dependency license coverage is not certified by package-level metadata or source-superset notices.",
+    "B5: py3langid embedded model training-corpus redistribution terms remain open."
+  ],
+  "additional_compatibility_blocker": "B6; see replacement-evidence.json",
+  "formal_windows_uat": "NOT RUN",
+  "owner_30_minute_smoke": "NOT RUN"
+}

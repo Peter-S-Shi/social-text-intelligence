@@ -94,14 +94,21 @@ dataset. Its sentiment subset and applicable platform terms are recorded in the
   the LGPL preflight and its open items.
 - Qt modules imported by the application: `QtCore`, `QtGui`, and `QtWidgets`,
   and nothing else. The installed wheel carries more Qt modules than these, so
-  the audit tracks the imported set: `tests/desktop/test_boundaries.py` fails if
+  the application import boundary tracks that set: `tests/desktop/test_boundaries.py` fails if
   another Qt module is imported, so adding one (some Qt modules are GPL-only)
   forces a licence check first.
 
-**Status of the LGPL obligations: tracked, not cleared.** M5.2 introduces the
-dependency for development only. The mandatory pre-distribution LGPL compliance
+**Status of the LGPL obligations: audited in M10-B, distribution BLOCKED.**
+M5.2 introduced the dependency for development. M10-B audits actual frozen
+contents, which also include Qt Network/Svg, image-format/platform/TLS plugins,
+translations and the software OpenGL renderer. An import-only audit is insufficient.
+Versioned component/source receipts, full LGPL/GPL texts, installed notices,
+source archives and replacement instructions accompany the local build in `legal/`.
+The application exposes **Licenses · Qt LGPL**. See the
+[M10-B compliance record](docs/V2_M10_B_DISTRIBUTION_COMPLIANCE.md).
+The mandatory pre-distribution LGPL compliance
 gate (see [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md))
-has **not** been performed and has **not** passed. No installer or build that
+has **not** passed. No installer or build that
 contains Qt may be distributed until it records at least: preserved copyright
 and licence notices with a prominent LGPL notice, Qt source provision or a
 written offer for the exact versions shipped, dynamic linking with replaceable

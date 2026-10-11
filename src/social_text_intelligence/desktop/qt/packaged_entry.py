@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from ..packaging import verify_runtime
 
@@ -15,12 +16,36 @@ def smoke() -> dict[str, object]:
     return packaged_smoke()
 
 
+def license_info() -> dict[str, object]:
+    """Report the loaded library without starting models or opening user data."""
+    from PySide6.QtCore import qVersion
+
+    legal = Path(getattr(sys, "_MEIPASS", ".")).parent / "legal"
+    return {
+        "qt_version": qVersion(),
+        "materials_present": all(
+            (legal / name).is_file()
+            for name in ("GNU-LGPL-3.0.txt", "GNU-GPL-3.0.txt", "inventory.json")
+        ),
+        "distribution_permitted": False,
+        "models_loaded": False,
+    }
+
+
 def diagnostic_main() -> int:
     parser = argparse.ArgumentParser(description="Offline packaged runtime checks")
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--verify-runtime", action="store_true")
     modes.add_argument("--smoke", action="store_true")
+    modes.add_argument("--license-info", action="store_true")
     args = parser.parse_args()
+    if args.license_info:
+        try:
+            print(json.dumps(license_info()))
+            return 0
+        except Exception:
+            print(json.dumps({"ready": False, "message": "Qt license check failed."}))
+            return 2
     result = verify_runtime()
     if not result.ready:
         print(

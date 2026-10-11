@@ -41,7 +41,8 @@ web = [
 ]
 # Native desktop shell. The app imports only the Qt Core, Gui, and Widgets modules
 # (a test enforces this); PySide6-Essentials carries more than those, so the
-# imported set, not the wheel, is what the licence audit tracks. Qt is LGPL-3.0:
+# import boundary is tested; distribution audit tracks actual frozen files,
+# including additional transitive Qt DLLs/plugins. Qt is LGPL-3.0:
 # see THIRD_PARTY_NOTICES.md. The pre-distribution LGPL compliance gate is still open.
 desktop = [
   "PySide6-Essentials>=6.11,<7",

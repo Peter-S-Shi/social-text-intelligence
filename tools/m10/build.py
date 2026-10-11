@@ -58,7 +58,14 @@ def verify_build_environment() -> None:
 
 
 def source_revision(root: Path = ROOT) -> str:
-    paths = ("src", "tools/m10", "LICENSE", "THIRD_PARTY_NOTICES.md", "pyproject.toml")
+    paths = (
+        "src",
+        "tools/m10",
+        "distribution",
+        "LICENSE",
+        "THIRD_PARTY_NOTICES.md",
+        "pyproject.toml",
+    )
     status = subprocess.check_output(
         ["git", "status", "--porcelain", "--untracked-files=all", "--", *paths],
         cwd=root,
@@ -99,6 +106,7 @@ def build_environment(output: Path) -> dict[str, str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--source-dir", type=Path, required=True)
     args = parser.parse_args()
     try:
         verify_build_environment()
@@ -120,7 +128,23 @@ def main() -> int:
             check=True,
             env=build_environment(output),
         )
-        layout = audit_bundle(output / "dist" / "sti-desktop")
+        bundle = output / "dist" / "sti-desktop"
+        subprocess.run(
+            [
+                sys.executable,
+                str(CONFIG / "compliance.py"),
+                "--bundle",
+                str(bundle),
+                "--source-dir",
+                str(args.source_dir),
+                "--application-sha",
+                sha,
+            ],
+            cwd=ROOT,
+            check=True,
+            env=build_environment(output),
+        )
+        layout = audit_bundle(bundle)
         if source_revision() != sha:
             raise ValueError("Packaging inputs changed during the build.")
         evidence = {
