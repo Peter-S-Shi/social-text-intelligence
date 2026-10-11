@@ -8,6 +8,7 @@ import importlib.metadata
 import json
 import re
 import shutil
+import struct
 import sys
 import tarfile
 from collections.abc import Sequence
@@ -104,6 +105,179 @@ def collect_source_notices(
     return records
 
 
+def unsigned_sha1(data: bytes) -> str:
+    """SHA-1 of a PE image before Authenticode signing, as Qt build SBOMs record it.
+
+    Signing appends the certificate table and sets the security directory and
+    header checksum. Qt's signed release images were built with a zero checksum,
+    so for a signed image removing exactly those restores the pre-signing bytes;
+    an unsigned image is hashed unchanged.
+    """
+    try:
+        if data[:2] != b"MZ":
+            raise ValueError("Not a PE image.")
+        header = struct.unpack_from("<I", data, 0x3C)[0]
+        if data[header : header + 4] != b"PE\0\0":
+            raise ValueError("Not a PE image.")
+        optional = header + 24
+        magic = struct.unpack_from("<H", data, optional)[0]
+        if magic not in {0x10B, 0x20B}:
+            raise ValueError("Unsupported PE optional header.")
+        directories = optional + (112 if magic == 0x20B else 96)
+        if struct.unpack_from("<I", data, directories - 4)[0] < 5:
+            raise ValueError("PE image has no security directory slot.")
+        security = directories + 4 * 8
+        offset, size = struct.unpack_from("<II", data, security)
+    except struct.error as error:
+        raise ValueError("Not a PE image.") from error
+    if not size:
+        return hashlib.sha1(data).hexdigest()
+    if offset + size != len(data):
+        raise ValueError("Certificate table is not the final part of the image.")
+    image = bytearray(data[:offset])
+    struct.pack_into("<I", image, optional + 64, 0)
+    struct.pack_into("<II", image, security, 0, 0)
+    return hashlib.sha1(image).hexdigest()
+
+
+@dataclass(frozen=True)
+class ReleaseSource:
+    """Identity of one delivered Qt release source archive."""
+
+    version: str
+    tag: str | None
+
+
+def release_sources(archives: Sequence[Path]) -> dict[str, ReleaseSource]:
+    """Read each Qt release archive's version (file name) and upstream .tag commit."""
+    sources: dict[str, ReleaseSource] = {}
+    for path in archives:
+        repository, _, rest = path.name.partition("-everywhere-src-")
+        tag = None
+        with tarfile.open(path, "r:xz") as archive:
+            for member in archive:
+                parts = member.name.removeprefix("./").split("/")
+                if member.isfile() and len(parts) == 2 and parts[1] == ".tag":
+                    stream = archive.extractfile(member)
+                    if stream is not None:
+                        tag = stream.read().decode().strip()
+                    break
+        sources[repository] = ReleaseSource(rest.removesuffix(".tar.xz"), tag)
+    return sources
+
+
+@dataclass(frozen=True)
+class SbomEntry:
+    sha1: str
+    module: str
+
+
+def source_link(
+    commit: str | None, version: str | None, source: ReleaseSource | None
+) -> str:
+    """How an SBOM's built module is tied to the delivered source archive."""
+    if source is None:
+        return "NO_SOURCE_ARCHIVE"
+    if commit:
+        return "COMMIT_MATCH" if commit == source.tag else "COMMIT_MISMATCH"
+    return "VERSION_ONLY" if version == source.version else "VERSION_MISMATCH"
+
+
+def read_build_sbom(
+    path: Path, sources: dict[str, ReleaseSource], entries: dict[str, SbomEntry]
+) -> dict[str, object]:
+    """Record one SBOM's module identity and add its file checksums to entries."""
+    document = json.loads(path.read_text(encoding="utf-8"))
+    described = {
+        item["relatedSpdxElement"]
+        for item in document.get("relationships", [])
+        if item.get("spdxElementId") == "SPDXRef-DOCUMENT"
+        and item.get("relationshipType") == "DESCRIBES"
+    }
+    packages = [
+        item for item in document.get("packages", []) if item["SPDXID"] in described
+    ]
+    if len(packages) != 1:
+        raise ValueError("A Qt build SBOM must describe exactly one module.")
+    module = packages[0]["name"]
+    match = re.fullmatch(
+        r"git://code\.qt\.io/qt/[a-z0-9-]+\.git(?:@([0-9a-f]{40}))?",
+        packages[0].get("downloadLocation", ""),
+    )
+    commit = match.group(1) if match else None
+    version = packages[0].get("versionInfo")
+    source = sources.get(module)
+    for item in document.get("files", []):
+        name = item.get("fileName", "").removeprefix("./").lower()
+        for checksum in item.get("checksums", []):
+            if checksum.get("algorithm") == "SHA1":
+                if name in entries:
+                    raise ValueError("Two Qt build SBOMs describe the same file.")
+                entries[name] = SbomEntry(checksum["checksumValue"].lower(), module)
+    return {
+        "module": module,
+        "version": version,
+        "sbom": path.name,
+        "sbom_sha256": digest(path),
+        "built_commit": commit,
+        "source_archive_tag": source.tag if source else None,
+        "source_link": source_link(commit, version, source),
+    }
+
+
+def verify_qt_provenance(
+    bundle: Path, documents: Sequence[Path], archives: Sequence[Path]
+) -> dict[str, object]:
+    """Match every shipped Qt library binary to an official Qt build SBOM entry.
+
+    PySide6/shiboken6 binding binaries and runtime DLLs have no Qt build SBOM and
+    stay outside this check; any other uncovered Qt-tree binary is reported.
+    """
+    sources = release_sources(archives)
+    entries: dict[str, SbomEntry] = {}
+    modules = [read_build_sbom(path, sources, entries) for path in documents]
+    links = {item["module"]: item["source_link"] for item in modules}
+    qt = bundle / "_internal" / "PySide6"
+    rows = []
+    uncovered = []
+    for path in sorted(qt.rglob("*")):
+        if not path.is_file() or path.suffix.lower() != ".dll":
+            continue
+        relative = path.relative_to(qt).as_posix()
+        if relative.lower().startswith(("pyside6.", "msvcp", "vcruntime")):
+            continue
+        key = relative.lower()
+        entry = entries.get(key if key.startswith("plugins/") else "bin/" + key)
+        if entry is None:
+            uncovered.append(relative)
+            continue
+        observed = unsigned_sha1(path.read_bytes())
+        status = "VERIFIED" if observed == entry.sha1 else "MISMATCH"
+        if status == "VERIFIED" and links[entry.module] not in {
+            "COMMIT_MATCH",
+            "VERSION_ONLY",
+        }:
+            status = "SOURCE_MISMATCH"
+        rows.append(
+            {
+                "path": "_internal/PySide6/" + relative,
+                "module": entry.module,
+                "unsigned_sha1": observed,
+                "status": status,
+            }
+        )
+    verified = bool(rows) and all(row["status"] == "VERIFIED" for row in rows)
+    return {
+        "schema_version": 1,
+        "modules": modules,
+        "binaries": rows,
+        "uncovered_qt_binaries": uncovered,
+        "qt_libraries_verified": verified and not uncovered,
+        "bindings_covered": False,
+        "distribution_permitted": False,
+    }
+
+
 def verify_packet(root: Path, inventory: dict[str, object]) -> dict[str, object]:
     """Structural integrity is separate from permission to distribute."""
     valid = True
@@ -145,17 +319,37 @@ def verify_packet(root: Path, inventory: dict[str, object]) -> dict[str, object]
     }
 
 
-BLOCKERS = [
+B1_UNVERIFIED = (
     "B1: Exact Qt/PySide binary corresponding source, modifications and build recipes "
-    "are not established by upstream release archives alone.",
+    "are not established by upstream release archives alone."
+)
+B1_BINDINGS = (
+    "B1: Qt library binaries match the official Qt build SBOMs, linked to the "
+    "delivered source archives by commit or, where an SBOM names none, by release "
+    "version only; PySide6/shiboken6 binding binaries have no producer build "
+    "record, and the release source-delivery route needs owner/legal confirmation."
+)
+B2 = (
     "B2: opengl32sw software renderer build provenance and compiled Mesa/LLVM "
-    "component attribution are unverified.",
+    "component attribution are unverified."
+)
+BLOCKERS = [
     "B3: Microsoft runtime redistribution grant and custom CPython runtime/native "
     "build provenance are not verified.",
     "B4: Static Rust/native and vendored dependency license coverage is not "
     "certified by package-level metadata or source-superset notices.",
     "B5: py3langid embedded model training-corpus redistribution terms remain open.",
 ]
+
+
+def distribution_blockers(
+    provenance: dict[str, object], software_renderer: bool
+) -> list[str]:
+    """Each blocker stays until its own evidence closes it; none grants permission."""
+    blockers = [B1_BINDINGS if provenance["qt_libraries_verified"] else B1_UNVERIFIED]
+    if software_renderer:
+        blockers.append(B2)
+    return blockers + BLOCKERS
 
 
 def installed_notices(name: str, output: Path) -> list[dict[str, str]]:
@@ -166,6 +360,8 @@ def installed_notices(name: str, output: Path) -> list[dict[str, str]]:
         basename = item.name.lower()
         if not (
             "/licenses/" in item.as_posix().lower()
+            # Wheel-embedded CycloneDX SBOMs list compiled Rust dependencies.
+            or "/sboms/" in item.as_posix().lower()
             or basename.startswith(("license", "copying", "copyright"))
             or basename in {"notice", "notice.txt"}
         ):
@@ -213,10 +409,37 @@ def native_owner(relative: str) -> str:
     return "UNRESOLVED native ownership"
 
 
+def loose_python_packages(bundle: Path) -> set[str]:
+    """Top-level names of Python sources shipped as files rather than in the PYZ.
+
+    `module_collection_mode="py"`/`"pyc"` (PySide6/shiboken6) and hook-collected
+    sources leave no PYZ entry; their owners still need a version-matched audit.
+    """
+    internal = bundle / "_internal"
+    return {
+        path.relative_to(internal).parts[0].removesuffix(path.suffix)
+        for path in internal.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".py", ".pyc"}
+    }
+
+
+def python_owners(
+    bundle: Path, pyz_modules: set[str], mapping: dict[str, list[str]], stdlib: set[str]
+) -> tuple[set[str], list[str], set[str]]:
+    """Owners of every delivered Python module, in the PYZ or as loose files.
+
+    Fails closed: an owner without a version-matched register entry stops packet
+    assembly, and a loose name with no owner becomes an unmapped-owner blocker.
+    """
+    loose = loose_python_packages(bundle)
+    owners, unknown = module_owners(pyz_modules | loose, mapping, stdlib)
+    return owners, unknown, loose
+
+
 def module_owners(
     modules: set[str], mapping: dict[str, list[str]], stdlib: set[str]
 ) -> tuple[set[str], list[str]]:
-    """Resolve PYZ ownership, including PyInstaller's installed fake module."""
+    """Resolve module ownership, including PyInstaller's installed fake module."""
     owners: set[str] = {"PyInstaller"}
     unknown = []
     for top in sorted({name.split(".")[0] for name in modules}):
@@ -248,6 +471,19 @@ def assemble(
     source_notices = collect_source_notices(
         [legal / "sources" / entry.filename for entry in archives], legal / "qt-notices"
     )
+    provenance_definition = json.loads(
+        (project / "distribution/qt-binary-provenance.json").read_text()
+    )
+    sboms = [
+        SourceArchive(item["component"], item["filename"], item["sha256"], item["url"])
+        for item in provenance_definition["documents"]
+    ]
+    sbom_receipts = stage_sources(source_dir, legal / "qt-sbom", sboms)
+    provenance = verify_qt_provenance(
+        bundle,
+        [legal / "qt-sbom" / entry.filename for entry in sboms],
+        [legal / "sources" / entry.filename for entry in archives],
+    )
     for path in (project / "distribution/legal").rglob("*"):
         if path.is_file():
             target = legal / path.relative_to(project / "distribution/legal")
@@ -263,7 +499,7 @@ def assemble(
         modules.update(embedded.toc)
     stdlib = sys.stdlib_module_names | {"social_text_intelligence"}
     mapping.pop("social_text_intelligence", None)
-    names, unmapped = module_owners(modules, mapping, stdlib)
+    names, unmapped, loose = python_owners(bundle, modules, dict(mapping), stdlib)
     register = json.loads(
         (project / "distribution/component-register.json").read_text()
     )
@@ -298,7 +534,9 @@ def assemble(
         for path in sorted(bundle.rglob("*"))
         if path.is_file()
     ]
-    blockers = list(BLOCKERS)
+    blockers = distribution_blockers(
+        provenance, (bundle / "_internal/PySide6/opengl32sw.dll").exists()
+    )
     native = [
         dict(item, owner=native_owner(str(item["path"])))
         for item in files
@@ -321,9 +559,12 @@ def assemble(
         "qt_version": definition["version"],
         "application_revision": application_revision,
         "modules": sorted(modules),
+        "loose_python_packages": sorted(loose),
         "native_components": native,
         "components": components,
         "source_delivery": source_receipts,
+        "qt_build_sboms": sbom_receipts,
+        "qt_binary_provenance": provenance,
         "qt_source_notices": source_notices,
         "notice_scope": "source superset; not a compiled static-link SBOM",
         "materials": files,

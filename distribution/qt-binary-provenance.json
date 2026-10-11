@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "version": "6.11.2",
+  "scope": "Official Qt build SBOMs (SPDX 2.3, data license CC0-1.0) that identify the Qt library binaries shipped in the PySide6-Essentials 6.11.2 wheel. Each SBOM is extracted from the official Qt 6.11.2 MSVC2022 x64 binary archive named here; the build stages the SBOM, not the archive.",
+  "bindings_covered": false,
+  "documents": [
+    {
+      "component": "QtBase build SBOM",
+      "filename": "qtbase-6.11.2.spdx.json",
+      "sha256": "a5c6018dd0b4096e66f697ce98b83f0ac3f8c9424720e090a1d5b00125179a24",
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+      "archive_sha256": "fd984b7264361b4dd3fd2a417702ca1258e4086268f2ee6a69b9a393d9c3f6bb"
+    },
+    {
+      "component": "QtSvg build SBOM",
+      "filename": "qtsvg-6.11.2.spdx.json",
+      "sha256": "eabd595e394dfb7a9d2fd3735096fe5390377f2bee5349b02a4311ff9471e8c5",
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+      "archive_sha256": "417f44499c835b2303f3ff78043179bb23442f33d5d2816fbf7e8dbf275b1c89"
+    },
+    {
+      "component": "QtImageFormats build SBOM",
+      "filename": "qtimageformats-6.11.2.spdx.json",
+      "sha256": "1678c477dcdf320fb04b8de1b6305278081f86b45ed72eda677fde0de9ec8b8e",
+      "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtimageformats.win64_msvc2022_64/6.11.2-0-202608131017qtimageformats-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+      "archive_sha256": "d6822c2160ebb675525173deb84bbfb68b4be046ee7f126af74a400a285b933d"
+    }
+  ]
+}

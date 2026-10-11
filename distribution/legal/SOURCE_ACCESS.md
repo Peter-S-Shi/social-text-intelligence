@@ -1,35 +1,52 @@
 # Source access and remaining corresponding-source obligations
 
-This local engineering bundle accompanies the Qt 6.11.2 release sources for
-QtBase, QtSvg, QtImageFormats, QtTranslations and PySide/shiboken in `sources/`.
-`inventory.json` records upstream URLs and independently checked SHA-256 values.
-The repository's `distribution/source-manifest.json` is the versioned receipt.
-These are full upstream release archives, not snippets or a link-only offer.
-The build fails if any required archive is absent or changed. Build preparation
-must acquire these exact public upstream files separately; the build never
-downloads them. Model weights and private application data are not included.
+This bundle includes the full Qt 6.11.2 release sources for QtBase, QtSvg,
+QtImageFormats and QtTranslations, and the PySide/shiboken 6.11.2 release
+source, in `sources/`. `inventory.json` records their upstream URLs and
+independently checked SHA-256 values; `distribution/source-manifest.json` in the
+repository is the versioned receipt. The build fails if any archive is absent or
+changed, and it never downloads them. Model weights and private application data
+are not included.
 
-This is **not a written offer** and creates no unsupported promise of a future
-source service. It is also not yet a complete corresponding-source claim:
-upstream releases do not prove the wheel's precise build configuration, patches,
-software-renderer sources or static dependency link units. Before distribution,
-resolve those differences, deliver all required matching source/build materials
-alongside the binary, and check the chosen LGPL/GPL conveyance route against its
-actual terms. Installation Information, if required by the applicable route and
-product classification, must also be supplied. No signing or device lock is
-introduced here.
+## Qt libraries: binaries matched to sources
 
-For rebuilding, unpack the sources in a separate workspace using a trusted
-archive tool, retain their licenses, and follow the included QtBase build
-instructions and PySide setup README. Build Windows x64 shared Qt libraries
-with an ABI-compatible MSVC toolchain; build QtSvg/QtImageFormats against that
-same Qt build and use the matching shiboken/PySide build when wrapper ABI changes
-require it. The PySide build prerequisites include its supported Python, CMake,
-Ninja and libclang versions. The exact producer flags and dependency sources
-remain blocker B1; these high-level steps are not represented as a reproduced
-upstream build recipe. See [Qt for Python build prerequisites](https://doc.qt.io/qtforpython-6.11/shiboken6/gettingstarted.html).
+`qt-sbom/` holds the official Qt 6.11.2 build SBOMs (SPDX 2.3, data license
+CC0-1.0) from the Qt binary archives named in
+`distribution/qt-binary-provenance.json`. During the build, every shipped Qt
+library and plugin binary is checked against those SBOMs: the binary's SHA-1
+before code signing must equal the SBOM checksum. `inventory.json` records the
+result under `qt_binary_provenance`.
 
-Python and package license texts are provided separately. Package-level notices
-and source-superset Qt acknowledgments must not be mistaken for a certified
-compiled-content SBOM. No proprietary runtime redistribution permission is
-inferred from a public download or an installed file.
+- **QtBase and QtSvg:** each SBOM names the built Git commit
+  (`qtbase@ef55f427f2c8b410d34f8a7681020a3000cf6866`,
+  `qtsvg@17ca512f903f935282ebeca496aac5d11ba4199a`). The `.tag` file inside the
+  delivered source archive names the same commit. The SBOM also records the
+  configure command, the compiler (MSVC 19.44.35227) and CMake 3.30.5. The CI
+  build instructions (`coin/`) and `configure` scripts are inside the archives.
+- **QtImageFormats:** the SBOM identifies the 6.11.2 release by version only
+  and names no commit.
+- **Not covered:** the Qt-licensed translation data files.
+
+## PySide6 and shiboken6
+
+The binding binaries come from the official 6.11.2 wheels. They carry no
+producer build record. The delivered `pyside-setup` 6.11.2 source includes its
+`build_scripts/`, `coin/` and `create_wheels.py`; it is not proven to be the
+byte-exact recipe of those wheels.
+
+## Status
+
+This is **not a written offer**. It is also not yet a complete legal clearance.
+The proposed release route places these same source archives next to the
+installer on the same download page. The owner (and legal review, where
+needed) must confirm that route, the binding-source position, and whether
+Installation Information applies. No signing or device lock is introduced.
+
+For rebuilding, unpack the sources in a separate workspace with a trusted
+archive tool and keep their licenses. Configure QtBase with the command recorded
+in its SBOM and an ABI-compatible MSVC toolchain. Build QtSvg and QtImageFormats
+against that Qt, and rebuild shiboken/PySide when the binding ABI changes. See
+[Qt for Python build prerequisites](https://doc.qt.io/qtforpython-6.11/shiboken6/gettingstarted.html).
+Python and package license texts are provided separately. No proprietary
+runtime redistribution permission is inferred from a public download or an
+installed file.

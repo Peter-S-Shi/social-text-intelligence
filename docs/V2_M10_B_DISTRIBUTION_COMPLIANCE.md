@@ -56,6 +56,10 @@ describe the route and its unresolved build details.
 
 ## Obligations and blockers
 
+This table records the M10-B state. The current dispositions — B2 resolved
+by removal; B1, B4 and B6 narrowed; B3 and B5 awaiting owner decisions — are
+in the [M10-E1 record](V2_M10_E1_DISTRIBUTION_UNBLOCKING.md).
+
 | ID | Evidence / required closure | Status |
 | --- | --- | --- |
 | B1 | Upstream release archives delivered; exact Qt/PySide wheel patches, flags, corresponding source and producer build recipes still need verification and delivery | OPEN, blocks distribution |

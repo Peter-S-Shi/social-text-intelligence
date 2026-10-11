@@ -1,31 +1,52 @@
 # Replacing the dynamically linked Qt libraries on Windows
 
-1. Close all STI processes. Keep the original local bundle unchanged and make
-   a separate copy of the entire `sti-desktop` onedir folder. Do not edit an
-   installed user profile or reuse real project data for this experiment.
-2. Obtain independently sourced, appropriately licensed Windows x64 Qt shared
-   libraries compatible with Qt 6.11 and the PySide6 6.11 ABI. Verify their
-   upstream provenance and hashes. A wheel is a possible engineering test
-   source, not automatic evidence of full redistribution permission.
-3. Replace the Qt DLLs in `_internal/PySide6/` and the matching files under
-   `_internal/PySide6/plugins/` with the compatible build. Keep filenames and
-   layout. Do not replace only a plugin with one from an incompatible Qt build.
-   If modifying wrapper ABI, rebuild and replace PySide/shiboken as a coherent
-   set. Keep the Python/runtime architecture compatible. No executable patch
-   or executable rebuild is required for an interface-compatible Qt replacement.
-4. In the copied folder run `sti-check.exe --license-info`,
-   `sti-check.exe --verify-runtime` and `sti-check.exe --smoke`.
-   The first reports the Qt version actually loaded; the last creates and
-   removes disposable synthetic app data. Use a fresh temporary environment for
-   caches and avoid supplying personal projects or model weights. A crash or
-   dependency failure is a failed compatibility experiment, not acceptance.
-5. Open the copied `sti-desktop.exe` if desired and use the footer's
-   **Licenses · Qt LGPL** button. The material-opening action exposes the
-   accompanying license texts, source archives and inventory. Restore the
-   original copy by discarding only your explicitly created experiment folder.
+Qt, PySide6 and shiboken6 are separate files in `_internal/PySide6/` and
+`_internal/shiboken6/`; the application loads them at run time. There is no
+signature check, executable patch or replacement lock.
 
-The M10-B record bounds the tested replacement and its observed outcome.
-Compatibility with arbitrary changes, future Qt versions, security policy,
-formal Windows UAT and LGPL compliance is not implied. Reverse engineering to
-debug LGPL-library modifications is permitted; no contractual prohibition or
-technical replacement lock is added.
+## Which replacement works
+
+The PySide6 6.11.2 binding binaries import Qt private API that Qt tags with its
+exact version (for example the import
+`??0QObjectPrivate@@QEAA@W4QtPrivate_6_11_2@@@Z` in `QtCore.pyd`). Therefore:
+
+- **Qt libraries only:** the replacement must be an interface-compatible Qt
+  **6.11.2** build, for example your own build of the delivered 6.11.2 sources,
+  with or without modifications. Qt 6.11.1 or 6.12.0 libraries alone cannot
+  satisfy that versioned import, so Windows refuses to load the bindings.
+- **Coherent set:** to use another Qt version, replace Qt **together with** the
+  matching PySide6 and shiboken6 files of that same version (binaries and the
+  loose Python files).
+
+## Procedure
+
+1. Close all STI processes. Make a separate copy of the entire `sti-desktop`
+   onedir folder and work only in the copy. Do not use real project data.
+2. Obtain the replacement files and check their provenance and hashes:
+   - Qt-only: Windows x64 MSVC Qt 6.11.2 shared libraries and plugins.
+   - Coherent set: a PySide6-Essentials wheel and the shiboken6 wheel of one
+     version. A wheel is a ZIP archive; its `PySide6/` and `shiboken6/` folders
+     hold the files.
+3. Overwrite each existing file in the copied `_internal/PySide6/` (and, for a
+   coherent set, `_internal/shiboken6/`) with the file of the same relative path
+   from the replacement. Keep the layout, and replace a plugin only together
+   with the Qt build it belongs to.
+4. In the copy, run `sti-check.exe --license-info`, then
+   `sti-check.exe --verify-runtime` and `sti-check.exe --smoke`. The first
+   reports the Qt version actually loaded; the last creates and removes
+   disposable synthetic app data. A crash or non-zero exit is a failed
+   replacement, not acceptance.
+5. Optionally open the copied `sti-desktop.exe` and use the footer's
+   **Licenses · Qt LGPL** button. To undo, discard only the copy you created.
+
+## What has been observed
+
+The [M10-E1 record](../../docs/V2_M10_E1_DISTRIBUTION_UNBLOCKING.md) has the
+exact results. On a Windows x64 development host: the officially distributed
+Qt 6.11.2 binaries, downloaded separately and Qt-signed, and a coherent
+6.11.1 Qt/PySide6/shiboken6 set each passed all three checks. A Qt-only 6.11.1
+or 6.12.0 swap fails for the versioned-import reason above. A replacement built
+from modified sources has **not yet** been demonstrated. No compatibility with
+arbitrary changes, future versions, formal Windows UAT or legal compliance is
+implied. Reverse engineering to debug modifications of these libraries is
+permitted; no contractual term prohibits it.
