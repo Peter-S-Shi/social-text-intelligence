@@ -109,44 +109,120 @@ def unsigned_sha1(data: bytes) -> str:
     """SHA-1 of a PE image before Authenticode signing, as Qt build SBOMs record it.
 
     Signing appends the certificate table and sets the security directory and
-    header checksum; removing exactly those restores the pre-signing image.
+    header checksum. Qt's signed release images were built with a zero checksum,
+    so for a signed image removing exactly those restores the pre-signing bytes;
+    an unsigned image is hashed unchanged.
     """
-    if len(data) < 0x40 or data[:2] != b"MZ":
-        raise ValueError("Not a PE image.")
-    header = struct.unpack_from("<I", data, 0x3C)[0]
-    if data[header : header + 4] != b"PE\0\0":
-        raise ValueError("Not a PE image.")
-    optional = header + 24
-    magic = struct.unpack_from("<H", data, optional)[0]
-    if magic not in {0x10B, 0x20B}:
-        raise ValueError("Unsupported PE optional header.")
-    security = optional + (112 if magic == 0x20B else 96) + 4 * 8
-    offset, size = struct.unpack_from("<II", data, security)
-    if size and offset + size != len(data):
+    try:
+        if data[:2] != b"MZ":
+            raise ValueError("Not a PE image.")
+        header = struct.unpack_from("<I", data, 0x3C)[0]
+        if data[header : header + 4] != b"PE\0\0":
+            raise ValueError("Not a PE image.")
+        optional = header + 24
+        magic = struct.unpack_from("<H", data, optional)[0]
+        if magic not in {0x10B, 0x20B}:
+            raise ValueError("Unsupported PE optional header.")
+        directories = optional + (112 if magic == 0x20B else 96)
+        if struct.unpack_from("<I", data, directories - 4)[0] < 5:
+            raise ValueError("PE image has no security directory slot.")
+        security = directories + 4 * 8
+        offset, size = struct.unpack_from("<II", data, security)
+    except struct.error as error:
+        raise ValueError("Not a PE image.") from error
+    if not size:
+        return hashlib.sha1(data).hexdigest()
+    if offset + size != len(data):
         raise ValueError("Certificate table is not the final part of the image.")
-    image = bytearray(data[:offset] if size else data)
+    image = bytearray(data[:offset])
     struct.pack_into("<I", image, optional + 64, 0)
     struct.pack_into("<II", image, security, 0, 0)
     return hashlib.sha1(image).hexdigest()
 
 
-def archive_tags(archives: Sequence[Path]) -> dict[str, str]:
-    """Read the upstream Git commit recorded in each Qt release archive's .tag."""
-    tags: dict[str, str] = {}
+@dataclass(frozen=True)
+class ReleaseSource:
+    """Identity of one delivered Qt release source archive."""
+
+    version: str
+    tag: str | None
+
+
+def release_sources(archives: Sequence[Path]) -> dict[str, ReleaseSource]:
+    """Read each Qt release archive's version (file name) and upstream .tag commit."""
+    sources: dict[str, ReleaseSource] = {}
     for path in archives:
-        repository = path.name.split("-everywhere-src-")[0]
+        repository, _, rest = path.name.partition("-everywhere-src-")
+        tag = None
         with tarfile.open(path, "r:xz") as archive:
             for member in archive:
-                if (
-                    member.isfile()
-                    and member.name.count("/") == 1
-                    and member.name.endswith("/.tag")
-                ):
+                parts = member.name.removeprefix("./").split("/")
+                if member.isfile() and len(parts) == 2 and parts[1] == ".tag":
                     stream = archive.extractfile(member)
                     if stream is not None:
-                        tags[repository] = stream.read().decode().strip()
+                        tag = stream.read().decode().strip()
                     break
-    return tags
+        sources[repository] = ReleaseSource(rest.removesuffix(".tar.xz"), tag)
+    return sources
+
+
+@dataclass(frozen=True)
+class SbomEntry:
+    sha1: str
+    module: str
+
+
+def source_link(
+    commit: str | None, version: str | None, source: ReleaseSource | None
+) -> str:
+    """How an SBOM's built module is tied to the delivered source archive."""
+    if source is None:
+        return "NO_SOURCE_ARCHIVE"
+    if commit:
+        return "COMMIT_MATCH" if commit == source.tag else "COMMIT_MISMATCH"
+    return "VERSION_ONLY" if version == source.version else "VERSION_MISMATCH"
+
+
+def read_build_sbom(
+    path: Path, sources: dict[str, ReleaseSource], entries: dict[str, SbomEntry]
+) -> dict[str, object]:
+    """Record one SBOM's module identity and add its file checksums to entries."""
+    document = json.loads(path.read_text(encoding="utf-8"))
+    described = {
+        item["relatedSpdxElement"]
+        for item in document.get("relationships", [])
+        if item.get("spdxElementId") == "SPDXRef-DOCUMENT"
+        and item.get("relationshipType") == "DESCRIBES"
+    }
+    packages = [
+        item for item in document.get("packages", []) if item["SPDXID"] in described
+    ]
+    if len(packages) != 1:
+        raise ValueError("A Qt build SBOM must describe exactly one module.")
+    module = packages[0]["name"]
+    match = re.fullmatch(
+        r"git://code\.qt\.io/qt/[a-z0-9-]+\.git(?:@([0-9a-f]{40}))?",
+        packages[0].get("downloadLocation", ""),
+    )
+    commit = match.group(1) if match else None
+    version = packages[0].get("versionInfo")
+    source = sources.get(module)
+    for item in document.get("files", []):
+        name = item.get("fileName", "").removeprefix("./").lower()
+        for checksum in item.get("checksums", []):
+            if checksum.get("algorithm") == "SHA1":
+                if name in entries:
+                    raise ValueError("Two Qt build SBOMs describe the same file.")
+                entries[name] = SbomEntry(checksum["checksumValue"].lower(), module)
+    return {
+        "module": module,
+        "version": version,
+        "sbom": path.name,
+        "sbom_sha256": digest(path),
+        "built_commit": commit,
+        "source_archive_tag": source.tag if source else None,
+        "source_link": source_link(commit, version, source),
+    }
 
 
 def verify_qt_provenance(
@@ -157,51 +233,9 @@ def verify_qt_provenance(
     PySide6/shiboken6 binding binaries and runtime DLLs have no Qt build SBOM and
     stay outside this check; any other uncovered Qt-tree binary is reported.
     """
-    tags = archive_tags(archives)
-    entries: dict[str, tuple[str, str]] = {}
-    modules = []
-    for path in documents:
-        document = json.loads(path.read_text(encoding="utf-8"))
-        described = {
-            item["relatedSpdxElement"]
-            for item in document.get("relationships", [])
-            if item.get("spdxElementId") == "SPDXRef-DOCUMENT"
-            and item.get("relationshipType") == "DESCRIBES"
-        }
-        packages = [
-            item for item in document.get("packages", []) if item["SPDXID"] in described
-        ]
-        if len(packages) != 1:
-            raise ValueError("A Qt build SBOM must describe exactly one module.")
-        module = packages[0]["name"]
-        match = re.fullmatch(
-            r"git://code\.qt\.io/qt/[a-z0-9-]+\.git(?:@([0-9a-f]{40}))?",
-            packages[0].get("downloadLocation", ""),
-        )
-        commit = match.group(1) if match else None
-        tag = tags.get(module)
-        modules.append(
-            {
-                "module": module,
-                "version": packages[0].get("versionInfo"),
-                "sbom": path.name,
-                "sbom_sha256": digest(path),
-                "built_commit": commit,
-                "source_archive_tag": tag,
-                "source_link": (
-                    "COMMIT_MATCH"
-                    if commit and commit == tag
-                    else "COMMIT_MISMATCH"
-                    if commit
-                    else "VERSION_ONLY"
-                ),
-            }
-        )
-        for item in document.get("files", []):
-            name = item.get("fileName", "").removeprefix("./")
-            for checksum in item.get("checksums", []):
-                if checksum.get("algorithm") == "SHA1":
-                    entries[name.lower()] = (checksum["checksumValue"].lower(), module)
+    sources = release_sources(archives)
+    entries: dict[str, SbomEntry] = {}
+    modules = [read_build_sbom(path, sources, entries) for path in documents]
     links = {item["module"]: item["source_link"] for item in modules}
     qt = bundle / "_internal" / "PySide6"
     rows = []
@@ -212,19 +246,22 @@ def verify_qt_provenance(
         relative = path.relative_to(qt).as_posix()
         if relative.lower().startswith(("pyside6.", "msvcp", "vcruntime")):
             continue
-        key = relative if relative.startswith("plugins/") else "bin/" + relative
-        entry = entries.get(key.lower())
+        key = relative.lower()
+        entry = entries.get(key if key.startswith("plugins/") else "bin/" + key)
         if entry is None:
             uncovered.append(relative)
             continue
         observed = unsigned_sha1(path.read_bytes())
-        status = "VERIFIED" if observed == entry[0] else "MISMATCH"
-        if status == "VERIFIED" and links[entry[1]] == "COMMIT_MISMATCH":
+        status = "VERIFIED" if observed == entry.sha1 else "MISMATCH"
+        if status == "VERIFIED" and links[entry.module] not in {
+            "COMMIT_MATCH",
+            "VERSION_ONLY",
+        }:
             status = "SOURCE_MISMATCH"
         rows.append(
             {
                 "path": "_internal/PySide6/" + relative,
-                "module": entry[1],
+                "module": entry.module,
                 "unsigned_sha1": observed,
                 "status": status,
             }
@@ -287,9 +324,10 @@ B1_UNVERIFIED = (
     "are not established by upstream release archives alone."
 )
 B1_BINDINGS = (
-    "B1: Qt library binaries match the official Qt build SBOMs and tagged source "
-    "archives; PySide6/shiboken6 binding binaries have no producer build record, and "
-    "the release source-delivery route needs owner/legal confirmation."
+    "B1: Qt library binaries match the official Qt build SBOMs, linked to the "
+    "delivered source archives by commit or, where an SBOM names none, by release "
+    "version only; PySide6/shiboken6 binding binaries have no producer build "
+    "record, and the release source-delivery route needs owner/legal confirmation."
 )
 B2 = (
     "B2: opengl32sw software renderer build provenance and compiled Mesa/LLVM "

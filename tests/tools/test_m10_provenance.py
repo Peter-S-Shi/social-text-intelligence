@@ -28,43 +28,56 @@ def load() -> Any:
     return module
 
 
-def synthetic_pe(body: bytes, *, signed: bool) -> tuple[bytes, bytes]:
+def synthetic_pe(
+    body: bytes, *, signed: bool, pe32: bool = False, checksum: int = 0
+) -> tuple[bytes, bytes]:
     """Return (signed-or-plain image, the same image as it was before signing)."""
     optional = 0x40 + 24
-    image = bytearray(optional + 240)
+    directories = optional + (96 if pe32 else 112)
+    image = bytearray(directories + 16 * 8)
     image[:2] = b"MZ"
     struct.pack_into("<I", image, 0x3C, 0x40)
     image[0x40:0x44] = b"PE\0\0"
     struct.pack_into("<HH", image, 0x44, 0x8664, 0)
-    struct.pack_into("<H", image, 0x40 + 20, 240)
-    struct.pack_into("<H", image, optional, 0x20B)
+    struct.pack_into("<H", image, 0x40 + 20, len(image) - optional)
+    struct.pack_into("<H", image, optional, 0x10B if pe32 else 0x20B)
+    struct.pack_into("<I", image, optional + 64, checksum)
+    struct.pack_into("<I", image, directories - 4, 16)
     image += body
     original = bytes(image)
     if not signed:
         return original, original
     certificate = b"synthetic certificate table"
     struct.pack_into("<I", image, optional + 64, 0x1234)
-    struct.pack_into("<II", image, optional + 112 + 32, len(image), len(certificate))
+    struct.pack_into("<II", image, directories + 32, len(image), len(certificate))
     return bytes(image + certificate), original
 
 
-def sbom(path: Path, files: dict[str, bytes], commit: str | None = COMMIT) -> Path:
+def sbom(
+    path: Path,
+    files: dict[str, bytes],
+    commit: str | None = COMMIT,
+    version: str = "0.0.0",
+    described: int = 1,
+) -> Path:
     location = "git://code.qt.io/qt/qtbase.git" + (f"@{commit}" if commit else "")
     document = {
         "relationships": [
             {
                 "spdxElementId": "SPDXRef-DOCUMENT",
                 "relationshipType": "DESCRIBES",
-                "relatedSpdxElement": "SPDXRef-Package-qtbase",
+                "relatedSpdxElement": f"SPDXRef-Package-qtbase-{index}",
             }
+            for index in range(described)
         ],
         "packages": [
             {
-                "SPDXID": "SPDXRef-Package-qtbase",
+                "SPDXID": f"SPDXRef-Package-qtbase-{index}",
                 "name": "qtbase",
-                "versionInfo": "synthetic",
+                "versionInfo": version,
                 "downloadLocation": location,
             }
+            for index in range(described)
         ],
         "files": [
             {
@@ -101,18 +114,26 @@ def bundle(tmp_path: Path, files: dict[str, bytes]) -> Path:
     return root
 
 
-def test_signature_removal_restores_the_pre_signing_digest() -> None:
+@pytest.mark.parametrize("pe32", [False, True])
+def test_signature_removal_restores_the_pre_signing_digest(pe32: bool) -> None:
     compliance = load()
-    signed, original = synthetic_pe(b"synthetic code", signed=True)
+    signed, original = synthetic_pe(b"synthetic code", signed=True, pe32=pe32)
     assert compliance.unsigned_sha1(signed) == hashlib.sha1(original).hexdigest()
-    plain, _ = synthetic_pe(b"synthetic code", signed=False)
+
+
+def test_an_unsigned_image_is_hashed_unchanged_including_its_checksum() -> None:
+    compliance = load()
+    plain, _ = synthetic_pe(b"synthetic code", signed=False, checksum=0x5678)
     assert compliance.unsigned_sha1(plain) == hashlib.sha1(plain).hexdigest()
 
 
-def test_non_pe_or_trailing_data_after_the_signature_is_rejected() -> None:
+def test_non_pe_truncated_or_trailing_data_after_the_signature_is_rejected() -> None:
     compliance = load()
     with pytest.raises(ValueError, match="PE"):
         compliance.unsigned_sha1(b"synthetic, not an executable image" * 4)
+    image, _ = synthetic_pe(b"", signed=False)
+    with pytest.raises(ValueError, match="PE"):
+        compliance.unsigned_sha1(image[:0x50])
     signed, _ = synthetic_pe(b"synthetic code", signed=True)
     with pytest.raises(ValueError, match="final"):
         compliance.unsigned_sha1(signed + b"appended")
@@ -182,6 +203,51 @@ def test_sbom_without_a_commit_links_to_source_by_version_only(tmp_path: Path) -
     receipt = compliance.verify_qt_provenance(root, [document], [archive])
     assert receipt["modules"][0]["source_link"] == "VERSION_ONLY"
     assert receipt["qt_libraries_verified"] is True
+
+
+def test_version_only_sbom_must_match_the_delivered_release_version(
+    tmp_path: Path,
+) -> None:
+    compliance = load()
+    core, core_original = synthetic_pe(b"synthetic core", signed=True)
+    root = bundle(tmp_path, {"Qt6Core.dll": core})
+    document = sbom(
+        tmp_path / "qtbase.spdx.json",
+        {"bin/Qt6Core.dll": core_original},
+        commit=None,
+        version="9.9.9",
+    )
+    archive = source_archive(tmp_path / "qtbase-everywhere-src-0.0.0.tar.xz", COMMIT)
+    receipt = compliance.verify_qt_provenance(root, [document], [archive])
+    assert receipt["modules"][0]["source_link"] == "VERSION_MISMATCH"
+    assert receipt["binaries"][0]["status"] == "SOURCE_MISMATCH"
+    receipt = compliance.verify_qt_provenance(root, [document], [])
+    assert receipt["modules"][0]["source_link"] == "NO_SOURCE_ARCHIVE"
+    assert receipt["qt_libraries_verified"] is False
+
+
+def test_a_bundle_without_qt_binaries_is_not_verified(tmp_path: Path) -> None:
+    compliance = load()
+    root = bundle(tmp_path, {"pyside6.abi3.dll": b"binding only"})
+    document = sbom(tmp_path / "qtbase.spdx.json", {})
+    archive = source_archive(tmp_path / "qtbase-everywhere-src-0.0.0.tar.xz", COMMIT)
+    receipt = compliance.verify_qt_provenance(root, [document], [archive])
+    assert receipt["binaries"] == []
+    assert receipt["qt_libraries_verified"] is False
+
+
+def test_ambiguous_sboms_are_rejected(tmp_path: Path) -> None:
+    compliance = load()
+    core, core_original = synthetic_pe(b"synthetic core", signed=True)
+    root = bundle(tmp_path, {"Qt6Core.dll": core})
+    archive = source_archive(tmp_path / "qtbase-everywhere-src-0.0.0.tar.xz", COMMIT)
+    two_modules = sbom(tmp_path / "two.spdx.json", {}, described=2)
+    with pytest.raises(ValueError, match="exactly one"):
+        compliance.verify_qt_provenance(root, [two_modules], [archive])
+    first = sbom(tmp_path / "a.spdx.json", {"bin/Qt6Core.dll": core_original})
+    second = sbom(tmp_path / "b.spdx.json", {"bin/Qt6Core.dll": core_original})
+    with pytest.raises(ValueError, match="same file"):
+        compliance.verify_qt_provenance(root, [first, second], [archive])
 
 
 def test_blockers_narrow_only_with_evidence_and_never_grant_permission() -> None:

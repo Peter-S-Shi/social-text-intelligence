@@ -412,12 +412,6 @@ action is to execute that isolated matrix and close the blockers; after M10-E1, 
 Owner 30-minute smoke remains planned NOT RUN; no signing, publication, formal
 UAT or release readiness is claimed. M9.2–M9.4 remain DEFERRED and Q5 unchanged.
 
-### M10-E1 — Distribution unblocking engineering; distribution still BLOCKED
-
-The [M10-E1 record](docs/V2_M10_E1_DISTRIBUTION_UNBLOCKING.md) verifies the shipped Qt binaries against the official Qt build SBOMs and the tagged source archives. It explains the M10-B replacement failures as Qt's version-tagged private API, and demonstrates same-version and coherent-set replacement. It keeps the binding layer replaceable and stops shipping the unused software renderer.
-
-Blocker status: B2 is resolved by removal; B1, B4 and B6 are narrowed but OPEN; B3 and B5 need owner/legal decisions. Next: those owner decisions, the defined E4 modified-source Qt rebuild, the B4 crate notices and the isolated clean-machine matrix. No binary is published.
-
 ### M10-D — Release readiness dossier and decision gate established; binary distribution BLOCKED
 
 The auditable [release readiness dossier](docs/V2_M10_D_RELEASE_DOSSIER.md)
@@ -432,3 +426,9 @@ Defensible recommendation is GO for source portfolio presentation and
 NO-GO for binary distribution. The formal release decision remains pending the
 repository owner. M9.2–M9.4 remain DEFERRED, the optional 30-minute owner smoke
 remains NOT RUN, and Q5 is unchanged.
+### M10-E1 — Distribution unblocking engineering; distribution still BLOCKED
+
+The [M10-E1 record](docs/V2_M10_E1_DISTRIBUTION_UNBLOCKING.md) verifies the shipped Qt binaries against the official Qt build SBOMs and the tagged source archives. It explains the M10-B replacement failures as Qt's version-tagged private API, and demonstrates same-version and coherent-set replacement. It keeps the binding layer replaceable and stops shipping the unused software renderer.
+
+Blocker status: B2 is resolved by removal; B1, B4 and B6 are narrowed but OPEN; B3 and B5 need owner/legal decisions. Next: those owner decisions, the defined E4 modified-source Qt rebuild, the B4 crate notices and the isolated clean-machine matrix. No binary is published.
+

@@ -47,6 +47,10 @@ authorization.
 
 ## 3. Detailed Audit of Unresolved Distribution Blockers (B1–B6)
 
+This section records the M10-D state. The current dispositions — B2 resolved
+by removal; B1, B4 and B6 narrowed; B3 and B5 awaiting owner decisions — are
+in the [M10-E1 record](V2_M10_E1_DISTRIBUTION_UNBLOCKING.md); binary distribution remains BLOCKED.
+
 The M10-B compliance audit established structural inventory checks and upstream
 source manifests, but confirmed that binary distribution is legally blocked
 under open obligations:

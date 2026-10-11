@@ -64,7 +64,12 @@ committed or redistributed.
 From now on, the build stages the three SBOMs into `legal/qt-sbom/` (hash-pinned)
 and runs this check. Its result goes into `inventory.json` as
 `qt_binary_provenance`, and the B1 blocker text narrows only when every Qt
-binary verifies.
+binary verifies and every module links to its delivered archive, by commit or,
+where the SBOM names none, by matching release version. After review, the
+check also hashes unsigned images unchanged and rejects ambiguous SBOMs and
+version mismatches. The narrowed B1 text now states that QtImageFormats is
+linked by version only. The committed build receipt keeps the `2a374e2`
+artifact's original wording.
 
 ### 2.2 Replacement mechanism (B6)
 
@@ -232,7 +237,10 @@ shipped in `legal/`:
 - **Combined Work, LGPL v3 §4.** (a) and (b): the Qt notice and both licence
   texts are shipped. (c): a licence dialog is shown. (d)(1): a "suitable shared
   library mechanism" — Qt, PySide6 and shiboken6 are separate run-time-loaded
-  files, now including the binding Python layer, and §2.2 shows replacement.
+  files, now including the binding Python layer. §2.2 shows replacement with
+  separately obtained and coherent-set libraries. Operation with a *modified*
+  interface-compatible version — which §4(d)(1) requires — is not yet shown;
+  that is E4 (§5).
   (e): Installation Information applies only where GPL v3 §6 requires it, which
   is for "User Products". Whether a downloadable desktop application falls
   under that is for owner/legal confirmation.
@@ -275,20 +283,28 @@ shipped in `legal/`:
 - **Replacement experiments:** E3, E2, E3b and E2b PASS. The two retained
   M10-B Qt-only experiments are FAIL, with the cause now explained.
   Modified-source E4 is NOT RUN.
-- **Local Windows full application suite** (worktree source on `PYTHONPATH`):
-  **1,197 passed / 6 opt-in skipped**. Its only failure was the new M10-E1
-  lifecycle check, which ran before the status row it checks existed. After the
-  governance update, the lifecycle file and `tests/tools` give **74 passed /
-  2 opt-in skipped**.
+- **Local Windows full application suite** (worktree source on `PYTHONPATH`),
+  after the review fixes: **1,203 passed / 6 opt-in skipped**.
 - **New regressions:** `tests/tools/test_m10_provenance.py` uses synthetic PE
   images, SBOMs and archives. It covers pre-signing digests, rejection of
   malformed or trailing data, VERIFIED / MISMATCH / SOURCE_MISMATCH /
-  VERSION_ONLY results, uncovered-binary reporting, evidence-derived blockers,
+  VERSION_ONLY / VERSION_MISMATCH / NO_SOURCE_ARCHIVE results, PE32 and
+  PE32+ images, unsigned images with a checksum, ambiguous SBOMs, an empty
+  bundle, uncovered-binary reporting, evidence-derived blockers,
   and the spec and manifest guards.
 - **Static checks:** Ruff and strict MyPy (241 files) pass.
 - **CI scope:** Linux CI runs the regressions and static checks; it is not
   Windows packaging or replacement evidence.
-- **Independent Spec and Standards reviews:** recorded in the PR.
+- **Independent Spec and Standards reviews:** run on the branch.
+  - Standards found two real defects, both fixed test-first: unsigned images
+    had their checksum zeroed, and VERSION_ONLY modules were never compared to
+    the archive version. It also found vacuous test assertions, now fixed.
+  - Spec found the B1 text overclaiming commit links for QtImageFormats, the
+    §4(d)(1) wording, and four stale statements (the M10-C record, the
+    installer notice and the M10-D dossier pointer). All are fixed.
+  - Spec's one-second-after-merge audit of the changed current-state
+    statements: **100% YES**.
+  - The real bundle still verifies 25/25 under the stricter check.
 - **Privacy:** evidence files hold relative bundle paths, hashes and public
   upstream URLs only. Downloaded archives, extracted official binaries, built
   bundles and logs stay local under ignored `_local/`.

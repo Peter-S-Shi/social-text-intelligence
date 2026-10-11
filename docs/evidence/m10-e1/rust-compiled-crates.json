@@ -140,5 +140,6 @@
   "safetensors": "safetensors-0.8.0.dist-info/sboms/safetensors-python.cyclonedx.json",
   "hf_xet": "hf_xet-1.5.2.dist-info/sboms/hf_xet.cyclonedx.json",
   "tokenizers": "none shipped"
- }
+ },
+ "distribution_permitted": false
 }

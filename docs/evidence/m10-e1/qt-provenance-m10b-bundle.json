@@ -302,5 +302,6 @@
   "qt_libraries_verified": false,
   "bindings_covered": false,
   "distribution_permitted": false
- }
+ },
+ "distribution_permitted": false
 }

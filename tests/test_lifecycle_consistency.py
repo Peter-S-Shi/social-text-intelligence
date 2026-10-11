@@ -94,6 +94,7 @@ def test_m10c_engineering_does_not_close_acceptance_or_distribution_gates() -> N
             assert stale not in surface
     assert "| M10-C clean-machine acceptance | **NOT RUN**" in status
     assert "B1–B6 remain BLOCKED" in record
+    assert "B2 is resolved by removal and B1 and\nB3–B6 remain BLOCKED" in record
     assert "M9.2–M9.4 remain DEFERRED" in record
     assert "clean-machine acceptance remains NOT RUN" in record
     assert "Actual missing-model analysis UI" in record
@@ -346,7 +347,7 @@ def test_m10e1_narrows_blockers_without_granting_distribution() -> None:
         data = json.loads(
             (ROOT / "docs/evidence/m10-e1" / evidence).read_text(encoding="utf-8")
         )
-        assert data.get("distribution_permitted", False) is False
+        assert data["distribution_permitted"] is False
 
 
 def test_m10d_dossier_stratifies_readiness_and_leaves_release_pending() -> None:
