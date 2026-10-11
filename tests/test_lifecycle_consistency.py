@@ -314,3 +314,23 @@ def test_m10_foundation_does_not_waive_acceptance_or_distribution_gates() -> Non
     assert "30-minute owner smoke: NOT RUN" in status
     assert "no distribution, LGPL compliance or release readiness" in status
     assert "DEFERRED, not accepted or waived" in status
+
+
+def test_m10d_dossier_stratifies_readiness_and_leaves_release_pending() -> None:
+    status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
+    dossier = (
+        ROOT / "docs" / "V2_M10_D_RELEASE_DOSSIER.md"
+    ).read_text(encoding="utf-8")
+    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+        surface = (ROOT / name).read_text(encoding="utf-8")
+        assert "M10-D release readiness dossier" in surface
+    assert "| M10-D — Release Readiness Dossier and Decision Gate |" in status
+    assert "RECOMMENDATION IS NO-GO" in dossier
+    assert "RECOMMENDATION IS GO" in dossier
+    assert "PENDING OWNER DECISION" in dossier
+    assert "B1–B6" in dossier
+    assert "Public Source-Code Portfolio Presentation" in dossier
+    assert "Non-Distributable Product Demonstrations" in dossier
+    assert "Downloadable Binary Distribution" in dossier
+    assert (ROOT / "docs" / "V2_M10_D_RELEASE_DOSSIER.md").is_file()
+

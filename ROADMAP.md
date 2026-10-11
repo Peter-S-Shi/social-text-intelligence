@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
+**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -411,3 +411,17 @@ acceptance and missing-model/download-cancel UI checks remain NOT RUN. The next
 action is to execute that isolated matrix and resolve B1–B6, which remain BLOCKED.
 Owner 30-minute smoke remains planned NOT RUN; no signing, publication, formal
 UAT or release readiness is claimed. M9.2–M9.4 remain DEFERRED and Q5 unchanged.
+
+### M10-D — Release readiness dossier and decision gate established; binary distribution BLOCKED
+
+The auditable [release readiness dossier](docs/V2_M10_D_RELEASE_DOSSIER.md)
+synthesizes M10-A packaging, M10-B compliance, M10-C installer engineering, and
+retained M7/M8/M9 risks across six stratified layers. Three distinct operational
+surfaces are defined: public source-code portfolio presentation is SUPPORTED;
+non-distributable product demonstrations are SUPPORTED UNDER CONTROLLED CONDITIONS;
+downloadable binary distribution is PROHIBITED / BLOCKED due to open legal blockers
+B1–B6, unsigned binaries, unverified clean-machine state, and unclosed Q5 domain
+evidence. Defensible recommendation is GO for source portfolio presentation and
+NO-GO for binary distribution. The formal release decision remains pending the
+repository owner. M9.2–M9.4 remain DEFERRED, the optional 30-minute owner smoke
+remains NOT RUN, and Q5 is unchanged.
