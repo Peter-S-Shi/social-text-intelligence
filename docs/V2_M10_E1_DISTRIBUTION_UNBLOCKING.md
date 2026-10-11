@@ -213,12 +213,16 @@ implementation commit `2a374e2e4539aec6f6f5727d86e056bcb5a786a4`
     36: `PySide6_Essentials` and `shiboken6` and their installed notices
     were missing. The loose-file collection leaves them no PYZ entry, and
     owner discovery read PYZ names only.
-  - Tool commit `6ae5fdf` adds owners of loose Python sources shipped
-    under `_internal` and records them as `loose_python_packages`.
+  - Tool commits `6ae5fdf` and `5800a40` add owners of loose Python
+    sources and bytecode shipped under `_internal`, and record them as
+    `loose_python_packages`.
     Unregistered loose files still become unmapped-owner blockers.
   - On a fresh copy of the same `2a374e2` bundle, the regenerated packet
     audits **36** components. Both bindings are version-matched (6.11.2)
-    with their installed notices, and no ownership blockers remain
+    with their installed notices, and no ownership blockers remain.
+    Each binding wheel installs only a `LicenseRef-Qt-Commercial`
+    reference. The full LGPL v3 and GPL v3 texts come from the delivered Qt
+    source archives, as designed in M10-B
     ([receipt](evidence/m10-e1/e1-packet-correction-receipt.json)).
   - Executables are byte-identical. `--verify`, `--license-info`,
     `--verify-runtime` and `--smoke` pass. The replacement mechanism and
@@ -307,7 +311,14 @@ shipped in `legal/`:
   M10-B Qt-only experiments are FAIL, with the cause now explained.
   Modified-source E4 is NOT RUN.
 - **Local Windows full application suite** (worktree source on `PYTHONPATH`),
-  after the review fixes: **1,203 passed / 6 opt-in skipped**.
+  after the first review fixes (`95beee7`): **1,203 passed / 6 opt-in
+  skipped**.
+- **Pre-merge packet correction** (`6ae5fdf`, `5800a40`): the full suite
+  was not re-run. Focused checks pass: `tests/tools` 71 passed / 2 opt-in
+  skipped, with the lifecycle checks, Ruff and strict MyPy. A mutation
+  check confirms the new regression fails without loose-file discovery.
+  The regenerated packet over the actual bundle is valid (§3). Fresh CI
+  runs on the PR head.
 - **New regressions:** `tests/tools/test_m10_provenance.py` uses synthetic PE
   images, SBOMs and archives. It covers pre-signing digests, rejection of
   malformed or trailing data, VERIFIED / MISMATCH / SOURCE_MISMATCH /
@@ -326,7 +337,11 @@ shipped in `legal/`:
     §4(d)(1) wording, and four stale statements (the M10-C record, the
     installer notice and the M10-D dossier pointer). All are fixed.
   - Spec's one-second-after-merge audit of the changed current-state
-    statements: **100% YES**.
+    statements at `95beee7`: **100% YES**.
+  - A bounded second Spec/Standards review of the packet correction found
+    no hard violations and no missing clauses. Its findings — `.pyc`-only
+    packages, a double bundle walk, a docstring, and dating these
+    validation lines — are fixed.
   - The real bundle still verifies 25/25 under the stricter check.
 - **Privacy:** evidence files hold relative bundle paths, hashes and public
   upstream URLs only. Downloaded archives, extracted official binaries, built
