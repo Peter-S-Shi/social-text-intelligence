@@ -25,9 +25,19 @@ common = dict(
     pathex=[str(root / "src")], datas=datas, hiddenimports=hidden,
     excludes=["flask", "tkinter", "PySide6.QtWebEngineCore", "PySide6.QtQml",
               "PySide6.QtQuick", "pytest", "_pytest", "pygments"],
+    # The LGPL binding layer stays as loose files beside its DLLs, so a user can
+    # replace the whole Qt/PySide6/shiboken6 set without rebuilding the PYZ.
+    module_collection_mode={"PySide6": "py", "shiboken6": "py"},
 )
 desktop = Analysis([str(config / "entry_desktop.py")], **common)
 check = Analysis([str(config / "entry_check.py")], **common)
+# The Widgets-only UI never creates an OpenGL context, so the Mesa software
+# renderer fallback is not redistributed (M10-E1, blocker B2).
+for analysis in (desktop, check):
+    analysis.binaries = [
+        entry for entry in analysis.binaries
+        if Path(entry[0]).name.lower() != "opengl32sw.dll"
+    ]
 # COLLECT deduplicates the shared onedir files. Keep each Analysis intact:
 # MERGE creates cross-executable extraction dependencies, unsuitable here.
 exe_d = EXE(PYZ(desktop.pure), desktop.scripts, [], exclude_binaries=True,
