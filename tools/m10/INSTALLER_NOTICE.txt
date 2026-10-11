@@ -1,0 +1,15 @@
+INTERNAL ENGINEERING INSTALLER - NOT APPROVED FOR DISTRIBUTION
+
+Qt LGPL and third-party obligations B1-B6 remain BLOCKED. This installation
+does not imply legal clearance, signing, formal Windows UAT or release readiness.
+Read the accompanying legal materials and source/replacement instructions.
+The owner optional 30-minute packaged smoke remains NOT RUN.
+
+Installation is per-user in LocalAppData/Programs/Social Text Intelligence.
+Projects and external model files remain in the separate application-data
+directory. No model downloads are started by this installer. Downloads inside
+STI continue to require explicit user authorization.
+
+Uninstall removes logged application files and shortcuts. It does not recursively
+clean the application directory or remove projects, models or unrelated files.
+Inno Setup 6.7.3 is used without modification; its license accompanies the app.
