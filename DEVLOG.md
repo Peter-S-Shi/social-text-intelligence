@@ -1,5 +1,26 @@
 # Development Log
 
+## M10-C — Internal installer engineering established; clean-machine NOT RUN
+
+From merged main `948f31e`, retained the existing Windows x64 PyInstaller
+onedir and M10-B license/source packet. Pinned Inno Setup 6.7.3, verified its
+official download and compiler, and added a receipt-bound generator with a fixed
+per-user target, Start Menu links, collision/ownership/reparse guards and
+installation-log-only uninstall. Model weights remain external; no downloads,
+product/dependency changes, signing credentials or artifact publication.
+
+Real development-host lifecycle observations PASS: payload hashes, native first
+launch, runtime/license/synthetic project smoke, reparse refusal, license/file
+and shortcut removal, reinstall and synthetic project/model/unrelated-byte
+preservation. This is not a clean machine. No isolated VM was available, and the
+UI observation tool could not initialize; clean-machine and missing-model UI /
+download-cancel checks remain NOT RUN. Private build/log evidence stays local;
+only sanitized hashes and observations are retained in the repository.
+
+B1–B6 remain BLOCKED, M9.2–M9.4 DEFERRED, Q5 unchanged, M7/M8 risks preserved,
+and owner 30-minute smoke planned NOT RUN. Installer engineering does not grant
+legal clearance, formal acceptance, distribution permission or release readiness.
+
 ## M10-B — Compliance materials established; distribution remains BLOCKED
 
 From merged main `282597b`, retained the M7/M10-A Windows onedir route and all

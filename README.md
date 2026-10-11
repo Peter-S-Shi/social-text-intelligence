@@ -9,7 +9,7 @@ contains Moderation Training and Support Triage workflows; they are retired
 from the V2 product surface but remain documented here as the unchanged V1
 baseline.
 
-> **Current lifecycle phase: V2 M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; distribution gate BLOCKED; M9.2–M9.4 deferred by owner**
+> **Current lifecycle phase: V2 M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; distribution gate BLOCKED; M9.2–M9.4 deferred by owner**
 > after V2 Native UI Integration, M6 complete (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
@@ -31,9 +31,9 @@ baseline.
 > [evidence design](docs/V2_M9_EVIDENCE_CONTRACT.md), approved by the owner
 > on 2026-10-10; real-source authorization and evaluation remain future gates.
 > M9.1 supplies a versioned [synthetic scenario pack and offline recorder](manual-qa/m9-uat/README.md),
-> with all formal UAT steps initially NOT RUN. M9.2–M9.4 are deferred by owner; M10-A packaging foundation is complete, and later M10 distribution gates remain open. V2 is not release-ready: M9
-> formal acceptance, remaining risk decisions, the LGPL gate and later packaging/distribution gates remain.
-> Owner direction prioritizes M10 engineering; [M10-B compliance materials and evidence](docs/V2_M10_B_DISTRIBUTION_COMPLIANCE.md) are established, with exact-source/native obligations and unverified compatible Qt replacement still blocking distribution, preserving M9.0 as historical approved design and M9.1 as COMPLETE. Deferral does not waive Q5 evidence for model capability claims. The optional 30-minute owner packaged-app smoke is planned NOT RUN; no installer, binary distribution or LGPL compliance is claimed.
+> with all formal UAT steps initially NOT RUN. M9.2–M9.4 are deferred by owner; M10-A packaging foundation and M10-C internal installer engineering are complete; clean-machine acceptance is NOT RUN and later M10 distribution gates remain open. V2 is not release-ready: M9
+> formal acceptance, clean-machine validation, remaining risk decisions, the LGPL gate and later packaging/distribution gates remain.
+> Owner direction prioritizes M10 engineering; [M10-B compliance materials and evidence](docs/V2_M10_B_DISTRIBUTION_COMPLIANCE.md) are established, with exact-source/native obligations and unverified compatible Qt replacement still blocking distribution, preserving M9.0 as historical approved design and M9.1 as COMPLETE. Deferral does not waive Q5 evidence for model capability claims. The optional 30-minute owner packaged-app smoke is planned NOT RUN; no installer publication, binary distribution or LGPL compliance is claimed.
 > See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
@@ -499,3 +499,11 @@ execution state are maintained separately:
 - [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md)
 - [Manual Acceptance Gate Standard](docs/MANUAL_ACCEPTANCE_GATE.md)
 - [Living Manual QA](manual-qa/manual_review_questionnaire.html)
+
+### Internal Windows installer engineering
+
+[M10-C installer and isolated validation](docs/V2_M10_C_WINDOWS_INSTALLER.md)
+wraps the existing Windows onedir/license packet. Development-host lifecycle
+checks PASS; clean-machine and missing-model UI checks remain NOT RUN.
+Installers are local internal evidence, not published downloads or distribution
+permission. M10-B B1–B6 remain BLOCKED; V2 is not release-ready.

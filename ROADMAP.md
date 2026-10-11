@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
+**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -109,9 +109,9 @@ deferral does not waive Q5 real-domain evidence for model capability claims.
 M10-A establishes the proven M7 Windows PyInstaller onedir route as a repeatable
 [packaging foundation](docs/V2_M10_A_PACKAGING_FOUNDATION.md), with offline
 startup/dependency checks and temporary-data smoke, keeping weights external.
-Next scope is a later M10 engineering gate, not automatic distribution approval.
+M10-C installer engineering is established; next execute isolated clean-machine validation and resolve B1–B6 before distribution clearance.
 The optional 30-minute owner packaged-app smoke is planned **NOT RUN**.
-Installer, clean-machine proof, LGPL/compliance and release gates remain open;
+Clean-machine proof, LGPL/compliance, signing and release gates remain open;
 formal Windows UAT/accessibility and M9.4 owner synthesis are not completed.
 
 ### M7 — Pre-Release Feasibility & Risk Gate (complete, CONDITIONAL exit accepted)
@@ -121,7 +121,7 @@ and distribution. The [evidence record](docs/V2_M7_FEASIBILITY_GATE.md) found no
 blocking risk: a PyInstaller onedir build ran both pinned models end to end, and no
 binding decision needs reopening. The exit is CONDITIONAL because clean-machine
 proof, the LGPL deliverables and some evidence gaps remain. M7 added experiment
-tooling only; no installer exists and V2 is not release-ready. The sequence stays:
+tooling only and did not deliver an installer; M10-C now supplies internal installer engineering, while V2 is not release-ready. The sequence stays:
 M8 Product Hardening (with an early owner-led exploratory trial), M9 Evidence and
 Formal Acceptance (owner-operated Scenario-Based UAT and a local HTML acceptance
 companion), M10 production packaging, final LGPL compliance, installer and release
@@ -395,6 +395,19 @@ unverified and explicitly blocks distribution (B6).
 [The compliance record](docs/V2_M10_B_DISTRIBUTION_COMPLIANCE.md) retains exact
 source, software-renderer, runtime redistribution and embedded dependency/model
 obligations as blockers. The next required action is to resolve those blockers;
-no compliance certification, installer, distribution or release readiness is
+no compliance certification, distribution or release readiness is
 claimed. M9.2–M9.4 remain deferred and Q5 is not waived. The owner optional
 30-minute packaged-app smoke remains planned NOT RUN.
+
+### M10-C — Installer engineering established; clean-machine NOT RUN
+
+The bounded Inno Setup 6.7.3 per-user workflow is established on `main`,
+retaining the M10-A onedir and M10-B license/source packet. Actual current
+Windows development-host installation, native launch, runtime/license checks,
+reparse refusal, logged-file uninstall, reinstall and synthetic byte preservation
+PASS. [The installer record](docs/V2_M10_C_WINDOWS_INSTALLER.md) contains the
+repeatable isolated Windows protocol and precise NOT RUN matrix. Clean-machine
+acceptance and missing-model/download-cancel UI checks remain NOT RUN. The next
+action is to execute that isolated matrix and resolve B1–B6, which remain BLOCKED.
+Owner 30-minute smoke remains planned NOT RUN; no signing, publication, formal
+UAT or release readiness is claimed. M9.2–M9.4 remain DEFERRED and Q5 unchanged.
