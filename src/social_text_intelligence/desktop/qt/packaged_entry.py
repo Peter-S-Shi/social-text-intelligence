@@ -57,6 +57,7 @@ def language_check(models_root: Path) -> dict[str, object]:
         }
     return {
         "available": True,
+        "model_file_present": installed_language_model(models_root).is_file(),
         "model": detector.info.model,
         "detected": detected,
     }

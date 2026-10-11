@@ -122,13 +122,27 @@ def test_a_separate_model_needs_its_pin() -> None:
         Py3LangidDetector(model_file=Path("model.npz.xz"))
 
 
-def test_the_desktop_detector_reads_the_pinned_file_in_the_models_folder(
-    tmp_path: Path,
+def test_a_failed_check_is_not_repeated_until_the_file_changes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    found = language_detector(tmp_path)
-    assert found._model_file == installed_language_model(tmp_path)
-    assert found._model_sha256 == LANGUAGE_MODEL_SHA256
-    assert installed_language_model(tmp_path).name == "model.npz.xz"
+    found, loader, installed = wired(monkeypatch, tmp_path, sha="0" * 64)
+    put(installed, MODEL)
+    hashed: list[Path] = []
+    real_hash = language_py3langid._sha256
+
+    def counting(path: Path) -> str:
+        hashed.append(path)
+        return real_hash(path)
+
+    monkeypatch.setattr(language_py3langid, "_sha256", counting)
+    for _ in range(3):
+        with pytest.raises(LanguageDetectorUnavailable):
+            found.detect("text")
+    assert len(hashed) == 1  # a large batch does not re-read the file per text
+    put(installed, MODEL + b"changed")
+    with pytest.raises(LanguageDetectorUnavailable):
+        found.detect("text")
+    assert len(hashed) == 2
 
 
 @pytest.fixture

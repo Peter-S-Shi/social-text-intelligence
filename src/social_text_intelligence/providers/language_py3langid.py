@@ -36,7 +36,7 @@ DEFAULT_MIN_SCORE = 0.5
 NO_LANGUAGE_CLASS = "zxx"  # the package's "not a language" class: digits, markup, ...
 UNDETERMINED_CLASS = "und"
 BUNDLED_MODEL = "bundled statistical language model"
-INSTALLED_MODEL = "statistical language model installed separately (SHA-256 verified)"
+INSTALLED_MODEL = "statistical language model installed separately, SHA-256 verified"
 
 
 def _sha256(path: Path) -> str:
@@ -65,6 +65,10 @@ class Py3LangidDetector:
         self._model_file = model_file
         self._model_sha256 = model_sha256
         self._model = BUNDLED_MODEL
+        # The installed file's (size, mtime) when a load last failed: until it
+        # changes, the answer is the same, so a batch never re-hashes per text.
+        self._failed_for: tuple[int, int] | None = None
+        self._failed = False
         self._lock = Lock()
 
     @property
@@ -87,17 +91,32 @@ class Py3LangidDetector:
             return identifier
         with self._lock:
             if self._identifier is None:
-                # Not cached on failure: a model installed later is found next time.
+                # A failure is remembered only until the installed file changes, so
+                # a model installed later is found on the next analysis.
+                marker = self._installed_marker()
+                if self._failed and marker == self._failed_for:
+                    raise LanguageDetectorUnavailable
                 try:
                     module = importlib.import_module(f"{PACKAGE}.langid")
                     model, label = self._model_source(module)
-                    self._identifier = module.LanguageIdentifier.from_model_file(
+                    identifier = module.LanguageIdentifier.from_model_file(
                         model, norm_probs=True
                     )
-                    self._model = label
                 except Exception as error:  # not installed, or an unusable model
+                    self._failed, self._failed_for = True, marker
                     raise LanguageDetectorUnavailable from error
+                self._model = label  # before publishing: the fast path is unlocked
+                self._identifier = identifier
             return self._identifier
+
+    def _installed_marker(self) -> tuple[int, int] | None:
+        if self._model_file is None:
+            return None
+        try:
+            stat = self._model_file.stat()
+        except OSError:
+            return None
+        return (stat.st_size, stat.st_mtime_ns)
 
     def _model_source(self, module: Any) -> tuple[Path, str]:
         """The package's own model first, else the verified separate copy."""

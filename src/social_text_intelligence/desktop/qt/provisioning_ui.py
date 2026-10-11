@@ -311,6 +311,8 @@ class ProvisioningUi(QObject):
                 language.stop()
             case ActionId.DISCARD:
                 language.discard(action.keys)
+            case ActionId.VERIFY:
+                language.verify()
             case ActionId.RETRY:
                 language.retry()
             case ActionId.DISMISS:

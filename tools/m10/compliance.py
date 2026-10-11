@@ -356,7 +356,6 @@ B4 = (
 )
 B5 = "B5: py3langid embedded model training-corpus redistribution terms remain open."
 BLOCKERS = [B4]
-LANGUAGE_MODEL_PATH = "_internal/py3langid/data/model.npz.xz"
 
 
 def distribution_blockers(

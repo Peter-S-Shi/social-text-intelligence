@@ -47,8 +47,8 @@ def _sentence(model: ModelStatus) -> str:
     readiness = model.readiness
     if readiness is Readiness.READY:
         return (
-            "Installed and checksum-verified. New analyses check the language of "
-            "each text on this computer."
+            "Installed, and checksum-verified when installed. New analyses check "
+            "the language of each text on this computer."
         )
     if readiness is Readiness.INCOMPLETE and model.resumable_bytes:
         return (
@@ -100,6 +100,17 @@ def _report(state: ControllerState) -> ReportView | None:
         return ReportView(
             ReportKind.INFO, "Stopped", "The partial file is kept.", None, ()
         )
+    if report.kind is Activity.VERIFYING:
+        damaged = report.found_damage
+        return ReportView(
+            ReportKind.WARNING if damaged else ReportKind.SUCCESS,
+            "Verify found a damaged file" if damaged else "Verify finished",
+            "The file does not match its pinned checksum, so it is never used."
+            if damaged
+            else "The file matches its pinned checksum.",
+            None,
+            (),
+        )
     if report.kind is Activity.DISCARDING:
         return ReportView(
             ReportKind.INFO,
@@ -136,6 +147,9 @@ def build_language_model_view(state: ControllerState) -> LanguageModelView:
     download = _download(model, state.busy)
     if download is not None:
         actions.append(download)
+    if model.readiness in (Readiness.READY, Readiness.CORRUPT):
+        # The quick status only compares sizes; Verify hashes the file again.
+        actions.append(ActionView(ActionId.VERIFY, "Verify file", not state.busy))
     if model.readiness is Readiness.INCOMPLETE and model.resumable_bytes:
         actions.append(
             ActionView(

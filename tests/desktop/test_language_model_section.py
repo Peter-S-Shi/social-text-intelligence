@@ -68,9 +68,10 @@ def test_not_installed_offers_a_download_and_names_the_fallback() -> None:
     assert "have not been verified" in view.source  # no corpus-rights claim
 
 
-def test_ready_offers_nothing_to_do() -> None:
+def test_ready_offers_only_a_fresh_checksum_verify() -> None:
     view = build_language_model_view(language_state(Readiness.READY))
-    assert view.actions == ()
+    assert [a.action for a in view.actions] == [ActionId.VERIFY]
+    assert "checksum-verified when installed" in view.sentence
     assert "check the language of each text" in view.sentence
 
 
@@ -86,6 +87,18 @@ def test_a_damaged_file_is_never_used_and_can_be_replaced() -> None:
     view = build_language_model_view(language_state(Readiness.CORRUPT))
     assert "never used" in view.sentence
     assert view.actions[0].label.startswith("Download replacement")
+    assert ActionId.VERIFY in [a.action for a in view.actions]
+
+
+def test_verify_reports_damage_or_a_match() -> None:
+    damaged = OperationReport(
+        Activity.VERIFYING, ProvisioningOutcome.COMPLETED, found_damage=True
+    )
+    clean = OperationReport(Activity.VERIFYING, ProvisioningOutcome.COMPLETED)
+    bad = build_language_model_view(language_state(Readiness.CORRUPT, report=damaged))
+    good = build_language_model_view(language_state(Readiness.READY, report=clean))
+    assert bad.report is not None and bad.report.kind is ReportKind.WARNING
+    assert good.report is not None and good.report.title == "Verify finished"
 
 
 def test_reports_after_a_download() -> None:
