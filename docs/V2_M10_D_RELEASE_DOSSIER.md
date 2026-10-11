@@ -39,9 +39,9 @@ authorization.
 | **L1** | **Engineering Completion** | **COMPLETE** | Implementation commits `49f8771` (M10-A), `e6fdd85` (M10-B), `35df292` (M10-C); GitHub CI [38102500170](https://github.com/Peter-S-Shi/social-text-intelligence/actions/runs/38102500170) PASS on Python 3.11/3.12/3.13 and Node | Core tools ([`tools/m10/build.py`](../tools/m10/build.py), [`compliance.py`](../tools/m10/compliance.py), [`installer.py`](../tools/m10/installer.py)) pass all deterministic generator and schema regressions. Full test suite: 1,186 passed / 6 skipped. |
 | **L2** | **Development-Host Observations** | **PASS (Host-Only)** | Frozen onedir build `302d9f5` (652 MiB, 4,920 files); material assembly `c93191e` (761 MiB, 5,265 files); installer build `35df292` | Executed on a Windows x64 development machine with ambient development tools. Verified per-user installation, clean uninstall, reparse link refusal, shortcut integrity, and synthetic byte preservation (C01–C06, C08–C12). Does not substitute for an isolated clean OS. |
 | **L3** | **Clean-Machine & UI Matrix** | **NOT RUN** | Defined in [M10-C Installer Record](V2_M10_C_WINDOWS_INSTALLER.md) (§5) | C01–C16 matrix on a fresh VM / Windows Sandbox remains **NOT RUN**. Missing-model UI blocking and download-cancel interaction (C07) and alternative `/DIR` refusal (C14) remain **NOT RUN**. |
-| **L4** | **Formal Acceptance & Deferred Risks** | **DEFERRED / NOT RUN** | Approved [M9.0 Evidence Contract](V2_M9_EVIDENCE_CONTRACT.md); [M9.1 Infrastructure](V2_M9_EXIT_GATE.md); [M8 Track A Ledger](V2_M8_TRACK_A_LEDGER.md) | M9.2 authentic dual-model evaluation (180 real records, 60 double-blind reference cases) deferred. Formal 49-step Windows UAT and Windows UI Automation accessibility audit NOT RUN. M8 physical low-RAM/cold-start (A5) and sync folder risks remain open. |
-| **L5** | **Signing & SmartScreen** | **BLOCKED** | Unsigned Inno Setup installer; unsigned executables; no Authenticode credentials | Distribution without a commercial code-signing certificate triggers prominent Windows SmartScreen warnings and antivirus reputation blocks on external systems. |
-| **L6** | **Legal & Distribution Compliance** | **BLOCKED (B1–B6)** | [M10-B Compliance Record](V2_M10_B_DISTRIBUTION_COMPLIANCE.md); `distribution/legal/inventory.json` | Six open distribution blockers (B1–B6). Both Qt DLL replacement experiments failed (exit 2). Microsoft VC++ runtime redistribution and CPython custom build rights unverified. Distribution prohibited. |
+| **L4** | **Formal Acceptance & Deferred Risks** | **DEFERRED / NOT RUN** | Approved [M9.0 Evidence Contract](V2_M9_EVIDENCE_CONTRACT.md); [M9.1 Infrastructure](V2_M9_EXIT_GATE.md); [M8 Track A Ledger](V2_M8_TRACK_A_LEDGER.md) | M9.2 authentic dual-model evaluation (180 real records, 60 double-blind reference cases) deferred; Q5 requires representative-domain evidence before model capability claims. Formal 49-step Windows UAT and Windows UI Automation accessibility audit NOT RUN. M8 physical low-RAM/cold-start (A5) and sync folder risks remain open. |
+| **L5** | **Signing & SmartScreen** | **OPEN / FRICTION RISK** | Unsigned Inno Setup installer; unsigned executables; no Authenticode credentials | Distribution without a commercial Authenticode code-signing certificate presents potential SmartScreen and application-reputation friction on external Windows systems. Code signing does not guarantee avoidance of reputation prompts, and an unsigned portfolio approach was historically accepted at Architecture Gate A6; external distribution readiness remains open. |
+| **L6** | **Legal & Distribution Compliance** | **BLOCKED (B1–B6)** | [M10-B Compliance Record](V2_M10_B_DISTRIBUTION_COMPLIANCE.md); generated local inventory `legal/inventory.json` and committed sanitized receipt [`evidence/m10-b/inventory-receipt.json`](evidence/m10-b/inventory-receipt.json) | Six open distribution blockers (B1–B6). Both Qt DLL replacement experiments failed (exit 2). Microsoft VC++ runtime redistribution and CPython custom build rights unverified. Distribution prohibited. |
 
 ---
 
@@ -55,7 +55,8 @@ under open obligations:
    While upstream tarballs for QtBase, PySide6, and Shiboken6 are collected and
    checksummed, exact PyPI wheel patch sets, compiler flags, and reproducible
    producer recipes for the deployed binaries are unverified. Distributing
-   binaries without guaranteed corresponding build recipes breaches LGPL v3 §6.
+   binaries without verified exact corresponding build recipes leaves LGPL v3 §6
+   written-offer and corresponding-source obligations unresolved.
 2. **B2 — Software Renderer Attribution (`opengl32sw.dll`) (OPEN, blocks distribution)**:
    The included Mesa/LLVM-based software OpenGL fallback DLL lacks verified
    compiled-content component attribution and upstream build provenance.
@@ -71,12 +72,16 @@ under open obligations:
 5. **B5 — Embedded Language Model Training Data Terms (`py3langid`) (OPEN, blocks distribution)**:
    The bundled Naive Bayes language identification model carries historical training
    data terms that remain unreviewed for public commercial/packaged redistribution.
-6. **B6 — Proven Incompatibility of Qt DLL Replacement (OPEN, blocks distribution)**:
-   LGPL v3 §4(d)(1) requires that users be able to replace the LGPL library with
-   a compatible version. Real Windows experiments replacing Qt DLLs with upstream
-   PySide6 6.11.1 and 6.12.0 binaries resulted in immediate startup failure
-   (`exit 2`). Because compatible dynamic replacement is unproven and failed in
-   practice, binary distribution is strictly blocked.
+6. **B6 — Unresolved Qt DLL Replacement Compatibility (OPEN, blocks distribution)**:
+   LGPL v3 §4(d)(1) requires conveying installation information or mechanisms
+   enabling users to run modified versions of the library. Real Windows replacement
+   experiments substituting Qt DLLs from upstream PySide6 6.11.1 and 6.12.0 wheels
+   while retaining the original 6.11.2 Python bindings and loader resulted in
+   immediate startup failure (`exit 2`). These experiments established no
+   compatible replacement in practice, but did not demonstrate that compliant
+   replacement is impossible (e.g., through rebuilding matching bindings or
+   coherent ABI toolchains). Because compatible replacement remains unverified
+   and unproven, B6 remains an unresolved distribution blocker.
 
 ---
 
@@ -106,9 +111,10 @@ operational surfaces:
 +------------------------------------+------------------------------------------+
 | 3. Downloadable Binary             | PROHIBITED / BLOCKED                     |
 |    Distribution (Releases)         | - Pre-compiled installers & wheels       |
-|                                    | - Blocked by B1-B6 and unsigned status   |
-|                                    | - Blocked by unverified clean-machine    |
-|                                    | - Blocked by deferred Q5 domain evidence |
+|                                    | - Blocked by unresolved B1-B6            |
+|                                    | - Unverified clean-machine state         |
+|                                    | - Potential SmartScreen friction         |
+|                                    | - Q5 required before capability claims   |
 +------------------------------------+------------------------------------------+
 ```
 
@@ -127,7 +133,7 @@ operational surfaces:
 ### Surface 2: Non-Distributable Product Demonstrations
 * **Status**: **SUPPORTED UNDER CONTROLLED CONDITIONS**.
 * **Scope**: Conducting private, author-operated demonstrations, video screen
-  recordings, or running the local demo launcher ([`start_demo.bat`](../start_demo.bat)).
+  recordings, or running the local demo launcher (`start_demo.bat`).
 * **Requirements & Guardrails**:
   - Execution occurs exclusively on author-controlled hardware or private test
     environments.
@@ -141,13 +147,20 @@ operational surfaces:
 * **Status**: **PROHIBITED / BLOCKED**.
 * **Scope**: Publishing pre-compiled installer executables, onedir ZIP archives,
   or wheels on GitHub Releases, websites, or package indexes for general download.
-* **Blockers**:
-  - Legally blocked by B1–B6 (LGPL replacement failure, Microsoft runtime rights,
-    and missing compiled SBOM).
-  - Technologically blocked by unverified clean-machine behavior (C01–C16 NOT RUN).
-  - Blocked by lack of Authenticode code signing (SmartScreen barrier).
-  - Blocked by deferred domain validation (Q5 requires authentic software feedback
-    benchmarks before capability claims).
+* **Blockers & Limitations**:
+  - Blocked by unresolved distribution obligations B1–B6 (Qt dynamic replacement
+    compatibility remains unverified following failed cross-version experiments;
+    Microsoft runtime redistribution and exact corresponding build receipts remain
+    unestablished; these leave obligations open rather than establishing proven
+    noncompliance).
+  - Technologically unverified on clean machines (C01–C16 NOT RUN on isolated
+    environments).
+  - Unsigned binaries present potential SmartScreen and application-reputation
+    friction on external systems (signing does not guarantee avoidance of reputation
+    prompts, though an unsigned portfolio approach was historically accepted at A6).
+  - Precedes required domain validation (Q5 requires authentic software feedback
+    benchmarks before making model capability claims, though not an independent
+    legal distribution requirement).
 
 ---
 
@@ -165,7 +178,8 @@ future milestones, the required actions are prioritized below:
    redistribution terms, compile-time SBOM receipts for static Rust dependencies,
    and exact source patch manifests for shipped wheels.
 3. **Code Signing Architecture**: Determine policy and infrastructure for Windows
-   Authenticode signing to prevent SmartScreen rejection.
+   Authenticode signing to mitigate potential SmartScreen and application-reputation
+   friction on external systems.
 
 ### Priority 2: Isolated Clean-Machine Validation (Mandatory for Installer Reliability)
 1. **Execute Disposable VM / Windows Sandbox Matrix**: Run
@@ -175,7 +189,7 @@ future milestones, the required actions are prioritized below:
    download-confirmation cancellation, and alternative `/DIR` target refusal in the
    compiled installer.
 
-### Priority 3: Formal Evidence & Capability Certification (Mandatory for Release Claims)
+### Priority 3: Formal Evidence & Capability Certification (Mandatory for Model Capability Claims)
 1. **Resume M9.2 Evaluation**: Execute authentic software feedback data acquisition
    (180 primary feedback items) and double-blind human reference evaluation (60 items)
    to discharge Q5.
@@ -191,19 +205,22 @@ future milestones, the required actions are prioritized below:
 Based on the verified records and technical facts of the repository:
 
 * **For Downloadable Binary Distribution**: **RECOMMENDATION IS NO-GO**.
-  Distributing binary installers at this stage would violate LGPL v3 conditions (B6),
-  distribute unverified third-party runtimes without affirmative legal clearance
-  (B1–B5), trigger severe Windows SmartScreen security blocks, and make unverified
-  capability claims without Q5 domain evidence.
-* **For Public Source-Code Portfolio Presentation**: **RECOMMENDATION IS GO**.
-  The source repository, automated testing infrastructure, architecture records,
-  and engineering rigor represent a complete, mature, and transparent portfolio
-  deliverable.
+  Distributing binary installers at this stage would leave unresolved LGPL written-offer
+  and corresponding-source obligations (B1), unverified Qt replacement compatibility
+  after failed cross-version experiments (B6), unestablished third-party and Microsoft
+  runtime distribution rights (B2–B5), and potential SmartScreen/reputation friction.
+  Furthermore, model capability claims remain unsupported pending Q5 representative-domain
+  evaluation.
+* **For Public Source-Code Portfolio Presentation**: **RECOMMENDATION IS GO (LIMITED TO SOURCE PRESENTATION)**.
+  Recommended for accurate public repository presentation under open-source MIT terms,
+  showcasing software engineering, architectural evolution, test suites, and transparent
+  governance documentation without binary distribution. This recommendation does not
+  constitute formal owner release approval.
 * **For Controlled Product Demonstrations**: **RECOMMENDATION IS GO (CONTROLLED)**.
-  Local demonstrations on author-operated machines using synthetic data are fully
-  defensible and technically validated.
+  Local demonstrations on author-operated machines using synthetic data are defensible
+  and technically validated on the development host.
 
 **Final Determination**:
-The formal release decision is **PENDING OWNER DECISION**. No binary release or
-release candidate tag shall be authorized without explicit written direction
-from the repository owner.
+The formal release and distribution decision remains strictly **PENDING OWNER DECISION**.
+Neither binary distribution nor a V2 release candidate tag is authorized without explicit
+written direction from the repository owner.

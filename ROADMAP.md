@@ -420,8 +420,9 @@ retained M7/M8/M9 risks across six stratified layers. Three distinct operational
 surfaces are defined: public source-code portfolio presentation is SUPPORTED;
 non-distributable product demonstrations are SUPPORTED UNDER CONTROLLED CONDITIONS;
 downloadable binary distribution is PROHIBITED / BLOCKED due to open legal blockers
-B1–B6, unsigned binaries, unverified clean-machine state, and unclosed Q5 domain
-evidence. Defensible recommendation is GO for source portfolio presentation and
+B1–B6, unverified clean-machine state, and potential unsigned binary friction;
+Q5 representative-domain evidence remains required before model capability claims.
+Defensible recommendation is GO for source portfolio presentation and
 NO-GO for binary distribution. The formal release decision remains pending the
 repository owner. M9.2–M9.4 remain DEFERRED, the optional 30-minute owner smoke
 remains NOT RUN, and Q5 is unchanged.
