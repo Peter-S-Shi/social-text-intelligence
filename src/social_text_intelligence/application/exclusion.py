@@ -13,6 +13,8 @@ from __future__ import annotations
 from typing import Protocol
 
 MODELS_SCOPE = "models"
+# The optional language model has its own files, so its own scope.
+LANGUAGE_MODEL_SCOPE = "language-model"
 
 
 def project_scope(project_id: str) -> str:
@@ -33,4 +35,10 @@ class ProcessLocks(Protocol):
         """Return the held lock, or None if another holder has the scope."""
 
 
-__all__ = ["MODELS_SCOPE", "ProcessLock", "ProcessLocks", "project_scope"]
+__all__ = [
+    "LANGUAGE_MODEL_SCOPE",
+    "MODELS_SCOPE",
+    "ProcessLock",
+    "ProcessLocks",
+    "project_scope",
+]

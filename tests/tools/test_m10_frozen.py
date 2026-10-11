@@ -19,7 +19,10 @@ pytestmark = pytest.mark.skipif(
 @pytest.mark.parametrize(
     ("mode", "expected"),
     [
-        ("--verify-runtime", {"ready": True, "models_loaded": False}),
+        (
+            "--verify-runtime",
+            {"ready": True, "models_loaded": False, "language_model_bundled": False},
+        ),
         (
             "--smoke",
             {

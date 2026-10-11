@@ -22,7 +22,10 @@ from ..application.settings import AnalysisGateway, AppSettings
 from ..application.use_cases import ApplicationUseCases
 from ..contracts import AnalysisReport
 from ..infrastructure.app_data import AppDataLocations
-from ..infrastructure.model_store import local_model_provisioner
+from ..infrastructure.model_store import (
+    local_language_model_provisioner,
+    local_model_provisioner,
+)
 from ..infrastructure.sqlite_projects import SqliteProjectRepository
 from .agreement import AgreementController
 from .analysis import AnalysisPageController
@@ -46,6 +49,8 @@ class DesktopServices:
     results: ResultsWorkflow
     insights: InsightsWorkflow
     use_cases: ApplicationUseCases
+    # The optional language-check model; never part of the analysis gate.
+    language_provisioning: ModelProvisioning
 
 
 def build_desktop_services(
@@ -54,6 +59,7 @@ def build_desktop_services(
     settings: AppSettings | None = None,
     provisioning: ModelProvisioning | None = None,
     analysis: AnalysisGateway | None = None,
+    language_provisioning: ModelProvisioning | None = None,
 ) -> DesktopServices:
     """Production wiring by default; tests inject a provisioner and a gateway."""
 
@@ -73,6 +79,8 @@ def build_desktop_services(
         results=ResultsWorkflow(projects),
         insights=InsightsWorkflow(projects),
         use_cases=ApplicationUseCases(projects, gate),
+        language_provisioning=language_provisioning
+        or local_language_model_provisioner(locations),
     )
 
 
@@ -84,6 +92,14 @@ def build_provisioning_controller(
     controller = ProvisioningController(services.provisioning, runner)
     controller.add_verify_observer(services.gate.note_verify_result)
     return controller
+
+
+def build_language_model_controller(
+    services: DesktopServices, runner: JobRunner
+) -> ProvisioningController:
+    """Download of the optional language model; Verify never feeds the gate."""
+
+    return ProvisioningController(services.language_provisioning, runner)
 
 
 def build_analysis_controller(

@@ -156,11 +156,23 @@ license, purpose, and any required attribution.
   package as a compressed NumPy archive that is loaded without pickle.
 - Installed only through the `language`, `desktop`, or `dev` extra; not bundled in the
   repository. If it is missing, the language check reports "unavailable".
+- **Windows installer (M10 S1).** The installer ships the py3langid code and its
+  licence, but **not** its statistical model `data/model.npz.xz`.
+  - A user may choose to download that model inside the app. It comes directly
+    from its publisher's repository, `github.com/adbar/py3langid`, at the commit of
+    the 0.4.0 release (`3b99caf00d0dcbc9416a9d06f8e5b690e919a74e`).
+  - It is used only if it is exactly 4,586,720 bytes with SHA-256
+    `f4f4a2c3465ca1f081541037f9cac23021d68151c2f709c55ae5eedfca522963`.
+  - Without it, the language check reports "unavailable" and analysis is otherwise
+    unchanged.
 - Residual note: the package's published model is trained on public corpora
   (Wikipedia article leads, Tatoeba sentences, CC100, GlotCC) that keep their own
-  terms. STI redistributes none of those corpora, and the package declares the
-  BSD-3-Clause licence for its code and bundled model. This is recorded rather than
-  cleared: re-check it before any packaged distribution.
+  terms. STI redistributes none of those corpora. The package declares the
+  BSD-3-Clause licence for its code and model.
+  - The Windows installer does not redistribute the model.
+  - Source installs receive it from the package itself.
+  - This only settles who distributes the model. It does not establish that the
+    corpus terms are satisfied. Those terms are recorded, not cleared.
 
 See [Language detection](docs/LANGUAGE_DETECTION.md) for the candidates considered, the
 selection evidence, and the behaviour contract.

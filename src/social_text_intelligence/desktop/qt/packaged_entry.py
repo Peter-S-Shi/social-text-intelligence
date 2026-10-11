@@ -32,13 +32,51 @@ def license_info() -> dict[str, object]:
     }
 
 
+LANGUAGE_SAMPLES = {
+    "en": "This software update works well and the interface is easy to use.",
+    "fr": "Ce logiciel fonctionne très bien et l'interface est facile à utiliser.",
+}
+
+
+def language_check(models_root: Path) -> dict[str, object]:
+    """Read-only: can the language check run with this models folder's model?"""
+    from ...application.language_model import installed_language_model
+    from ...application.settings import language_detector
+    from ...contracts import LanguageDetectorUnavailable
+
+    detector = language_detector(models_root)
+    detected: dict[str, str | None] = {}
+    try:
+        for code, text in LANGUAGE_SAMPLES.items():
+            detected[code] = detector.detect(text).language
+    except LanguageDetectorUnavailable:
+        return {
+            "available": False,
+            "model_file_present": installed_language_model(models_root).is_file(),
+            "detected": {},
+        }
+    return {
+        "available": True,
+        "model": detector.info.model,
+        "detected": detected,
+    }
+
+
 def diagnostic_main() -> int:
     parser = argparse.ArgumentParser(description="Offline packaged runtime checks")
     modes = parser.add_mutually_exclusive_group(required=True)
     modes.add_argument("--verify-runtime", action="store_true")
     modes.add_argument("--smoke", action="store_true")
     modes.add_argument("--license-info", action="store_true")
+    modes.add_argument("--language-check", type=Path, metavar="MODELS_FOLDER")
     args = parser.parse_args()
+    if args.language_check is not None:
+        try:
+            print(json.dumps(language_check(args.language_check)))
+            return 0
+        except Exception:
+            print(json.dumps({"available": False, "message": "Language check failed."}))
+            return 2
     if args.license_info:
         try:
             print(json.dumps(license_info()))
@@ -68,7 +106,15 @@ def diagnostic_main() -> int:
             and observed["invalid_rows"] == 1
             else 2
         )
-    print(json.dumps({"ready": True, "models_loaded": False}))
+    print(
+        json.dumps(
+            {
+                "ready": True,
+                "models_loaded": False,
+                "language_model_bundled": result.language_model_bundled,
+            }
+        )
+    )
     return 0
 
 

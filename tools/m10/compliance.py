@@ -350,11 +350,13 @@ B3_MICROSOFT = (
 B3_PYTHON = (
     "B3: Bundled CPython runtime files do not match the pinned official runtime."
 )
-BLOCKERS = [
+B4 = (
     "B4: Static Rust/native and vendored dependency license coverage is not "
-    "certified by package-level metadata or source-superset notices.",
-    "B5: py3langid embedded model training-corpus redistribution terms remain open.",
-]
+    "certified by package-level metadata or source-superset notices."
+)
+B5 = "B5: py3langid embedded model training-corpus redistribution terms remain open."
+BLOCKERS = [B4]
+LANGUAGE_MODEL_PATH = "_internal/py3langid/data/model.npz.xz"
 
 
 def distribution_blockers(
@@ -362,6 +364,7 @@ def distribution_blockers(
     software_renderer: bool,
     microsoft_runtime: bool = True,
     python_runtime_verified: bool = False,
+    language_model_bundled: bool = True,
 ) -> list[str]:
     """Each blocker stays until its own evidence closes it; none grants permission."""
     blockers = [B1_BINDINGS if provenance["qt_libraries_verified"] else B1_UNVERIFIED]
@@ -371,7 +374,8 @@ def distribution_blockers(
         blockers.append(B3_MICROSOFT)
     if not python_runtime_verified:
         blockers.append(B3_PYTHON)
-    return blockers + BLOCKERS
+    # B5 concerns redistributing the model; a bundle without it does not ship it.
+    return blockers + BLOCKERS + ([B5] if language_model_bundled else [])
 
 
 def verify_python_runtime(
@@ -404,6 +408,31 @@ def verify_python_runtime(
         and all(row["matches"] for row in rows)
         and not unpinned
         and licence_matches,
+    }
+
+
+def language_model_status(bundle: Path) -> dict[str, object]:
+    """Whether py3langid's statistical model is redistributed in this bundle.
+
+    Only the redistribution question is answered here. The training-corpus terms
+    stay unverified either way (M10-E2 section 2.5).
+    """
+    stray = sorted(
+        path.relative_to(bundle).as_posix()
+        for path in bundle.rglob("model.npz.xz")
+        if path.is_file()
+    )
+    bundled = bool(stray)
+    return {
+        "bundled": bundled,
+        "files": stray,
+        "distribution": (
+            "redistributed in this bundle"
+            if bundled
+            else "not redistributed; the user may install it from upstream "
+            "(adbar/py3langid at the v0.4.0 commit, SHA-256 pinned)"
+        ),
+        "training_corpus_terms": "not verified",
     }
 
 
@@ -598,6 +627,7 @@ def assemble(
         bundle,
         json.loads((project / "distribution/python-runtime.json").read_text()),
     )
+    language_model = language_model_status(bundle)
     blockers = distribution_blockers(
         provenance,
         (bundle / "_internal/PySide6/opengl32sw.dll").exists(),
@@ -605,6 +635,7 @@ def assemble(
             item["owner"] == "Microsoft runtime (B3)" for item in native
         ),
         python_runtime_verified=bool(python_runtime["verified"]),
+        language_model_bundled=bool(language_model["bundled"]),
     )
     if any(item["owner"] == "UNRESOLVED native ownership" for item in native):
         blockers.append(
@@ -630,6 +661,7 @@ def assemble(
         "qt_build_sboms": sbom_receipts,
         "qt_binary_provenance": provenance,
         "python_runtime": python_runtime,
+        "language_model": language_model,
         "qt_source_notices": source_notices,
         "notice_scope": "source superset; not a compiled static-link SBOM",
         "materials": files,

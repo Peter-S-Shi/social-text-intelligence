@@ -3,12 +3,13 @@ import re
 import sys
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
+from PyInstaller.utils.hooks import collect_submodules, copy_metadata
 
 config = Path(SPECPATH)
 root = config.parents[1]
-datas = collect_data_files("py3langid")
-datas += [(str(root / "LICENSE"), "."), (str(root / "THIRD_PARTY_NOTICES.md"), ".")]
+# py3langid ships as code only: its statistical model (data/model.npz.xz) is not
+# redistributed; users may install it from upstream inside the app (M10 S1, B5).
+datas = [(str(root / "LICENSE"), "."), (str(root / "THIRD_PARTY_NOTICES.md"), ".")]
 hidden = [
     "torch", "transformers", "tokenizers", "safetensors", "huggingface_hub",
     "py3langid.langid", "social_text_intelligence.providers.cardiff_sentiment",

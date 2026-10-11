@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -13,12 +14,16 @@ class RuntimeVerification:
     ready: bool
     failed: tuple[str, ...] = ()
     message: str = "Packaged runtime dependencies are available."
+    # The language model is optional: the installer leaves it out, and the user can
+    # install it later. Its absence never blocks start-up.
+    language_model_bundled: bool = False
 
 
 def verify_runtime(
     *, import_module: Callable[[str], Any] = importlib.import_module
 ) -> RuntimeVerification:
     """Exercise offline imports without model weights or user data."""
+    language_model_bundled = False
     modules = (
         "torch",
         "transformers",
@@ -40,14 +45,21 @@ def verify_runtime(
                     if not callable(getattr(module, attribute)):
                         raise ImportError("model loader unavailable")
             if name == "py3langid.langid":
-                identifier = module.LanguageIdentifier.from_model_file(
-                    module.MODEL_FILE, norm_probs=True
-                )
-                language, _ = identifier.classify(
-                    "This software update works well and the interface is easy to use."
-                )
-                if language != "en":
-                    raise ValueError("language resource unavailable")
+                if not callable(module.LanguageIdentifier.from_model_file):
+                    raise ImportError("language model loader unavailable")
+                language_model_bundled = (
+                    Path(module.__file__).parent / module.MODEL_FILE
+                ).is_file()
+                if language_model_bundled:
+                    identifier = module.LanguageIdentifier.from_model_file(
+                        module.MODEL_FILE, norm_probs=True
+                    )
+                    language, _ = identifier.classify(
+                        "This software update works well and the interface is easy "
+                        "to use."
+                    )
+                    if language != "en":
+                        raise ValueError("language resource unavailable")
         except Exception:
             return RuntimeVerification(
                 ready=False,
@@ -57,4 +69,6 @@ def verify_runtime(
                     "Rebuild or repair the application before starting it."
                 ),
             )
-    return RuntimeVerification(ready=True)
+    return RuntimeVerification(
+        ready=True, language_model_bundled=language_model_bundled
+    )

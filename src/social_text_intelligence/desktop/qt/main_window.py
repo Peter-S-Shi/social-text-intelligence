@@ -27,6 +27,7 @@ from ..composition import (
     build_agreement_controller,
     build_analysis_controller,
     build_insights_controller,
+    build_language_model_controller,
     build_projects_controller,
     build_provisioning_controller,
     build_results_controller,
@@ -87,6 +88,9 @@ class MainWindow(QMainWindow):
         self.provisioning: ProvisioningController = build_provisioning_controller(
             services, runner
         )
+        self.language_model: ProvisioningController = build_language_model_controller(
+            services, runner
+        )
         self.analysis: AnalysisPageController = build_analysis_controller(
             services, runner
         )
@@ -133,6 +137,7 @@ class MainWindow(QMainWindow):
             platform,
             self,
             lambda text: self.statusBar().showMessage(text, 8000),
+            self.language_model,
         )
 
         self.models_button.clicked.connect(self.ui.show_models)
@@ -149,6 +154,7 @@ class MainWindow(QMainWindow):
         self.analyze_page.analyze_requested.connect(self.analysis.submit)
 
         self.provisioning.subscribe(self._on_provisioning)
+        self.language_model.subscribe(self._on_idle_check)
         self.analysis.subscribe(self._on_analysis)
         self.projects.subscribe(self._on_projects)
         self.review.subscribe(self._on_review)
@@ -252,6 +258,7 @@ class MainWindow(QMainWindow):
         """Quick status at launch; show the setup window unless models are ready."""
 
         self.provisioning.refresh()
+        self.language_model.refresh()
         self.projects.refresh()
         if not self.provisioning.state.status.ready:
             self.ui.show_setup()
@@ -427,6 +434,8 @@ class MainWindow(QMainWindow):
         self._closing = True
         if self.provisioning.can_stop:
             self.provisioning.stop()
+        if self.language_model.can_stop:
+            self.language_model.stop()
         if self.projects.can_cancel:
             self.projects.cancel()  # nothing is saved from a cancelled run
         self.statusBar().showMessage(
@@ -458,6 +467,7 @@ class MainWindow(QMainWindow):
     def _idle(self) -> bool:
         return not (
             self.provisioning.state.busy
+            or self.language_model.state.busy
             or self.analysis.state.running
             or self.projects.state.busy
             or self.review.state.busy
