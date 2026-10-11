@@ -265,8 +265,10 @@ language check is a single English-or-not warning (M5.6). The narrowest options:
 - **Tests:** regressions for the runtime manifest check, import-table parsing and
   relinking, refusal of runtime files, the installer's prerequisite and refusal,
   translation verification, CPython verification, evidence-derived B3, and E4.
-- **Static checks:** Ruff and strict MyPy pass. Full-suite and CI results are in
-  `PROJECT_STATUS.md`.
+- **Static checks:** Ruff and strict MyPy pass.
+- **Full suite and CI:** local Windows full suite at the final head: 1,226 passed /
+  6 opt-in skipped. PR CI [run 38161692380](https://github.com/Peter-S-Shi/social-text-intelligence/actions/runs/38161692380)
+  on implementation head `574dd55`: PASS. The review-fix head's run is attached to PR #61.
 - **Independent review fixes** (Standards and Spec, before the final build):
   - Delay-load imports are now read and relinked; before, a delay-loaded
     vendored runtime would have passed the check.
