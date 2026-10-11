@@ -16,7 +16,13 @@
   },
   "frozen": {
     "model_files_in_bundle": [],
-    "py3langid_code_in_bundle": false,
+    "py3langid_loose_source_files_in_bundle": false,
+    "py3langid_code_delivery": {
+      "delivered": true,
+      "form": "compiled modules inside the frozen PYZ archive, not loose .py files",
+      "evidence": "--verify-runtime ready (its preflight imports py3langid) and frozen_after_provisioning available with en->en, fr->fr (py3langid.langid loaded from the frozen app)",
+      "note": "This field was recorded as py3langid_code_in_bundle in the original receipt. That name was misleading: the check looked only for loose py3langid/langid.py* files. Only the statistical model is excluded. Wording correction only; no new test was run."
+    },
     "--verify-runtime": {
       "exit": 0,
       "output": {
@@ -98,6 +104,7 @@
     "models_bundled": false,
     "distribution_permitted": false,
     "clean_machine_validation": "NOT RUN",
+    "in_app_network_download": "NOT RUN (synthetic transport only; real download deferred to S5)",
     "payload_files": 5257,
     "payload_model_files": [],
     "model_bytes_found_in_installer": false,

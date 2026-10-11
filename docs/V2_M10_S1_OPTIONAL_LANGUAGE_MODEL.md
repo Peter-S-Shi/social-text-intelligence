@@ -58,7 +58,8 @@ One recorded difference: the `language_detector` evidence label names the model
 source. A source install records "bundled statistical language model"; an installer
 build with the downloaded model records "statistical language model installed
 separately, SHA-256 verified". The detections are identical. A unit test checks the
-74-text evaluation set against the bundled model.
+74-text evaluation set against the bundled model. The independent S1 review
+accepted these distinct labels as truthful, so no code change was made.
 
 ## 3. Verification
 
@@ -78,7 +79,18 @@ separately, SHA-256 verified". The detections are identical. A unit test checks 
 
 Evidence: [s1-frozen-receipt.json](evidence/m10-s1/s1-frozen-receipt.json). The
 in-app download over the network was exercised with a synthetic transport only;
-the one real download was the approved verification fetch.
+the one real download was the approved verification fetch. The real in-app
+network download is **NOT RUN** until S5.
+
+Receipt wording correction (after the independent review): py3langid's code *is*
+in the frozen build. It is delivered as compiled modules inside the PYZ archive,
+not as loose `.py` files. Two existing results show it: `--verify-runtime`
+reports ready, and its preflight imports py3langid; the frozen `--language-check`
+detects English and French after provisioning. Only the statistical model is
+excluded. The receipt field formerly named `py3langid_code_in_bundle: false`
+checked only for loose source files. It is now
+`py3langid_loose_source_files_in_bundle`, and a `py3langid_code_delivery` entry
+was added. No new test was run.
 
 ## 4. B5, narrowly
 
