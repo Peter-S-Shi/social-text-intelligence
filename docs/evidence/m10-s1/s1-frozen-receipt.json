@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "milestone": "M10 S1 optional language model",
+  "application_sha": "255e6303c39c9dee9f9881b4293fde64e703c572",
+  "python": "3.13.16",
+  "layout": {
+    "files": 5255,
+    "bytes": 723730494
+  },
+  "upstream_download": {
+    "url": "https://raw.githubusercontent.com/adbar/py3langid/v0.4.0/py3langid/data/model.npz.xz",
+    "bytes": 4586720,
+    "sha256": "f4f4a2c3465ca1f081541037f9cac23021d68151c2f709c55ae5eedfca522963",
+    "matches_pin": true,
+    "note": "single owner-approved download, used only for verification; not committed"
+  },
+  "frozen": {
+    "model_files_in_bundle": [],
+    "py3langid_code_in_bundle": false,
+    "--verify-runtime": {
+      "exit": 0,
+      "output": {
+        "ready": true,
+        "models_loaded": false,
+        "language_model_bundled": false
+      }
+    },
+    "--smoke": {
+      "exit": 0,
+      "output": {
+        "window": true,
+        "models_unbundled": true,
+        "project_rows": 2,
+        "invalid_rows": 1,
+        "reopened": true
+      }
+    },
+    "--license-info": {
+      "exit": 0,
+      "output": {
+        "qt_version": "6.11.2",
+        "materials_present": true,
+        "distribution_permitted": false,
+        "models_loaded": false
+      }
+    },
+    "packet_language_model": {
+      "bundled": false,
+      "files": [],
+      "distribution": "not redistributed; the user may install it from upstream (adbar/py3langid at the v0.4.0 commit, SHA-256 pinned)",
+      "training_corpus_terms": "not verified"
+    },
+    "packet_blockers": [
+      "B1:",
+      "B4:"
+    ],
+    "frozen_before_provisioning": {
+      "exit": 0,
+      "output": {
+        "available": false,
+        "model_file_present": false,
+        "detected": {}
+      }
+    },
+    "provisioning": {
+      "before": "not_installed",
+      "outcome": "completed",
+      "after": "ready",
+      "installed_sha256_pinned": "f4f4a2c3465ca1f081541037f9cac23021d68151c2f709c55ae5eedfca522963",
+      "installed_at_detector_path": true
+    },
+    "frozen_after_provisioning": {
+      "exit": 0,
+      "output": {
+        "available": true,
+        "model_file_present": true,
+        "model": "statistical language model installed separately, SHA-256 verified",
+        "detected": {
+          "en": "en",
+          "fr": "fr"
+        }
+      }
+    },
+    "source_mode_same_folder": {
+      "available": true,
+      "model_file_present": true,
+      "model": "bundled statistical language model",
+      "detected": {
+        "en": "en",
+        "fr": "fr"
+      }
+    }
+  },
+  "installer": {
+    "compiled": true,
+    "frozen_application_sha": "255e6303c39c9dee9f9881b4293fde64e703c572",
+    "installer_sha256": "ff58feb275c49933f233714e577e15e3f3509393d7fbf164521d78fe3cf3f71b",
+    "models_bundled": false,
+    "distribution_permitted": false,
+    "clean_machine_validation": "NOT RUN",
+    "payload_files": 5257,
+    "payload_model_files": [],
+    "model_bytes_found_in_installer": false,
+    "control_licence_bytes_found_in_installer": true
+  },
+  "b5_claim": "The core installer does not redistribute the py3langid model. Training-corpus terms remain unverified; nothing here resolves them.",
+  "distribution_permitted": false
+}
