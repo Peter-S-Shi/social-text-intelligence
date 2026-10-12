@@ -293,7 +293,7 @@ def test_spec_installer_and_runtime_share_one_icon() -> None:
     assert 'Path(__file__).resolve().parent / "resources" / "sti.ico"' in runtime
     assert r"UninstallDisplayIcon={app}\sti-desktop.exe" in script
     assert r'IconFilename: "{app}\sti-desktop.exe"' in script
-    assert "SIZES = (16, 20, 24, 32, 40, 48, 64, 256)" in render
+    assert "from build import APPLICATION_ICON, ICON_SIZES" in render
     assert "ICON_SIZES = (16, 20, 24, 32, 40, 48, 64, 256)" in (
         root / "tools/m10/build.py"
     ).read_text(encoding="utf-8")

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
   <title>Social Text Intelligence application icon (A, text to evidence; owner-approved M10 S5-UI-001)</title>
   <!-- Reference design. tools/m10/render_icon.py draws the same geometry into sti.ico;
-       at 20 px and below it keeps only the first bar so the mark stays legible. -->
+       the approved 16 px variant keeps only the first bar, 6 units high (rx 3). -->
   <rect width="64" height="64" rx="14" fill="#2C47E0"/>
   <path d="M14 16h36a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H30l-10 8v-8h-6a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4z" fill="#FFFFFF"/>
   <rect x="18" y="23" width="26" height="5" rx="2.5" fill="#33404F"/>

@@ -4,6 +4,8 @@ The geometry is assets/icon/sti-icon.svg (design A, "text to evidence") on a
 64-unit grid, drawn with QtGui only, so no image library is added. Each size is
 stored as a PNG entry, which Windows Vista and later read at every size. Run it
 only to regenerate src/social_text_intelligence/desktop/qt/resources/sti.ico.
+The pixels are fixed by the design; the PNG bytes may differ with the Qt or zlib
+version, so tests compare decoded pixels rather than file bytes.
 """
 
 from __future__ import annotations
@@ -16,11 +18,11 @@ from pathlib import Path
 from PySide6.QtCore import QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QGuiApplication, QImage, QPainter, QPainterPath
 
-ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "src/social_text_intelligence/desktop/qt/resources/sti.ico"
-SIZES = (16, 20, 24, 32, 40, 48, 64, 256)
-# At these sizes the second bar would blur into the first, so it is left out.
-SIMPLIFIED = 20
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from build import APPLICATION_ICON, ICON_SIZES  # noqa: E402  (one source of truth)
+
+# The approved 16 px variant keeps one, thicker bar so the mark stays legible.
+SINGLE_BAR_SIZE = 16
 ULTRAMARINE, GRAPHITE, WHITE = "#2C47E0", "#33404F", "#FFFFFF"
 
 
@@ -43,7 +45,7 @@ def render(size: int) -> QImage:
     painter.setBrush(QColor(WHITE))
     painter.drawPath(bubble.united(tail))
     painter.setBrush(QColor(GRAPHITE))
-    if size <= SIMPLIFIED:
+    if size == SINGLE_BAR_SIZE:
         painter.drawRoundedRect(QRectF(18, 23, 26, 6), 3, 3)
     else:
         painter.drawRoundedRect(QRectF(18, 23, 26, 5), 2.5, 2.5)
@@ -77,14 +79,13 @@ def ico(images: dict[int, bytes]) -> bytes:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=OUTPUT)
+    parser.add_argument("--output", type=Path, default=APPLICATION_ICON)
     args = parser.parse_args()
     app = QGuiApplication.instance() or QGuiApplication(sys.argv[:1])
-    del app
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_bytes(ico({size: png(render(size)) for size in SIZES}))
-    print(f"Wrote {len(SIZES)} sizes to {args.output.name}.")
-    return 0
+    args.output.write_bytes(ico({size: png(render(size)) for size in ICON_SIZES}))
+    print(f"Wrote {len(ICON_SIZES)} sizes to {args.output.name}.")
+    return 0 if app is not None else 1
 
 
 if __name__ == "__main__":

@@ -23,6 +23,7 @@ MICROSOFT_RUNTIME = re.compile(
     r"(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll", re.I
 )
 VENDORED_RUNTIME = re.compile(r"msvcp140-[0-9a-f]{32}\.dll", re.I)
+EXECUTABLES = ("sti-desktop.exe", "sti-check.exe")
 # truststore verifies every model download (M10 S5-NET-001). Install it with
 # requirements-truststore.txt, which hash-locks the reviewed PyPI wheel; each
 # installed file below must still match that wheel byte for byte.
@@ -71,7 +72,7 @@ def audit_bundle(root: Path) -> dict[str, int]:
             path.name.lower() in {"pytorch_model.bin", ".env"}
         ):
             raise ValueError("Packaging output contains forbidden model or user data.")
-    for name in ("sti-desktop.exe", "sti-check.exe"):
+    for name in EXECUTABLES:
         if not (root / name).is_file():
             raise ValueError("Required packaging entry is absent.")
     return {"files": len(files), "bytes": sum(path.stat().st_size for path in files)}
@@ -225,7 +226,7 @@ def icon_resources(data: bytes) -> list[bytes]:
 def verify_executable_icons(bundle: Path, path: Path = APPLICATION_ICON) -> None:
     """Both executables must embed exactly the approved icon's images."""
     expected = sorted(verify_icon_file(path))
-    for name in ("sti-desktop.exe", "sti-check.exe"):
+    for name in EXECUTABLES:
         if sorted(icon_resources((bundle / name).read_bytes())) != expected:
             raise ValueError(f"{name} does not embed the approved application icon.")
     shipped = bundle / "_internal/social_text_intelligence/desktop/qt/resources"
