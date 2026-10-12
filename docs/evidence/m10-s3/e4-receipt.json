@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "milestone": "M10 S3 / B6: E4 modified-source QtCore replacement",
+  "result": "PASS",
+  "script": {
+    "path": "tools/m10/e4_modified_qt.ps1",
+    "unchanged_from": "a2db4bd",
+    "prerequisite_check": "exit 0 (E4 prerequisites present.)",
+    "exit": 0
+  },
+  "toolchain": {
+    "visual_studio": "Visual Studio Build Tools 2022 17.14.37710.0 (installed and licence-accepted by the owner)",
+    "msvc_toolset": "14.44.35207",
+    "cl": "19.44.35229 for x64",
+    "windows_sdk": "10.0.26100.0",
+    "cmake": "3.31.6-msvc6 (Visual Studio bundled)",
+    "ninja": "1.12.1 (Visual Studio bundled)",
+    "environment_note": "vcvars64 environment; a MinGW toolchain directory was removed from PATH for the run so that only the Visual Studio CMake/Ninja/MSVC were visible; the script itself was not changed"
+  },
+  "inputs": {
+    "qtbase_archive": "qtbase-everywhere-src-6.11.2.tar.xz",
+    "qtbase_sha256": "5b2e00eccaf5a4d8c14134ffa0ea8dfd0a35ae1ffc7f8d87fa4305a1ed23cf22",
+    "frozen_bundle_application_sha": "fbb6e139dd957bbbda662213005b36f092516172",
+    "bundle_note": "the M10 S2 frozen build; fbb6e13..a2db4bd differs only in documentation",
+    "original_qt6core_sha256": "d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653"
+  },
+  "modification": {
+    "file": "src/corelib/global/qlibraryinfo.cpp (qt_build_string)",
+    "from": "\" build; by \" COMPILER_STRING \")\";",
+    "to": "\" build, STI-E4-MODIFIED; by \" COMPILER_STRING \")\";"
+  },
+  "build": {
+    "configure": "configure.bat -release -force-debug-info -nomake examples -nomake tests -qt-zlib -- -DFEATURE_msvc_obj_debug_info=ON",
+    "cmake_build_type": "RelWithDebInfo",
+    "generator": "Ninja",
+    "compiler_identification": "MSVC 19.44.35229.0",
+    "target": "Core",
+    "steps": 413,
+    "rebuilt_qt6core_sha256": "64359b5cc1eaaae46fe713bf33db3e3377f1c226d7098fe8d3dce8ece7711ac5",
+    "rebuilt_qt6core_bytes": 10352128,
+    "marker_in_rebuilt": 1,
+    "marker_in_original": 0
+  },
+  "replacement": {
+    "copy_only": true,
+    "replaced_file": "_internal/PySide6/Qt6Core.dll",
+    "other_files_changed": 0,
+    "qt6core_before_sha256": "d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653",
+    "qt6core_after_sha256": "64359b5cc1eaaae46fe713bf33db3e3377f1c226d7098fe8d3dce8ece7711ac5",
+    "original_bundle_qt6core_after_run_sha256": "d6a3c37c5263c5d418fc0e80b722bc9fca7c0859e6f635f9624a2fde00bdc653"
+  },
+  "validation": {
+    "unresolved_qt_imports": 0,
+    "--license-info": {
+      "exit": 0,
+      "output": {
+        "qt_version": "6.11.2",
+        "materials_present": true,
+        "distribution_permitted": false,
+        "models_loaded": false
+      }
+    },
+    "--verify-runtime": {
+      "exit": 0,
+      "output": {
+        "ready": true,
+        "models_loaded": false,
+        "language_model_bundled": false
+      }
+    },
+    "--smoke": {
+      "exit": 0,
+      "output": {
+        "window": true,
+        "models_unbundled": true,
+        "project_rows": 2,
+        "invalid_rows": 1,
+        "reopened": true
+      }
+    }
+  },
+  "not_shown": "The receipt does not capture QLibraryInfo::build() at runtime; that the copy loads its own _internal/PySide6/Qt6Core.dll follows from the self-contained onedir layout and the passing checks",
+  "distribution_permitted": false
+}
