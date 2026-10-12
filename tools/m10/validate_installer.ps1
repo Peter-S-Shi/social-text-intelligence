@@ -4,10 +4,14 @@ param(
     [Parameter(Mandatory=$true)][string]$Installer,
     [Parameter(Mandatory=$true)][string]$Receipt,
     [Parameter(Mandatory=$true)][string]$Output,
-    [ValidateSet('DevelopmentHost','DisposableVM')][string]$EnvironmentKind = 'DevelopmentHost'
+    [ValidateSet('DevelopmentHost','DisposableVM')][string]$EnvironmentKind = 'DevelopmentHost',
+    # Missing: prove the installer refuses without VC++ 14.44+ and leaves nothing.
+    # Present: the full lifecycle on a machine that has the runtime (R1).
+    [Parameter(Mandatory=$true)][ValidateSet('Missing','Present')][string]$RuntimeExpectation
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot 'validate_installer_lib.ps1')
 
 function Hash([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 function Assert([bool]$Condition, [string]$Message) { if (-not $Condition) { throw $Message } }
@@ -46,8 +50,10 @@ if ($EnvironmentKind -eq 'DisposableVM') {
 Assert (-not (Test-Path -LiteralPath $Output)) 'Validation output must be new.'
 Assert (-not ($Output -match '["\r\n]')) 'Invalid output path.'
 $manifest = Get-Content -LiteralPath $Receipt -Raw | ConvertFrom-Json
-Assert ($manifest.compiled -eq $true) 'Compiled installer receipt is required.'
+$facts = Test-StiReceipt $manifest
 Assert ((Hash $Installer) -eq $manifest.installer_sha256) 'Installer checksum differs from receipt.'
+$runtime = Get-StiVCRuntimeState
+Assert-StiRuntimeExpectation $runtime $RuntimeExpectation
 $local = [Environment]::GetFolderPath('LocalApplicationData')
 $install = [IO.Path]::GetFullPath((Join-Path $local 'Programs\Social Text Intelligence'))
 $appData = Join-Path $local 'SocialTextIntelligence'
@@ -55,6 +61,8 @@ $menu = Join-Path ([Environment]::GetFolderPath('Programs')) 'Social Text Intell
 Assert (-not (Test-Path -LiteralPath $install)) 'Existing installation/data is preserved; use a fresh Windows profile.'
 Assert (-not (Test-Path -LiteralPath $appData)) 'Existing project/model data is preserved; use a fresh Windows profile.'
 Assert (-not (Test-Path -LiteralPath $menu)) 'Existing Start Menu folder is preserved; use a fresh profile.'
+$uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{DB272C58-19C3-48E1-A88B-040CD5D88E35}_is1'
+Assert (-not (Test-Path -LiteralPath $uninstallKey)) 'Existing uninstall registration is preserved; use a fresh profile.'
 New-Item -ItemType Directory -Path $Output | Out-Null
 $Output = [IO.Path]::GetFullPath($Output)
 $savedEnvironment = @{}
@@ -68,6 +76,18 @@ try {
     $env:HF_HOME = Join-Path $Output 'empty-hub-cache'
     $env:HF_HUB_OFFLINE = '1'; $env:TRANSFORMERS_OFFLINE = '1'
     Remove-Item Env:QT_PLUGIN_PATH,Env:QML2_IMPORT_PATH,Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue
+    if ($RuntimeExpectation -eq 'Missing') {
+        $code = RunProcess $Installer @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',('/LOG="' + $Output + '\install-private.log"'))
+        Assert ($code -ne 0) 'Installation was not refused without the required VC++ runtime.'
+        foreach ($path in @($install, $appData, $menu, $uninstallKey)) {
+            Assert (-not (Test-Path -LiteralPath $path)) 'A refused installation left files, shortcuts or registration behind.'
+        }
+        New-StiObservations $manifest $facts $runtime $EnvironmentKind $RuntimeExpectation ([ordered]@{
+            install_refused_without_runtime='PASS'; no_residue_after_refusal='PASS'
+            lifecycle='NOT RUN in RuntimeExpectation Missing mode'
+        }) | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $Output 'observations.json') -Encoding utf8
+        return
+    }
     Install
     $uninstallerHash = Hash (Join-Path $install 'unins000.exe')
     $shell = New-Object -ComObject WScript.Shell
@@ -91,8 +111,8 @@ try {
     Assert ($window.CloseMainWindow()) 'Native window did not accept close.'
     Assert ($started.WaitForExit(15000)) 'First-launch process did not close safely.'
 
-    $runtime = (& (Join-Path $install 'sti-check.exe') --verify-runtime) | ConvertFrom-Json
-    Assert ($LASTEXITCODE -eq 0 -and $runtime.ready -and -not $runtime.models_loaded) 'Installed runtime readiness failed.'
+    $appRuntime = (& (Join-Path $install 'sti-check.exe') --verify-runtime) | ConvertFrom-Json
+    Assert ($LASTEXITCODE -eq 0 -and $appRuntime.ready -and -not $appRuntime.models_loaded) 'Installed runtime readiness failed.'
     $license = (& (Join-Path $install 'sti-check.exe') --license-info) | ConvertFrom-Json
     Assert ($LASTEXITCODE -eq 0 -and $license.materials_present -and -not $license.distribution_permitted) 'Installed license packet is missing.'
     $smoke = (& (Join-Path $install 'sti-check.exe') --smoke) | ConvertFrom-Json
@@ -141,18 +161,15 @@ try {
     $uninstallerHash = Hash (Join-Path $install 'unins000.exe')
     Assert ((Uninstall) -eq 0) 'Second uninstall failed.'
     CheckSentinels
-    [ordered]@{
-        schema_version=1; environment=$EnvironmentKind; installer_sha256=$manifest.installer_sha256
-        frozen_application_sha=$manifest.frozen_application_sha; installed_payload_matches=$true
-        start_menu_target='PASS'; first_native_launch='PASS'; runtime=$runtime; license=$license
-        synthetic_native_smoke=$smoke; missing_model_analysis_interaction='NOT RUN'
-        download_authorization_interaction='NOT RUN'; reparse_uninstall_refusal='PASS'
-        external_sentinel_preserved=$true; uninstall_owned_files_and_license_removal='PASS'
-        shortcuts_removed='PASS'; reinstall='PASS'; preservation_sentinels='PASS'
-        clean_machine_acceptance='NOT RUN - requires independently witnessed fresh VM baseline'
-        formal_windows_uat='NOT RUN'; owner_30_minute_smoke='NOT RUN'; distribution_permitted=$false
-        legal_blockers=@('B1','B2','B3','B4','B5','B6')
-    } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $Output 'observations.json') -Encoding utf8
+    Assert (-not (Test-Path -LiteralPath $uninstallKey)) 'Uninstall registration was not removed.'
+    New-StiObservations $manifest $facts $runtime $EnvironmentKind $RuntimeExpectation ([ordered]@{
+        installed_payload_matches=$true; start_menu_target='PASS'; first_native_launch='PASS'
+        app_runtime=$appRuntime; license=$license; synthetic_native_smoke=$smoke
+        missing_model_analysis_interaction='NOT RUN'; download_authorization_interaction='NOT RUN'
+        reparse_uninstall_refusal='PASS'; external_sentinel_preserved=$true
+        uninstall_owned_files_and_license_removal='PASS'; shortcuts_removed='PASS'
+        uninstall_registration_removed='PASS'; reinstall='PASS'; preservation_sentinels='PASS'
+    }) | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $Output 'observations.json') -Encoding utf8
 } finally {
     foreach ($name in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process') }
 }
