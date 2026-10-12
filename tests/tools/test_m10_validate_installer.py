@@ -343,3 +343,128 @@ def test_the_runtime_threshold_matches_the_installer() -> None:
         "VCRuntimeKey = 'SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64'"
         in script
     )
+
+
+JUNCTION = r"""
+param([string]$Harness, [string]$Case, [string]$Root)
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+$tokens = $null; $errors = $null
+$parser = [System.Management.Automation.Language.Parser]
+$ast = $parser::ParseFile($Harness, [ref]$tokens, [ref]$errors)
+$helpers = @($ast.FindAll({ param($n)
+    $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+    $n.Name -in @('Assert', 'RemoveVerifiedJunction') }, $false))
+foreach ($helper in $helpers) { . ([scriptblock]::Create($helper.Extent.Text)) }
+function Digest([string]$Path) {
+    (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+}
+
+$external = Join-Path $Root 'external'
+$link = Join-Path $Root 'legal'
+$held = Join-Path $Root 'legal-held'
+New-Item -ItemType Directory -Path (Join-Path $external 'nested') | Out-Null
+New-Item -ItemType Directory -Path $held | Out-Null
+$target = Join-Path $external 'nested\preserve.txt'
+$kept = Join-Path $held 'original.txt'
+'Synthetic external target.' | Set-Content -LiteralPath $target -Encoding ascii
+'Synthetic held material.' | Set-Content -LiteralPath $kept -Encoding ascii
+$before = @((Digest $target), (Digest $kept))
+if ($Case -eq 'plain_directory') {
+    New-Item -ItemType Directory -Path $link | Out-Null
+    $own = Join-Path $link 'own.txt'
+    'Synthetic plain directory.' | Set-Content -LiteralPath $own -Encoding ascii
+} elseif ($Case -ne 'missing_link') {
+    New-Item -ItemType Junction -Path $link -Target $external | Out-Null
+}
+$expected = $external
+if ($Case -eq 'wrong_target') { $expected = Join-Path $Root 'other' }
+$failure = $null
+try { RemoveVerifiedJunction $link $expected } catch { $failure = $_.Exception.Message }
+@{
+    helpers = $helpers.Count; error = $failure
+    link_exists = (Test-Path -LiteralPath $link)
+    unchanged = ((Digest $target) -eq $before[0] -and (Digest $kept) -eq $before[1])
+    plain_kept = ($Case -ne 'plain_directory' -or (Test-Path -LiteralPath $own))
+} | ConvertTo-Json -Compress
+"""
+
+needs_windows_powershell = pytest.mark.skipif(
+    SHELL is None or sys.platform != "win32", reason="needs Windows junctions"
+)
+
+
+def remove_junction(case: str, tmp_path: Path) -> dict[str, Any]:
+    assert SHELL is not None
+    driver = tmp_path / "junction.ps1"
+    driver.write_text(JUNCTION, encoding="utf-8")
+    root = tmp_path / "fixture"
+    root.mkdir()
+    result = subprocess.run(
+        [
+            SHELL,
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(driver),
+            "-Harness",
+            str(HARNESS),
+            "-Case",
+            case,
+            "-Root",
+            str(root),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    checked = dict(json.loads(result.stdout))
+    assert checked["helpers"] == 2
+    return checked
+
+
+@needs_windows_powershell
+def test_a_verified_junction_is_removed_without_prompting_or_touching_its_target(
+    tmp_path: Path,
+) -> None:
+    checked = remove_junction("verified", tmp_path)
+
+    assert checked["error"] is None, checked
+    assert not checked["link_exists"]
+    assert checked["unchanged"]
+
+
+@needs_windows_powershell
+@pytest.mark.parametrize(
+    ("case", "reason", "link_exists"),
+    [
+        ("wrong_target", "Unexpected link", True),
+        ("plain_directory", "Unexpected link", True),
+        ("missing_link", "", False),
+    ],
+)
+def test_an_unverified_link_path_is_refused_and_nothing_is_removed(
+    case: str, reason: str, link_exists: bool, tmp_path: Path
+) -> None:
+    checked = remove_junction(case, tmp_path)
+
+    assert checked["error"], checked
+    assert reason in checked["error"]
+    assert checked["link_exists"] is link_exists
+    assert checked["unchanged"]
+    assert checked["plain_kept"]
+
+
+def test_the_redirected_material_junction_is_removed_only_after_verification() -> None:
+    harness = HARNESS.read_text(encoding="utf-8")
+
+    assert "RemoveVerifiedJunction $legal $external" in harness
+    assert "Remove-Item -LiteralPath $legal" not in harness
+    assert "[StiS5JunctionNative]::RemoveDirectory($LinkPath)" in harness
+    assert harness.index("$junction.Target -eq $ExpectedTarget") < harness.index(
+        "[StiS5JunctionNative]::RemoveDirectory($LinkPath)"
+    )

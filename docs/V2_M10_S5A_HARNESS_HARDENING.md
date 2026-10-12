@@ -113,7 +113,14 @@ reported as not passed.
 The guest's script policy still applies. M10-C does not authorize a policy
 bypass, so if policy blocks the script, the owner decides how to proceed.
 
-## 5. Not done
+## 5. Later fix: junction cleanup (S5 closure)
+
+Stage B showed that `Remove-Item -Force` on the verified test junction asks for
+recursion confirmation on Windows PowerShell 5.1. `RemoveVerifiedJunction` now
+verifies the link type, reparse attribute and target, then removes only the link
+with `RemoveDirectoryW`. See the [S5 completion record](V2_M10_S5_COMPLETION_RECORD.md) §4.
+
+## 6. Not done
 
 - S5-UI-001 (the application icon) is a separate open item.
 - C14 (`/DIR` refusal) is not automated here.
