@@ -13,8 +13,9 @@ formally accepted, and none of its items is marked PASS by this record.
 
 During the S5 clean-VM test (Windows 11 in VMware, standard user, internal S4
 installer), every pinned Hugging Face download in the app failed with
-`network_unavailable` ("Connection lost"). In the same guest, Edge opened the
-model page, and curl got HTTP 206 and 1,024 bytes of the pinned weights.
+`network_unavailable` ("Connection lost"). During the owner's diagnosis in the
+same guest, outside the app, Edge opened the model page, and curl got HTTP 206 and
+1,024 bytes of the pinned weights.
 
 ## 2. Diagnosis
 

@@ -24,7 +24,7 @@
   },
   "validation": {
     "red_before_fix": "main 4282d03 reported an untrusted local HTTPS chain as network_unavailable",
-    "green_after_fix": "this branch reports it as certificate_rejected",
+    "green_after_fix": "873776d reports it as certificate_rejected",
     "local_full_suite": "1321 passed, 7 opt-in skipped (Windows, Python 3.12)",
     "affected_suites_after_review_fixes": "760 passed",
     "ruff": "pass",
