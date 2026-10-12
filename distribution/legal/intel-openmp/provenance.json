@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "component": "Intel OpenMP runtime (shipped inside PyTorch 2.13.0 torch/lib)",
+  "files": {
+    "_internal/torch/lib/libiomp5md.dll": {
+      "bytes": 1617536,
+      "sha256": "ee527c978999653eb18edc3ef372b4e95d4ad9a7691b6d08817be9d38c7d0a02",
+      "file_version": "20260213"
+    },
+    "_internal/torch/lib/libiompstubs5md.dll": {
+      "bytes": 44160,
+      "sha256": "6920b610c0bd16b3acfc247791e986bfc36f247994ef0f6713fbbe1fb0e49214"
+    }
+  },
+  "provenance": {
+    "package": "intel-openmp 2026.1.0 (PyPI, author Intel Corporation)",
+    "wheel": "intel_openmp-2026.1.0-py2.py3-none-win_amd64.whl",
+    "wheel_url": "https://files.pythonhosted.org/packages/6e/cc/b4cb4ed4a1cca9dcc63cec93f7813ef3840f37d8bd30c06b8013948edc00/intel_openmp-2026.1.0-py2.py3-none-win_amd64.whl",
+    "wheel_sha256": "8f9f86d93da9d549eec7bae26d65d6188ed748792ce655b5cdbc2e1a15cb7206",
+    "match": "both DLLs are byte-identical (SHA-256) to Library/bin in this wheel",
+    "build_route": "PyTorch v2.13.0 (commit cf30153c4c131c8164ee7798e5022d810682e2cb): .ci/pytorch/windows/setup_build.bat installs mkl-static, which requires intel-openmp; cmake/PostBuildSteps.cmake installs libiomp5md.dll and libiompstubs5md.dll into torch/lib"
+  },
+  "license": {
+    "name": "Intel End User License Agreement for Developer Tools (Version August 2024)",
+    "text": "LICENSE.txt",
+    "text_sha256": "febfb69a5b058f55892dc7f341108a9ca29d50e9fe85723a57eebbb826436958",
+    "third_party_notices": "third-party-programs.txt",
+    "third_party_notices_sha256": "f8ce918fe7311ce279e68380a2e233f8a42b1cd3dda8f4c48d6de97a0255c1d7",
+    "source": "intel_openmp-2026.1.0.dist-info/LICENSE.txt and share/doc/compiler/licensing/openmp/third-party-programs.txt in the wheel above"
+  },
+  "redistribution": {
+    "status": "OPEN: owner/legal decision required",
+    "unresolved": [
+      "Section 2.1.D permits distribution only of 'Redistributables' listed in redist.txt or similarly named files; the wheel contains no such list, so the DLLs' Redistributable status is not established",
+      "Section 2.1.D(2): Executable Code Redistributables may be distributed only under a licence agreement that prohibits reverse engineering, decompiling or disassembly; STI has no such end-user terms",
+      "Section 2.1.D(4)(v): the distributor must indemnify, defend and hold harmless Intel and its suppliers",
+      "Section 7.3: Intel's limitations of liability must be conveyed to and made binding on customers who acquire the Redistributables"
+    ]
+  }
+}

@@ -354,8 +354,12 @@ B4 = (
     "B4: Static Rust/native and vendored dependency license coverage is not "
     "certified by package-level metadata or source-superset notices."
 )
+B4_INTEL = (
+    "Intel OpenMP (libiomp5md/libiompstubs5md) redistribution under the Intel "
+    "End User License Agreement for Developer Tools needs an owner/legal decision"
+)
 B5 = "B5: py3langid embedded model training-corpus redistribution terms remain open."
-BLOCKERS = [B4]
+INTEL_FILES = ("libiomp5md.dll", "libiompstubs5md.dll")
 
 
 def distribution_blockers(
@@ -364,8 +368,13 @@ def distribution_blockers(
     microsoft_runtime: bool = True,
     python_runtime_verified: bool = False,
     language_model_bundled: bool = True,
+    b4_remaining: Sequence[str] | None = None,
 ) -> list[str]:
-    """Each blocker stays until its own evidence closes it; none grants permission."""
+    """Each blocker stays until its own evidence closes it; none grants permission.
+
+    B4 fails closed: without a coverage check (`b4_remaining` is None) it keeps its
+    general wording; with one, it names what is still open.
+    """
     blockers = [B1_BINDINGS if provenance["qt_libraries_verified"] else B1_UNVERIFIED]
     if software_renderer:
         blockers.append(B2)
@@ -373,8 +382,107 @@ def distribution_blockers(
         blockers.append(B3_MICROSOFT)
     if not python_runtime_verified:
         blockers.append(B3_PYTHON)
+    if b4_remaining is None:
+        blockers.append(B4)
+    elif b4_remaining:
+        blockers.append("B4: " + "; ".join(b4_remaining) + ".")
     # B5 concerns redistributing the model; a bundle without it does not ship it.
-    return blockers + BLOCKERS + ([B5] if language_model_bundled else [])
+    return blockers + ([B5] if language_model_bundled else [])
+
+
+def rust_notice_coverage(
+    legal: Path, versions: dict[str, str]
+) -> tuple[dict[str, object], list[str]]:
+    """Licence texts for every crate in the pinned source superset (B4).
+
+    `versions` are the frozen tokenizers/safetensors versions; the index only
+    covers the versions it was collected for.
+    """
+    index_path = legal / "rust-crates" / "index.json"
+    if not index_path.is_file():
+        return {"present": False}, ["Rust crate licence texts are not in the packet"]
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    gaps = []
+    for name, version in index["binaries"].items():
+        if versions.get(name) != version:
+            gaps.append(
+                f"the Rust crate index covers {name} {version}, not the bundled one"
+            )
+    missing_texts = sorted(
+        {
+            notice["sha256"]
+            for crate in index["crates"]
+            for notice in crate["notices"]
+            if not (legal / "rust-crates/texts" / f"{notice['sha256']}.txt").is_file()
+            or digest(legal / "rust-crates/texts" / f"{notice['sha256']}.txt")
+            != notice["sha256"]
+        }
+    )
+    uncovered = sorted(
+        f"{crate['name']}@{crate['version']}"
+        for crate in index["crates"]
+        if not crate["notices"] and "not_linked_on_windows" not in crate
+    )
+    if missing_texts:
+        gaps.append(
+            f"{len(missing_texts)} indexed Rust licence texts are missing or changed"
+        )
+    if uncovered:
+        gaps.append("Rust crates without a licence text: " + ", ".join(uncovered))
+    summary = {
+        "present": True,
+        "crates": len(index["crates"]),
+        "texts": len({n["sha256"] for c in index["crates"] for n in c["notices"]}),
+        "not_linked_on_windows": sorted(
+            c["name"] for c in index["crates"] if "not_linked_on_windows" in c
+        ),
+        "complete": not gaps,
+    }
+    return summary, gaps
+
+
+def intel_openmp_status(
+    bundle: Path, legal: Path
+) -> tuple[dict[str, object], list[str]]:
+    """The shipped Intel OpenMP DLLs must be the ones whose terms are recorded."""
+    record_path = legal / "intel-openmp" / "provenance.json"
+    shipped = {
+        name: bundle / "_internal/torch/lib" / name
+        for name in INTEL_FILES
+        if (bundle / "_internal/torch/lib" / name).is_file()
+    }
+    if not shipped:
+        return {"bundled": False}, []
+    if not record_path.is_file():
+        return {"bundled": True, "recorded": False}, [
+            "Intel OpenMP has no recorded provenance or licence text"
+        ]
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    expected = {
+        Path(path).name: item["sha256"] for path, item in record["files"].items()
+    }
+    matches = all(expected.get(name) == digest(path) for name, path in shipped.items())
+    licence = record["license"]
+    texts = all(
+        (legal / "intel-openmp" / licence[key]).is_file()
+        and digest(legal / "intel-openmp" / licence[key]) == licence[key + "_sha256"]
+        for key in ("text", "third_party_notices")
+    )
+    gaps = []
+    if not matches:
+        gaps.append("the bundled Intel OpenMP DLLs differ from the recorded provenance")
+    if not texts:
+        gaps.append("the Intel OpenMP licence texts are missing or changed")
+    # Engineering evidence cannot settle the licence's redistribution conditions.
+    gaps.append(B4_INTEL)
+    return {
+        "bundled": True,
+        "recorded": True,
+        "matches_provenance": matches,
+        "license": licence["name"],
+        "texts_present": texts,
+        "redistribution": record["redistribution"]["status"],
+    }, gaps
 
 
 def verify_python_runtime(
@@ -627,6 +735,33 @@ def assemble(
         json.loads((project / "distribution/python-runtime.json").read_text()),
     )
     language_model = language_model_status(bundle)
+    versions = {str(item["name"]).lower(): str(item["version"]) for item in components}
+    rust_notices, rust_gaps = rust_notice_coverage(legal, versions)
+    intel_openmp, intel_gaps = intel_openmp_status(bundle, legal)
+    torch_notices = next(
+        (
+            len(item["license_notices"])
+            for item in components
+            if item["name"] == "torch"
+        ),
+        0,
+    )
+    torch_gaps = (
+        []
+        if torch_notices
+        else ["PyTorch's upstream third_party licence files are missing"]
+    )
+    b4_remaining = rust_gaps + intel_gaps + torch_gaps
+    b4 = {
+        "rust_crates": rust_notices,
+        "intel_openmp": intel_openmp,
+        # Plan revision 2 section 5 keeps PyTorch's static content at this level.
+        "pytorch_static_third_party": {
+            "coverage": "upstream third_party licence superset from the torch wheel",
+            "notice_files": torch_notices,
+        },
+        "remaining": b4_remaining,
+    }
     blockers = distribution_blockers(
         provenance,
         (bundle / "_internal/PySide6/opengl32sw.dll").exists(),
@@ -635,6 +770,7 @@ def assemble(
         ),
         python_runtime_verified=bool(python_runtime["verified"]),
         language_model_bundled=bool(language_model["bundled"]),
+        b4_remaining=b4_remaining,
     )
     if any(item["owner"] == "UNRESOLVED native ownership" for item in native):
         blockers.append(
@@ -661,6 +797,7 @@ def assemble(
         "qt_binary_provenance": provenance,
         "python_runtime": python_runtime,
         "language_model": language_model,
+        "b4_coverage": b4,
         "qt_source_notices": source_notices,
         "notice_scope": "source superset; not a compiled static-link SBOM",
         "materials": files,
