@@ -17,7 +17,7 @@ from typing import Any
 
 import pytest
 
-M10 = Path(__file__).parents[2] / "tools/m10"
+M10 = Path(__file__).resolve().parents[2] / "tools/m10"
 HARNESS = M10 / "validate_installer.ps1"
 LIB = M10 / "validate_installer_lib.ps1"
 SHELL = shutil.which("pwsh") or (
@@ -33,7 +33,7 @@ Set-StrictMode -Version Latest
 $data = Get-Content -LiteralPath $DataPath -Raw | ConvertFrom-Json
 try {
     if ($Case -eq 'receipt') {
-        $out = @{ ok = $true; result = (Test-StiReceipt $data.receipt) }
+        $out = @{ ok = $true; result = (Get-StiReceiptFacts $data.receipt) }
     } elseif ($Case -eq 'runtime') {
         $values = $null
         if ($null -ne $data.registry) {
@@ -48,7 +48,7 @@ try {
         Assert-StiRuntimeExpectation $state $data.expectation
         $out = @{ ok = $true; result = $state }
     } else {
-        $facts = Test-StiReceipt $data.receipt
+        $facts = Get-StiReceiptFacts $data.receipt
         $state = Get-StiVCRuntimeState { $null }
         $automated = [ordered]@{ install_refused_without_runtime = 'PASS' }
         $observed = New-StiObservations $data.receipt $facts $state `
@@ -132,8 +132,8 @@ def test_blockers_come_from_the_receipt_not_a_fixed_list(tmp_path: Path) -> None
         tmp_path,
     )
     assert checked["ok"], checked
-    assert checked["result"]["legal_blockers"] in (["B1"], "B1")
-    assert checked["result"]["other_packet_blockers"] in ([other], other)
+    assert checked["result"]["legal_blockers"] == ["B1"]
+    assert checked["result"]["other_packet_blockers"] == [other]
     assert checked["result"]["release_conditions"] == RECEIPT["release_conditions"]
 
 
@@ -147,6 +147,18 @@ UNSAFE = {
     "models bundled": (receipt(models_bundled=True), "no models are bundled"),
     "not compiled": (receipt(compiled=False), "Compiled installer receipt"),
     "other schema": (receipt(schema_version=2), "schema version 1"),
+    "schema as text": (receipt(schema_version="1"), "schema version 1"),
+    "schema as boolean": (receipt(schema_version=True), "schema version 1"),
+    "upper-case installer hash": (
+        receipt(installer_sha256="C" * 64),
+        "installer SHA-256",
+    ),
+    "malformed payload entry": (receipt(payload=[1]), "payload entry"),
+    "owner smoke claimed": (receipt(owner_30_minute_smoke="PASS"), "owner smoke"),
+    "B6 as blocker and condition": (
+        receipt(legal_blockers=["B1", "B6"]),
+        "B6 both",
+    ),
     "no blockers": (receipt(legal_blockers=[]), "must name its blockers"),
     "B1 omitted": (receipt(legal_blockers=["B4"]), "omits B1"),
     "malformed code": (receipt(legal_blockers=["B1", "B7"]), "malformed"),
@@ -246,15 +258,33 @@ def test_observations_never_claim_clean_machine_acceptance(tmp_path: Path) -> No
     )
 
 
+PARSE = r"""
+param([string]$Script)
+$tokens = $null; $errors = $null
+$parser = [System.Management.Automation.Language.Parser]
+[void]$parser::ParseFile($Script, [ref]$tokens, [ref]$errors)
+$errors.Count
+"""
+
+
 @needs_powershell
-def test_the_harness_parses(tmp_path: Path) -> None:
-    script = (
-        "$t=$null; $e=$null; [void][System.Management.Automation.Language.Parser]"
-        f"::ParseFile('{HARNESS}', [ref]$t, [ref]$e); $e.Count"
-    )
+@pytest.mark.parametrize("script", [HARNESS, LIB])
+def test_the_harness_scripts_parse(script: Path, tmp_path: Path) -> None:
     assert SHELL is not None
+    parser = tmp_path / "parse.ps1"
+    parser.write_text(PARSE, encoding="utf-8")
     result = subprocess.run(
-        [SHELL, "-NoProfile", "-NonInteractive", "-Command", script],
+        [
+            SHELL,
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(parser),
+            "-Script",
+            str(script),
+        ],
         capture_output=True,
         text=True,
         timeout=120,
@@ -270,7 +300,9 @@ def test_the_harness_has_no_fixed_blocker_list_or_self_acceptance() -> None:
     assert "clean_machine_acceptance" not in harness
     assert ". (Join-Path $PSScriptRoot 'validate_installer_lib.ps1')" in harness
     assert "[Parameter(Mandatory=$true)][ValidateSet('Missing','Present')]" in harness
-    assert "$facts = Test-StiReceipt $manifest" in harness
+    assert "$facts = Get-StiReceiptFacts $manifest" in harness
+    assert "Assert ($code -eq 1)" in harness
+    assert "-SimpleMatch $StiRuntimeRefusalLog" in harness
     assert "Assert-StiRuntimeExpectation $runtime $RuntimeExpectation" in harness
 
 
@@ -297,6 +329,14 @@ def test_the_runtime_threshold_matches_the_installer() -> None:
     lib = LIB.read_text(encoding="utf-8")
 
     assert "((Major > 14) or ((Major = 14) and (Minor >= 44)))" in script
+    assert "and (Installed = 1)" in script
+    assert "$state.installed -eq 1" in lib
+    app_id = re.search(r"AppId=\{(\{[0-9A-F-]{36}\})", script)
+    assert app_id is not None
+    assert f"Uninstall\\{app_id.group(1)}_is1'" in lib
+    refusal = re.search(r"Log\('(Microsoft Visual C\+\+ [^']+)'\)", script)
+    assert refusal is not None
+    assert f"$StiRuntimeRefusalLog = '{refusal.group(1)}'" in lib
     assert "$StiVCRuntimeMinimum = @{ Major = 14; Minor = 44 }" in lib
     assert "'SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64'" in lib
     assert (

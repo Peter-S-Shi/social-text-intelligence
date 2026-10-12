@@ -50,7 +50,7 @@ if ($EnvironmentKind -eq 'DisposableVM') {
 Assert (-not (Test-Path -LiteralPath $Output)) 'Validation output must be new.'
 Assert (-not ($Output -match '["\r\n]')) 'Invalid output path.'
 $manifest = Get-Content -LiteralPath $Receipt -Raw | ConvertFrom-Json
-$facts = Test-StiReceipt $manifest
+$facts = Get-StiReceiptFacts $manifest
 Assert ((Hash $Installer) -eq $manifest.installer_sha256) 'Installer checksum differs from receipt.'
 $runtime = Get-StiVCRuntimeState
 Assert-StiRuntimeExpectation $runtime $RuntimeExpectation
@@ -61,7 +61,7 @@ $menu = Join-Path ([Environment]::GetFolderPath('Programs')) 'Social Text Intell
 Assert (-not (Test-Path -LiteralPath $install)) 'Existing installation/data is preserved; use a fresh Windows profile.'
 Assert (-not (Test-Path -LiteralPath $appData)) 'Existing project/model data is preserved; use a fresh Windows profile.'
 Assert (-not (Test-Path -LiteralPath $menu)) 'Existing Start Menu folder is preserved; use a fresh profile.'
-$uninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{DB272C58-19C3-48E1-A88B-040CD5D88E35}_is1'
+$uninstallKey = $StiUninstallKey
 Assert (-not (Test-Path -LiteralPath $uninstallKey)) 'Existing uninstall registration is preserved; use a fresh profile.'
 New-Item -ItemType Directory -Path $Output | Out-Null
 $Output = [IO.Path]::GetFullPath($Output)
@@ -78,10 +78,14 @@ try {
     Remove-Item Env:QT_PLUGIN_PATH,Env:QML2_IMPORT_PATH,Env:QT_QPA_PLATFORM -ErrorAction SilentlyContinue
     if ($RuntimeExpectation -eq 'Missing') {
         $code = RunProcess $Installer @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',('/LOG="' + $Output + '\install-private.log"'))
-        Assert ($code -ne 0) 'Installation was not refused without the required VC++ runtime.'
+        # Exit code 1 is Inno Setup's "failed to initialize": InitializeSetup returned False.
+        Assert ($code -eq 1) 'Installation was not refused at initialization; inspect private log.'
+        $refusal = Select-String -LiteralPath (Join-Path $Output 'install-private.log') -SimpleMatch $StiRuntimeRefusalLog -Quiet
+        Assert $refusal 'The installer log does not record the missing-runtime refusal.'
         foreach ($path in @($install, $appData, $menu, $uninstallKey)) {
             Assert (-not (Test-Path -LiteralPath $path)) 'A refused installation left files, shortcuts or registration behind.'
         }
+        Assert (@(Get-ChildItem -LiteralPath $env:TEMP -Force).Count -eq 0) 'A refused installation left temporary files behind.'
         New-StiObservations $manifest $facts $runtime $EnvironmentKind $RuntimeExpectation ([ordered]@{
             install_refused_without_runtime='PASS'; no_residue_after_refusal='PASS'
             lifecycle='NOT RUN in RuntimeExpectation Missing mode'

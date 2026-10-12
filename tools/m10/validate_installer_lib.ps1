@@ -4,9 +4,16 @@
 $StiVCRuntimeKey = 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64'
 # The installer requires Visual C++ 2015-2022 x64 runtime 14.44 or later (R1).
 $StiVCRuntimeMinimum = @{ Major = 14; Minor = 44 }
+# The per-user uninstall registration Inno Setup creates for installer.iss AppId.
+$StiUninstallKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{DB272C58-19C3-48E1-A88B-040CD5D88E35}_is1'
+# The line installer.iss InitializeSetup logs when it refuses for a missing runtime.
+$StiRuntimeRefusalLog = 'Microsoft Visual C++ 2015-2022 x64 runtime 14.44 or later is not installed.'
 $StiAcceptanceNotDetermined = 'NOT DETERMINED BY THIS HARNESS'
 
+function Test-StiInteger($Value) { return ($Value -is [int] -or $Value -is [long]) }
+
 function Get-StiField($Object, [string]$Name) {
+    <# A required receipt field; a missing one refuses the receipt. #>
     if ($null -eq $Object -or -not ($Object.PSObject.Properties.Name -contains $Name)) {
         throw "Receipt field '$Name' is missing; the receipt is refused."
     }
@@ -14,10 +21,11 @@ function Get-StiField($Object, [string]$Name) {
     return ,$Object.$Name
 }
 
-function Test-StiReceipt($Manifest) {
+function Get-StiReceiptFacts($Manifest) {
     <# The receipt's own blocker facts, after a fail-closed structural check (H1). #>
     if ($null -eq $Manifest -or $Manifest -is [array]) { throw 'The receipt must be one JSON object.' }
-    if ((Get-StiField $Manifest 'schema_version') -ne 1) { throw 'Only receipt schema version 1 is accepted.' }
+    $schema = Get-StiField $Manifest 'schema_version'
+    if (-not (Test-StiInteger $schema) -or $schema -ne 1) { throw 'Only receipt schema version 1 is accepted.' }
     if ((Get-StiField $Manifest 'compiled') -isnot [bool] -or -not $Manifest.compiled) {
         throw 'Compiled installer receipt is required.'
     }
@@ -27,14 +35,21 @@ function Test-StiReceipt($Manifest) {
     if ((Get-StiField $Manifest 'models_bundled') -isnot [bool] -or $Manifest.models_bundled) {
         throw 'The receipt must record that no models are bundled.'
     }
-    if ((Get-StiField $Manifest 'installer_sha256') -notmatch '^[0-9a-f]{64}$') {
+    if ((Get-StiField $Manifest 'installer_sha256') -cnotmatch '^[0-9a-f]{64}$') {
         throw 'The receipt must record the installer SHA-256.'
     }
-    if ((Get-StiField $Manifest 'frozen_application_sha') -notmatch '^[0-9a-f]{40}$') {
+    if ((Get-StiField $Manifest 'frozen_application_sha') -cnotmatch '^[0-9a-f]{40}$') {
         throw 'The receipt must record the frozen application revision.'
     }
     $payload = Get-StiField $Manifest 'payload'
     if ($payload -isnot [array] -or $payload.Count -eq 0) { throw 'The receipt must list the installed payload.' }
+    foreach ($entry in $payload) {
+        if ($entry -isnot [System.Management.Automation.PSCustomObject] -or
+            ($entry.PSObject.Properties.Name -cnotcontains 'path') -or $entry.path -isnot [string] -or
+            ($entry.PSObject.Properties.Name -cnotcontains 'sha256') -or $entry.sha256 -cnotmatch '^[0-9a-f]{64}$') {
+            throw 'A receipt payload entry is malformed.'
+        }
+    }
 
     $legal = Get-StiField $Manifest 'legal_blockers'
     if ($legal -isnot [array]) { throw 'legal_blockers must be a list.' }
@@ -67,6 +82,13 @@ function Test-StiReceipt($Manifest) {
     if ($conditions.clean_machine_validation -cne 'NOT RUN' -or (Get-StiField $Manifest 'clean_machine_validation') -cne 'NOT RUN') {
         # A receipt is produced before any clean-machine run; it cannot carry an acceptance.
         throw 'The receipt claims a clean-machine result it cannot hold.'
+    }
+    if ((Get-StiField $Manifest 'owner_30_minute_smoke') -cne 'NOT RUN') {
+        throw 'The receipt claims an owner smoke result it cannot hold.'
+    }
+    if ($codes -ccontains 'B6') {
+        # B6 is reported as a release condition (closed on its narrow criterion), never both.
+        throw 'The receipt reports B6 both as a packet blocker and as a release condition.'
     }
     return [ordered]@{
         legal_blockers = $codes
@@ -109,13 +131,14 @@ function Get-StiVCRuntimeState([scriptblock]$Reader = { Read-StiVCRuntimeRegistr
 }
 
 function Assert-StiRuntimeExpectation($State, [string]$Expectation) {
+    <# Refuses a run whose selected mode does not match the machine's actual runtime. #>
+    if ($Expectation -cnotin @('Missing', 'Present')) { throw 'Unknown runtime expectation.' }
     if ($Expectation -ceq 'Missing' -and $State.meets_requirement) {
         throw 'RuntimeExpectation Missing was selected, but a qualifying VC++ runtime is installed.'
     }
     if ($Expectation -ceq 'Present' -and -not $State.meets_requirement) {
         throw 'RuntimeExpectation Present was selected, but no VC++ runtime 14.44 or later is installed.'
     }
-    if ($Expectation -cnotin @('Missing', 'Present')) { throw 'Unknown runtime expectation.' }
 }
 
 function New-StiObservations($Receipt, $Facts, $Runtime, [string]$EnvironmentKind, [string]$Expectation, $Automated) {
