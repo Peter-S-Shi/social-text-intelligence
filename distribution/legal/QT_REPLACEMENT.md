@@ -45,8 +45,18 @@ The [M10-E1 record](../../docs/V2_M10_E1_DISTRIBUTION_UNBLOCKING.md) has the
 exact results. On a Windows x64 development host: the officially distributed
 Qt 6.11.2 binaries, downloaded separately and Qt-signed, and a coherent
 6.11.1 Qt/PySide6/shiboken6 set each passed all three checks. A Qt-only 6.11.1
-or 6.12.0 swap fails for the versioned-import reason above. A replacement built
-from modified sources has **not yet** been demonstrated. No compatibility with
+or 6.12.0 swap fails for the versioned-import reason above.
+
+A replacement built from **modified source** has been demonstrated for
+**QtCore only** (M10 S3):
+- `Qt6Core.dll` was rebuilt from the delivered 6.11.2 source with one visible
+  change, using MSVC 19.44. It replaced the shipped file in a copy of the
+  application.
+- The copy passed all three checks and the opt-in frozen tests, with no
+  unresolved Qt imports. The rebuilt library is unsigned and is accepted.
+- A modified-source rebuild of Gui, Widgets or the plugins has **not** been
+  demonstrated. The running application's reported build string was not
+  captured. No compatibility with
 arbitrary changes, future versions, formal Windows UAT or legal compliance is
 implied. Reverse engineering to debug modifications of these libraries is
 permitted; no contractual term prohibits it.

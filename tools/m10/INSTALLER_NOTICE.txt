@@ -1,7 +1,12 @@
 INTERNAL ENGINEERING INSTALLER - NOT APPROVED FOR DISTRIBUTION
 
-Qt LGPL and third-party obligations B1, B4, B5 and B6 remain BLOCKED (B2 and
-B3 are resolved: no software renderer or Microsoft runtime file is shipped).
+Distribution blockers remain open; legal/inventory.json lists them (B1 and B4
+for this build configuration). B1 has an owner engineering direction but no
+legal confirmation. B2 and B3 are resolved: no software renderer or Microsoft
+runtime file is shipped. B5 is not derived because the language model is not
+shipped, but its corpus terms are unverified. B6 is closed only on a QtCore-only
+modified-source test. Source archives travel in this package; no public source
+download is operational.
 It requires the Microsoft Visual C++ 2015-2022 x64 runtime 14.44 or later,
 which this setup checks for but never installs. This installation
 does not imply legal clearance, signing, formal Windows UAT or release readiness.

@@ -19,6 +19,39 @@ INNO_VERSION = "6.7.3"
 ISCC_SHA256 = "0a8757031b33777e4c9cbffee40f11a5062b36d25cbe144c1db73b6102b80ad7"
 LICENSE_SHA256 = "3df23505b7ec00dc007a1e1e9ba32ee3895e7ce90043bcd1ac1b9b47155921a7"
 MARKER = "STI M10-C managed application files v1"
+BLOCKER_CODE = re.compile(r"(B[1-6]):")
+# Release-readiness facts that the packet does not derive; stated, not inferred.
+RELEASE_CONDITIONS = {
+    "B6": (
+        "closed only on the narrow M10-E2 QtCore-only criterion (M10 S3); a "
+        "modified-source rebuild of Gui, Widgets and plugins was not exercised"
+    ),
+    "clean_machine_validation": "NOT RUN",
+    "public_source_hosting": "not operational",
+}
+
+
+def packet_blockers(inventory: dict[str, object]) -> tuple[list[str], list[str]]:
+    """The packet's own blocker codes, and any blocker that has no code.
+
+    Fails closed: a packet that permits distribution, or whose blocker list is
+    malformed, is refused rather than summarised.
+    """
+    blockers = inventory.get("blockers")
+    if inventory.get("distribution_permitted") is not False:
+        raise ValueError(
+            "The license packet must record distribution as not permitted."
+        )
+    if not isinstance(blockers, list) or not all(isinstance(b, str) for b in blockers):
+        raise ValueError("The license packet's blocker list is malformed.")
+    codes, uncoded = [], []
+    for blocker in blockers:
+        match = BLOCKER_CODE.match(blocker)
+        if match is None:
+            uncoded.append(blocker)
+        elif match.group(1) not in codes:
+            codes.append(match.group(1))
+    return codes, uncoded
 
 
 def ordinary_path(path: Path) -> None:
@@ -67,6 +100,7 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         raise ValueError("A version-1 license inventory object is required.")
     if not verify_packet(bundle, inventory)["materials_valid"]:
         raise ValueError("The complete license packet failed byte/set verification.")
+    legal_blockers, other_blockers = packet_blockers(inventory)
     sources = inventory.get("source_delivery", [])
     names = [item["filename"] for item in sources]
     if len(set(names)) != 5 or any(
@@ -149,7 +183,10 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         "inno_license_sha256": LICENSE_SHA256,
         "models_bundled": False,
         "distribution_permitted": False,
-        "legal_blockers": ["B1", "B2", "B3", "B4", "B5", "B6"],
+        # As derived by the verified packet, not a fixed list.
+        "legal_blockers": legal_blockers,
+        "other_packet_blockers": other_blockers,
+        "release_conditions": RELEASE_CONDITIONS,
         "clean_machine_validation": "NOT RUN",
         "owner_30_minute_smoke": "NOT RUN",
         "payload": [

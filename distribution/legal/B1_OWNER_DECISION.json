@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "record": "M10 S4 B1 owner decision (engineering direction)",
+  "decided": "2026-10-11",
+  "basis": "docs/V2_M10_S4_B1_DECISION_MEMO.md",
+  "scope": {
+    "qt_version": "6.11.2",
+    "components": {
+      "PySide6_Essentials": "6.11.2",
+      "shiboken6": "6.11.2"
+    },
+    "source_archives": {
+      "qtbase-everywhere-src-6.11.2.tar.xz": "5b2e00eccaf5a4d8c14134ffa0ea8dfd0a35ae1ffc7f8d87fa4305a1ed23cf22",
+      "qtsvg-everywhere-src-6.11.2.tar.xz": "d594337feca84c26fb67fe87b85e6a5c12fda404b611d905f9d138210c311876",
+      "qtimageformats-everywhere-src-6.11.2.tar.xz": "cecd8900f34b6550076309bc94f62f828008b633a4239e0a08c86788f41001f8",
+      "qttranslations-everywhere-src-6.11.2.tar.xz": "021684c1a7937a9fabc3b056a6698ad5978794caf9ac190fd6cc11399e67c014",
+      "pyside-setup-everywhere-src-6.11.2.tar.xz": "cba47efbaad1bedd529725cbc14e21f156c7a19366f07b3edfbb076ffd7afdf8"
+    }
+  },
+  "decisions": {
+    "D1": {
+      "status": "approved_engineering_direction",
+      "summary": "Keep the official, unmodified Qt/PySide6/shiboken6 6.11.2 binaries and deliver the hash-pinned upstream release sources and build scripts as their source."
+    },
+    "D2": {
+      "status": "approved_engineering_direction",
+      "summary": "Plan in-package source archives plus GPLv3 section 6(d) equivalent access, with same-download-page hosting as the preferred policy."
+    },
+    "D3": {
+      "status": "approved_engineering_direction",
+      "summary": "Keep the Qt libraries replaceable with no signature or integrity lock for standalone software distribution."
+    },
+    "D4": {
+      "status": "unresolved",
+      "linked_blocker": "B4",
+      "summary": "Whether an Intel-only anti-reverse-engineering term is compatible with LGPLv3 section 4."
+    }
+  },
+  "legal_confirmation": "pending",
+  "binding_producer_source_correspondence": "unproven",
+  "public_source_hosting": "not operational",
+  "b1_effect": "remains_open",
+  "distribution_permitted": false
+}
