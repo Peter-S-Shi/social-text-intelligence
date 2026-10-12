@@ -32,6 +32,8 @@ def verify_runtime(
         "safetensors",
         "huggingface_hub",
         "py3langid.langid",
+        # Model downloads verify certificates with it (M10 S5-NET-001).
+        "truststore",
         "PySide6.QtWidgets",
     )
     for name in modules:

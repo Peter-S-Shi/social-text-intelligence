@@ -389,6 +389,30 @@ def test_discarding_partial_downloads_removes_only_staged_files(
     assert (snapshot_dir(root, SENTIMENT) / "config.json").is_file()
 
 
+def test_an_untrusted_certificate_on_resume_keeps_the_partial_download(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "models"
+    transport = FakeTransport.serving_manifest()
+    weights_url = url_for(SENTIMENT, "weights.bin")
+    transport.fail_after_bytes[weights_url] = 4_096
+    make_provisioner(root, transport).download(("sentiment",))
+    transport.fail_after_bytes.clear()
+    transport.fail_open[weights_url] = "certificate_rejected"
+
+    failed = make_provisioner(root, transport).download(("sentiment",))
+
+    assert failed.outcome is ProvisioningOutcome.FAILED
+    assert failed.error_code == "certificate_rejected"
+    assert failed.error_message is not None
+    assert "http" not in failed.error_message
+    assert failed.status.model("sentiment").resumable_bytes == 4_096
+    transport.fail_open.clear()
+    resumed = make_provisioner(root, transport).download(("sentiment",))
+    assert resumed.status.model("sentiment").ready
+    assert (weights_url, 4_096) in transport.requests
+
+
 def test_a_body_that_ends_early_without_an_error_is_kept_for_resume(
     tmp_path: Path,
 ) -> None:

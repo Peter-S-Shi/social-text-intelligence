@@ -41,6 +41,12 @@ _PROVISIONING_MESSAGES = {
         "The model source could not be reached. Check the connection and "
         "download again; finished and partial files are kept."
     ),
+    "certificate_rejected": (
+        "The model source's security certificate could not be verified, so "
+        "nothing was downloaded from it. Check the computer's date and time "
+        "and any network security software, then download again; finished and "
+        "partial files are kept."
+    ),
     "download_rejected": (
         "The model source returned an unexpected response. Try again later "
         "or use a models folder."

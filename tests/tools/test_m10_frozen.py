@@ -16,6 +16,15 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+def test_frozen_packet_audits_the_bundled_truststore() -> None:
+    bundle = Path(os.environ["STI_M10_BUNDLE"])
+    inventory = json.loads((bundle / "legal/inventory.json").read_text("utf-8"))
+    (component,) = [c for c in inventory["components"] if c["name"] == "truststore"]
+    assert component["version"] == "0.10.4"
+    assert component["license_expression"] == "MIT"
+    assert component["license_notices"]
+
+
 @pytest.mark.parametrize(
     ("mode", "expected"),
     [

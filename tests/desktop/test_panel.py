@@ -227,6 +227,11 @@ def test_stopping_shows_a_stopping_note_and_no_second_stop() -> None:
             ["Download again · resumes", "Use a models folder…"],
         ),
         (
+            "certificate_rejected",
+            "The secure connection could not be verified",
+            ["Download again · resumes", "Use a models folder…"],
+        ),
+        (
             "download_rejected",
             "The download was refused",
             ["Download again", "Use a models folder…"],
@@ -310,7 +315,8 @@ def test_verify_storage_failure_says_nothing_was_recorded() -> None:
     assert "Nothing was recorded" in report.body
 
 
-def test_network_failure_with_a_partial_says_it_is_kept() -> None:
+@pytest.mark.parametrize("code", ["network_unavailable", "certificate_rejected"])
+def test_a_failed_connection_with_a_partial_says_it_is_kept(code: str) -> None:
     state = ControllerState(
         status(
             Readiness.INCOMPLETE,
@@ -320,7 +326,7 @@ def test_network_failure_with_a_partial_says_it_is_kept() -> None:
         report=OperationReport(
             Activity.DOWNLOADING,
             ProvisioningOutcome.FAILED,
-            "network_unavailable",
+            code,
             "fixed",
         ),
     )

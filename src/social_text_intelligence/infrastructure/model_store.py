@@ -374,7 +374,9 @@ class LocalModelProvisioner:
                     # A body that ends early is an interrupted transfer: keep it.
                     raise TransportError("network_unavailable")
         except TransportError as error:
-            if error.code != "network_unavailable":
+            # A connection that failed or was not trusted proves nothing about
+            # the bytes already received, so they are kept for resume.
+            if error.code not in {"network_unavailable", "certificate_rejected"}:
                 _remove(part)
             raise ModelProvisioningError(error.code) from None
         except OSError as error:

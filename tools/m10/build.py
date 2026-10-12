@@ -23,6 +23,33 @@ MICROSOFT_RUNTIME = re.compile(
     r"(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll", re.I
 )
 VENDORED_RUNTIME = re.compile(r"msvcp140-[0-9a-f]{32}\.dll", re.I)
+# truststore verifies every model download (M10 S5-NET-001). The build must use the
+# reviewed PyPI wheel truststore-0.10.4-py3-none-any.whl, sha256
+# adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981.
+# Each installed file below must match that wheel byte for byte.
+TRUSTSTORE_FILES = {
+    "truststore/__init__.py": (
+        "06eee4aa49a9ba784bb23e710aef204ffdb992da0f5dc4a7c1ef151e4d46989a"
+    ),
+    "truststore/_api.py": (
+        "0910c84046483677663181b1c1b9f5db1ce5baddf89b4e9ed94248d8846a232e"
+    ),
+    "truststore/_macos.py": (
+        "9d994b90e9accd413483aaf2470055198e423b33f2b9d72c889b4359aacce4b4"
+    ),
+    "truststore/_openssl.py": (
+        "cc1f9242f272764b3bb50d32230acfe860f77d035249a3e2abbcf0e321794f8d"
+    ),
+    "truststore/_ssl_constants.py": (
+        "3540f87d529d483d36ae2efe75bd2d9ced15a8b3fd687bb3992b5c5bbb40974f"
+    ),
+    "truststore/_windows.py": (
+        "ac01f22980fc33bb7e6d77c6f1580e55add3a5f85585bb78ad94253b8e58b8ff"
+    ),
+    "truststore-0.10.4.dist-info/licenses/LICENSE": (
+        "33be7b7e8fa4fd19b1760e1a8ed8a668bdab852c91b692dd41424bcb725a9fca"
+    ),
+}
 
 
 def prepare_output(output: Path) -> Path:
@@ -193,6 +220,19 @@ def runtime_mismatches(base: Path, manifest: dict[str, object]) -> list[str]:
     return mismatched
 
 
+def installed_mismatches(name: str, pinned: dict[str, str]) -> list[str]:
+    """Pinned files of an installed distribution whose bytes differ or are absent."""
+    distribution = importlib.metadata.distribution(name)
+    actual = {
+        item.as_posix(): hashlib.sha256(
+            Path(distribution.locate_file(item)).read_bytes()
+        ).hexdigest()
+        for item in distribution.files or ()
+        if item.as_posix() in pinned
+    }
+    return sorted(path for path, digest in pinned.items() if actual.get(path) != digest)
+
+
 def verify_build_environment() -> None:
     if sys.platform != "win32" or platform.machine().lower() not in {"amd64", "x86_64"}:
         raise ValueError("The production build requires Windows x64.")
@@ -211,6 +251,8 @@ def verify_build_environment() -> None:
             raise ValueError(
                 "Build dependency versions must match the pinned manifest."
             )
+    if installed_mismatches("truststore", TRUSTSTORE_FILES):
+        raise ValueError("truststore must be installed from the reviewed wheel.")
 
 
 def source_revision(root: Path = ROOT) -> str:

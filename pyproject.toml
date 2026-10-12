@@ -18,7 +18,11 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
 ]
-dependencies = []
+# truststore: model downloads verify TLS with the operating system's trust store
+# (MIT; M10 S5-NET-001). It is used only by the download transport.
+dependencies = [
+  "truststore>=0.10.4,<0.11",
+]
 
 [project.optional-dependencies]
 sentiment = [

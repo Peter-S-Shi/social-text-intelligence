@@ -56,7 +56,19 @@ def test_all_dependencies_verify_without_accessing_user_data() -> None:
     result = verify_runtime(import_module=load)
     assert result.ready
     assert "transformers.models.roberta.modeling_roberta" in names
+    assert "truststore" in names
     assert "PySide6.QtWidgets" in names
+
+
+def test_a_missing_certificate_verifier_is_a_fixed_failure() -> None:
+    def load(name: str) -> object:
+        if name == "truststore":
+            raise ImportError("not bundled")
+        return complete_module(name)
+
+    result = verify_runtime(import_module=load)
+    assert not result.ready
+    assert result.failed == ("truststore",)
 
 
 def test_packaged_smoke_uses_temporary_app_data(qapp: Any) -> None:

@@ -338,7 +338,7 @@ def _recovery(report: OperationReport) -> tuple[ActionView, ...]:
     code = report.error_code
     again = ActionView(ActionId.DOWNLOAD, "Download again", keys=None, primary=True)
     use_folder = ActionView(ActionId.USE_FOLDER, "Use a models folder…")
-    if code == "network_unavailable":
+    if code in {"network_unavailable", "certificate_rejected"}:
         return (
             ActionView(ActionId.DOWNLOAD, "Download again · resumes", primary=True),
             use_folder,
@@ -392,7 +392,7 @@ def _report_view(
         if report.kind is Activity.VERIFYING and code == "storage_failed":
             title = copy.VERIFY_STORAGE_TITLE
             body = f"{body} {copy.VERIFY_STORAGE_NOTE}"
-        elif code == "network_unavailable" and any(
+        elif code in {"network_unavailable", "certificate_rejected"} and any(
             m.resumable_bytes for m in status.models
         ):
             body = f"{body} {_kept_text(status)}"

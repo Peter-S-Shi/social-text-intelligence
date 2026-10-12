@@ -13,6 +13,9 @@ __pycache__/
 !.env.example
 *.pem
 *.key
+# Synthetic, never-trusted TLS test certificates (see the README beside them).
+!tests/provisioning/tls/*.pem
+!tests/provisioning/tls/*.key
 
 # Test, type-check, and coverage output
 .pytest_cache/
