@@ -14,10 +14,12 @@ debug those modifications. The onedir package keeps Qt DLLs and plugins separate
 from the executables. See `QT_REPLACEMENT.md` for replacement and installation
 instructions and `SOURCE_ACCESS.md` for source access.
 
-**Public distribution remains blocked.** Structural delivery and a bounded
-replacement experiment do not establish complete corresponding source or
-clear all third-party obligations. `inventory.json` records unresolved items;
-no legal certification or release readiness is claimed.
+**Public distribution remains blocked.** Structural delivery and bounded
+replacement experiments do not establish complete corresponding source or
+clear all third-party obligations. The modified-source experiment covered QtCore
+only. `B1_OWNER_DECISION.json` records an owner **engineering direction**, not
+legal approval. `inventory.json` records the unresolved items. No legal
+certification or release readiness is claimed.
 
 Authoritative terms: [LGPL v3](https://doc.qt.io/qt-6.11/lgpl.html),
 [Qt licensing](https://doc.qt.io/qt-6.11/licensing.html),

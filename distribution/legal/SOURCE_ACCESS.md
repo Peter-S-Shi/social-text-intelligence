@@ -40,15 +40,36 @@ upstream `v6.11.2` tag tree (commit
 - only four git housekeeping files are absent.
 
 The source includes `build_scripts/`, `coin/` and `create_wheels.py`. It is
-not proven to be the byte-exact recipe of those wheels.
+not proven to be the byte-exact recipe of those wheels. The shipped binding
+binaries are byte-identical to the official wheels' file records. No producer
+build record was found in the wheels or the materials reviewed, so exact
+producer source correspondence remains unproven.
 
 ## Status
 
-This is **not a written offer**. It is also not yet a complete legal clearance.
-The proposed release route places these same source archives next to the
-installer on the same download page. The owner (and legal review, where
-needed) must confirm that route, the binding-source position, and whether
-Installation Information applies. No signing or device lock is introduced.
+- **In this package now:** the archives in `sources/`, delivered with the object
+  code.
+- **Owner engineering direction (not legal clearance).** `B1_OWNER_DECISION.json`
+  records the owner's approval of decisions D1–D3 as an engineering direction:
+  - keep the official, unmodified binaries with this upstream release-source
+    route;
+  - plan the in-package archives plus equivalent access from the download
+    location;
+  - keep the Qt libraries replaceable, with no signature or integrity lock.
+
+  Legal confirmation is **pending**. D4, the compatibility of an Intel-only
+  anti-reverse-engineering term with LGPL v3 §4, is unresolved together with B4.
+  B1 stays open.
+- **Future source hosting (approved policy, not operational).** For a future
+  release, the same archives are to be offered beside the installer on its
+  download page. GPL v3 §6(d) requires equivalent access, which may also be
+  another server with clear directions next to the object code, kept available
+  for as long as the object code is. **No public download exists yet.** This
+  file is not a written offer.
+- Installation Information is unlikely to be triggered by a standalone
+  download onto a user's own PC, because no User Product is transferred. That
+  reading is still subject to the pending legal confirmation. No signing or
+  device lock is introduced.
 
 For rebuilding, unpack the sources in a separate workspace with a trusted
 archive tool and keep their licenses. Configure QtBase with the command recorded

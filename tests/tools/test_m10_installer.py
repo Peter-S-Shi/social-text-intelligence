@@ -41,7 +41,13 @@ def test_incomplete_license_packet_is_rejected_without_output(tmp_path: Path) ->
     assert not output.exists()
 
 
-def packet(root: Path, *extra: str) -> Path:
+def packet(
+    root: Path,
+    *extra: str,
+    blockers: object = ("B1: Synthetic unresolved gate.",),
+    permitted: object = False,
+    decision: object = None,
+) -> Path:
     root.mkdir()
     files = [
         "sti-desktop.exe",
@@ -74,8 +80,9 @@ def packet(root: Path, *extra: str) -> Path:
                 "application_revision": "a" * 40,
                 "materials": receipts,
                 "source_delivery": sources,
-                "distribution_permitted": False,
-                "blockers": ["Synthetic unresolved gate"],
+                "distribution_permitted": permitted,
+                "blockers": list(blockers) if isinstance(blockers, tuple) else blockers,
+                **({} if decision is None else {"b1_owner_decision": decision}),
             }
         )
     )
@@ -175,4 +182,83 @@ def test_malformed_inventory_fails_without_traceback_or_writes(
     result = invoke(bundle, output)
     assert result.returncode == 2
     assert result.stderr == ""
+    assert not output.exists()
+
+
+def test_receipt_blockers_are_the_packets_own(tmp_path: Path) -> None:
+    bundle = packet(
+        tmp_path / "bundle",
+        blockers=("B1: synthetic binding item.", "B4: synthetic notice item.", "Other"),
+    )
+    output = tmp_path / "prepared"
+    result = invoke(bundle, output)
+    assert result.returncode == 0, result.stdout
+    observed = json.loads(result.stdout)
+    assert observed["legal_blockers"] == ["B1", "B4"]
+    assert observed["other_packet_blockers"] == ["Other"]
+    conditions = observed["release_conditions"]
+    assert "QtCore-only" in conditions["B6"]
+    assert conditions["clean_machine_validation"] == "NOT RUN"
+    assert conditions["public_source_hosting"] == "not operational"
+    assert observed["distribution_permitted"] is False
+
+
+@pytest.mark.parametrize(
+    ("blockers", "permitted"),
+    [
+        (("B1: synthetic.",), True),
+        (("B1: synthetic.",), None),
+        ("B1: not a list", False),
+        ([1, 2], False),
+    ],
+)
+def test_a_permissive_or_malformed_packet_is_refused(
+    tmp_path: Path, blockers: object, permitted: object
+) -> None:
+    bundle = packet(tmp_path / "bundle", blockers=blockers, permitted=permitted)
+    output = tmp_path / "prepared"
+    result = invoke(bundle, output)
+    assert result.returncode == 2
+    assert not output.exists()
+
+
+SCHEMA_1_DECISION = {"valid": True, "schema_version": 1, "b1_effect": "remains_open"}
+
+
+@pytest.mark.parametrize(
+    ("blockers", "decision"),
+    [
+        ((), None),
+        ((), SCHEMA_1_DECISION),
+        (("B4: synthetic notice item.",), None),
+        (("B4: synthetic notice item.",), SCHEMA_1_DECISION),
+        # Schema 1 cannot close B1, even if a packet claims it did.
+        (("B4: synthetic.",), {**SCHEMA_1_DECISION, "b1_effect": "closed"}),
+        (
+            ("B4: synthetic.",),
+            {"valid": False, "schema_version": 2, "b1_effect": "closed"},
+        ),
+    ],
+)
+def test_receipts_inconsistent_with_an_open_b1_are_refused(
+    tmp_path: Path, blockers: tuple[str, ...], decision: object
+) -> None:
+    bundle = packet(tmp_path / "bundle", blockers=blockers, decision=decision)
+    output = tmp_path / "prepared"
+    result = invoke(bundle, output)
+    assert result.returncode == 2
+    assert "blockers" in result.stdout or "B1" in result.stdout
+    assert not output.exists()
+
+
+def test_a_self_declared_future_schema_cannot_account_for_b1(tmp_path: Path) -> None:
+    # No schema 2 validator exists, so fabricated inventory fields are not trusted.
+    decision = {"valid": True, "schema_version": 2, "b1_effect": "closed"}
+    bundle = packet(
+        tmp_path / "bundle", blockers=("B4: synthetic notice item.",), decision=decision
+    )
+    output = tmp_path / "prepared"
+    result = invoke(bundle, output)
+    assert result.returncode == 2
+    assert "omits B1" in result.stdout
     assert not output.exists()

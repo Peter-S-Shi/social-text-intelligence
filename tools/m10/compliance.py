@@ -362,6 +362,132 @@ B5 = "B5: py3langid embedded model training-corpus redistribution terms remain o
 INTEL_FILES = ("libiomp5md.dll", "libiompstubs5md.dll")
 
 
+B1_DECIDED = (
+    "B1: Qt library binaries and translations match the official Qt build SBOMs; "
+    "the owner approved keeping the unmodified official Qt/PySide6/shiboken6 "
+    "binaries with upstream release-source delivery (D1-D3) as an engineering "
+    "direction only. Legal confirmation is pending, exact binding producer-source "
+    "correspondence is unproven, public source hosting is not operational, and D4 "
+    "is unresolved with B4."
+)
+B1_RECORD = "B1_OWNER_DECISION.json"
+B1_APPROVED = "approved_engineering_direction"
+# The owner-approved content of schema version 1, exactly. Version 1 can express
+# only an engineering direction: legal confirmation pending and B1 open. A
+# confirmation, a B1 closure or other content needs a reviewed new version,
+# added here beside it.
+B1_SCHEMA_1: dict[str, object] = {
+    "schema_version": 1,
+    "record": "M10 S4 B1 owner decision (engineering direction)",
+    "decided": "2026-10-11",
+    "basis": "docs/V2_M10_S4_B1_DECISION_MEMO.md",
+    "decisions": {
+        "D1": {
+            "status": B1_APPROVED,
+            "summary": "Keep the official, unmodified Qt/PySide6/shiboken6 6.11.2 "
+            "binaries and deliver the hash-pinned upstream release sources and "
+            "build scripts as their source.",
+        },
+        "D2": {
+            "status": B1_APPROVED,
+            "summary": "Plan in-package source archives plus GPLv3 section 6(d) "
+            "equivalent access, with same-download-page hosting as the preferred "
+            "policy.",
+        },
+        "D3": {
+            "status": B1_APPROVED,
+            "summary": "Keep the Qt libraries replaceable with no signature or "
+            "integrity lock for standalone software distribution.",
+        },
+        "D4": {
+            "status": "unresolved",
+            "linked_blocker": "B4",
+            "summary": "Whether an Intel-only anti-reverse-engineering term is "
+            "compatible with LGPLv3 section 4.",
+        },
+    },
+    "legal_confirmation": "pending",
+    "binding_producer_source_correspondence": "unproven",
+    "public_source_hosting": "not operational",
+    "b1_effect": "remains_open",
+    "distribution_permitted": False,
+}
+B1_SCHEMA_1_COMPONENTS = {"PySide6_Essentials": "6.11.2", "shiboken6": "6.11.2"}
+
+
+def canonical(value: object) -> str:
+    """JSON text that keeps types apart (true is not 1), for exact comparison."""
+    return json.dumps(value, sort_keys=True)
+
+
+def b1_owner_decision(
+    legal: Path, definition: dict[str, object], versions: dict[str, str]
+) -> tuple[dict[str, object], list[str]]:
+    """Validate the shipped owner-decision record against the packet's evidence.
+
+    Schema 1 must equal the approved content exactly, with a scope of the source
+    manifest's Qt version and archives and exactly the two bundled binding
+    packages. A valid record only narrows B1's wording; it never removes B1,
+    because owner engineering approval is not legal approval.
+    """
+    path = legal / B1_RECORD
+    if not path.is_file():
+        return {"present": False}, ["the owner decision record is missing"]
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {"present": True, "valid": False}, [
+            "the owner decision record is malformed"
+        ]
+    if not isinstance(record, dict) or canonical(record.get("schema_version")) != "1":
+        return {"present": True, "valid": False}, [
+            "the owner decision record is not schema version 1"
+        ]
+    archives = {
+        item["filename"]: item["sha256"]
+        for item in definition["archives"]  # type: ignore[union-attr]
+    }
+    expected = dict(
+        B1_SCHEMA_1,
+        scope={
+            "qt_version": definition["version"],
+            "components": B1_SCHEMA_1_COMPONENTS,
+            "source_archives": archives,
+        },
+    )
+    problems = sorted(
+        f"{key} differs from the approved schema 1 content"
+        for key in set(expected) | set(record)
+        if key not in record
+        or key not in expected
+        or canonical(record[key]) != canonical(expected[key])
+    )
+    mismatched = sorted(
+        name
+        for name, version in B1_SCHEMA_1_COMPONENTS.items()
+        if versions.get(name.lower()) != version
+    )
+    if mismatched:
+        problems.append(
+            "the bundled binding versions differ from the record: "
+            + ", ".join(mismatched)
+        )
+    decisions = record.get("decisions")
+    return {
+        "present": True,
+        "valid": not problems,
+        "schema_version": 1,
+        "record_sha256": digest(path),
+        "decided": record.get("decided"),
+        "decisions": {
+            key: value.get("status") if isinstance(value, dict) else None
+            for key, value in (decisions.items() if isinstance(decisions, dict) else ())
+        },
+        "legal_confirmation": record.get("legal_confirmation"),
+        "b1_effect": record.get("b1_effect"),
+    }, problems
+
+
 def distribution_blockers(
     provenance: dict[str, object],
     software_renderer: bool,
@@ -369,13 +495,29 @@ def distribution_blockers(
     python_runtime_verified: bool = False,
     language_model_bundled: bool = True,
     b4_remaining: Sequence[str] | None = None,
+    b1_record_problems: Sequence[str] | None = None,
 ) -> list[str]:
     """Each blocker stays until its own evidence closes it; none grants permission.
 
     B4 fails closed: without a coverage check (`b4_remaining` is None) it keeps its
-    general wording; with one, it names what is still open.
+    general wording; with one, it names what is still open. B1 is always derived.
+    A valid owner-decision record (`b1_record_problems == []`) only narrows its
+    wording; a missing or invalid one is named and never narrows it.
     """
-    blockers = [B1_BINDINGS if provenance["qt_libraries_verified"] else B1_UNVERIFIED]
+    if not provenance["qt_libraries_verified"]:
+        b1 = B1_UNVERIFIED
+    elif b1_record_problems is None:
+        b1 = B1_BINDINGS
+    elif b1_record_problems:
+        b1 = (
+            B1_BINDINGS
+            + " Owner decision record rejected: "
+            + "; ".join(b1_record_problems)
+            + "."
+        )
+    else:
+        b1 = B1_DECIDED
+    blockers = [b1]
     if software_renderer:
         blockers.append(B2)
     if microsoft_runtime:
@@ -738,6 +880,8 @@ def assemble(
     versions = {str(item["name"]).lower(): str(item["version"]) for item in components}
     rust_notices, rust_gaps = rust_notice_coverage(legal, versions)
     intel_openmp, intel_gaps = intel_openmp_status(bundle, legal)
+    b1_decision, b1_problems = b1_owner_decision(legal, definition, versions)
+    b1_decision["problems"] = b1_problems
     torch_notices = next(
         (
             len(item["license_notices"])
@@ -771,6 +915,7 @@ def assemble(
         python_runtime_verified=bool(python_runtime["verified"]),
         language_model_bundled=bool(language_model["bundled"]),
         b4_remaining=b4_remaining,
+        b1_record_problems=b1_problems,
     )
     if any(item["owner"] == "UNRESOLVED native ownership" for item in native):
         blockers.append(
@@ -798,6 +943,7 @@ def assemble(
         "python_runtime": python_runtime,
         "language_model": language_model,
         "b4_coverage": b4,
+        "b1_owner_decision": b1_decision,
         "qt_source_notices": source_notices,
         "notice_scope": "source superset; not a compiled static-link SBOM",
         "materials": files,
