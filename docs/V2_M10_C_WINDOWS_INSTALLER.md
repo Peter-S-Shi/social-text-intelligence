@@ -125,8 +125,19 @@ and running the reviewed local script under the guest's permitted script policy:
 & C:\STIInput\validate_installer.ps1 `
   -Installer C:\STIInput\STI-0.10.0-internal-x64.exe `
   -Receipt C:\STIInput\installer-receipt.json `
-  -Output C:\STIValidation -EnvironmentKind DisposableVM
+  -Output C:\STIValidation -EnvironmentKind DisposableVM -RuntimeExpectation Present
 ```
+
+Since M10 S5-A (see [the S5-A record](V2_M10_S5A_HARNESS_HARDENING.md)):
+
+- `validate_installer_lib.ps1` must sit beside the script, so copy it to
+  `C:\STIInput` too.
+- `-RuntimeExpectation` is mandatory and must match the real VC++ runtime:
+  - `Missing` proves the installer refuses without runtime 14.44+ and leaves
+    nothing behind;
+  - `Present` runs the lifecycle below.
+- Blockers come from the validated receipt.
+- `observations.json` never states clean-machine acceptance.
 
 The marker expresses operator intent, not proof of a clean baseline. The harness
 refuses existing application/profile/Start Menu namespaces and existing output.
