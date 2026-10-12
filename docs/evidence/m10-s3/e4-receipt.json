@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "milestone": "M10 S3 / B6: E4 modified-source QtCore replacement",
-  "result": "PASS",
+  "result": "PASS (narrower M10-E2 QtCore-only criterion)",
   "script": {
     "path": "tools/m10/e4_modified_qt.ps1",
     "unchanged_from": "a2db4bd",
@@ -77,8 +77,29 @@
         "invalid_rows": 1,
         "reopened": true
       }
+    },
+    "opt_in_frozen_pytest": {
+      "bundle": "the modified copy (Qt6Core.dll SHA-256 64359b5c...11ac5)",
+      "tests": "tests/tools/test_m10_frozen.py at cbb7e20",
+      "result": "2 passed (--verify-runtime, --smoke)",
+      "run_after": "the E4 script, without rebuilding"
     }
   },
-  "not_shown": "The receipt does not capture QLibraryInfo::build() at runtime; that the copy loads its own _internal/PySide6/Qt6Core.dll follows from the self-contained onedir layout and the passing checks",
-  "distribution_permitted": false
+  "not_shown": "Runtime QLibraryInfo::build() output was not captured: UNVERIFIED. Loading of the copy's own _internal/PySide6/Qt6Core.dll is inferred from the self-contained onedir layout and the passing checks, not observed.",
+  "distribution_permitted": false,
+  "scope": {
+    "exercised": "M10-E2 section 2.6 criterion: QtCore only (Core target) rebuilt from the pinned modified source and replaced; Gui, Widgets, plugins and the PySide6/shiboken6 bindings are the shipped Qt-signed files",
+    "e1_section_5_not_exercised": [
+      "Gui and Widgets rebuilt from modified source",
+      "platform and style plugins rebuilt from modified source"
+    ],
+    "e1_section_5_criteria_met": [
+      "rebuilt Qt6Core.dll differs from the shipped (SBOM-verified) file and contains the marker",
+      "0 unresolved Qt imports",
+      "--license-info, --verify-runtime and --smoke exit 0 on a fresh copy",
+      "opt-in frozen pytest pair passes"
+    ],
+    "related_evidence": "M10-E2 replacement-e2c.json: a coherent replacement of all 36 PySide6/shiboken6/Qt files with the separately obtained upstream 6.11.1 wheels PASSED; that covers replacing every Qt module, but with unmodified upstream binaries",
+    "compiler_note": "the Qt 6.11.2 SBOM records cl 19.44.35227; this run used 19.44.35229 (same 14.44 toolset family)"
+  }
 }

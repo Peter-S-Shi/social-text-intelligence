@@ -2,8 +2,8 @@
 
 Status: **PLAN, revision 2 — approved by the owner (2026-10-11).** S1 is complete on
 `main` (PR #64). S2 is complete on `main` (PR #65); B4 stays OPEN on Intel OpenMP
-redistribution authorization. S3 is complete on `main` (PR #66): E4 PASS, B6
-CLOSED. S4 and S5 remain.
+redistribution authorization. S3 is complete on `main` (PR #66): QtCore-only E4 PASS,
+B6 CLOSED on that narrower criterion. S4 and S5 remain.
 Documentation only. Nothing is implemented, built, published or merged by this
 record, and no release gate changes. The owner's overriding goal is unchanged: a
 legally distributable Windows installer, not a source-only portfolio.
