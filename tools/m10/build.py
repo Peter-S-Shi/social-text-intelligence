@@ -23,6 +23,7 @@ MICROSOFT_RUNTIME = re.compile(
     r"(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll", re.I
 )
 VENDORED_RUNTIME = re.compile(r"msvcp140-[0-9a-f]{32}\.dll", re.I)
+EXECUTABLES = ("sti-desktop.exe", "sti-check.exe")
 # truststore verifies every model download (M10 S5-NET-001). Install it with
 # requirements-truststore.txt, which hash-locks the reviewed PyPI wheel; each
 # installed file below must still match that wheel byte for byte.
@@ -71,7 +72,7 @@ def audit_bundle(root: Path) -> dict[str, int]:
             path.name.lower() in {"pytorch_model.bin", ".env"}
         ):
             raise ValueError("Packaging output contains forbidden model or user data.")
-    for name in ("sti-desktop.exe", "sti-check.exe"):
+    for name in EXECUTABLES:
         if not (root / name).is_file():
             raise ValueError("Required packaging entry is absent.")
     return {"files": len(files), "bytes": sum(path.stat().st_size for path in files)}
@@ -82,7 +83,11 @@ def digest(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-IMPORT_DIRECTORY, DELAY_IMPORT_DIRECTORY = 1, 13
+IMPORT_DIRECTORY, DELAY_IMPORT_DIRECTORY, RESOURCE_DIRECTORY = 1, 13, 2
+RT_ICON = 3
+# The approved application icon (M10 S5-UI-001) and the sizes it must carry.
+APPLICATION_ICON = ROOT / "src/social_text_intelligence/desktop/qt/resources/sti.ico"
+ICON_SIZES = (16, 20, 24, 32, 40, 48, 64, 256)
 
 
 @dataclass(frozen=True)
@@ -157,6 +162,76 @@ def import_names(data: bytes) -> list[tuple[int, str]]:
         return names
     except (struct.error, UnicodeDecodeError) as error:
         raise ValueError("Unreadable PE import directory.") from error
+
+
+def ico_images(data: bytes) -> list[tuple[int, bytes]]:
+    """(pixel size, image bytes) of every ICO entry; 256 is stored as 0."""
+    try:
+        reserved, kind, count = struct.unpack_from("<HHH", data)
+        if (reserved, kind) != (0, 1) or count == 0:
+            raise ValueError("Not an icon file.")
+        images = []
+        for index in range(count):
+            width, height, _, _, _, _, size, offset = struct.unpack_from(
+                "<BBBBHHII", data, 6 + 16 * index
+            )
+            if width != height or offset + size > len(data):
+                raise ValueError("Malformed icon entry.")
+            images.append((width or 256, data[offset : offset + size]))
+        return images
+    except struct.error as error:
+        raise ValueError("Not an icon file.") from error
+
+
+def verify_icon_file(path: Path = APPLICATION_ICON) -> list[bytes]:
+    """The approved icon, with exactly the required sizes; otherwise the build fails."""
+    if not path.is_file():
+        raise ValueError("The application icon is missing; the build is refused.")
+    images = ico_images(path.read_bytes())
+    if sorted(size for size, _ in images) != sorted(ICON_SIZES):
+        raise ValueError("The application icon lacks or adds a required size.")
+    return [image for _, image in images]
+
+
+def icon_resources(data: bytes) -> list[bytes]:
+    """The RT_ICON images embedded in a PE image."""
+
+    def entries(at: int) -> list[tuple[int, int]]:
+        named, numbered = struct.unpack_from("<12xHH", data, at)
+        return [
+            struct.unpack_from("<II", data, at + 16 + 8 * i)
+            for i in range(named + numbered)
+        ]
+
+    try:
+        image = PeImage.parse(data)
+        rva = image.directory(RESOURCE_DIRECTORY)
+        if not rva:
+            return []
+        root = image.offset(rva)
+        images = []
+        for kind, types in entries(root):
+            if kind != RT_ICON or not types & 0x80000000:
+                continue
+            for _, names in entries(root + (types & 0x7FFFFFFF)):
+                for _, leaf in entries(root + (names & 0x7FFFFFFF)):
+                    at, size = struct.unpack_from("<II", data, root + leaf)
+                    start = image.offset(at)
+                    images.append(data[start : start + size])
+        return images
+    except struct.error as error:
+        raise ValueError("Unreadable PE resource directory.") from error
+
+
+def verify_executable_icons(bundle: Path, path: Path = APPLICATION_ICON) -> None:
+    """Both executables must embed exactly the approved icon's images."""
+    expected = sorted(verify_icon_file(path))
+    for name in EXECUTABLES:
+        if sorted(icon_resources((bundle / name).read_bytes())) != expected:
+            raise ValueError(f"{name} does not embed the approved application icon.")
+    shipped = bundle / "_internal/social_text_intelligence/desktop/qt/resources"
+    if digest(shipped / "sti.ico") != digest(path):
+        raise ValueError("The bundle does not ship the approved application icon.")
 
 
 def relink_vendored_runtime(bundle: Path) -> list[dict[str, str]]:
@@ -307,6 +382,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         verify_build_environment()
+        verify_icon_file()
         sha = source_revision()
         output = prepare_output(args.output)
         subprocess.run(
@@ -328,6 +404,7 @@ def main() -> int:
         bundle = output / "dist" / "sti-desktop"
         relinked = relink_vendored_runtime(bundle)
         verify_no_microsoft_runtime(bundle)
+        verify_executable_icons(bundle)
         subprocess.run(
             [
                 sys.executable,
@@ -357,6 +434,7 @@ def main() -> int:
             "requirements_sha256": hashlib.sha256(
                 (CONFIG / "requirements-build.txt").read_bytes()
             ).hexdigest(),
+            "application_icon_sha256": digest(APPLICATION_ICON),
             "layout": layout,
             "python_runtime": json.loads(
                 (ROOT / "distribution/python-runtime.json").read_text()

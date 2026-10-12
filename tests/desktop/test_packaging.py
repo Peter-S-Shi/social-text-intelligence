@@ -81,6 +81,7 @@ def test_packaged_smoke_uses_temporary_app_data(qapp: Any) -> None:
         "project_rows": 2,
         "invalid_rows": 1,
         "reopened": True,
+        "application_icon": True,
     }
 
 

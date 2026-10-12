@@ -10,6 +10,12 @@ root = config.parents[1]
 # py3langid ships as code only: its statistical model (data/model.npz.xz) is not
 # redistributed; users may install it from upstream inside the app (M10 S1, B5).
 datas = [(str(root / "LICENSE"), "."), (str(root / "THIRD_PARTY_NOTICES.md"), ".")]
+# The approved application icon (M10 S5-UI-001): embedded in both executables and
+# shipped at its package path for Qt. build.py refuses a build without it.
+icon = root / "src/social_text_intelligence/desktop/qt/resources/sti.ico"
+if not icon.is_file():
+    raise SystemExit("The application icon is missing; the build is refused.")
+datas.append((str(icon), "social_text_intelligence/desktop/qt/resources"))
 hidden = [
     "torch", "transformers", "tokenizers", "safetensors", "huggingface_hub",
     "py3langid.langid", "social_text_intelligence.providers.cardiff_sentiment",
@@ -57,8 +63,8 @@ for analysis in (desktop, check):
 # COLLECT deduplicates the shared onedir files. Keep each Analysis intact:
 # MERGE creates cross-executable extraction dependencies, unsuitable here.
 exe_d = EXE(PYZ(desktop.pure), desktop.scripts, [], exclude_binaries=True,
-            name="sti-desktop", console=False, upx=False)
+            name="sti-desktop", console=False, upx=False, icon=str(icon))
 exe_c = EXE(PYZ(check.pure), check.scripts, [], exclude_binaries=True,
-            name="sti-check", console=True, upx=False)
+            name="sti-check", console=True, upx=False, icon=str(icon))
 COLLECT(exe_d, desktop.binaries, desktop.datas, exe_c, check.binaries, check.datas,
         name="sti-desktop", upx=False)

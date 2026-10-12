@@ -161,6 +161,144 @@ def test_truststore_must_be_the_reviewed_wheel_and_is_license_audited() -> None:
     assert (entry["version"], entry["selected_license"]) == ("0.10.4", "MIT")
 
 
+def icon_pe(*images: bytes) -> bytes:
+    """PE32+ image whose resource section holds the given RT_ICON images."""
+    optional, section_rva, raw = 0x40 + 24, 0x1000, 0x400
+    image = bytearray(raw)
+    image[:2] = b"MZ"
+    struct.pack_into("<I", image, 0x3C, 0x40)
+    image[0x40:0x44] = b"PE\0\0"
+    struct.pack_into("<HH", image, 0x44, 0x8664, 1)
+    struct.pack_into("<H", image, 0x40 + 20, 240)
+    struct.pack_into("<H", image, optional, 0x20B)
+    struct.pack_into("<I", image, optional + 108, 16)
+    count = len(images)
+    root, names = 0, 24
+    languages = names + 16 + 8 * count
+    leaves = languages + 24 * count
+    blobs = leaves + 16 * count
+    body = bytearray(blobs)
+    struct.pack_into("<12xHH", body, root, 0, 1)
+    struct.pack_into("<II", body, root + 16, 3, 0x80000000 | names)
+    struct.pack_into("<12xHH", body, names, 0, count)
+    at = blobs
+    for index, data in enumerate(images):
+        language = languages + 24 * index
+        struct.pack_into(
+            "<II", body, names + 16 + 8 * index, index + 1, 0x80000000 | language
+        )
+        struct.pack_into("<12xHH", body, language, 0, 1)
+        struct.pack_into("<II", body, language + 16, 1033, leaves + 16 * index)
+        struct.pack_into("<II", body, leaves + 16 * index, section_rva + at, len(data))
+        body += data
+        at += len(data)
+    struct.pack_into("<II", image, optional + 112 + 8 * 2, section_rva, len(body))
+    struct.pack_into(
+        "<8sIIII",
+        image,
+        optional + 240,
+        b".rsrc",
+        len(body),
+        section_rva,
+        len(body),
+        raw,
+    )
+    return bytes(image + body)
+
+
+ICON = Path(__file__).parents[2] / (
+    "src/social_text_intelligence/desktop/qt/resources/sti.ico"
+)
+
+
+def approved_bundle(tmp_path: Path, *images: bytes) -> Path:
+    bundle = tmp_path / "bundle"
+    shipped = bundle / "_internal/social_text_intelligence/desktop/qt/resources"
+    shipped.mkdir(parents=True)
+    (shipped / "sti.ico").write_bytes(ICON.read_bytes())
+    for name in ("sti-desktop.exe", "sti-check.exe"):
+        (bundle / name).write_bytes(icon_pe(*images))
+    return bundle
+
+
+def test_the_approved_icon_carries_exactly_the_windows_sizes() -> None:
+    build = load()
+    images = build.ico_images(ICON.read_bytes())
+
+    assert sorted(size for size, _ in images) == list(build.ICON_SIZES)
+    assert all(image.startswith(b"\x89PNG") for _, image in images)
+    assert len(build.verify_icon_file()) == len(build.ICON_SIZES)
+
+
+def test_a_missing_or_incomplete_icon_fails_the_build(tmp_path: Path) -> None:
+    build = load()
+    partial = tmp_path / "partial.ico"
+    sixteen = next(
+        image for size, image in build.ico_images(ICON.read_bytes()) if size == 16
+    )
+    partial.write_bytes(
+        struct.pack("<HHH", 0, 1, 1)
+        + struct.pack("<BBBBHHII", 16, 16, 0, 0, 1, 32, len(sixteen), 22)
+        + sixteen
+    )
+
+    with pytest.raises(ValueError, match="missing"):
+        build.verify_icon_file(tmp_path / "absent.ico")
+    with pytest.raises(ValueError, match="required size"):
+        build.verify_icon_file(partial)
+    with pytest.raises(ValueError, match="Not an icon"):
+        build.ico_images(b"not an icon")
+
+
+def test_executables_must_embed_the_approved_icon(tmp_path: Path) -> None:
+    build = load()
+    approved = [image for _, image in build.ico_images(ICON.read_bytes())]
+    assert sorted(build.icon_resources(icon_pe(*approved))) == sorted(approved)
+
+    build.verify_executable_icons(approved_bundle(tmp_path / "ok", *approved))
+    with pytest.raises(ValueError, match="does not embed"):
+        build.verify_executable_icons(
+            approved_bundle(tmp_path / "default", b"PyInstaller default image")
+        )
+    with pytest.raises(ValueError, match="does not embed"):
+        build.verify_executable_icons(
+            approved_bundle(tmp_path / "partial", *approved[1:])
+        )
+    bundle = approved_bundle(tmp_path / "unshipped", *approved)
+    (
+        bundle / "_internal/social_text_intelligence/desktop/qt/resources/sti.ico"
+    ).write_bytes(b"other")
+    with pytest.raises(ValueError, match="does not ship"):
+        build.verify_executable_icons(bundle)
+
+
+def test_spec_installer_and_runtime_share_one_icon() -> None:
+    root = Path(__file__).parents[2]
+    spec = (root / "tools/m10/sti_desktop.spec").read_text(encoding="utf-8")
+    script = (root / "tools/m10/installer.iss").read_text(encoding="utf-8")
+    runtime = (root / "src/social_text_intelligence/desktop/qt/app_icon.py").read_text(
+        encoding="utf-8"
+    )
+    render = (root / "tools/m10/render_icon.py").read_text(encoding="utf-8")
+
+    assert spec.count("icon=str(icon)") == 2
+    assert (
+        'icon = root / "src/social_text_intelligence/desktop/qt/resources/sti.ico"'
+        in spec
+    )
+    assert (
+        'datas.append((str(icon), "social_text_intelligence/desktop/qt/resources"))'
+        in spec
+    )
+    assert 'Path(__file__).resolve().parent / "resources" / "sti.ico"' in runtime
+    assert r"UninstallDisplayIcon={app}\sti-desktop.exe" in script
+    assert r'IconFilename: "{app}\sti-desktop.exe"' in script
+    assert "from build import APPLICATION_ICON, ICON_SIZES" in render
+    assert "ICON_SIZES = (16, 20, 24, 32, 40, 48, 64, 256)" in (
+        root / "tools/m10/build.py"
+    ).read_text(encoding="utf-8")
+
+
 def test_build_never_reuses_an_existing_output(tmp_path: Path) -> None:
     build = load()
     with pytest.raises(ValueError, match="new"):

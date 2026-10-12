@@ -12,6 +12,7 @@ from PySide6.QtWidgets import QApplication
 from ...contracts.errors import ProjectStorageError
 from ...infrastructure.app_data import AppDataLocations, default_app_data_locations
 from ..composition import build_desktop_services
+from .app_icon import application_icon
 from .main_window import APP_TITLE, MainWindow
 from .platform import DesktopPlatform
 from .runner import QtJobRunner
@@ -26,11 +27,21 @@ def build_window(
     return window, runner
 
 
+def apply_application_icon(app: QApplication) -> bool:
+    """Set the window and taskbar icon; without the file, Qt's default stays."""
+    icon = application_icon()
+    if icon is None:
+        return False
+    app.setWindowIcon(icon)
+    return True
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = list(sys.argv if argv is None else argv)
     app = QApplication.instance() or QApplication(args)
     assert isinstance(app, QApplication)
     app.setApplicationName(APP_TITLE)
+    apply_application_icon(app)
     app.setStyleSheet(STYLESHEET)
     try:
         locations = default_app_data_locations()
@@ -50,6 +61,7 @@ def packaged_smoke() -> dict[str, object]:
     app = QApplication.instance() or QApplication([])
     assert isinstance(app, QApplication)
     app.setStyleSheet(STYLESHEET)
+    icon = apply_application_icon(app)
     with TemporaryDirectory(prefix="sti-m10-smoke-") as temporary:
         locations = AppDataLocations(Path(temporary) / "application-data")
         window, runner = build_window(locations)
@@ -78,6 +90,7 @@ def packaged_smoke() -> dict[str, object]:
                 "project_rows": details.row_count,
                 "invalid_rows": details.invalid_rows,
                 "reopened": reopened.row_count == details.row_count,
+                "application_icon": icon,
             }
         finally:
             if not runner.wait_idle(5):
