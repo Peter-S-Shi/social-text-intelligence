@@ -6,7 +6,7 @@ redistribution authorization. S3 is complete on `main` (PR #66): QtCore-only E4 
 B6 CLOSED on that narrower criterion. The S4 decision memo (PR #67) and phase 2
 record (PR #68) are on `main`; B1 awaits legal confirmation and D4. S5 remains. Its first
 clean-VM defect, S5-NET-001 (in-app downloads failing certificate verification), is
-fixed on `main` (PR #69); the owner's VM re-verification passed at product level. The S5 matrix itself is still open.
+fixed on `main` (PR #69); the owner's VM re-verification passed at product level. The S5 matrix itself is still open. Its harness gaps H1–H3 are fixed on `main` (S5-A, PR #70), and the harness now runs as `-RuntimeExpectation Missing` and `Present` stages.
 Documentation only. Nothing is implemented, built, published or merged by this
 record, and no release gate changes. The owner's overriding goal is unchanged: a
 legally distributable Windows installer, not a source-only portfolio.
