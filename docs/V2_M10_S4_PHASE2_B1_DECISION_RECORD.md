@@ -33,13 +33,21 @@ reviewed new schema version.
 
 ## 2. Packet validation
 
-`compliance.b1_owner_decision()` checks the shipped copy:
+`compliance.b1_owner_decision()` checks the shipped copy. Schema 1 must
+**equal the approved content exactly**. The comparison uses type-preserving
+canonical JSON, so `true` is not accepted as `1`. It covers:
 
-- exact field set;
-- the fixed values above, with their types (so `true` is not accepted as `1`);
-- the D1–D4 states;
-- the Qt version and archive hashes against `distribution/source-manifest.json`;
-- the binding versions against the bundled components.
+- the record identity, decision date and basis;
+- every D1–D4 status, summary and link;
+- the fixed states above;
+- a scope of the Qt version and archive hashes from
+  `distribution/source-manifest.json` and **exactly** the two binding packages,
+  `PySide6_Essentials` and `shiboken6` 6.11.2;
+- those two versions against the bundled components.
+
+Any changed, missing or extra field is rejected, at any level, and so is any
+other `schema_version`. A later reviewed schema has to be added beside version 1
+in `compliance.py`.
 
 The inventory gains `b1_owner_decision`, with its status, record hash and any
 problems.
@@ -59,7 +67,12 @@ B1 is **always derived**:
 
 - takes `legal_blockers` from the verified packet's own blocker codes;
 - lists any blocker without a code in `other_packet_blockers`;
-- refuses a packet that permits distribution or has a malformed blocker list.
+- refuses a packet that permits distribution or has a malformed blocker list;
+- refuses a packet with **no blockers**, because distribution is not permitted;
+- refuses a packet that **omits B1**, unless its own valid owner-decision record
+  is of a schema that can close B1. Schema 1 always records B1 as remaining
+  open, so a schema 1 packet must list B1. A future reviewed schema is not
+  blocked by a fixed list.
 
 Facts the packet does not derive are stated separately in `release_conditions`:
 
@@ -93,13 +106,14 @@ The in-app licence text (`license_notice.py`) was not stale and is unchanged.
 
 | Check | Result |
 | --- | --- |
-| Focused tests (`test_m10_b1_decision.py`, `test_m10_installer.py`) | record integrity (valid, missing, malformed, extra field, 13 inconsistent mutations, missing decision, version mismatch); B1 never removed; installer blockers derived; permissive or malformed packets refused |
-| Local full suite | 1,285 passed, 6 opt-in skipped; Ruff and strict MyPy pass |
+| Focused tests (`test_m10_b1_decision.py`, `test_m10_installer.py`) | record integrity: valid, missing, malformed, and 31 contradictory, partial or extended records. These include identity, date type, basis, summaries, extra decision fields, missing decisions, schema version, and the exact two-package scope. B1 is never removed. Installer: blockers are derived; packets that permit distribution, are malformed, have no blockers or omit B1 are refused; a future reviewed schema may account for B1 |
+| Local full suite | 1,309 passed, 6 opt-in skipped; Ruff and strict MyPy pass |
 | Frozen build at `d5cb664` (official CPython 3.13.16) | packet valid; blockers **B1** (decided wording) and **B4**; `b1_owner_decision.valid: true` |
 | `--verify-runtime` / `--smoke` / `--license-info` | exit 0 |
 | Opt-in frozen pytest | 2 passed |
 | Internal installer (Inno 6.7.3, not published) | compiled; receipt `legal_blockers: ["B1", "B4"]`, `release_conditions` as in §3, `distribution_permitted: false` |
-| PR CI | run on implementation head `d5cb664`, attached to PR #68 |
+| PR CI | `d5cb664`: 4 checks passed. The review-fix head `9da364c` has its own run attached to PR #68 |
+| Review fixes at `9da364c` | not rebuilt: the shipped record is unchanged. The existing frozen packet's record passes the exact schema 1 check, and a fresh installer preparation from it gives `legal_blockers: ["B1", "B4"]` |
 
 Evidence: [s4-phase2-receipt.json](evidence/m10-s4/s4-phase2-receipt.json).
 
