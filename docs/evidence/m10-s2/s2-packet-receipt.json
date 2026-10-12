@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "milestone": "M10 S2 B4 licence materials",
+  "application_sha": "fbb6e139dd957bbbda662213005b36f092516172",
+  "python": "3.13.16",
+  "layout": {
+    "files": 5360,
+    "bytes": 724260914
+  },
+  "frozen_checks": {
+    "--verify-runtime": {
+      "exit": 0,
+      "output": {
+        "ready": true,
+        "models_loaded": false,
+        "language_model_bundled": false
+      }
+    },
+    "--smoke": {
+      "exit": 0
+    },
+    "--license-info": {
+      "exit": 0,
+      "output": {
+        "distribution_permitted": false,
+        "materials_present": true
+      }
+    },
+    "opt_in_frozen_pytest": "2 passed"
+  },
+  "packet": {
+    "materials_valid": true,
+    "blockers": [
+      "B1:",
+      "B4:"
+    ],
+    "b4": "B4: Intel OpenMP (libiomp5md/libiompstubs5md) redistribution under the Intel End User License Agreement for Developer Tools needs an owner/legal decision.",
+    "b4_coverage": {
+      "rust_crates": {
+        "present": true,
+        "crates": 173,
+        "texts": 101,
+        "not_linked_on_windows": [
+          "r-efi",
+          "wasip2"
+        ],
+        "complete": true
+      },
+      "intel_openmp": {
+        "bundled": true,
+        "recorded": true,
+        "matches_provenance": true,
+        "license": "Intel End User License Agreement for Developer Tools (Version August 2024)",
+        "texts_present": true,
+        "redistribution": "OPEN: owner/legal decision required"
+      },
+      "pytorch_static_third_party": {
+        "coverage": "upstream third_party licence superset from the torch wheel",
+        "notice_files": 107
+      },
+      "remaining": [
+        "Intel OpenMP (libiomp5md/libiompstubs5md) redistribution under the Intel End User License Agreement for Developer Tools needs an owner/legal decision"
+      ]
+    }
+  },
+  "downloads": {
+    "crates_io_archives": {
+      "count": 171,
+      "checksums_verified": true,
+      "committed": false,
+      "approx_bytes": "22 MB"
+    },
+    "tokenizers_upstream": {
+      "commit": "f383101a26663708484cac0727792aad74f78234",
+      "files": [
+        "bindings/python/Cargo.lock (matches receipt lockfile_sha256)",
+        "LICENSE"
+      ]
+    },
+    "intel_openmp_wheel": {
+      "file": "intel_openmp-2026.1.0-py2.py3-none-win_amd64.whl",
+      "bytes": 26355044,
+      "sha256": "8f9f86d93da9d549eec7bae26d65d6188ed748792ce655b5cdbc2e1a15cb7206",
+      "matches_pypi": true,
+      "committed": false
+    },
+    "intel_candidates_by_zip_index": {
+      "method": "HTTP range read of each wheel's zip central directory; size and CRC-32 of both DLLs",
+      "2025.3.2": false,
+      "2025.3.3": false,
+      "2026.0.0": false,
+      "2026.1.0": true
+    }
+  },
+  "installer": "NOT BUILT for S2 (packet-only change)",
+  "clean_machine_validation": "NOT RUN",
+  "distribution_permitted": false
+}
