@@ -100,7 +100,7 @@ def test_missing_or_malformed_records_fail_closed(tmp_path: Path) -> None:
     assert compliance.b1_owner_decision(tmp_path, definition(), VERSIONS)[1]
     write(tmp_path, dict(record(), extra="field"))
     assert compliance.b1_owner_decision(tmp_path, definition(), VERSIONS)[1] == [
-        "the owner decision record has unexpected fields"
+        "extra differs from the approved schema 1 content"
     ]
     blockers = compliance.distribution_blockers(
         VERIFIED, **EVIDENCE, b1_record_problems=missing
@@ -119,28 +119,67 @@ def mutate(path: tuple[str, ...], value: object) -> Callable[[dict[str, Any]], N
     return apply
 
 
+def delete(path: tuple[str, ...]) -> Callable[[dict[str, Any]], None]:
+    def apply(data: dict[str, Any]) -> None:
+        target = data
+        for key in path[:-1]:
+            target = target[key]
+        del target[path[-1]]
+
+    return apply
+
+
 @pytest.mark.parametrize(
     ("change", "expected"),
     [
         (mutate(("legal_confirmation",), "confirmed"), "legal_confirmation"),
         (mutate(("b1_effect",), "closed"), "b1_effect"),
         (mutate(("distribution_permitted",), True), "distribution_permitted"),
-        (mutate(("schema_version",), True), "schema_version"),
-        (mutate(("binding_producer_source_correspondence",), "proven"), "unproven"),
+        (mutate(("distribution_permitted",), 0), "distribution_permitted"),
+        (mutate(("schema_version",), True), "not schema version 1"),
+        (mutate(("schema_version",), 2), "not schema version 1"),
+        (
+            mutate(("binding_producer_source_correspondence",), "proven"),
+            "binding_producer_source_correspondence",
+        ),
         (mutate(("public_source_hosting",), "operational"), "public_source_hosting"),
-        (mutate(("decisions", "D1", "status"), "approved"), "D1"),
-        (mutate(("decisions", "D4", "status"), "resolved"), "D4"),
-        (mutate(("decisions", "D4", "linked_blocker"), "B1"), "D4"),
-        (mutate(("scope", "qt_version"), "6.11.1"), "Qt version"),
+        # Record identity and metadata, with their types.
+        (mutate(("record",), "M10 S4 B1 legal clearance"), "record"),
+        (mutate(("decided",), 20261011), "decided"),
+        (mutate(("decided",), "2026-10-12"), "decided"),
+        (mutate(("basis",), "docs/OTHER.md"), "basis"),
+        (mutate(("extra",), "field"), "extra"),
+        (delete(("basis",)), "basis"),
+        # Decision content, not only status.
+        (mutate(("decisions", "D1", "status"), "approved"), "decisions"),
+        (
+            mutate(("decisions", "D1", "summary"), "Legal sufficiency is confirmed."),
+            "decisions",
+        ),
+        (mutate(("decisions", "D3", "summary"), ""), "decisions"),
+        (mutate(("decisions", "D2", "note"), "unreviewed"), "decisions"),
+        (mutate(("decisions", "D4", "status"), "resolved"), "decisions"),
+        (mutate(("decisions", "D4", "linked_blocker"), "B1"), "decisions"),
+        (delete(("decisions", "D4", "summary")), "decisions"),
+        (delete(("decisions", "D3")), "decisions"),
+        # The exact two-package binding scope and the source manifest.
+        (mutate(("scope", "qt_version"), "6.11.1"), "scope"),
         (
             mutate(
                 ("scope", "source_archives", "qtbase-everywhere-src-6.11.2.tar.xz"),
                 "0" * 64,
             ),
-            "source archives",
+            "scope",
         ),
-        (mutate(("scope", "components", "shiboken6"), "6.11.1"), "binding versions"),
-        (mutate(("scope", "components"), {}), "binding versions"),
+        (
+            delete(("scope", "source_archives", "qtsvg-everywhere-src-6.11.2.tar.xz")),
+            "scope",
+        ),
+        (mutate(("scope", "components", "shiboken6"), "6.11.1"), "scope"),
+        (delete(("scope", "components", "shiboken6")), "scope"),
+        (mutate(("scope", "components", "PySide6_Addons"), "6.11.2"), "scope"),
+        (mutate(("scope", "components"), {}), "scope"),
+        (mutate(("scope", "extra"), True), "scope"),
     ],
 )
 def test_inconsistent_records_are_rejected(
@@ -168,7 +207,7 @@ def test_missing_decision_keys_are_rejected(tmp_path: Path) -> None:
     problems = compliance.b1_owner_decision(
         write(tmp_path, data), definition(), VERSIONS
     )[1]
-    assert "decisions must be exactly D1-D4" in problems
+    assert "decisions differs from the approved schema 1 content" in problems
 
 
 def test_bundle_versions_must_match_the_record(tmp_path: Path) -> None:
@@ -176,4 +215,6 @@ def test_bundle_versions_must_match_the_record(tmp_path: Path) -> None:
     problems = compliance.b1_owner_decision(
         LEGAL, definition(), {**VERSIONS, "pyside6_essentials": "6.12.0"}
     )[1]
-    assert problems == ["the record's binding versions differ from the bundle"]
+    assert problems == [
+        "the bundled binding versions differ from the record: PySide6_Essentials"
+    ]

@@ -372,29 +372,52 @@ B1_DECIDED = (
 )
 B1_RECORD = "B1_OWNER_DECISION.json"
 B1_APPROVED = "approved_engineering_direction"
-B1_FIELDS = {
-    "schema_version",
-    "record",
-    "decided",
-    "basis",
-    "scope",
-    "decisions",
-    "legal_confirmation",
-    "binding_producer_source_correspondence",
-    "public_source_hosting",
-    "b1_effect",
-    "distribution_permitted",
-}
-# Version 1 of the record can express only these states. Anything else, such as
-# a claimed legal confirmation or a B1 closure, needs a reviewed new version.
-B1_FIXED = {
+# The owner-approved content of schema version 1, exactly. Version 1 can express
+# only an engineering direction: legal confirmation pending and B1 open. A
+# confirmation, a B1 closure or other content needs a reviewed new version,
+# added here beside it.
+B1_SCHEMA_1: dict[str, object] = {
     "schema_version": 1,
+    "record": "M10 S4 B1 owner decision (engineering direction)",
+    "decided": "2026-10-11",
+    "basis": "docs/V2_M10_S4_B1_DECISION_MEMO.md",
+    "decisions": {
+        "D1": {
+            "status": B1_APPROVED,
+            "summary": "Keep the official, unmodified Qt/PySide6/shiboken6 6.11.2 "
+            "binaries and deliver the hash-pinned upstream release sources and "
+            "build scripts as their source.",
+        },
+        "D2": {
+            "status": B1_APPROVED,
+            "summary": "Plan in-package source archives plus GPLv3 section 6(d) "
+            "equivalent access, with same-download-page hosting as the preferred "
+            "policy.",
+        },
+        "D3": {
+            "status": B1_APPROVED,
+            "summary": "Keep the Qt libraries replaceable with no signature or "
+            "integrity lock for standalone software distribution.",
+        },
+        "D4": {
+            "status": "unresolved",
+            "linked_blocker": "B4",
+            "summary": "Whether an Intel-only anti-reverse-engineering term is "
+            "compatible with LGPLv3 section 4.",
+        },
+    },
     "legal_confirmation": "pending",
     "binding_producer_source_correspondence": "unproven",
     "public_source_hosting": "not operational",
     "b1_effect": "remains_open",
     "distribution_permitted": False,
 }
+B1_SCHEMA_1_COMPONENTS = {"PySide6_Essentials": "6.11.2", "shiboken6": "6.11.2"}
+
+
+def canonical(value: object) -> str:
+    """JSON text that keeps types apart (true is not 1), for exact comparison."""
+    return json.dumps(value, sort_keys=True)
 
 
 def b1_owner_decision(
@@ -402,8 +425,10 @@ def b1_owner_decision(
 ) -> tuple[dict[str, object], list[str]]:
     """Validate the shipped owner-decision record against the packet's evidence.
 
-    A valid record only narrows B1's wording; it never removes B1, because owner
-    engineering approval is not legal approval.
+    Schema 1 must equal the approved content exactly, with a scope of the source
+    manifest's Qt version and archives and exactly the two bundled binding
+    packages. A valid record only narrows B1's wording; it never removes B1,
+    because owner engineering approval is not legal approval.
     """
     path = legal / B1_RECORD
     if not path.is_file():
@@ -414,67 +439,52 @@ def b1_owner_decision(
         return {"present": True, "valid": False}, [
             "the owner decision record is malformed"
         ]
-    if not isinstance(record, dict) or set(record) != B1_FIELDS:
+    if not isinstance(record, dict) or canonical(record.get("schema_version")) != "1":
         return {"present": True, "valid": False}, [
-            "the owner decision record has unexpected fields"
+            "the owner decision record is not schema version 1"
         ]
-    problems = [
-        f"{key} must be {value!r}"
-        for key, value in B1_FIXED.items()
-        if record[key] != value or type(record[key]) is not type(value)
-    ]
-    decisions = record["decisions"]
-    if not isinstance(decisions, dict) or set(decisions) != {"D1", "D2", "D3", "D4"}:
-        problems.append("decisions must be exactly D1-D4")
-    else:
-        for key in ("D1", "D2", "D3"):
-            if (
-                not isinstance(decisions[key], dict)
-                or decisions[key].get("status") != B1_APPROVED
-            ):
-                problems.append(f"{key} must be {B1_APPROVED!r}")
-        d4 = decisions["D4"]
-        if (
-            not isinstance(d4, dict)
-            or d4.get("status") != "unresolved"
-            or d4.get("linked_blocker") != "B4"
-        ):
-            problems.append("D4 must be unresolved and linked to B4")
-    scope = record["scope"]
     archives = {
         item["filename"]: item["sha256"]
         for item in definition["archives"]  # type: ignore[union-attr]
     }
-    if not isinstance(scope, dict):
-        problems.append("scope must be an object")
-    else:
-        if scope.get("qt_version") != definition["version"]:
-            problems.append("the record's Qt version differs from the source manifest")
-        if scope.get("source_archives") != archives:
-            problems.append(
-                "the record's source archives differ from the source manifest"
-            )
-        components = scope.get("components")
-        if (
-            not isinstance(components, dict)
-            or not components
-            or any(
-                versions.get(str(name).lower()) != version
-                for name, version in components.items()
-            )
-        ):
-            problems.append("the record's binding versions differ from the bundle")
+    expected = dict(
+        B1_SCHEMA_1,
+        scope={
+            "qt_version": definition["version"],
+            "components": B1_SCHEMA_1_COMPONENTS,
+            "source_archives": archives,
+        },
+    )
+    problems = sorted(
+        f"{key} differs from the approved schema 1 content"
+        for key in set(expected) | set(record)
+        if key not in record
+        or key not in expected
+        or canonical(record[key]) != canonical(expected[key])
+    )
+    mismatched = sorted(
+        name
+        for name, version in B1_SCHEMA_1_COMPONENTS.items()
+        if versions.get(name.lower()) != version
+    )
+    if mismatched:
+        problems.append(
+            "the bundled binding versions differ from the record: "
+            + ", ".join(mismatched)
+        )
+    decisions = record.get("decisions")
     return {
         "present": True,
         "valid": not problems,
+        "schema_version": 1,
         "record_sha256": digest(path),
-        "decided": record["decided"],
+        "decided": record.get("decided"),
         "decisions": {
             key: value.get("status") if isinstance(value, dict) else None
             for key, value in (decisions.items() if isinstance(decisions, dict) else ())
         },
-        "legal_confirmation": record["legal_confirmation"],
-        "b1_effect": record["b1_effect"],
+        "legal_confirmation": record.get("legal_confirmation"),
+        "b1_effect": record.get("b1_effect"),
     }, problems
 
 

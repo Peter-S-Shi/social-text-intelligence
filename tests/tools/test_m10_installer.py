@@ -44,8 +44,9 @@ def test_incomplete_license_packet_is_rejected_without_output(tmp_path: Path) ->
 def packet(
     root: Path,
     *extra: str,
-    blockers: object = ("Synthetic unresolved gate",),
+    blockers: object = ("B1: Synthetic unresolved gate.",),
     permitted: object = False,
+    decision: object = None,
 ) -> Path:
     root.mkdir()
     files = [
@@ -81,6 +82,7 @@ def packet(
                 "source_delivery": sources,
                 "distribution_permitted": permitted,
                 "blockers": list(blockers) if isinstance(blockers, tuple) else blockers,
+                **({} if decision is None else {"b1_owner_decision": decision}),
             }
         )
     )
@@ -218,3 +220,42 @@ def test_a_permissive_or_malformed_packet_is_refused(
     result = invoke(bundle, output)
     assert result.returncode == 2
     assert not output.exists()
+
+
+SCHEMA_1_DECISION = {"valid": True, "schema_version": 1, "b1_effect": "remains_open"}
+
+
+@pytest.mark.parametrize(
+    ("blockers", "decision"),
+    [
+        ((), None),
+        ((), SCHEMA_1_DECISION),
+        (("B4: synthetic notice item.",), None),
+        (("B4: synthetic notice item.",), SCHEMA_1_DECISION),
+        # Schema 1 cannot close B1, even if a packet claims it did.
+        (("B4: synthetic.",), {**SCHEMA_1_DECISION, "b1_effect": "closed"}),
+        (
+            ("B4: synthetic.",),
+            {"valid": False, "schema_version": 2, "b1_effect": "closed"},
+        ),
+    ],
+)
+def test_receipts_inconsistent_with_an_open_b1_are_refused(
+    tmp_path: Path, blockers: tuple[str, ...], decision: object
+) -> None:
+    bundle = packet(tmp_path / "bundle", blockers=blockers, decision=decision)
+    output = tmp_path / "prepared"
+    result = invoke(bundle, output)
+    assert result.returncode == 2
+    assert "blockers" in result.stdout or "B1" in result.stdout
+    assert not output.exists()
+
+
+def test_a_future_reviewed_schema_may_account_for_b1(tmp_path: Path) -> None:
+    decision = {"valid": True, "schema_version": 2, "b1_effect": "closed"}
+    bundle = packet(
+        tmp_path / "bundle", blockers=("B4: synthetic notice item.",), decision=decision
+    )
+    result = invoke(bundle, tmp_path / "prepared")
+    assert result.returncode == 0, result.stdout
+    assert json.loads(result.stdout)["legal_blockers"] == ["B4"]
