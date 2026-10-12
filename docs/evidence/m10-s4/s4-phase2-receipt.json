@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "milestone": "M10 S4 phase 2 B1 owner-decision record",
+  "application_sha": "d5cb664de41a3e36ed603c398ab055c1a04d5453",
+  "layout": {
+    "files": 5361,
+    "bytes": 724265469
+  },
+  "packet": {
+    "materials_valid": true,
+    "blockers": [
+      "B1:",
+      "B4:"
+    ],
+    "b1": "B1: Qt library binaries and translations match the official Qt build SBOMs; the owner approved keeping the unmodified official Qt/PySide6/shiboken6 binaries with upstream release-source delivery (D1-D3) as an engineering direction only. Legal confirmation is pending, exact binding producer-source correspondence is unproven, public source hosting is not operational, and D4 is unresolved with B4.",
+    "b1_owner_decision": {
+      "present": true,
+      "valid": true,
+      "record_sha256": "5c73e10e1de50fa4a60d3eaafc9ddbb6af3dde0ebba0df994c0e526ffcb70b2b",
+      "decided": "2026-10-11",
+      "decisions": {
+        "D1": "approved_engineering_direction",
+        "D2": "approved_engineering_direction",
+        "D3": "approved_engineering_direction",
+        "D4": "unresolved"
+      },
+      "legal_confirmation": "pending",
+      "b1_effect": "remains_open",
+      "problems": []
+    }
+  },
+  "frozen_checks": {
+    "--verify-runtime": 0,
+    "--smoke": 0,
+    "--license-info": 0,
+    "opt_in_frozen_pytest": "2 passed"
+  },
+  "installer": {
+    "compiled": true,
+    "installer_sha256": "2a7feaac9398498b84f80b5ca0dbd141b498d29abe33249435090920b966468f",
+    "legal_blockers": [
+      "B1",
+      "B4"
+    ],
+    "other_packet_blockers": [],
+    "release_conditions": {
+      "B6": "closed only on the narrow M10-E2 QtCore-only criterion (M10 S3); a modified-source rebuild of Gui, Widgets and plugins was not exercised",
+      "clean_machine_validation": "NOT RUN",
+      "public_source_hosting": "not operational"
+    },
+    "clean_machine_validation": "NOT RUN",
+    "distribution_permitted": false
+  },
+  "published": false,
+  "distribution_permitted": false
+}
