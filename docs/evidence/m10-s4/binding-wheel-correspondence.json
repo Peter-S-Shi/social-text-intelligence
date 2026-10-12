@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "milestone": "M10 S4 B1 decision review (read-only)",
+  "bundle_application_sha": "fbb6e139dd957bbbda662213005b36f092516172",
+  "method": "SHA-256 of every .dll/.pyd under _internal/PySide6 and _internal/shiboken6 compared with the RECORD of the installed official wheels used by the build",
+  "wheels": ["pyside6_essentials 6.11.2", "shiboken6 6.11.2"],
+  "native_files": 32,
+  "byte_identical": 32,
+  "not_in_record": 0,
+  "binding_binaries": [
+    "PySide6/QtCore.pyd", "PySide6/QtGui.pyd", "PySide6/QtNetwork.pyd",
+    "PySide6/QtWidgets.pyd", "PySide6/pyside6.abi3.dll",
+    "shiboken6/Shiboken.pyd", "shiboken6/shiboken6.abi3.dll"
+  ],
+  "wheel_build_metadata": {
+    "pyside6_build_date": "2026-08-14T10:05:56+00:00",
+    "shiboken6_build_date": "2026-08-14T10:05:50+00:00",
+    "commit_fields": "empty; no producer build record"
+  },
+  "not_checked": "the installed wheel archives' own SHA-256 against PyPI was not re-verified in S4",
+  "distribution_permitted": false
+}
