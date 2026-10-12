@@ -300,6 +300,15 @@
       "status": "IDENTIFIED; embedded/native coverage remains conditional"
     },
     {
+      "name": "truststore",
+      "version": "0.10.4",
+      "selected_license": "MIT",
+      "upstream": "https://github.com/sethmlarson/truststore",
+      "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
+      "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
+      "status": "IDENTIFIED; embedded/native coverage remains conditional"
+    },
+    {
       "name": "typing_extensions",
       "version": "4.16.0",
       "selected_license": "PSF-2.0",

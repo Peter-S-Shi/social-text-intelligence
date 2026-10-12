@@ -91,6 +91,8 @@ class FakeTransport:
     fail_after_bytes: dict[str, int] = field(default_factory=dict)
     reject: set[str] = field(default_factory=set)
     end_early_after_bytes: dict[str, int] = field(default_factory=dict)
+    # A transport error code raised when these URLs are opened.
+    fail_open: dict[str, str] = field(default_factory=dict)
     requests: list[tuple[str, int]] = field(default_factory=list)
     on_chunk: Callable[[str], None] | None = None
 
@@ -105,6 +107,8 @@ class FakeTransport:
     @contextmanager
     def open(self, url: str, *, start: int) -> Iterator[DownloadStream]:
         self.requests.append((url, start))
+        if url in self.fail_open:
+            raise TransportError(self.fail_open[url])
         if url in self.reject or url not in self.served:
             raise TransportError("download_rejected")
         data = self.served[url]

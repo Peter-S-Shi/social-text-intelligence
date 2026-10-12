@@ -146,6 +146,21 @@ def test_runtime_manifest_pins_the_official_python_release() -> None:
     assert not any(name.lower().startswith("vcruntime") for name in manifest["files"])
 
 
+def test_truststore_must_be_the_reviewed_wheel_and_is_license_audited() -> None:
+    build = load()
+    project = Path(__file__).parents[2]
+    assert build.installed_mismatches("truststore", build.TRUSTSTORE_FILES) == []
+    altered = dict(build.TRUSTSTORE_FILES, **{"truststore/_api.py": "0" * 64})
+    assert build.installed_mismatches("truststore", altered) == ["truststore/_api.py"]
+    pins = (project / "tools/m10/requirements-build.txt").read_text().splitlines()
+    assert "truststore==0.10.4" in pins
+    register = json.loads(
+        (project / "distribution/component-register.json").read_text()
+    )
+    (entry,) = [c for c in register["components"] if c["name"] == "truststore"]
+    assert (entry["version"], entry["selected_license"]) == ("0.10.4", "MIT")
+
+
 def test_build_never_reuses_an_existing_output(tmp_path: Path) -> None:
     build = load()
     with pytest.raises(ValueError, match="new"):

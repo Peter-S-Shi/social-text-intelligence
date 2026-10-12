@@ -1,0 +1,4 @@
+# Hash-locked install of the reviewed truststore wheel (M10 S5-NET-001):
+#   pip install --require-hashes -r tools/m10/requirements-truststore.txt
+# build.py then checks the installed files against that wheel.
+truststore==0.10.4 --hash=sha256:adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981

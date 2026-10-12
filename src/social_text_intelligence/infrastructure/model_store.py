@@ -37,7 +37,7 @@ from ..application.model_provisioning import (
     ProvisioningResult,
     Readiness,
 )
-from ..contracts.errors import ModelProvisioningError
+from ..contracts.errors import PARTIAL_KEEPING_CODES, ModelProvisioningError
 from .app_data import AppDataLocations
 from .model_download import (
     DownloadTransport,
@@ -374,7 +374,7 @@ class LocalModelProvisioner:
                     # A body that ends early is an interrupted transfer: keep it.
                     raise TransportError("network_unavailable")
         except TransportError as error:
-            if error.code != "network_unavailable":
+            if error.code not in PARTIAL_KEEPING_CODES:
                 _remove(part)
             raise ModelProvisioningError(error.code) from None
         except OSError as error:

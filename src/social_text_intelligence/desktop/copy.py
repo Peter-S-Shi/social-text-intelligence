@@ -28,6 +28,7 @@ PHASE_WORDS = {
 
 ERROR_TITLES = {
     "network_unavailable": "Connection lost",
+    "certificate_rejected": "The secure connection could not be verified",
     "download_rejected": "The download was refused",
     "checksum_mismatch": "A file failed its checksum and was discarded",
     "storage_failed": "The models folder could not be read or written",

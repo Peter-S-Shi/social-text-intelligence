@@ -121,8 +121,9 @@ not been verified.
 
 ## Milestone 2 baseline
 
-The core runtime package has no mandatory third-party dependencies and includes
-no models, model weights, or datasets.
+The core runtime package includes no models, model weights, or datasets. Its
+only mandatory third-party dependency is truststore (since M10 S5-NET-001; see
+below).
 
 Optional development tools are declared in `pyproject.toml`. Their licenses
 remain the property of their respective authors and are not replaced by the
@@ -131,6 +132,22 @@ project's MIT License.
 Future milestones must update this file when adding a runtime dependency, model,
 or dataset. Each entry must identify its source, exact version or revision,
 license, purpose, and any required attribution.
+
+## Download certificate verification (M10 S5-NET-001)
+
+### truststore
+
+- [truststore](https://github.com/sethmlarson/truststore) `0.10.4`, constrained to
+  `>=0.10.4,<0.11`, MIT License, copyright 2022 Seth Michael Larson.
+- Purpose: model downloads verify the server's certificate chain and host name with
+  the operating system's trust store (on Windows, its native certificate verifier)
+  instead of only the roots OpenSSL can read. It applies to the download transport
+  alone and is never injected into Python's `ssl` module.
+- The Windows build installs the reviewed PyPI wheel
+  `truststore-0.10.4-py3-none-any.whl` (SHA-256
+  `adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981`). The build
+  checks each installed file against it. The frozen license packet carries the
+  wheel's own MIT license text.
 
 ## Local language detection (M5.6)
 

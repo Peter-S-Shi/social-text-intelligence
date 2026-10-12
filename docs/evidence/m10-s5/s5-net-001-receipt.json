@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "milestone": "M10 S5-NET-001 model download certificate verification",
+  "pull_request": 69,
+  "application_sha": "873776d15885e3d8f6f0d408f0f69e065d494e5b",
+  "diagnosis": {
+    "environment": "owner's clean Windows 11 VMware guest, standard user",
+    "probe_runtime": "official CPython 3.13.16; seven key runtime files identical to the installed STI",
+    "s5_net_002": "all product-equivalent urllib requests failed at open with ssl.SSLCertVerificationError verify_code 20",
+    "s5_net_003": {
+      "verdict": "RED/GREEN",
+      "stdlib_arm": "3 of 3 failed certificate verification",
+      "truststore_arm": "3 of 3 succeeded (config, weights, Range resume)",
+      "reproduction_environment": "consistent",
+      "ssl_globals_unchanged": true
+    }
+  },
+  "dependency": {
+    "name": "truststore",
+    "version": "0.10.4",
+    "license": "MIT",
+    "wheel": "truststore-0.10.4-py3-none-any.whl",
+    "wheel_sha256": "adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981"
+  },
+  "validation": {
+    "red_before_fix": "main 4282d03 reported an untrusted local HTTPS chain as network_unavailable",
+    "green_after_fix": "873776d reports it as certificate_rejected",
+    "local_full_suite": "1321 passed, 7 opt-in skipped (Windows, Python 3.12)",
+    "affected_suites_after_review_fixes": "760 passed",
+    "ruff": "pass",
+    "mypy_strict": "pass",
+    "reviews": "independent Spec and Standards: no blocking findings; should-fix items addressed",
+    "ci_run": "https://github.com/Peter-S-Shi/social-text-intelligence/actions/runs/38280074010",
+    "ci_result": "4 checks passed on 873776d"
+  },
+  "frozen_build": {
+    "python": "3.13.16",
+    "layout": {
+      "files": 5362,
+      "bytes": 724324801
+    },
+    "packet": {
+      "materials_valid": true,
+      "distribution_permitted": false,
+      "blockers": [
+        "B1",
+        "B4"
+      ],
+      "truststore_component": "0.10.4, MIT, 1 licence notice"
+    },
+    "frozen_checks": {
+      "--verify-runtime": 0,
+      "--smoke": 0,
+      "--license-info": 0,
+      "opt_in_frozen_pytest": "3 passed"
+    }
+  },
+  "installer": {
+    "compiled": true,
+    "inno_version": "6.7.3",
+    "installer_sha256": "a7fedbd633dd00651df8c22e6d6fac4ea749f25c948f6c3a96126d5e35ebe071",
+    "receipt_sha256": "d0e817745912c055b36af42b088f4dfbc1b574fc74f156ad07455cf9ceb470b4",
+    "legal_blockers": [
+      "B1",
+      "B4"
+    ],
+    "distribution_permitted": false,
+    "published": false
+  },
+  "not_run": [
+    "S5 clean-machine matrix C01-C16 (not formally accepted; no item marked PASS here)",
+    "validate_installer.ps1 lifecycle run, missing/present VC++ runtime stages, C07/C14 manual checks",
+    "formal Windows UAT and release readiness"
+  ],
+  "separate_open_items": [
+    "S5-UI-001 application icon",
+    "validate_installer.ps1 harness corrections H1-H3",
+    "remaining S5 installer lifecycle acceptance"
+  ],
+  "owner_vm_reverification": {
+    "result": "PASS (product level, S5-NET-001 only)",
+    "installer_sha256": "a7fedbd633dd00651df8c22e6d6fac4ea749f25c948f6c3a96126d5e35ebe071",
+    "environment": "restored Windows 11 VMware guest, standard user",
+    "owner_witnessed": [
+      "real in-app download of both required models (sentiment, emotion)",
+      "app-reported checksum verification passed",
+      "real inference: Positive (sentiment) and Joy (emotion)",
+      "optional py3langid model downloaded; English (en) identified",
+      "models persisted and stayed Ready after an app restart",
+      "download recovery after a user stop and after a network disconnect"
+    ],
+    "screenshot_shows": [
+      "2/2 models ready",
+      "both models Ready"
+    ],
+    "not_captured": [
+      "raw network logs, HTTP status codes or byte-level transfer observations",
+      "the certificate chain validated by the app",
+      "the partial byte count each resume continued from"
+    ]
+  }
+}
