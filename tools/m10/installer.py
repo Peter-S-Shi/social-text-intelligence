@@ -54,24 +54,14 @@ def packet_blockers(inventory: dict[str, object]) -> tuple[list[str], list[str]]
     if not blockers:
         # Distribution is not permitted, so a packet must say why.
         raise ValueError("The license packet records no blockers.")
-    if "B1" not in codes and not b1_closed_by_record(inventory):
+    if "B1" not in codes:
+        # No implemented owner-decision schema can close B1. A future closure
+        # needs its own reviewed, schema-specific validator here, never a
+        # self-declared inventory field.
         raise ValueError(
-            "The license packet omits B1 without a valid owner-decision record "
-            "that closes it."
+            "The license packet omits B1, which no reviewed record closes."
         )
     return codes, uncoded
-
-
-def b1_closed_by_record(inventory: dict[str, object]) -> bool:
-    """Only a valid record whose own schema can close B1 may account for its
-    absence. Schema 1 always records B1 as remaining open, so it never does."""
-    decision = inventory.get("b1_owner_decision")
-    return (
-        isinstance(decision, dict)
-        and decision.get("valid") is True
-        and decision.get("b1_effect") == "closed"
-        and decision.get("schema_version") != 1
-    )
 
 
 def ordinary_path(path: Path) -> None:

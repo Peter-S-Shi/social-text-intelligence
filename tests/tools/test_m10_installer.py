@@ -251,11 +251,14 @@ def test_receipts_inconsistent_with_an_open_b1_are_refused(
     assert not output.exists()
 
 
-def test_a_future_reviewed_schema_may_account_for_b1(tmp_path: Path) -> None:
+def test_a_self_declared_future_schema_cannot_account_for_b1(tmp_path: Path) -> None:
+    # No schema 2 validator exists, so fabricated inventory fields are not trusted.
     decision = {"valid": True, "schema_version": 2, "b1_effect": "closed"}
     bundle = packet(
         tmp_path / "bundle", blockers=("B4: synthetic notice item.",), decision=decision
     )
-    result = invoke(bundle, tmp_path / "prepared")
-    assert result.returncode == 0, result.stdout
-    assert json.loads(result.stdout)["legal_blockers"] == ["B4"]
+    output = tmp_path / "prepared"
+    result = invoke(bundle, output)
+    assert result.returncode == 2
+    assert "omits B1" in result.stdout
+    assert not output.exists()
