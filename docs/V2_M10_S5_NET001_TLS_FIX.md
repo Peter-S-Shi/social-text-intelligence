@@ -1,9 +1,13 @@
 # V2 M10 S5-NET-001 — Model download certificate verification
 
-Status: **fix COMPLETE on `main` (PR #69). Real-VM re-verification is pending
-the owner.** Overall S5 acceptance is still NOT RUN, and no full in-app model
-download has passed on a clean machine yet. B1 and B4 stay OPEN, and
-`distribution_permitted` stays false. Nothing was published.
+Status: **fix COMPLETE on `main` (PR #69). Owner VM re-verification of
+S5-NET-001 PASSED at product level (§6).** That closes this defect only.
+**S5 as a whole is not complete:** the clean-machine matrix C01–C16 is not
+formally accepted, and none of its items is marked PASS by this record.
+
+- B1 and B4 stay OPEN.
+- B6 stays closed only on its QtCore-only criterion.
+- `distribution_permitted` stays false, and nothing was published.
 
 ## 1. Defect
 
@@ -109,24 +113,63 @@ See [s5-net-001-receipt.json](evidence/m10-s5/s5-net-001-receipt.json).
 | Opt-in frozen pytest | 3 passed, including the truststore inventory check |
 | Internal installer (Inno 6.7.3, not published) | compiled; SHA-256 `a7fedbd633dd00651df8c22e6d6fac4ea749f25c948f6c3a96126d5e35ebe071`; receipt `legal_blockers: ["B1", "B4"]`, `distribution_permitted: false` |
 
-## 6. Owner VM re-verification (pending)
+## 6. Owner VM re-verification: PASS (product level)
 
-1. Restore `S5-Runtime-Ready`. Do not open Edge or curl first.
-2. Optional: rerun S5-NET-003, which should still be `RED/GREEN`. This shows the
-   environment still reproduces the defect.
-3. Install the new internal installer (path and SHA-256 are in the receipt).
-4. Download the sentiment model in the app. Disconnect the virtual network
-   adapter during the weights, reconnect it, and resume. Confirm the model
-   reaches Ready.
-5. Download the emotion model, then run an analysis.
-6. Optional: install the language model.
+The owner verified the fix in the restored Windows 11 VMware guest, as a standard
+user, with the internal installer whose SHA-256 is
+`a7fedbd633dd00651df8c22e6d6fac4ea749f25c948f6c3a96126d5e35ebe071` (built at
+`873776d`). The evidence falls into three kinds, kept separate here.
 
-Until the owner records these results, the full model download, inference and
-the S5 matrix stay NOT RUN.
+**Owner-witnessed, in the installed app:**
 
-## 7. Not done
+- Both required models, sentiment and emotion, downloaded for real.
+- The app reported that their checksum verification passed.
+- Real inference returned Positive (sentiment) and Joy (emotion).
+- The optional py3langid language model downloaded, and the app identified
+  English (`en`).
+- After the app restarted, the models were still installed and Ready.
+- Downloads recovered after the owner stopped one and after the network was
+  disconnected.
+
+**Shown directly by the owner's final screenshot:** "2/2 models ready", with both
+models Ready.
+
+**Automated evidence (§5):**
+
+- the transport tests and CI;
+- the frozen build, its packet and checks;
+- the installer receipt.
+
+**Not captured, so not claimed:**
+
+- raw network logs, HTTP status codes or byte-level transfer observations from
+  the app;
+- the certificate chain the app validated;
+- which partial byte count each resume continued from.
+
+What the PASS covers: S5-NET-001 is resolved for this build in this environment.
+In-app downloads that failed certificate verification before the fix now
+complete, verify, run and persist.
+
+What it does not cover:
+
+- the S5 clean-machine matrix (C01–C16);
+- the `validate_installer.ps1` lifecycle run;
+- the missing/present VC++ runtime stages;
+- the C07/C14 manual checks;
+- formal Windows UAT;
+- release readiness.
+
+Those stay NOT RUN unless a separate record accepts them.
+
+## 7. Not done (separate follow-up work)
 
 - S5-UI-001 (the application icon) is a separate open item.
+- Harness corrections H1–H3 to `validate_installer.ps1`:
+  - H1: take the blockers from the receipt instead of the hard-coded B1–B6;
+  - H2: add the missing/present VC++ runtime stages;
+  - H3: keep automatic and witnessed clean-machine acceptance separate.
+- The remaining installer lifecycle acceptance in the S5 matrix.
 - No change to R1 or R2, B1, B4 or B6.
 - No diagnostics system, no `network-check` mode and no download-architecture
   change.
