@@ -8,3 +8,4 @@
 # Verbatim upstream licence texts are checked by content hash; keep their bytes.
 distribution/legal/rust-crates/texts/** -text
 distribution/legal/intel-openmp/*.txt -text
+*.ico binary

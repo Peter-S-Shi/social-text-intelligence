@@ -80,6 +80,7 @@ social_text_intelligence = [
   "interface/static/*.css",
   "interface/static/*.js",
   "resources/*.json",
+  "desktop/qt/resources/*.ico",
 ]
 
 [tool.pytest.ini_options]

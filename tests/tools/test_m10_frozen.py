@@ -40,6 +40,7 @@ def test_frozen_packet_audits_the_bundled_truststore() -> None:
                 "project_rows": 2,
                 "invalid_rows": 1,
                 "reopened": True,
+                "application_icon": True,
             },
         ),
     ],

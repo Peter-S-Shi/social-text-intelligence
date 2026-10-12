@@ -25,7 +25,7 @@ WizardStyle=modern
 @@FILES@@
 
 [Icons]
-Name: "{autoprograms}\Social Text Intelligence\Social Text Intelligence"; Filename: "{app}\sti-desktop.exe"; WorkingDir: "{app}"
+Name: "{autoprograms}\Social Text Intelligence\Social Text Intelligence"; Filename: "{app}\sti-desktop.exe"; WorkingDir: "{app}"; IconFilename: "{app}\sti-desktop.exe"
 Name: "{autoprograms}\Social Text Intelligence\Licenses and sources"; Filename: "{app}\legal"
 
 [Code]
