@@ -36,6 +36,10 @@ class ProjectStorageError(SocialTextIntelligenceError):
         self.message = message
 
 
+# Transport failures that prove nothing about bytes already received: the partial
+# file is kept, and the next download resumes it.
+PARTIAL_KEEPING_CODES = frozenset({"network_unavailable", "certificate_rejected"})
+
 _PROVISIONING_MESSAGES = {
     "network_unavailable": (
         "The model source could not be reached. Check the connection and "

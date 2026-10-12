@@ -3,7 +3,9 @@
 The server uses a synthetic test CA (``tls/README.md``) that nothing trusts. Only
 a test context trusts it, and only for one test. Rejecting an untrusted chain may
 make the operating system's verifier consult its own root-update service; no
-model repository is contacted.
+model repository is contacted. On Windows these tests run truststore's native
+verifier; on Linux, truststore verifies with OpenSSL and the system CA paths, so
+the Windows path is proven only by a Windows run.
 """
 
 from __future__ import annotations
@@ -34,6 +36,13 @@ class _Handler(BaseHTTPRequestHandler):
             self.send_header("Location", "/file")
             self.end_headers()
             return
+        if self.path == "/elsewhere":
+            # The second hop presents this server's certificate for another name.
+            self.send_response(302)
+            port = self.headers["Host"].rsplit(":", 1)[1]
+            self.send_header("Location", f"https://localhost:{port}/file")
+            self.end_headers()
+            return
         if self.path == "/insecure":
             self.send_response(302)
             self.send_header("Location", "http://127.0.0.1:9/file")
@@ -59,7 +68,7 @@ class _Handler(BaseHTTPRequestHandler):
 
 
 @pytest.fixture()
-def port() -> Iterator[int]:
+def https_port() -> Iterator[int]:
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(TLS / "server.pem", TLS / "server.key")
@@ -105,54 +114,64 @@ def test_production_downloads_verify_with_a_local_native_trust_context() -> None
     assert context.check_hostname is True
 
 
-def test_a_trusted_chain_streams_the_whole_file(port: int) -> None:
+def test_a_trusted_chain_streams_the_whole_file(https_port: int) -> None:
     transport = UrllibDownloadTransport(context_factory=trusting_test_ca)
 
-    assert read_all(transport, f"https://127.0.0.1:{port}/file") == (False, BODY)
+    assert read_all(transport, f"https://127.0.0.1:{https_port}/file") == (False, BODY)
 
 
-def test_a_range_resumes_over_https_after_a_redirect(port: int) -> None:
+def test_a_range_resumes_over_https_after_a_redirect(https_port: int) -> None:
     transport = UrllibDownloadTransport(context_factory=trusting_test_ca)
 
-    assert read_all(transport, f"https://127.0.0.1:{port}/moved", 5_000) == (
+    assert read_all(transport, f"https://127.0.0.1:{https_port}/moved", 5_000) == (
         True,
         BODY[5_000:],
     )
 
 
-def test_a_redirect_from_https_to_http_is_still_refused(port: int) -> None:
+def test_a_redirect_from_https_to_http_is_still_refused(https_port: int) -> None:
     transport = UrllibDownloadTransport(context_factory=trusting_test_ca)
 
     with pytest.raises(TransportError) as refused:
-        read_all(transport, f"https://127.0.0.1:{port}/insecure")
+        read_all(transport, f"https://127.0.0.1:{https_port}/insecure")
     assert refused.value.code == "download_rejected"
 
 
-def test_an_untrusted_chain_is_a_certificate_rejection(port: int) -> None:
+def test_an_untrusted_chain_is_a_certificate_rejection(https_port: int) -> None:
     with pytest.raises(TransportError) as rejected:
-        read_all(UrllibDownloadTransport(), f"https://127.0.0.1:{port}/file")
+        read_all(UrllibDownloadTransport(), f"https://127.0.0.1:{https_port}/file")
     assert rejected.value.code == "certificate_rejected"
 
 
 def test_a_certificate_for_another_host_is_a_certificate_rejection(
-    port: int,
+    https_port: int,
 ) -> None:
     transport = UrllibDownloadTransport(context_factory=trusting_test_ca)
 
     with pytest.raises(TransportError) as rejected:
-        read_all(transport, f"https://localhost:{port}/file")
+        read_all(transport, f"https://localhost:{https_port}/file")
     assert rejected.value.code == "certificate_rejected"
 
 
-def test_downloads_leave_the_global_ssl_defaults_untouched(port: int) -> None:
+def test_an_untrusted_redirect_target_is_a_certificate_rejection(
+    https_port: int,
+) -> None:
+    transport = UrllibDownloadTransport(context_factory=trusting_test_ca)
+
+    with pytest.raises(TransportError) as rejected:
+        read_all(transport, f"https://127.0.0.1:{https_port}/elsewhere")
+    assert rejected.value.code == "certificate_rejected"
+
+
+def test_downloads_leave_the_global_ssl_defaults_untouched(https_port: int) -> None:
     before = ssl_defaults()
 
     read_all(
         UrllibDownloadTransport(context_factory=trusting_test_ca),
-        f"https://127.0.0.1:{port}/file",
+        f"https://127.0.0.1:{https_port}/file",
     )
     with pytest.raises(TransportError):
-        read_all(UrllibDownloadTransport(), f"https://127.0.0.1:{port}/file")
+        read_all(UrllibDownloadTransport(), f"https://127.0.0.1:{https_port}/file")
 
     assert ssl_defaults() == before
     assert ssl.SSLContext.__module__ == "ssl"

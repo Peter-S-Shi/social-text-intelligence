@@ -23,10 +23,9 @@ MICROSOFT_RUNTIME = re.compile(
     r"(msvcp140|vcruntime140|concrt140|vccorlib140)([_-][0-9a-z_]+)?\.dll", re.I
 )
 VENDORED_RUNTIME = re.compile(r"msvcp140-[0-9a-f]{32}\.dll", re.I)
-# truststore verifies every model download (M10 S5-NET-001). The build must use the
-# reviewed PyPI wheel truststore-0.10.4-py3-none-any.whl, sha256
-# adaeaecf1cbb5f4de3b1959b42d41f6fab57b2b1666adb59e89cb0b53361d981.
-# Each installed file below must match that wheel byte for byte.
+# truststore verifies every model download (M10 S5-NET-001). Install it with
+# requirements-truststore.txt, which hash-locks the reviewed PyPI wheel; each
+# installed file below must still match that wheel byte for byte.
 TRUSTSTORE_FILES = {
     "truststore/__init__.py": (
         "06eee4aa49a9ba784bb23e710aef204ffdb992da0f5dc4a7c1ef151e4d46989a"

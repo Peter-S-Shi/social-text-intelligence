@@ -49,7 +49,7 @@ def native_trust_context() -> ssl.SSLContext:
     transport only and is never injected into ``ssl``.
     """
     context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    # As http.client configures its own default HTTPS context.
+    # Match http.client's default HTTPS context: ALPN http/1.1, post-handshake auth.
     context.set_alpn_protocols(["http/1.1"])
     if context.post_handshake_auth is not None:
         context.post_handshake_auth = True

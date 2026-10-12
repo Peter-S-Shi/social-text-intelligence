@@ -121,9 +121,9 @@ not been verified.
 
 ## Milestone 2 baseline
 
-At Milestone 2 the core runtime package had no mandatory third-party
-dependencies. It includes no models, model weights, or datasets. Its one
-mandatory dependency, truststore, is listed below.
+The core runtime package includes no models, model weights, or datasets. Its
+only mandatory third-party dependency is truststore (since M10 S5-NET-001; see
+below).
 
 Optional development tools are declared in `pyproject.toml`. Their licenses
 remain the property of their respective authors and are not replaced by the
