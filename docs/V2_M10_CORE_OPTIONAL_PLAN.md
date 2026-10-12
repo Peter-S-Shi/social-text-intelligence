@@ -4,7 +4,9 @@ Status: **PLAN, revision 2 — approved by the owner (2026-10-11).** S1 is compl
 `main` (PR #64). S2 is complete on `main` (PR #65); B4 stays OPEN on Intel OpenMP
 redistribution authorization. S3 is complete on `main` (PR #66): QtCore-only E4 PASS,
 B6 CLOSED on that narrower criterion. The S4 decision memo (PR #67) and phase 2
-record (PR #68) are on `main`; B1 awaits legal confirmation and D4. S5 remains.
+record (PR #68) are on `main`; B1 awaits legal confirmation and D4. S5 remains. Its first
+clean-VM defect, S5-NET-001 (in-app downloads failing certificate verification), is
+fixed on `main` (PR #69) and awaits the owner's VM re-verification.
 Documentation only. Nothing is implemented, built, published or merged by this
 record, and no release gate changes. The owner's overriding goal is unchanged: a
 legally distributable Windows installer, not a source-only portfolio.
