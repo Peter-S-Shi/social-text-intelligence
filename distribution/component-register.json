@@ -66,15 +66,6 @@
       "status": "IDENTIFIED; embedded/native coverage remains conditional"
     },
     {
-      "name": "hf-xet",
-      "version": "1.5.2",
-      "selected_license": "Apache-2.0",
-      "upstream": "https://github.com/huggingface/xet-core",
-      "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
-      "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
-      "status": "IDENTIFIED; embedded/native coverage remains conditional"
-    },
-    {
       "name": "httpcore",
       "version": "1.0.9",
       "selected_license": "BSD-3-Clause",
@@ -205,15 +196,6 @@
       "version": "6.11.2",
       "selected_license": "LGPL-3.0-only",
       "upstream": "https://pyside.org",
-      "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
-      "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
-      "status": "IDENTIFIED; embedded/native coverage remains conditional"
-    },
-    {
-      "name": "pytest",
-      "version": "8.4.2",
-      "selected_license": "MIT",
-      "upstream": "https://docs.pytest.org/en/latest/",
       "installed_evidence": "versioned dist-info license text and metadata; material hashes in frozen inventory",
       "obligations": "Preserve copyright, full license text and applicable notices; retain source/replacement obligations for copyleft portions. Package-level identification does not certify embedded dependencies.",
       "status": "IDENTIFIED; embedded/native coverage remains conditional"

@@ -1,0 +1,259 @@
+{
+ "schema_version": 1,
+ "scope": "Sanitized receipt of the actual local M10-E2 Windows frozen build; binaries, SBOMs and source archives are not published.",
+ "build_evidence": {
+  "schema_version": 1,
+  "application_sha": "ba2887bd84ad8dfafbe580b0bbb4b8aa4cdcb4ce",
+  "python": "3.13.16",
+  "platform": "windows-x64",
+  "spec_sha256": "807d34bb4ae1c81d6ee1079815211e66fbee5b6ba3a90b4d35a3779ff5f89c40",
+  "requirements_sha256": "4c4fe3004b94cb94ad46f64f81a7afc2fbedfe6ee1db77946633c7f1e4f1aeed",
+  "layout": {
+   "files": 5256,
+   "bytes": 728293371
+  },
+  "python_runtime": "tags/v3.13.16:cbc944f",
+  "microsoft_runtime_redistributed": false,
+  "relinked_runtime_imports": [
+   {
+    "path": "_internal/numpy/_core/_multiarray_umath.cp313-win_amd64.pyd",
+    "replaced_imports": "msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll",
+    "before_sha256": "5027a2b967225c5feb113b5c1737cec3959ed878b07efd9af267f662889c35ed",
+    "after_sha256": "5db94e4879c2ab8d4ab54aa54b279d107d28d4ceb4f6a5564ec6415faa742f9a"
+   },
+   {
+    "path": "_internal/numpy/fft/_pocketfft_umath.cp313-win_amd64.pyd",
+    "replaced_imports": "msvcp140-a4c2229bdc2a2a630acdc095b4d86008.dll",
+    "before_sha256": "7c1190ee13b380d4c9506d14bdaf8462f001aba0924d9898bfcdf31d5912b5c8",
+    "after_sha256": "bbe3522bfb138902c42645119b5c73ba25ae8d641b38856ee9ab2cb588734063"
+   }
+  ],
+  "models_bundled": false,
+  "release_ready": false
+ },
+ "inventory_sha256": "ba27b1b7a534d4ef7506888705ffa397f23cc22c2656bd2fd9c64d8f4de728ac",
+ "frozen_module_count": 6675,
+ "loose_python_packages": [
+  "PySide6",
+  "shiboken6",
+  "torch",
+  "transformers"
+ ],
+ "native_component_count": 87,
+ "native_owners": {
+  "CPython standard-library extensions (B3)": 18,
+  "CPython/runtime bundled dependencies (B3)": 6,
+  "MarkupSafe": 1,
+  "NumPy/OpenBLAS": 14,
+  "Qt/PySide6": 30,
+  "regex": 1,
+  "safetensors/Rust dependencies (B4)": 1,
+  "shiboken6": 2,
+  "tokenizers/Rust dependencies (B4)": 1,
+  "PyTorch/native dependencies (B4)": 10,
+  "PyYAML": 1,
+  "STI/PyInstaller bootloader": 2
+ },
+ "components": [
+  "Jinja2==3.1.6",
+  "MarkupSafe==3.0.3",
+  "PySide6_Essentials==6.11.2",
+  "PyYAML==6.0.3",
+  "anyio==4.14.2",
+  "certifi==2026.6.17",
+  "click==8.4.2",
+  "colorama==0.4.6",
+  "filelock==3.31.0",
+  "fsspec==2026.6.0",
+  "h11==0.16.0",
+  "httpcore==1.0.9",
+  "httpx==0.28.1",
+  "huggingface_hub==1.24.0",
+  "idna==3.18",
+  "markdown-it-py==4.2.0",
+  "mdurl==0.1.2",
+  "mpmath==1.3.0",
+  "networkx==3.6.1",
+  "numpy==2.5.1",
+  "packaging==26.2",
+  "py3langid==0.4.0",
+  "pyinstaller==6.22.3",
+  "regex==2026.7.10",
+  "rich==15.0.0",
+  "safetensors==0.8.0",
+  "setuptools==83.0.0",
+  "shiboken6==6.11.2",
+  "sympy==1.14.0",
+  "tokenizers==0.22.2",
+  "torch==2.13.0",
+  "tqdm==4.69.0",
+  "transformers==5.14.1",
+  "typing_extensions==4.16.0"
+ ],
+ "absent_by_design": {
+  "opengl32sw.dll": true,
+  "protoc.exe": true,
+  "vcruntime140.dll": true,
+  "vcruntime140_1.dll": true,
+  "msvcp140.dll": true,
+  "msvcp140_1.dll": true,
+  "msvcp140_2.dll": true,
+  "msvcp140_atomic_wait.dll": true,
+  "hf_xet package": true
+ },
+ "qt_provenance": {
+  "verified": 121,
+  "translations_verified": 96,
+  "uncovered": [],
+  "modules": [
+   {
+    "module": "qtbase",
+    "version": "ef55f427+HEAD",
+    "sbom": "qtbase-6.11.2.spdx.json",
+    "sbom_sha256": "a5c6018dd0b4096e66f697ce98b83f0ac3f8c9424720e090a1d5b00125179a24",
+    "built_commit": "ef55f427f2c8b410d34f8a7681020a3000cf6866",
+    "source_archive_tag": "ef55f427f2c8b410d34f8a7681020a3000cf6866",
+    "source_link": "COMMIT_MATCH"
+   },
+   {
+    "module": "qtsvg",
+    "version": "17ca512+HEAD",
+    "sbom": "qtsvg-6.11.2.spdx.json",
+    "sbom_sha256": "eabd595e394dfb7a9d2fd3735096fe5390377f2bee5349b02a4311ff9471e8c5",
+    "built_commit": "17ca512f903f935282ebeca496aac5d11ba4199a",
+    "source_archive_tag": "17ca512f903f935282ebeca496aac5d11ba4199a",
+    "source_link": "COMMIT_MATCH"
+   },
+   {
+    "module": "qtimageformats",
+    "version": "6.11.2",
+    "sbom": "qtimageformats-6.11.2.spdx.json",
+    "sbom_sha256": "1678c477dcdf320fb04b8de1b6305278081f86b45ed72eda677fde0de9ec8b8e",
+    "built_commit": null,
+    "source_archive_tag": "47b6139dda3b84d1d3ec15caf8d04eff8d744c8d",
+    "source_link": "VERSION_ONLY"
+   },
+   {
+    "module": "qttranslations",
+    "version": "6.11.2",
+    "sbom": "qttranslations-6.11.2.spdx.json",
+    "sbom_sha256": "44b904f44127ce246c3fada6d759fd2759ae0dfa03375f1a413aa0c0ba2a60ee",
+    "built_commit": null,
+    "source_archive_tag": "570add0b7d3b1f2b7034b0bf41715456a238b29f",
+    "source_link": "VERSION_ONLY"
+   }
+  ],
+  "qt_libraries_verified": true
+ },
+ "python_runtime": {
+  "version": "3.13.16",
+  "build": "tags/v3.13.16:cbc944f",
+  "checked": [
+   {
+    "file": "_asyncio.pyd",
+    "matches": true
+   },
+   {
+    "file": "_bz2.pyd",
+    "matches": true
+   },
+   {
+    "file": "_ctypes.pyd",
+    "matches": true
+   },
+   {
+    "file": "_decimal.pyd",
+    "matches": true
+   },
+   {
+    "file": "_elementtree.pyd",
+    "matches": true
+   },
+   {
+    "file": "_hashlib.pyd",
+    "matches": true
+   },
+   {
+    "file": "_lzma.pyd",
+    "matches": true
+   },
+   {
+    "file": "_multiprocessing.pyd",
+    "matches": true
+   },
+   {
+    "file": "_overlapped.pyd",
+    "matches": true
+   },
+   {
+    "file": "_queue.pyd",
+    "matches": true
+   },
+   {
+    "file": "_socket.pyd",
+    "matches": true
+   },
+   {
+    "file": "_sqlite3.pyd",
+    "matches": true
+   },
+   {
+    "file": "_ssl.pyd",
+    "matches": true
+   },
+   {
+    "file": "_uuid.pyd",
+    "matches": true
+   },
+   {
+    "file": "_wmi.pyd",
+    "matches": true
+   },
+   {
+    "file": "libcrypto-3.dll",
+    "matches": true
+   },
+   {
+    "file": "libffi-8.dll",
+    "matches": true
+   },
+   {
+    "file": "libssl-3.dll",
+    "matches": true
+   },
+   {
+    "file": "pyexpat.pyd",
+    "matches": true
+   },
+   {
+    "file": "python3.dll",
+    "matches": true
+   },
+   {
+    "file": "python313.dll",
+    "matches": true
+   },
+   {
+    "file": "select.pyd",
+    "matches": true
+   },
+   {
+    "file": "sqlite3.dll",
+    "matches": true
+   },
+   {
+    "file": "unicodedata.pyd",
+    "matches": true
+   }
+  ],
+  "unpinned_cpython_files": [],
+  "licence_matches": true,
+  "verified": true
+ },
+ "blockers": [
+  "B1: Qt library binaries and translations match the official Qt build SBOMs, linked to the delivered source archives by commit or, where an SBOM names none, by release version only; PySide6/shiboken6 binding binaries have no producer build record, and the release source-delivery route needs owner/legal confirmation.",
+  "B4: Static Rust/native and vendored dependency license coverage is not certified by package-level metadata or source-superset notices.",
+  "B5: py3langid embedded model training-corpus redistribution terms remain open."
+ ],
+ "distribution_permitted": false
+}

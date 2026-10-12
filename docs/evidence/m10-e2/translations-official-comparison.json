@@ -1,0 +1,12 @@
+{
+ "schema_version": 1,
+ "official_archive": {
+  "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+  "sha1": "2826dd1fcb9489d243c25a812f3edd7319ca2e45",
+  "sha256": "1c9516ce25d286ecf97e7aaaa5c8fa395823f21af5fa3dcb7bd06f648453dd77"
+ },
+ "shipped_qm_files": 96,
+ "byte_identical_to_official": 96,
+ "sbom": "qttranslations-6.11.2.spdx.json (CC0-1.0), sha256 44b904f44127ce246c3fada6d759fd2759ae0dfa03375f1a413aa0c0ba2a60ee; package 'qttranslations' 6.11.2, no built commit (VERSION_ONLY)",
+ "distribution_permitted": false
+}

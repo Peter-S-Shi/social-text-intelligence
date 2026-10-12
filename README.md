@@ -9,7 +9,7 @@ contains Moderation Training and Support Triage workflows; they are retired
 from the V2 product surface but remain documented here as the unchanged V1
 baseline.
 
-> **Current lifecycle phase: V2 M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); distribution gate BLOCKED; M9.2–M9.4 deferred by owner**
+> **Current lifecycle phase: V2 M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); M10-E2 blocker closure engineering established (B3 CLOSED by an official CPython runtime and no Microsoft runtime redistribution; B1 and B4 narrowed but OPEN; B5 and B6 OPEN pending owner/legal decisions and the owner toolchain); distribution gate BLOCKED; M9.2–M9.4 deferred by owner**
 > after V2 Native UI Integration, M6 complete (V2 Product
 > Scope, Architecture, and UI/IA Gates are PASS; see
 > [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
@@ -31,7 +31,7 @@ baseline.
 > [evidence design](docs/V2_M9_EVIDENCE_CONTRACT.md), approved by the owner
 > on 2026-10-10; real-source authorization and evaluation remain future gates.
 > M9.1 supplies a versioned [synthetic scenario pack and offline recorder](manual-qa/m9-uat/README.md),
-> with all formal UAT steps initially NOT RUN. M9.2–M9.4 are deferred by owner; M10-A packaging foundation, M10-B compliance, M10-C internal installer engineering, and M10-D release readiness dossier are established; clean-machine acceptance is NOT RUN. M10-E1 distribution unblocking resolved B2 by removal and narrowed B1, B4 and B6; binary distribution gates remain BLOCKED on B1 and B3–B6 ([M10-E1 record](docs/V2_M10_E1_DISTRIBUTION_UNBLOCKING.md)). The auditable [release readiness dossier](docs/V2_M10_D_RELEASE_DOSSIER.md) defines three operational surfaces: public source portfolio is SUPPORTED, controlled author demos are SUPPORTED UNDER CONTROLLED CONDITIONS, and downloadable binary distribution is PROHIBITED / BLOCKED. Formal release decision is pending repository owner. Deferral does not waive Q5 evidence for model capability claims. The optional 30-minute owner packaged-app smoke is planned NOT RUN; no installer publication, binary distribution or LGPL compliance is claimed.
+> with all formal UAT steps initially NOT RUN. M9.2–M9.4 are deferred by owner; M10-A packaging foundation, M10-B compliance, M10-C internal installer engineering, and M10-D release readiness dossier are established; clean-machine acceptance is NOT RUN. M10-E1 distribution unblocking resolved B2 by removal and narrowed B1, B4 and B6; M10-E2 blocker closure engineering closed B3 with an official CPython runtime and no Microsoft runtime redistribution; binary distribution gates remain BLOCKED on B1 and B4–B6 ([M10-E2 record](docs/V2_M10_E2_BLOCKER_CLOSURE.md)). The auditable [release readiness dossier](docs/V2_M10_D_RELEASE_DOSSIER.md) defines three operational surfaces: public source portfolio is SUPPORTED, controlled author demos are SUPPORTED UNDER CONTROLLED CONDITIONS, and downloadable binary distribution is PROHIBITED / BLOCKED. Formal release decision is pending repository owner. Deferral does not waive Q5 evidence for model capability claims. The optional 30-minute owner packaged-app smoke is planned NOT RUN; no installer publication, binary distribution or LGPL compliance is claimed.
 > See [Project Status](PROJECT_STATUS.md).
 > The `0.10.0` V1
 > baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
@@ -504,4 +504,4 @@ execution state are maintained separately:
 wraps the existing Windows onedir/license packet. Development-host lifecycle
 checks PASS; clean-machine and missing-model UI checks remain NOT RUN.
 Installers are local internal evidence, not published downloads or distribution
-permission. B1 and B3–B6 remain BLOCKED after M10-E1; V2 is not release-ready.
+permission. B1 and B4–B6 remain BLOCKED after M10-E2; V2 is not release-ready.

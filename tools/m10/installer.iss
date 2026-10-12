@@ -32,6 +32,39 @@ Name: "{autoprograms}\Social Text Intelligence\Licenses and sources"; Filename: 
 function GetFileAttributesW(Name: string): Cardinal;
   external 'GetFileAttributesW@kernel32.dll stdcall';
 
+const
+  VCRuntimeKey = 'SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64';
+  VCRuntimePage = 'https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist';
+
+{ STI does not redistribute Microsoft Visual C++ runtime files (M10-E2, B3). It
+  needs the system Visual C++ 2015-2022 x64 runtime 14.44 or later, which only
+  its official Microsoft installer provides. This per-user setup never elevates. }
+function VCRuntimeInstalled(): Boolean;
+var Installed, Major, Minor: Cardinal;
+begin
+  Result := RegQueryDWordValue(HKLM64, VCRuntimeKey, 'Installed', Installed)
+    and (Installed = 1)
+    and RegQueryDWordValue(HKLM64, VCRuntimeKey, 'Major', Major)
+    and RegQueryDWordValue(HKLM64, VCRuntimeKey, 'Minor', Minor)
+    and ((Major > 14) or ((Major = 14) and (Minor >= 44)));
+end;
+
+function InitializeSetup(): Boolean;
+var ErrorCode: Integer;
+begin
+  Result := VCRuntimeInstalled();
+  if not Result then begin
+    Log('Microsoft Visual C++ 2015-2022 x64 runtime 14.44 or later is not installed.');
+    if SuppressibleMsgBox('Social Text Intelligence needs the Microsoft Visual C++ '
+      + '2015-2022 Redistributable (x64), version 14.44 or later. It is not '
+      + 'installed on this computer, and this setup does not install it.' + #13#10#13#10
+      + 'Install it from Microsoft (administrator rights may be required), then run '
+      + 'this setup again. Open the Microsoft download page now?',
+      mbError, MB_YESNO, IDNO) = IDYES then
+      ShellExecAsOriginalUser('open', VCRuntimePage, '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+  end;
+end;
+
 function HasReparse(Path: string): Boolean;
 var Attributes: Cardinal; Parent: string;
 begin

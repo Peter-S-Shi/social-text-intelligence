@@ -245,9 +245,32 @@ def test_ambiguous_sboms_are_rejected(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="exactly one"):
         compliance.verify_qt_provenance(root, [two_modules], [archive])
     first = sbom(tmp_path / "a.spdx.json", {"bin/Qt6Core.dll": core_original})
-    second = sbom(tmp_path / "b.spdx.json", {"bin/Qt6Core.dll": core_original})
-    with pytest.raises(ValueError, match="same file"):
-        compliance.verify_qt_provenance(root, [first, second], [archive])
+    duplicate = sbom(tmp_path / "b.spdx.json", {"bin/Qt6Core.dll": core_original})
+    receipt = compliance.verify_qt_provenance(root, [first, duplicate], [archive])
+    assert receipt["qt_libraries_verified"] is True
+    conflicting = sbom(tmp_path / "c.spdx.json", {"bin/Qt6Core.dll": b"other"})
+    with pytest.raises(ValueError, match="conflict"):
+        compliance.verify_qt_provenance(root, [first, conflicting], [archive])
+
+
+def test_translations_are_verified_by_plain_digest(tmp_path: Path) -> None:
+    compliance = load()
+    core, core_original = synthetic_pe(b"synthetic core", signed=True)
+    translation = b"synthetic compiled translation catalogue"
+    root = bundle(
+        tmp_path, {"Qt6Core.dll": core, "translations/qtbase_xx.qm": translation}
+    )
+    archive = source_archive(tmp_path / "qtbase-everywhere-src-0.0.0.tar.xz", COMMIT)
+    document = sbom(
+        tmp_path / "qtbase.spdx.json",
+        {"bin/Qt6Core.dll": core_original, "translations/qtbase_xx.qm": translation},
+    )
+    receipt = compliance.verify_qt_provenance(root, [document], [archive])
+    assert [row["status"] for row in receipt["binaries"]] == ["VERIFIED", "VERIFIED"]
+    (root / "_internal/PySide6/translations/qtbase_yy.qm").write_bytes(b"unlisted")
+    receipt = compliance.verify_qt_provenance(root, [document], [archive])
+    assert receipt["uncovered_qt_binaries"] == ["translations/qtbase_yy.qm"]
+    assert receipt["qt_libraries_verified"] is False
 
 
 def test_blockers_narrow_only_with_evidence_and_never_grant_permission() -> None:
@@ -257,18 +280,69 @@ def test_blockers_narrow_only_with_evidence_and_never_grant_permission() -> None
     )
     assert unverified[0] == compliance.B1_UNVERIFIED
     assert compliance.B2 in unverified
+    assert compliance.B3_MICROSOFT in unverified
+    assert compliance.B3_PYTHON in unverified
     verified = compliance.distribution_blockers(
-        {"qt_libraries_verified": True}, software_renderer=False
+        {"qt_libraries_verified": True},
+        software_renderer=False,
+        microsoft_runtime=False,
+        python_runtime_verified=True,
     )
     assert verified[0] == compliance.B1_BINDINGS
-    assert compliance.B2 not in verified
-    assert [item[:3] for item in verified] == ["B1:", "B3:", "B4:", "B5:"]
+    assert [item[:3] for item in verified] == ["B1:", "B4:", "B5:"]
 
 
-def test_spec_keeps_the_binding_layer_replaceable_and_omits_the_renderer() -> None:
+def test_bundled_cpython_must_be_the_pinned_official_runtime(tmp_path: Path) -> None:
+    compliance = load()
+    bundle = tmp_path / "bundle"
+    internal = bundle / "_internal"
+    internal.mkdir(parents=True)
+    (bundle / "legal").mkdir()
+    (bundle / "legal" / "PYTHON-LICENSE.txt").write_text("synthetic licence")
+    (internal / "python313.dll").write_bytes(b"synthetic runtime")
+    (internal / "_ssl.pyd").write_bytes(b"synthetic extension")
+    manifest = {
+        "version": "0.0.0",
+        "files": {
+            "python313.dll": hashlib.sha256(b"synthetic runtime").hexdigest(),
+            "DLLs/_ssl.pyd": hashlib.sha256(b"synthetic extension").hexdigest(),
+            "LICENSE.txt": hashlib.sha256(b"synthetic licence").hexdigest(),
+        },
+    }
+    assert compliance.verify_python_runtime(bundle, manifest)["verified"] is True
+    (bundle / "legal" / "PYTHON-LICENSE.txt").write_text("edited licence")
+    receipt = compliance.verify_python_runtime(bundle, manifest)
+    assert receipt["licence_matches"] is False
+    assert receipt["verified"] is False
+    (bundle / "legal" / "PYTHON-LICENSE.txt").write_text("synthetic licence")
+    (internal / "_ssl.pyd").write_bytes(b"rebuilt extension")
+    assert compliance.verify_python_runtime(bundle, manifest)["verified"] is False
+    (internal / "_ssl.pyd").write_bytes(b"synthetic extension")
+    (internal / "_unpinned.pyd").write_bytes(b"extra")
+    receipt = compliance.verify_python_runtime(bundle, manifest)
+    assert receipt["unpinned_cpython_files"] == ["_unpinned.pyd"]
+    assert receipt["verified"] is False
+
+
+@pytest.mark.parametrize(
+    "name", ["concrt140.dll", "vccorlib140.dll", "msvcp140_atomic_wait.dll"]
+)
+def test_every_microsoft_runtime_family_is_owned_as_b3(name: str) -> None:
+    compliance = load()
+    assert compliance.native_owner("_internal/" + name) == "Microsoft runtime (B3)"
+
+
+def test_spec_keeps_the_binding_layer_replaceable_and_omits_redistributables() -> None:
     spec = (ROOT / "tools/m10/sti_desktop.spec").read_text(encoding="utf-8")
     assert 'module_collection_mode={"PySide6": "py", "shiboken6": "py"}' in spec
-    assert '!= "opengl32sw.dll"' in spec
+    # The spec reuses the build's Microsoft-runtime pattern rather than a copy.
+    for omitted in (
+        r'OMITTED = re.compile(r"opengl32sw\.dll|protoc\.exe", re.I)',
+        "from build import MICROSOFT_RUNTIME",
+        "MICROSOFT_RUNTIME.fullmatch(name)",
+        '"hf_xet"]',
+    ):
+        assert omitted in spec
 
 
 def test_provenance_manifest_pins_every_official_sbom() -> None:
@@ -280,6 +354,7 @@ def test_provenance_manifest_pins_every_official_sbom() -> None:
         "qtbase-6.11.2.spdx.json",
         "qtsvg-6.11.2.spdx.json",
         "qtimageformats-6.11.2.spdx.json",
+        "qttranslations-6.11.2.spdx.json",
     }
     for item in definition["documents"]:
         assert len(item["sha256"]) == 64

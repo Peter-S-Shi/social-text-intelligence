@@ -1,0 +1,25 @@
+{
+ "repository": "https://github.com/qtproject/pyside-pyside-setup",
+ "tag": "v6.11.2",
+ "commit": "24627cd36e1593adf22eb1f2950e4248e7bcc1ec",
+ "tree_truncated": false,
+ "archive_files": 4602,
+ "git_blobs": 4606,
+ "identical": 4600,
+ "content_differs": [
+  "sources/pyside-tools/deploy_lib/android/android_utilities.py",
+  "sources/shiboken6/data/docgenerator.1"
+ ],
+ "only_in_archive": [],
+ "only_in_git": [
+  "sources/pyside6/.gitattributes",
+  "sources/pyside6/.gitignore",
+  "sources/shiboken6/.gitattributes",
+  "sources/shiboken6/.gitignore"
+ ],
+ "only_in_git_count": 4,
+ "archive": "pyside-setup-everywhere-src-6.11.2.tar.xz (sha256 cba47efbaad1bedd529725cbc14e21f156c7a19366f07b3edfbb076ffd7afdf8)",
+ "content_differs_explained": "Both paths are git symlinks in the tag; the release archive stores the link targets' contents as files.",
+ "only_in_git_explained": "Repository .gitattributes/.gitignore files excluded from the release export.",
+ "distribution_permitted": false
+}
