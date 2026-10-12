@@ -69,10 +69,10 @@ B1 is **always derived**:
 - lists any blocker without a code in `other_packet_blockers`;
 - refuses a packet that permits distribution or has a malformed blocker list;
 - refuses a packet with **no blockers**, because distribution is not permitted;
-- refuses a packet that **omits B1**, unless its own valid owner-decision record
-  is of a schema that can close B1. Schema 1 always records B1 as remaining
-  open, so a schema 1 packet must list B1. A future reviewed schema is not
-  blocked by a fixed list.
+- refuses **every** packet that omits B1. Self-declared inventory fields (`valid`,
+  `b1_effect`, `schema_version`) are not trusted. No implemented schema can close
+  B1, so a future closure needs its own reviewed, schema-specific validator. That
+  is still not a fixed blocker list: other codes are taken from the packet.
 
 Facts the packet does not derive are stated separately in `release_conditions`:
 
@@ -106,14 +106,14 @@ The in-app licence text (`license_notice.py`) was not stale and is unchanged.
 
 | Check | Result |
 | --- | --- |
-| Focused tests (`test_m10_b1_decision.py`, `test_m10_installer.py`) | record integrity: valid, missing, malformed, and 31 contradictory, partial or extended records. These include identity, date type, basis, summaries, extra decision fields, missing decisions, schema version, and the exact two-package scope. B1 is never removed. Installer: blockers are derived; packets that permit distribution, are malformed, have no blockers or omit B1 are refused; a future reviewed schema may account for B1 |
+| Focused tests (`test_m10_b1_decision.py`, `test_m10_installer.py`) | record integrity: valid, missing, malformed, and 31 contradictory, partial or extended records. These include identity, date type, basis, summaries, extra decision fields, missing decisions, schema version, and the exact two-package scope. B1 is never removed. Installer: blockers are derived; packets that permit distribution, are malformed, have no blockers or omit B1 are refused, including one with a fabricated valid schema 2 record |
 | Local full suite | 1,309 passed, 6 opt-in skipped; Ruff and strict MyPy pass |
 | Frozen build at `d5cb664` (official CPython 3.13.16) | packet valid; blockers **B1** (decided wording) and **B4**; `b1_owner_decision.valid: true` |
 | `--verify-runtime` / `--smoke` / `--license-info` | exit 0 |
 | Opt-in frozen pytest | 2 passed |
 | Internal installer (Inno 6.7.3, not published) | compiled; receipt `legal_blockers: ["B1", "B4"]`, `release_conditions` as in §3, `distribution_permitted: false` |
-| PR CI | `d5cb664`: 4 checks passed. The review-fix head `9da364c` has its own run attached to PR #68 |
-| Review fixes at `9da364c` | not rebuilt: the shipped record is unchanged. The existing frozen packet's record passes the exact schema 1 check, and a fresh installer preparation from it gives `legal_blockers: ["B1", "B4"]` |
+| PR CI | `d5cb664` and `9da364c`: 4 checks passed each. The final head `a8caced` has its own run attached to PR #68 |
+| Review fixes at `9da364c` and `a8caced` | not rebuilt: the shipped record is unchanged. The existing frozen packet's record passes the exact schema 1 check, and a fresh installer preparation from it gives `legal_blockers: ["B1", "B4"]` |
 
 Evidence: [s4-phase2-receipt.json](evidence/m10-s4/s4-phase2-receipt.json).
 
