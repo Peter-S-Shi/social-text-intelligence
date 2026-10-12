@@ -5,3 +5,6 @@
 *.yml text eol=lf
 *.yaml text eol=lf
 *.json text eol=lf
+# Verbatim upstream licence texts are checked by content hash; keep their bytes.
+distribution/legal/rust-crates/texts/** -text
+distribution/legal/intel-openmp/*.txt -text
