@@ -27,7 +27,7 @@ gate. Actual gate decisions and live execution state are recorded in
 
 ## V2 cycle
 
-**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); M10-E2 blocker closure engineering established (B3 CLOSED by an official CPython runtime and no Microsoft runtime redistribution; B1 and B4 narrowed but OPEN; B5 and B6 OPEN pending owner/legal decisions and the owner toolchain); Core + Optional Components distribution strategy and R1 approved; plan revision 2 awaiting owner agreement (the py3langid statistical model leaves the core installer and is provisioned from upstream on user request, so language detection stays in the release; R2 parked in draft PR #62); distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
+**Current phase: M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); M10-E2 blocker closure engineering established (B3 CLOSED by an official CPython runtime and no Microsoft runtime redistribution; B1 and B4 narrowed but OPEN; B5 and B6 OPEN pending owner/legal decisions and the owner toolchain); Core + Optional Components strategy, R1 and plan revision 2 approved; M10 S1 optional language model COMPLETE on `main` (engineering validation passed on a real frozen build and internal installer; S5 clean-machine and real in-app download tests NOT RUN; the py3langid model is not in the core installer and is downloaded from upstream only on user request; language detection restored once installed; B5 not derived for the installer contents, corpus terms unverified; R2 parked in draft PR #62); distribution gate BLOCKED; M9.0 remains historical approved design, M9.1 is COMPLETE and merged, and M9.2–M9.4 are deferred by owner. M8 owner PASS and M7 CONDITIONAL risks are preserved; later distribution gates remain open.** V2 reopens the project from
 the verified, public V1 `0.10.0` baseline. The V1 lifecycle below is historical
 and unchanged. The Product Scope Gate (decisions in
 [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md)), the Architecture Gate
@@ -452,7 +452,7 @@ Next: owner/legal decisions for B1 and B5, the owner's MSVC toolchain for E4
 (B6), the B4 notice texts and the clean-machine matrix. No binary is
 published.
 
-### Core + Optional Components plan (strategy approved; revision 2 awaiting agreement)
+### Core + Optional Components plan (strategy and revision 2 approved)
 
 The [plan](docs/V2_M10_CORE_OPTIONAL_PLAN.md) sets the distribution strategy:
 
@@ -466,5 +466,7 @@ The [plan](docs/V2_M10_CORE_OPTIONAL_PLAN.md) sets the distribution strategy:
   - Until then, the existing "Language check unavailable" state applies.
 
 B1, B4 and B6 finish through narrow tasks (S2–S4), then the clean-machine matrix
-(S5). Merge order: #61, #63, then the S1 PR. #62 is not merged.
+(S5). #61, #63 and #64 were merged in that order with the owner's approval; #62 stays parked and unmerged.
+
+**S1 complete on `main`** (PR #64, [record](docs/V2_M10_S1_OPTIONAL_LANGUAGE_MODEL.md)). Engineering validation passed on a real frozen build and an internal installer; the S5 clean-machine matrix and the real in-app download are NOT RUN. Next: S2, B4 licence materials. The model is absent from both. Installing the pinned upstream bytes restores detection.
 

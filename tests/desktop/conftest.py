@@ -88,8 +88,11 @@ def make_shell(qapp: Any, tmp_path: Path) -> Iterator[Callable[..., Any]]:
         runner: Any = None,
         platform: Any = None,
         gateway: Any = None,
+        language: Any = None,
     ) -> Shell:
-        shell = Shell(tmp_path, fake, runner or ImmediateRunner(), platform, gateway)
+        shell = Shell(
+            tmp_path, fake, runner or ImmediateRunner(), platform, gateway, language
+        )
         shells.append(shell)
         return shell
 

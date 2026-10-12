@@ -143,6 +143,39 @@ to `.pyi` files). That is safe only while nothing here uses NumPy, which
 It is an **optional extra** (`pip install ".[language]"`, included in `desktop` and
 `dev`). Without it the language check reports *unavailable* rather than answering.
 
+### Windows installer: the model is an optional download (M10 S1)
+
+The Windows installer ships py3langid's code but not its statistical model.
+
+**Where the model can come from.** In the setup and Models windows, a separate
+"Language check model (optional)" section offers the model for download:
+
+- It comes directly from `github.com/adbar/py3langid`, at the commit of the 0.4.0
+  release.
+- It is downloaded only when the user chooses.
+- It goes into the local models folder only after its size and SHA-256 match the
+  pin (4,586,720 bytes, `f4f4a2c3…2963`).
+
+**Analysis never waits for this model.** It is not part of the sentiment and emotion
+readiness that gates analysis.
+
+**How the detector finds its model.** The order is:
+
+1. the package's own model, as in a source install;
+2. else the verified downloaded file;
+3. else *unavailable*.
+
+A file with other bytes is never loaded. Absence is not cached, so a model installed
+during a session is used from the next analysis on.
+
+**The contract above is unchanged.** It covers the states, the threshold 0.5, the
+wording, the exports and the snapshots. With the model installed, detections equal
+the bundled model's on the 74-text evaluation set; a test enforces this. A result's
+`language_detector` records which model source was used.
+
+`sti-check --language-check <models folder>` reports, read-only, whether the check
+can run with that folder's model.
+
 ## Bounded evaluation
 
 `tests/language_eval_set.py` holds 74 invented texts (no real posts or people): 30 clear

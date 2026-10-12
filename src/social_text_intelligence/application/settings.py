@@ -12,6 +12,7 @@ from ..providers.language_py3langid import Py3LangidDetector
 from ..providers.samlowe_emotion import DEFAULT_EMOTION_THRESHOLD
 from ..services import AnalysisService, LazyAnalysisService
 from ..services.batch import DEFAULT_MAX_BATCH_BYTES, DEFAULT_MAX_BATCH_ROWS
+from .language_model import LANGUAGE_MODEL_SHA256, installed_language_model
 
 
 class AnalysisGateway(Protocol):
@@ -51,6 +52,15 @@ def build_analysis_service(settings: AppSettings) -> AnalysisGateway:
     return LazyAnalysisService(lambda: pinned_analysis_service(settings))
 
 
+def language_detector(models_root: Path) -> Py3LangidDetector:
+    """The package's bundled model, else the verified optional model in the folder."""
+
+    return Py3LangidDetector(
+        model_file=installed_language_model(models_root),
+        model_sha256=LANGUAGE_MODEL_SHA256,
+    )
+
+
 def pinned_analysis_service(settings: AppSettings) -> AnalysisService:
     return AnalysisService(
         sentiment_provider=CardiffSentimentProvider(
@@ -61,6 +71,6 @@ def pinned_analysis_service(settings: AppSettings) -> AnalysisService:
             offline=settings.offline,
             threshold=settings.emotion_threshold,
         ),
-        # Local and offline; reports itself unavailable if its package is missing.
-        language_detector=Py3LangidDetector(),
+        # Local and offline; reports itself unavailable without a usable model.
+        language_detector=language_detector(settings.cache_dir),
     )

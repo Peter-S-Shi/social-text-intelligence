@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -30,7 +31,7 @@ def test_lazy_classes_and_language_resources_are_required(broken: str) -> None:
     assert result.failed == (broken,)
 
 
-def complete_module(name: str) -> object:
+def complete_module(name: str, package_dir: Path | None = None) -> object:
     class Identifier:
         @classmethod
         def from_model_file(cls, model: object, *, norm_probs: bool) -> Any:
@@ -41,6 +42,7 @@ def complete_module(name: str) -> object:
         AutoModelForSequenceClassification=lambda: None,
         LanguageIdentifier=Identifier,
         MODEL_FILE="synthetic-resource",
+        __file__=str((package_dir or Path(__file__).parent) / "langid.py"),
     )
 
 
@@ -51,7 +53,8 @@ def test_all_dependencies_verify_without_accessing_user_data() -> None:
         names.append(name)
         return complete_module(name)
 
-    assert verify_runtime(import_module=load).ready
+    result = verify_runtime(import_module=load)
+    assert result.ready
     assert "transformers.models.roberta.modeling_roberta" in names
     assert "PySide6.QtWidgets" in names
 
@@ -69,6 +72,20 @@ def test_packaged_smoke_uses_temporary_app_data(qapp: Any) -> None:
     }
 
 
+def test_an_absent_language_model_never_blocks_start_up() -> None:
+    # The installer leaves the statistical model out; the code must still import.
+    result = verify_runtime(import_module=complete_module)
+    assert result.ready
+    assert result.language_model_bundled is False
+
+
+def test_a_bundled_language_model_is_exercised(tmp_path: Path) -> None:
+    (tmp_path / "synthetic-resource").write_bytes(b"synthetic model placeholder")
+    result = verify_runtime(import_module=lambda name: complete_module(name, tmp_path))
+    assert result.ready
+    assert result.language_model_bundled is True
+
+
 def test_actual_bundled_language_resource_verifies() -> None:
     import importlib
 
@@ -77,4 +94,6 @@ def test_actual_bundled_language_resource_verifies() -> None:
             return importlib.import_module(name)
         return complete_module(name)
 
-    assert verify_runtime(import_module=load).ready
+    result = verify_runtime(import_module=load)
+    assert result.ready
+    assert result.language_model_bundled is True  # source install: bundled model

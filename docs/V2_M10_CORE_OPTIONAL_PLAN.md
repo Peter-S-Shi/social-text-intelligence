@@ -1,6 +1,7 @@
 # V2 M10 — Core + Optional Components distribution plan
 
-Status: **PLAN, revision 2 — awaiting owner agreement before any code.**
+Status: **PLAN, revision 2 — approved by the owner (2026-10-11).** S1 is complete on
+`main` (PR #64); S2–S5 remain.
 Documentation only. Nothing is implemented, built, published or merged by this
 record, and no release gate changes. The owner's overriding goal is unchanged: a
 legally distributable Windows installer, not a source-only portfolio.
@@ -68,10 +69,10 @@ downloaded.
 | Does the existing API load an external model? | The py3langid code was copied without its `data` folder and imported in isolation. `LanguageIdentifier.from_model_file(<absolute path>, norm_probs=True)` then loaded a separately stored copy | English 0.998, French 0.999, "ok" 0.014 (below the 0.5 threshold, so *undetermined*). A missing file raises `FileNotFoundError`, which the adapter already maps to *unavailable* |
 | Safety of the format | `modelio.load_model` reads LZMA plus `np.load(allow_pickle=False)`; no code is executed from the file | — |
 
-**Still to confirm:** whether a full download through the endpoint reproduces the
-pinned SHA-256. That is the first test of S1 and needs owner approval for a single
-download of about 4.6 MB. Until it passes, the HEAD response and the matching git
-blob SHA-1 are strong evidence, not proof.
+**Confirmed in S1:** with the owner's approval, one full download through the
+endpoint reproduced the pinned 4,586,720 bytes and SHA-256
+([S1 record](V2_M10_S1_OPTIONAL_LANGUAGE_MODEL.md)). The feasibility rows above are
+kept as recorded before that download.
 
 ### 3.2 Release path (O1 + O2 together)
 
@@ -158,7 +159,7 @@ Q3 is not dropped silently, and no alternative dependency research starts.
 
 | Step | Change | Files | Tests and evidence | CI |
 | --- | --- | --- | --- | --- |
-| **S1 — optional language model (O1 + O2)** | Frozen spec: ship py3langid code, exclude `data/model.npz.xz`. Adapter resolution order (§3.2). The preflight treats the language model as optional and reports its availability. A provisioning entry for the language model, separate from the analysis readiness gate. An opt-in UI action with the upstream source named. B5 derived only when the model file is in the bundle | `providers/language_py3langid.py`, `desktop/packaging.py`, the provisioning contract, store and transport (a generic pinned-URL entry beside the Hugging Face one), the desktop provisioning UI, `tools/m10/sti_desktop.spec`, `tools/m10/compliance.py`, notices, `docs/LANGUAGE_DETECTION.md` | Unit tests: resolution order; a bad hash is never loaded; absent model gives *unavailable*; provisioning success, failure and cancel; analysis is not gated by the language model; the existing language-warning suites unchanged. One approved real download reproduces the pinned SHA-256. Rebuild the frozen bundle: no model file in it; `--verify-runtime` and `--smoke` exit 0; *unavailable* before provisioning; after provisioning, the 74-text evaluation gives the same results as source mode; the packet derives B1 and B4 only | Yes (code) |
+| **S1 — optional language model (O1 + O2)** — implemented, see [S1 record](V2_M10_S1_OPTIONAL_LANGUAGE_MODEL.md) | Frozen spec: ship py3langid code, exclude `data/model.npz.xz`. Adapter resolution order (§3.2). The preflight treats the language model as optional and reports its availability. A provisioning entry for the language model, separate from the analysis readiness gate. An opt-in UI action with the upstream source named. B5 derived only when the model file is in the bundle | `providers/language_py3langid.py`, `desktop/packaging.py`, the provisioning contract, store and transport (a generic pinned-URL entry beside the Hugging Face one), the desktop provisioning UI, `tools/m10/sti_desktop.spec`, `tools/m10/compliance.py`, notices, `docs/LANGUAGE_DETECTION.md` | Unit tests: resolution order; a bad hash is never loaded; absent model gives *unavailable*; provisioning success, failure and cancel; analysis is not gated by the language model; the existing language-warning suites unchanged. One approved real download reproduces the pinned SHA-256. Rebuild the frozen bundle: no model file in it; `--verify-runtime` and `--smoke` exit 0; *unavailable* before provisioning; after provisioning, the 74-text evaluation gives the same results as source mode; the packet derives B1 and B4 only | Yes (code) |
 | S2 — B4 notices | Add the crate licence texts and the Intel OpenMP licence to the packet; narrow the B4 derivation | `tools/m10/compliance.py`, `distribution/`, records | Packet test; rebuild | Yes |
 | S3 — B6 E4 run | No code change expected | Receipt and records | E4 receipt; frozen checks on the modified bundle | Docs-only: no |
 | S4 — B1 closure | Record the owner/legal position; the packet derives B1 from it | `tools/m10/compliance.py`, records | Packet test | Yes |
@@ -166,8 +167,8 @@ Q3 is not dropped silently, and no alternative dependency research starts.
 
 **Order:**
 
-- S1 starts once the owner agrees to this revision, approving the single model
-  download with it.
+- S1 ran after the owner agreed to this revision and approved the single model
+  download; it is complete on `main`.
 - S2 needs download approval, S3 the toolchain, S4 the B1 decision, and S5 a VM.
 
 Lifecycle records are updated with each step. Documentation-only commits use
@@ -177,12 +178,13 @@ Lifecycle records are updated with each step. Documentation-only commits use
 
 | PR | Base | Content | Merge |
 | --- | --- | --- | --- |
-| #61 | `main` | M10-E2 blocker-closure engineering | **First**, after owner approval |
-| #63 | `milestone/m10-e2-blocker-closure` (#61) | This plan (docs only) | **Second.** Retarget to `main` after #61 merges, then merge |
-| S1 implementation (new) | this plan's branch (#63) | Optional language model | **Third.** Retarget to `main` after #63 merges |
+| #61 | `main` | M10-E2 blocker-closure engineering | **Merged first** (merge commit `bdf57dc`) |
+| #63 | `milestone/m10-e2-blocker-closure` (#61) | This plan (docs only) | **Merged second**, after retargeting to `main` (merge commit `d50f05d`) |
+| #64 | this plan's branch (#63) | S1 optional language model | **Merged third**, after retargeting to `main` |
 | #62 | `milestone/m10-e2-blocker-closure` (#61) | Parked R2 | **Not merged.** It stays draft; if a requirement ever reopens it, rebase it onto `main` first |
 
-No PR is merged without owner approval.
+The owner approved this sequence on 2026-10-11; merge commits keep the stacked
+ancestry. Any further merge needs separate owner approval.
 
 ## 8. Not done by this plan
 

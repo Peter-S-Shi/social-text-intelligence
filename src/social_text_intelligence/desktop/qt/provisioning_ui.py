@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from PySide6.QtCore import QObject, Qt
+from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 from ..controller import Activity, ControllerState, ProvisioningController
 from ..formatting import format_bytes
 from ..gate import AnalysisAvailability, AnalysisGate
+from ..language_model_view import LanguageModelView, build_language_model_view
 from ..panel import (
     ActionId,
     ActionView,
@@ -50,6 +51,64 @@ HERO_OFFLINE = (
 )
 
 
+class LanguageModelSection(QWidget):
+    """The optional language model, below the required ones; it never gates analysis."""
+
+    action_requested = Signal(object)
+
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 0, 24, 8)
+        self.card = frame("card")
+        self.card.setObjectName("language-model-card")
+        card_layout = QVBoxLayout(self.card)
+        self.title = label(role="title")
+        self.chip = label()
+        self.sentence = label()
+        self.source = label(role="muted")
+        self.action_row = ActionRow()
+        self.progress = ProgressBlock()
+        self.report = ReportBox()
+        add_all(
+            card_layout,
+            self.title,
+            self.chip,
+            self.sentence,
+            self.source,
+            self.progress,
+            self.report,
+            self.action_row,
+        )
+        layout.addWidget(self.card)
+        self.action_row.triggered.connect(self.action_requested.emit)
+        self.report.triggered.connect(self.action_requested.emit)
+        self.progress.stop_requested.connect(
+            lambda: self.action_requested.emit(ActionView(ActionId.STOP, "Stop"))
+        )
+
+    def show_view(self, view: LanguageModelView) -> None:
+        self.title.setText(view.title)
+        self.chip.setText(view.chip)
+        self.sentence.setText(view.sentence)
+        self.source.setText(view.source)
+        self.card.setAccessibleName(view.accessible_name)
+        self.action_row.set_actions(view.actions)
+        self.action_row.setVisible(bool(view.actions))
+        if view.progress is not None:
+            self.progress.setVisible(True)
+            self.progress.show_progress(view.progress)
+        else:
+            self.progress.setVisible(False)
+            self.progress.reset()
+        if view.report is not None:
+            self.report.setVisible(True)
+            self.report.show_report(view.report)
+        else:
+            self.report.setVisible(False)
+            self.report.clear()
+
+
 class PanelDialog(QDialog):
     """A window that hosts the provisioning panel plus one closing button.
 
@@ -66,14 +125,18 @@ class PanelDialog(QDialog):
         self.setMinimumSize(1000 if hero else 640, 560)
         layout = QVBoxLayout(self)
         self.panel = ProvisioningPanel()
+        self.language = LanguageModelSection()
+        column = QVBoxLayout()
+        column.addWidget(self.panel, 1)
+        column.addWidget(self.language)
         if hero:
             split = QHBoxLayout()
             split.setSpacing(0)
             split.addWidget(self._hero(), 5)
-            split.addWidget(self.panel, 6)
+            split.addLayout(column, 6)
             layout.addLayout(split, 1)
         else:
-            layout.addWidget(self.panel, 1)
+            layout.addLayout(column, 1)
         row = QHBoxLayout()
         row.addStretch(1)
         self.close_button = QPushButton("Close")
@@ -205,9 +268,11 @@ class ProvisioningUi(QObject):
         platform: DesktopPlatform,
         parent_window: QWidget,
         notify: Callable[[str], None],
+        language: ProvisioningController | None = None,
     ) -> None:
         super().__init__(parent_window)
         self.controller = controller
+        self.language = language
         self.gate = gate
         self._models_root = models_root
         self.platform = platform
@@ -221,8 +286,37 @@ class ProvisioningUi(QObject):
         self.folder_dialog = FolderDialog(self, parent_window)
         self.folder_dialog.setObjectName("folder-dialog")
         self._notify = notify
+        for dialog in (self.setup_dialog, self.models_dialog):
+            dialog.language.action_requested.connect(self.handle_language)
+            dialog.language.setVisible(language is not None)
         controller.subscribe(self.render)
         self.render(controller.state)
+        if language is not None:
+            language.subscribe(self.render_language)
+            self.render_language(language.state)
+
+    def render_language(self, state: ControllerState) -> None:
+        view = build_language_model_view(state)
+        for dialog in (self.setup_dialog, self.models_dialog):
+            dialog.language.show_view(view)
+
+    def handle_language(self, action: ActionView) -> None:
+        language = self.language
+        if language is None:
+            return
+        match action.action:
+            case ActionId.DOWNLOAD:
+                language.download(action.keys)
+            case ActionId.STOP:
+                language.stop()
+            case ActionId.DISCARD:
+                language.discard(action.keys)
+            case ActionId.VERIFY:
+                language.verify()
+            case ActionId.RETRY:
+                language.retry()
+            case ActionId.DISMISS:
+                language.dismiss_report()
 
     # -- rendering ----------------------------------------------------------
 

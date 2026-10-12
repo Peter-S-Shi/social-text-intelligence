@@ -18,9 +18,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import BinaryIO
 
-from ..application.exclusion import MODELS_SCOPE, ProcessLocks
+from ..application.exclusion import LANGUAGE_MODEL_SCOPE, MODELS_SCOPE, ProcessLocks
 from ..application.model_provisioning import (
     APPROVED_MODELS,
+    LANGUAGE_MODEL,
     CancelCheck,
     FolderFinding,
     FolderInspection,
@@ -139,8 +140,10 @@ class LocalModelProvisioner:
         transport: DownloadTransport,
         manifest: Sequence[ModelSpec] = APPROVED_MODELS,
         process_locks: ProcessLocks | None = None,
+        lock_scope: str = MODELS_SCOPE,
     ) -> None:
         self._root = models_root
+        self._lock_scope = lock_scope
         self._transport = transport
         self._manifest = tuple(manifest)
         self._busy = threading.Lock()
@@ -164,7 +167,7 @@ class LocalModelProvisioner:
             held = None
             if self._process_locks is not None:
                 try:
-                    held = self._process_locks.try_acquire(MODELS_SCOPE)
+                    held = self._process_locks.try_acquire(self._lock_scope)
                 except OSError:
                     raise ModelProvisioningError("storage_failed") from None
                 if held is None:
@@ -349,7 +352,11 @@ class LocalModelProvisioner:
         progress: _Progress,
         cancelled: CancelCheck,
     ) -> None:
-        url = pinned_file_url(spec.model_id, spec.revision, item.name)
+        url = (
+            f"{spec.download_base}/{item.name}"
+            if spec.download_base is not None
+            else pinned_file_url(spec.model_id, spec.revision, item.name)
+        )
         try:
             part.parent.mkdir(parents=True, exist_ok=True)
             with self._transport.open(url, start=start) as stream:
@@ -512,6 +519,20 @@ def local_model_provisioner(locations: AppDataLocations) -> LocalModelProvisione
         models_root=locations.models_dir,
         transport=UrllibDownloadTransport(),
         process_locks=FileProcessLocks(locations.locks_dir),
+    )
+
+
+def local_language_model_provisioner(
+    locations: AppDataLocations,
+) -> LocalModelProvisioner:
+    """The optional language model: same folder and checks, separate operations."""
+
+    return LocalModelProvisioner(
+        models_root=locations.models_dir,
+        transport=UrllibDownloadTransport(),
+        manifest=(LANGUAGE_MODEL,),
+        process_locks=FileProcessLocks(locations.locks_dir),
+        lock_scope=LANGUAGE_MODEL_SCOPE,
     )
 
 

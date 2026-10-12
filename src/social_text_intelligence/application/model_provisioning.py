@@ -21,6 +21,15 @@ from ..providers import (
     MODEL_REVISION,
 )
 from ..services import AnalysisService, LazyAnalysisService
+from .language_model import (
+    LANGUAGE_MODEL_FILE,
+    LANGUAGE_MODEL_ID,
+    LANGUAGE_MODEL_KEY,
+    LANGUAGE_MODEL_REVISION,
+    LANGUAGE_MODEL_SHA256,
+    LANGUAGE_MODEL_SIZE,
+    LANGUAGE_MODEL_URL_BASE,
+)
 from .settings import AnalysisGateway, AppSettings, pinned_analysis_service
 
 
@@ -40,6 +49,9 @@ class ModelSpec:
     revision: str
     license: str
     files: tuple[ModelFile, ...]
+    # None: Hugging Face at the pinned revision. Otherwise an immutable HTTPS
+    # folder URL holding the same files (the optional language model, M10 S1).
+    download_base: str | None = None
 
     @property
     def total_bytes(self) -> int:
@@ -123,6 +135,17 @@ APPROVED_MODELS: tuple[ModelSpec, ...] = (
             ),
         ),
     ),
+)
+
+
+# Optional and outside APPROVED_MODELS: analysis readiness never depends on it.
+LANGUAGE_MODEL = ModelSpec(
+    key=LANGUAGE_MODEL_KEY,
+    model_id=LANGUAGE_MODEL_ID,
+    revision=LANGUAGE_MODEL_REVISION,
+    license="BSD-3-Clause (package); training-corpus terms not verified",
+    files=(ModelFile(LANGUAGE_MODEL_FILE, LANGUAGE_MODEL_SIZE, LANGUAGE_MODEL_SHA256),),
+    download_base=LANGUAGE_MODEL_URL_BASE,
 )
 
 

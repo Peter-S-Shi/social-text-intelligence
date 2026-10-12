@@ -386,6 +386,25 @@ def test_m10e2_closes_only_evidenced_blockers_and_keeps_gates() -> None:
         assert data["distribution_permitted"] is False
 
 
+
+def test_m10_s1_record_keeps_the_b5_claim_narrow() -> None:
+    record = (ROOT / "docs/V2_M10_S1_OPTIONAL_LANGUAGE_MODEL.md").read_text(
+        encoding="utf-8"
+    )
+    receipt = json.loads(
+        (ROOT / "docs/evidence/m10-s1/s1-frozen-receipt.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "Nothing here establishes that the training-corpus terms are" in record
+    assert receipt["frozen"]["model_files_in_bundle"] == []
+    assert receipt["frozen"]["packet_blockers"] == ["B1:", "B4:"]
+    assert receipt["frozen"]["packet_language_model"]["training_corpus_terms"] == (
+        "not verified"
+    )
+    assert receipt["installer"]["payload_model_files"] == []
+    assert receipt["distribution_permitted"] is False
+
 def test_m10d_dossier_stratifies_readiness_and_leaves_release_pending() -> None:
     status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
     dossier = (

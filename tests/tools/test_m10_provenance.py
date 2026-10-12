@@ -292,6 +292,41 @@ def test_blockers_narrow_only_with_evidence_and_never_grant_permission() -> None
     assert [item[:3] for item in verified] == ["B1:", "B4:", "B5:"]
 
 
+def test_b5_is_derived_only_when_the_language_model_is_bundled(tmp_path: Path) -> None:
+    compliance = load()
+    evidence = dict(
+        software_renderer=False, microsoft_runtime=False, python_runtime_verified=True
+    )
+    shipped = compliance.distribution_blockers(
+        {"qt_libraries_verified": True}, **evidence, language_model_bundled=True
+    )
+    excluded = compliance.distribution_blockers(
+        {"qt_libraries_verified": True}, **evidence, language_model_bundled=False
+    )
+    assert compliance.B5 in shipped
+    assert [item[:3] for item in excluded] == ["B1:", "B4:"]
+    # Fail closed: a caller that does not say is treated as shipping the model.
+    assert compliance.B5 in compliance.distribution_blockers(
+        {"qt_libraries_verified": True}, **evidence
+    )
+    status = compliance.language_model_status(tmp_path)
+    assert status["bundled"] is False
+    assert status["training_corpus_terms"] == "not verified"
+    model = tmp_path / "_internal/py3langid/data/model.npz.xz"
+    model.parent.mkdir(parents=True)
+    model.write_bytes(b"synthetic model")
+    status = compliance.language_model_status(tmp_path)
+    assert status["bundled"] is True
+    assert status["files"] == ["_internal/py3langid/data/model.npz.xz"]
+
+
+def test_spec_ships_py3langid_code_without_its_model() -> None:
+    spec = (ROOT / "tools/m10/sti_desktop.spec").read_text(encoding="utf-8")
+    assert "collect_data_files" not in spec
+    assert '"py3langid.langid"' in spec  # the code and its interface stay
+    assert '"py3langid",' in spec  # metadata stays, for the detector version
+
+
 def test_bundled_cpython_must_be_the_pinned_official_runtime(tmp_path: Path) -> None:
     compliance = load()
     bundle = tmp_path / "bundle"
