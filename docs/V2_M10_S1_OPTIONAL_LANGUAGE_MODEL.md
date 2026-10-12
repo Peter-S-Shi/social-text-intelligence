@@ -1,9 +1,16 @@
 # V2 M10 S1 — Optional language model (O1 + O2)
 
-Status: **S1 implemented and verified on a real frozen build and a compiled
-internal installer.** Binary distribution remains **BLOCKED**: B1 and B4 are still
-derived, and B6 and the clean-machine matrix are open. `distribution_permitted`
-stays false. Nothing was published or merged.
+Status: **S1 COMPLETE on `main`** (PR #64, merged after #61 and #63 with the
+owner's approval, 2026-10-11).
+
+- **Passed:** engineering validation on a real frozen build and a compiled internal
+  installer (§3).
+- **NOT RUN:** the S5 clean-machine matrix and the real in-app network download of
+  the model (§5).
+
+Binary distribution remains **BLOCKED**: B1 and B4 are still derived, and B6 and the
+clean-machine matrix are open. `distribution_permitted` stays false. Nothing was
+published.
 
 Plan: [Core + Optional Components plan, revision 2](V2_M10_CORE_OPTIONAL_PLAN.md)
 §3.2 and §6 (S1), approved by the owner on 2026-10-11.
