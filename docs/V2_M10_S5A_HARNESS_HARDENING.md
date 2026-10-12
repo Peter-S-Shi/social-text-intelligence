@@ -1,8 +1,9 @@
 # V2 M10 S5-A — Clean-machine harness hardening (H1–H3)
 
-Status: **COMPLETE on `main` (PR #70).** The harness is hardened, but it has
-**not been run**: no S5 clean-machine stage has been executed with it. S5 is
-not complete, and no C01–C16 item changes status.
+Status: **COMPLETE on `main` (PR #70).** At the time of this PR the harness
+had not been run. It has since been run in S5 Stages A and B, with a later
+junction-cleanup fix (§5). The S5 verdict is NOT DETERMINED: see the
+[S5 completion record](V2_M10_S5_COMPLETION_RECORD.md).
 
 - B1 and B4 stay OPEN.
 - B6 stays closed only on its QtCore-only criterion.

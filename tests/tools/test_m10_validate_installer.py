@@ -345,7 +345,7 @@ def test_the_runtime_threshold_matches_the_installer() -> None:
     )
 
 
-JUNCTION = r"""
+JUNCTION_DRIVER = r"""
 param([string]$Harness, [string]$Case, [string]$Root)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -397,7 +397,7 @@ needs_windows_powershell = pytest.mark.skipif(
 def remove_junction(case: str, tmp_path: Path) -> dict[str, Any]:
     assert SHELL is not None
     driver = tmp_path / "junction.ps1"
-    driver.write_text(JUNCTION, encoding="utf-8")
+    driver.write_text(JUNCTION_DRIVER, encoding="utf-8")
     root = tmp_path / "fixture"
     root.mkdir()
     result = subprocess.run(

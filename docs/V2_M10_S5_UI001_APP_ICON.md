@@ -90,6 +90,10 @@ not published.
 
 ## 5. Owner Windows check (pending)
 
+Update: S5 Stage B took five icon screenshots on a fresh install of candidate
+`a16d559`. They await the owner's visual review (see the
+[S5 completion record](V2_M10_S5_COMPLETION_RECORD.md)).
+
 On a fresh install of a later internal build (none is made by this PR), confirm
 that one icon appears in all four places:
 

@@ -27,13 +27,14 @@ The only code change in this closure is the junction cleanup in
 
 The runner (`Run-S5.ps1`, `StiUia.ps1`, the stage launchers and
 `Create-Marker.cmd`) is acceptance tooling outside the repository and the
-installer payload. It went through three read-only ISO inputs. All hashes below
-were recomputed from the local files during this closure.
+installer payload. It went through three read-only ISO inputs. The hashes below
+were recomputed during this closure from each ISO's contents, read on the
+host.
 
 | Input ISO | ISO SHA-256 | `SHA256SUMS.txt` | `validate_installer.ps1` | Use |
 | --- | --- | --- | --- | --- |
 | Stage 1 frozen package | `9851a7ad11be32e31a38d9c5b273c123fbba1d9d94f414237765f253b5e7364c` | `2628f792…717d` | `b8db1272…3626` (main) | Superseded: its launchers stop on a Restricted script policy |
-| Policy A | `920a0d8bafb8102c8528e93180e23f4aceec7ef57bc56c12fcb8ff6cd3c95cf0` | `9de5c7e7…64f5` | `b8db1272…3626` (main) | Stage A, inferred (§1.1); first Stage B attempt, interrupted |
+| Policy A | `920a0d8bafb8102c8528e93180e23f4aceec7ef57bc56c12fcb8ff6cd3c95cf0` | `9de5c7e7cc1de0d63a2efea3bb8a3d0d21b073a11130a665334ab5a092a764f5` | `b8db1272…3626` (main) | Stage A, inferred (§1.1); first Stage B attempt, interrupted |
 | Policy A + harness fix | `0449d4ee6428ce6c94dc7784fa423c90aa6f9a15ca58812a7753fd11132938a6` | `ff0e5b2d622db32217051c53fb62f885a7c55dd9f0f41aeb84f31db1c2c2bea0` | `15ad4a834949b555f48b9a0afb8c0632eab3862cc4151ef72b48cadea4e10f61` | Stage B rerun (attached to the guest now) |
 
 Between the Stage 1 package and Policy A, the changes were:
@@ -52,8 +53,10 @@ Stage B ran** (`15ad4a83…`). Before it, main held `b8db1272…3626`.
 
 ### 1.1 Stage and snapshot facts
 
-The guest was not touched. These facts come from read-only host metadata (the
-VM's snapshot list and file times):
+The guest was not touched. Snapshot presence, parentage and times come from
+read-only host metadata (the VM's snapshot list and file times). The VC++
+versions in the first column come from the owner's handoff and the snapshot
+descriptions:
 
 | Snapshot | Present | Note |
 | --- | --- | --- |
@@ -82,7 +85,9 @@ The raw evidence is the following, all inside the guest:
   `summary.json`, `uia-log.txt`, copies of the observations, the screenshots and
   `EVIDENCE-SHA256.txt`.
 
-No exported or privacy-reviewed copy exists on the host. Reading the evidence
+No exported or privacy-reviewed copy of the Stage A/B evidence exists on the
+host. The host transfer area was searched, and its earlier evidence folder holds
+only the S5-NET-002/003 probe results. Reading the evidence
 requires the owner's credentials for the encrypted VM, and a transfer channel
 the isolation settings deliberately block. Neither was pre-authorized, so
 nothing was attempted.
@@ -104,13 +109,13 @@ Columns:
 | ID | Check | Evidence source | Automated observation (owner-reported) | Owner witness | Determination | Gap |
 | --- | --- | --- | --- | --- | --- | --- |
 | H2-A | Missing runtime refused, nothing left behind (Stage A) | Guest `STIValidation-A\observations.json`; runner baseline | `[PASS] baseline` (VC++ 14.40, standard user, offline, no STI namespaces), `[PASS] marker`, `[PASS] H2-A Harness completed`, UI Automation capability PASS | Not recorded | NOT DETERMINED | Exit code, log line and residue values unreviewed |
-| C01 | Verified artifact builds into unsigned installer | Host build and receipt (Stage 1) | Build exit 0; icon check, `--verify-runtime`, `--smoke`, `--license-info` exit 0; receipt and installer hash match | n/a | PASS (host build evidence) | None for the build itself |
+| C01 | Verified artifact builds into unsigned installer | Stage 1 host build log and receipt check (kept privately on the host, not committed) | Build exit 0; icon check, `--verify-runtime`, `--smoke`, `--license-info` exit 0; receipt and installer hash match | n/a | PASS (host build evidence) | None for the build itself |
 | C02 | Fixed per-user path, installed payload hashes | Guest harness; runner reinstall payload check | `harness-present` PASS; `reinstall` PASS | Not recorded | NOT DETERMINED | Observations unreviewed |
 | C03 | Start Menu target, working directory, licence link | Guest harness | `harness-present` PASS | Not recorded | NOT DETERMINED | Observations unreviewed |
 | C04 | First native window and safe close | Guest harness | `harness-present` PASS | Not recorded | NOT DETERMINED | Observations unreviewed |
 | C05 | Native dependency readiness without models | Guest harness (`--verify-runtime`) | `harness-present` PASS | n/a | NOT DETERMINED | Observations unreviewed |
 | C06 | No model weights; synthetic project reopens | Guest harness (`--smoke`) | `harness-present` PASS | n/a | NOT DETERMINED | Observations unreviewed |
-| C07 | Missing-model analysis blocked; no download started (limited definition) | Runner `C07` entry in `summary.json`, model listing, `uia-log.txt` | `C07` PASS | **Pending:** the owner watched the run, but nothing is signed | NOT DETERMINED | Results and owner signature |
+| C07 | Missing-model analysis blocked; no download started (limited definition) | Runner `C07` entry in `summary.json`, model listing, `uia-log.txt` | `C07` PASS | **Pending:** the owner reports watching the run; nothing is signed | NOT DETERMINED | Results and owner signature |
 | C08 | Licence material present and removed on uninstall | Guest harness | `harness-present` PASS; `uninstall` PASS | n/a | NOT DETERMINED | Observations unreviewed |
 | C09 | Reparse redirect refuses uninstall; external sentinel kept | Guest harness `15ad4a83…` | First attempt interrupted at junction cleanup (§4); rerun `harness-present` PASS | n/a | NOT DETERMINED | Observations unreviewed |
 | C10 | Normal uninstall, both shortcuts removed | Guest harness; runner guarded uninstall | `uninstall` PASS ("0 payload files left") | n/a | NOT DETERMINED | Results unreviewed |
@@ -174,7 +179,15 @@ deletion.
 - **Time-of-check gap.** A gap exists between verification and removal. It is
   accepted for a disposable, single-operator VM.
 - **Add-Type.** It needs the normal .NET compiler and is unavailable in
-  Constrained Language Mode, where the harness would fail closed.
+  Constrained Language Mode (for example under WDAC). There it throws after
+  verification and before removal, so nothing is removed, but the harness
+  cannot complete in that mode.
+- **Masked error.** If the verification, `Add-Type` or `RemoveDirectoryW` fails
+  inside `finally`, its error replaces any error from the `try` block. The
+  install is left with the junction at `legal` and the original folder at
+  `legal-m10c-held`. Nothing is lost, but the root cause must be read from the
+  log. This was not changed, so that the repository harness stays
+  byte-identical to the one Stage B ran.
 
 **Tests added** (`tests/tools/test_m10_validate_installer.py`): these run the
 helper as defined in the harness, extracted from its syntax tree, on Windows
@@ -195,6 +208,9 @@ The junction tests are Windows-only and skip on the Linux CI.
 M10-C says "there is no automatic logon command or execution-policy bypass".
 That wording is unchanged.
 
+**Reason.** The guest's script policy blocked the reviewed runner, and the
+Stage 1 launchers correctly stopped for an owner decision.
+
 **Exception granted.** For this S5 run only, the owner authorized one bounded
 exception (recorded privately on the host):
 
@@ -211,8 +227,17 @@ exception (recorded privately on the host):
 - removing the human-witness requirement.
 
 **Trust anchor.** The launcher cannot authenticate itself through a manifest
-that it executes. Trust comes from the independent ISO hash the owner checks
-(§1).
+that it executes. Trust comes from the independent ISO hash (§1), which the
+owner is expected to check before running anything.
+
+**Versions under the exception.**
+
+- Candidate: `a16d559`, with installer `aa43ca1d…1d68`.
+- Policy A launchers: `Stage-A.cmd` `7ae07a2985dc5251b84ec736b20e4a27d99a803ed98de52cd89fedac76b9f675`
+  and `Stage-B.cmd` `b95904e4c9ddd4032426134cb81cef1362b56060bbb086c2c9da2f449e1ff386`.
+- Harness-fix launchers: `Stage-A.cmd` `978bee8060208e821974cdd74671e2e85c05395d401a00a3296f8907fd97841a`
+  and `Stage-B.cmd` `c47f93af1268dbee35691f737dc8ac0a9de78bd66c950496930c35c929781ca0`.
+- Runner: `Run-S5.ps1` `9e0c8ba1…b8470` in both inputs.
 
 **Governance.** M10-C keeps its rule. A future clean-machine run needs its own
 owner authorization, and this exception does not carry over.
@@ -224,8 +249,9 @@ owner authorization, and this exception does not carry over.
 **Engineering closure is complete:**
 
 - the candidate is pinned;
-- the formal harness matches what ran;
-- the stages ran end to end on isolated snapshots;
+- the formal harness matches what Stage B ran (Stage A ran main's harness,
+  inferred from timestamps, §1.1);
+- the owner reports that both stages ran end to end on isolated snapshots;
 - the owner reported no failing assertion.
 
 **Conditions before S5 is recorded as PASS:**
@@ -259,8 +285,11 @@ Do this once, from the existing `S5-StageB-Evidence` snapshot and then the
 needed.
 
 1. Copy these items into one new, empty, private host folder:
-   - `C:\STIValidation-X\observations.json`;
-   - the whole `C:\STIEvidence-X` folder.
+   - the whole `C:\STIEvidence-X` folder, which already holds copies of the
+     observations, plus `baseline.json`, `summary.json`, `uia-log.txt`, the
+     screenshots and `EVIDENCE-SHA256.txt`;
+   - the whole `C:\STIValidation-X` folder, which holds the original
+     `observations.json` and the installer and harness logs.
 2. Use a channel the owner approves, for example a temporary shared folder that
    points only at that empty folder and is removed afterwards. Do not enable a
    broad writable share.
