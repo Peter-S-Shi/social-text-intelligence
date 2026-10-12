@@ -1,11 +1,12 @@
 # V2 M10 S2 — B4 licence materials
 
-Status: **S2 engineering complete; B4 stays OPEN, narrowed to one owner/legal
-item: Intel OpenMP redistribution terms.**
+Status: **S2 COMPLETE on `main` (PR #65).** The independent review accepted the
+engineering. **B4 stays OPEN**, narrowed to one item: Intel OpenMP redistribution
+authorization, which is **not approved**.
 - The packet now carries licence texts for every Rust crate in the pinned source
   superset, plus Intel's licence for the shipped OpenMP DLLs.
 - Binary distribution remains **BLOCKED**, and `distribution_permitted` stays
-  false. Nothing was published or merged.
+  false. Nothing was published; PR #65 merges only with owner approval.
 
 Plan: [Core + Optional Components plan, revision 2](V2_M10_CORE_OPTIONAL_PLAN.md)
 §5 and §6 (S2). The owner approved it on 2026-10-11, with metadata lookups, the
@@ -80,6 +81,23 @@ B4 cannot close without them, so they are included.
 
   As with R2, an independently downloadable package is not assumed to move these
   obligations onto users.
+- **Review position (2026-10-11).** The official PyPI wheel does not by itself
+  confer redistribution rights. The owner accepting the indemnity would not
+  substitute for a verified Redistributables designation.
+- **One official-source check (2026-10-11): unresolved.** Intel's page
+  "Intel® oneAPI DPC++/C++ and Fortran Compilers Runtime Libraries by Version"
+  (article 662585, updated 2025-05-01) is the official index of redistributable
+  compiler runtimes.
+  - Its newest Windows entry is 2025.2.1. It has no 2026.1 entry.
+  - It does not name `libiomp5md.dll`, `libiompstubs5md.dll` or OpenMP, and does
+    not list the files inside any package.
+  - It states no redistribution terms, and does not mention PyPI or
+    `intel-openmp`.
+
+  No further Intel investigation, alternative packaging or PyTorch rebuild was
+  started. The unresolved item is precise: no official Intel source has been
+  found that designates the exact `intel-openmp` 2026.1.0 Windows DLLs as
+  Redistributables, or that states their downstream terms.
 
 ## 4. PyTorch static third-party code
 
@@ -110,7 +128,7 @@ Other blockers are unchanged.
 | `--verify-runtime` / `--smoke` / `--license-info` | exit 0; `distribution_permitted: false` |
 | Opt-in frozen pytest (`STI_M10_BUNDLE`) | 2 passed |
 | Local full suite | 1,262 passed, 6 opt-in skipped; Ruff and strict MyPy pass |
-| PR CI | run on implementation head `fbb6e13`, attached to PR #65 |
+| PR CI | implementation head `fbb6e13`: 4 checks passed |
 | Installer | not rebuilt; this change touches only the packet, which the installer copies |
 | Clean-machine matrix | NOT RUN (S5) |
 
@@ -118,8 +136,9 @@ Evidence: [s2-packet-receipt.json](evidence/m10-s2/s2-packet-receipt.json).
 
 ## 7. Still open
 
-- **B4:** an owner/legal decision on Intel OpenMP redistribution, either
-  accepting the four conditions above, with end-user terms that cover them, or
-  choosing another route.
+- **B4:** a verified Redistributables designation for the exact Intel OpenMP
+  2026.1.0 Windows DLLs, from Intel or legal counsel, and then an owner/legal
+  decision on the conditions above with end-user terms that cover them. Otherwise
+  another route needs its own approval.
 - B1 (S4), B6 (S3), and the clean-machine matrix (S5), as before. B5's
   training-corpus terms stay unverified. R2 stays parked in draft PR #62.
