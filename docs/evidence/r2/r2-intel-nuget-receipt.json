@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "milestone": "V2 Release-2 distribution compliance closure (engineering)",
+  "pull_request": 74,
+  "application_sha": "ec824bab0a058fb03a038a9663a67bad6cbdffc5",
+  "intel_package": {
+    "id": "intelopenmp.redist.win",
+    "version": "2026.1.0.239",
+    "bytes": 2163555,
+    "sha512_base64_matches_nuget_catalog": true,
+    "sha256": "2a0f9fcdb51d8ac9fa535b67f013fd9341338355679261a39b946ef5e3f399fe",
+    "author_signature": {
+      "signer": "Intel Corporation (EV code signing, Sectigo Public Code Signing CA EV R36)",
+      "certificate_sha256": "69fce007b873e429769dcd7dc7c849328fc03a417f404f9f905c1407d08cb5fa",
+      "cms_signature_valid": true,
+      "signed_package_hash_matches_recomputed": true,
+      "chain_to_windows_trusted_root": true,
+      "revocation_checked": false
+    },
+    "repository_countersignature_cryptography_verified": false,
+    "dlls_byte_identical_to_frozen_a16d559_and_pytorch_copies": true,
+    "license": "Intel Simplified Software License (Version October 2022)"
+  },
+  "frozen_build": {
+    "python": "3.13.16",
+    "files": 5364,
+    "intel_openmp_from_nuget": [
+      "_internal/torch/lib/libiomp5md.dll",
+      "_internal/torch/lib/libiompstubs5md.dll"
+    ],
+    "packet": {
+      "materials_valid": true,
+      "distribution_permitted": false,
+      "blockers": ["B1", "B4"],
+      "b4_remaining": [
+        "Intel OpenMP (libiomp5md/libiompstubs5md) redistribution from Intel's author-signed NuGet package under the Intel Simplified Software License needs legal confirmation (channel, notice content, D4 scope, high-risk-use clause)"
+      ]
+    },
+    "frozen_checks": {
+      "--verify-runtime": 0,
+      "--smoke": 0,
+      "--license-info": 0,
+      "opt_in_frozen_pytest": "3 passed"
+    }
+  },
+  "installer": {
+    "compiled": true,
+    "inno_version": "6.7.3",
+    "bytes": 726685457,
+    "sha256": "b1295763a31591bddd7bd848cbeee47facfa243775ad4cdaf16dbbb19bd547ff",
+    "payload_entries": 5366,
+    "legal_blockers": ["B1", "B4"],
+    "distribution_permitted": false,
+    "published": false
+  },
+  "validation": {
+    "local_full_suite": "1394 passed, 7 opt-in skipped (Windows, Python 3.12)",
+    "ruff": "pass",
+    "mypy_strict": "pass"
+  },
+  "not_claimed": [
+    "legal clearance of B1 or B4",
+    "a new clean-machine run",
+    "release or distribution permission"
+  ]
+}

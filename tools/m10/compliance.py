@@ -3,17 +3,20 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import importlib.metadata
+import io
 import json
 import re
 import shutil
 import struct
 import sys
 import tarfile
+import zipfile
 from collections.abc import Sequence
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 @dataclass(frozen=True)
@@ -355,9 +358,12 @@ B4 = (
     "certified by package-level metadata or source-superset notices."
 )
 B4_INTEL = (
-    "Intel OpenMP (libiomp5md/libiompstubs5md) redistribution under the Intel "
-    "End User License Agreement for Developer Tools needs an owner/legal decision"
+    "Intel OpenMP (libiomp5md/libiompstubs5md) redistribution from Intel's "
+    "author-signed NuGet package under the Intel Simplified Software License "
+    "needs legal confirmation (channel, notice content, D4 scope, high-risk-use "
+    "clause)"
 )
+INTEL_LICENSE = "Intel Simplified Software License (Version October 2022)"
 B5 = "B5: py3langid embedded model training-corpus redistribution terms remain open."
 INTEL_FILES = ("libiomp5md.dll", "libiompstubs5md.dll")
 
@@ -583,6 +589,37 @@ def rust_notice_coverage(
     return summary, gaps
 
 
+def intel_package_entries(package: Path, source: dict[str, object]) -> dict[str, bytes]:
+    """The pinned entries of Intel's NuGet package, or an error; nothing is guessed."""
+    if package.is_symlink() or not package.is_file():
+        raise ValueError("The pinned Intel OpenMP NuGet package is missing.")
+    if package.stat().st_size != source["bytes"]:
+        raise ValueError("The Intel OpenMP NuGet package does not match its pin.")
+    data = package.read_bytes()
+    sha512 = base64.b64encode(hashlib.sha512(data).digest()).decode("ascii")
+    if (
+        len(data) != source["bytes"]
+        or hashlib.sha256(data).hexdigest() != source["sha256"]
+        or sha512 != source["sha512_base64"]
+    ):
+        raise ValueError("The Intel OpenMP NuGet package does not match its pin.")
+    entries = source["entries"]
+    assert isinstance(entries, dict)
+    found: dict[str, bytes] = {}
+    # Parse the very bytes that were hashed, not the file a second time.
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        names = [info.filename for info in archive.infolist()]
+        for name, expected in entries.items():
+            member = PurePosixPath(name)
+            if member.is_absolute() or ".." in member.parts or names.count(name) != 1:
+                raise ValueError("A pinned Intel package entry is absent or ambiguous.")
+            content = archive.read(name)
+            if hashlib.sha256(content).hexdigest() != expected:
+                raise ValueError("A pinned Intel package entry has changed.")
+            found[name] = content
+    return found
+
+
 def intel_openmp_status(
     bundle: Path, legal: Path
 ) -> tuple[dict[str, object], list[str]]:
@@ -610,21 +647,55 @@ def intel_openmp_status(
         and digest(legal / "intel-openmp" / licence[key]) == licence[key + "_sha256"]
         for key in ("text", "third_party_notices")
     )
+    source = record.get("source", {})
+    entries = source.get("entries", {})
+    # The licence on record must be the one carried by the pinned NuGet package.
+    nuget = (
+        record.get("schema_version") == 2
+        and source.get("channel") == "nuget"
+        and licence["name"] == INTEL_LICENSE
+        and entries.get("license.txt") == licence["text_sha256"]
+        and licence["third_party_notices_sha256"] in entries.values()
+        and all(
+            entries.get(item["package_entry"]) == item["sha256"]
+            for item in record["files"].values()
+        )
+    )
     gaps = []
     if not matches:
         gaps.append("the bundled Intel OpenMP DLLs differ from the recorded provenance")
     if not texts:
         gaps.append("the Intel OpenMP licence texts are missing or changed")
+    if not nuget:
+        gaps.append("the Intel OpenMP record does not name the pinned NuGet source")
     # Engineering evidence cannot settle the licence's redistribution conditions.
     gaps.append(B4_INTEL)
     return {
         "bundled": True,
         "recorded": True,
         "matches_provenance": matches,
+        "nuget_source_recorded": nuget,
+        "source_package": f"{source.get('package_id')} {source.get('version')}",
         "license": licence["name"],
         "texts_present": texts,
         "redistribution": record["redistribution"]["status"],
     }, gaps
+
+
+def verify_intel_source(bundle: Path, source_dir: Path, legal: Path) -> None:
+    """Bundled Intel DLLs must be the bytes of the pinned, verified NuGet package."""
+    shipped = [bundle / "_internal/torch/lib" / name for name in INTEL_FILES]
+    if not any(path.is_file() for path in shipped):
+        return
+    record = json.loads(
+        (legal / "intel-openmp/provenance.json").read_text(encoding="utf-8")
+    )
+    entries = intel_package_entries(
+        source_dir / record["source"]["filename"], record["source"]
+    )
+    for path, item in record["files"].items():
+        if (bundle / path).read_bytes() != entries[item["package_entry"]]:
+            raise ValueError("A bundled Intel DLL is not the NuGet package's copy.")
 
 
 def verify_python_runtime(
@@ -822,6 +893,7 @@ def assemble(
             target = legal / path.relative_to(project / "distribution/legal")
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, target)
+    verify_intel_source(bundle, source_dir, legal)
     shutil.copyfile(project / "LICENSE", legal / "STI-LICENSE.txt")
     shutil.copyfile(Path(sys.base_prefix) / "LICENSE.txt", legal / "PYTHON-LICENSE.txt")
     mapping = importlib.metadata.packages_distributions()

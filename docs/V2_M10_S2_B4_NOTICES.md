@@ -1,5 +1,10 @@
 # V2 M10 S2 — B4 licence materials
 
+> **Superseded in part by Release-2 (PR #74).** The Intel OpenMP DLLs now ship
+> from Intel's author-signed NuGet package under the Intel Simplified Software
+> License; the Developer Tools EULA route described in §3 is historical. See
+> [the Release-2 record](V2_R2_COMPLIANCE_CLOSURE.md).
+
 Status: **S2 COMPLETE on `main` (PR #65).** The independent review accepted the
 engineering. **B4 stays OPEN**, narrowed to one item: Intel OpenMP redistribution
 authorization, which is **not approved**.

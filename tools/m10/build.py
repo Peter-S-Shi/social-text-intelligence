@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import importlib.metadata
+import importlib.util
 import json
 import os
 import platform
@@ -14,6 +15,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = Path(__file__).resolve().parent
@@ -24,6 +26,9 @@ MICROSOFT_RUNTIME = re.compile(
 )
 VENDORED_RUNTIME = re.compile(r"msvcp140-[0-9a-f]{32}\.dll", re.I)
 EXECUTABLES = ("sti-desktop.exe", "sti-check.exe")
+# The Intel OpenMP DLLs are shipped from Intel's author-signed NuGet package, pinned
+# in this record, not from the copies PyTorch's wheel brings (Release-2, B4).
+INTEL_RECORD = ROOT / "distribution/legal/intel-openmp/provenance.json"
 # truststore verifies every model download (M10 S5-NET-001). Install it with
 # requirements-truststore.txt, which hash-locks the reviewed PyPI wheel; each
 # installed file below must still match that wheel byte for byte.
@@ -234,6 +239,53 @@ def verify_executable_icons(bundle: Path, path: Path = APPLICATION_ICON) -> None
         raise ValueError("The bundle does not ship the approved application icon.")
 
 
+def load_compliance() -> ModuleType:
+    spec = importlib.util.spec_from_file_location(
+        "m10_compliance", CONFIG / "compliance.py"
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def source_intel_openmp(
+    bundle: Path, source_dir: Path, record_path: Path = INTEL_RECORD
+) -> list[dict[str, str]]:
+    """Replace PyTorch's Intel OpenMP DLLs with the pinned NuGet package's copies.
+
+    The package must match its pin, and PyTorch's copies must already be the same
+    build: a different one needs review, so the build stops instead of mixing.
+    """
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    source = record["source"]
+    entries = load_compliance().intel_package_entries(
+        source_dir / source["filename"], source
+    )
+    receipts = []
+    for relative, item in sorted(record["files"].items()):
+        target = bundle / relative
+        if target.is_symlink() or not target.is_file():
+            raise ValueError("PyTorch's Intel OpenMP DLL is absent from the bundle.")
+        if digest(target) != item["sha256"]:
+            raise ValueError(
+                "PyTorch ships a different Intel OpenMP build; review it first."
+            )
+        target.write_bytes(entries[item["package_entry"]])
+        if digest(target) != item["sha256"]:
+            raise ValueError("The NuGet copy of an Intel DLL was not written intact.")
+        receipts.append(
+            {
+                "path": relative,
+                "sha256": item["sha256"],
+                "source": f"{source['package_id']} {source['version']}: "
+                + item["package_entry"],
+            }
+        )
+    return receipts
+
+
 def relink_vendored_runtime(bundle: Path) -> list[dict[str, str]]:
     """Point delvewheel-renamed msvcp140 imports back at the system runtime.
 
@@ -405,6 +457,7 @@ def main() -> int:
         relinked = relink_vendored_runtime(bundle)
         verify_no_microsoft_runtime(bundle)
         verify_executable_icons(bundle)
+        intel_openmp = source_intel_openmp(bundle, args.source_dir)
         subprocess.run(
             [
                 sys.executable,
@@ -441,6 +494,7 @@ def main() -> int:
             )["build"],
             "microsoft_runtime_redistributed": False,
             "relinked_runtime_imports": relinked,
+            "intel_openmp_from_nuget": intel_openmp,
             "models_bundled": False,
             "release_ready": False,
         }
@@ -454,6 +508,7 @@ def main() -> int:
         return 2
     except (
         OSError,
+        KeyError,
         subprocess.CalledProcessError,
         importlib.metadata.PackageNotFoundError,
     ):

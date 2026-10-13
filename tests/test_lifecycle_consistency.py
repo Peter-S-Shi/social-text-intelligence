@@ -464,3 +464,19 @@ def test_release_one_does_not_imply_distribution() -> None:
         assert "distribution gate BLOCKED" in surface, name
         assert "distribution_permitted=true" not in surface, name
         assert "`distribution_permitted` true" not in surface, name
+
+
+def test_release_two_record_keeps_b1_and_b4_open() -> None:
+    record = (ROOT / "docs/V2_R2_COMPLIANCE_CLOSURE.md").read_text(encoding="utf-8")
+    receipt = json.loads(
+        (ROOT / "docs/evidence/r2/r2-intel-nuget-receipt.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "B1 and B4 remain legally OPEN" in record
+    assert "no record in this repository can clear B1 or B4" in record
+    for decision in ("| LD1 |", "| LD2 |", "| LD3 |", "| LD4 |", "| LD5 |", "| LD6 |"):
+        assert decision in record
+    assert receipt["installer"]["distribution_permitted"] is False
+    assert receipt["installer"]["published"] is False
+    assert receipt["frozen_build"]["packet"]["blockers"] == ["B1", "B4"]

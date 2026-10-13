@@ -10,7 +10,11 @@ the selected open-source license grant.
 
 Read `GNU-LGPL-3.0.txt` together with `GNU-GPL-3.0.txt`.
 You may modify the LGPL libraries and reverse engineer this combined work to
-debug those modifications. The onedir package keeps Qt DLLs and plugins separate
+debug those modifications. Intel's terms for its two OpenMP runtime files
+(`libiomp5md.dll`, `libiompstubs5md.dll`) forbid reverse engineering those two
+files only. They do not apply to the Qt libraries and are not intended to limit
+these LGPL rights
+(see `intel-openmp/NOTICE.md`). The onedir package keeps Qt DLLs and plugins separate
 from the executables. See `QT_REPLACEMENT.md` for replacement and installation
 instructions and `SOURCE_ACCESS.md` for source access.
 
