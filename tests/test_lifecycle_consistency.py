@@ -92,7 +92,7 @@ def test_m10c_engineering_does_not_close_acceptance_or_distribution_gates() -> N
             "Next scope is a later M10 engineering gate",
         ):
             assert stale not in surface
-    assert "| M10-C clean-machine acceptance | **NOT DETERMINED**" in status
+    assert "| M10-C clean-machine acceptance | **Evidence reviewed" in status
     assert "B1–B6 remain BLOCKED" in record
     assert "B2 and B3 are closed and B1 and\nB4–B6 remain BLOCKED" in record
     assert "M9.2–M9.4 remain DEFERRED" in record
@@ -424,21 +424,43 @@ def test_m10d_dossier_stratifies_readiness_and_leaves_release_pending() -> None:
     assert (ROOT / "docs" / "V2_M10_D_RELEASE_DOSSIER.md").is_file()
 
 
-def test_m10_s5_record_does_not_accept_unreviewed_guest_evidence() -> None:
-    status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
+def table_rows(text: str, *ids: str) -> dict[str, str]:
+    rows = {}
+    for line in text.splitlines():
+        for row_id in ids:
+            if line.startswith(f"| {row_id} |"):
+                rows[row_id] = line
+    return rows
+
+
+def test_m10_s5_record_keeps_its_evidence_boundaries() -> None:
     record = (ROOT / "docs/V2_M10_S5_COMPLETION_RECORD.md").read_text(
         encoding="utf-8"
     )
-    assert "S5 clean-machine verdict NOT DETERMINED" in record
-    assert "Recommended decision: CONDITIONAL." in record
-    assert "| Release-1 gate decision | _unsigned_ |" in record
-    assert "| C07 witness | _unsigned_ |" in record
+    # Reviewed PASS needs the exported hash chains to have been recomputed.
+    assert "`EVIDENCE-SHA256.txt` entries recomputed and equal" in record
+    # C07 keeps its limited definition and only the owner's reported witness.
     assert "No Cancel interaction is claimed." in record
+    rows = table_rows(record, "C07", "C15", "C16", "Icons")
+    assert "Owner-reported" in rows["C07"]
+    # A formal icon place without visual evidence keeps the icon row from PASS.
+    # The same gap keeps the Release-1 gate from an unconditional PASS.
+    formal = [line for line in record.splitlines() if "| Formal (" in line]
+    assert len(formal) == 4
+    gate = table_rows(record, "Release-1 gate decision")["Release-1 gate decision"]
+    if any("NOT DETERMINED" in line for line in formal):
+        assert "| PASS" not in rows["Icons"]
+        assert "PASS" not in gate
+    # Gates that no evidence here can open.
+    assert "**BLOCKED**" in rows["C15"]
+    assert "| PASS" not in rows["C16"]
     assert "`distribution_permitted` stays false" in record
-    for row in record.splitlines():
-        if row.startswith(("| C02 |", "| C07 |", "| C09 |", "| C14 |", "| H2-A |")):
-            assert "| NOT DETERMINED |" in row, row
-        if row.startswith("| Icons |"):
-            assert "| NEEDS REVIEW |" in row, row
-    assert "| C15 |" in record and "**BLOCKED**" in record
-    assert "verdict NOT DETERMINED; Release-1 gate unsigned" in status
+    assert "permits no product release" in record
+
+
+def test_release_one_does_not_imply_distribution() -> None:
+    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+        surface = (ROOT / name).read_text(encoding="utf-8")
+        assert "distribution gate BLOCKED" in surface, name
+        assert "distribution_permitted=true" not in surface, name
+        assert "`distribution_permitted` true" not in surface, name
