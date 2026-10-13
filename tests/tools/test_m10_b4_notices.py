@@ -126,6 +126,15 @@ def test_rust_coverage_fails_closed(tmp_path: Path) -> None:
     )
 
 
+def test_the_notice_anchor_is_independent_of_the_packet_record() -> None:
+    compliance = load("compliance")
+    record = json.loads((LEGAL / "intel-openmp" / "provenance.json").read_text())
+    assert compliance.INTEL_NOTICE == record["license"]["notice"] == "NOTICE.md"
+    assert record["license"]["notice_sha256"] == compliance.INTEL_NOTICE_SHA256
+    data = (LEGAL / "intel-openmp" / compliance.INTEL_NOTICE).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == compliance.INTEL_NOTICE_SHA256
+
+
 def test_intel_record_pins_the_nuget_package_and_records_the_decisions() -> None:
     record = json.loads((LEGAL / "intel-openmp" / "provenance.json").read_text())
     source = record["source"]
@@ -347,7 +356,17 @@ def test_intel_item_closes_only_on_decisions_for_matching_nuget_copies(
 
 
 @pytest.mark.parametrize(
-    "fault", ["none", "other-package", "no-notice", "changed-notice", "changed-licence"]
+    "fault",
+    [
+        "none",
+        "other-package",
+        "no-notice",
+        "changed-notice",
+        "coordinated-notice-and-hash",
+        "substituted-filename",
+        "substituted-filename-approved-bytes",
+        "changed-licence",
+    ],
 )
 def test_decisions_do_not_cover_another_package_or_missing_notices(
     tmp_path: Path, fault: str
@@ -370,6 +389,27 @@ def test_decisions_do_not_cover_another_package_or_missing_notices(
     if fault == "changed-notice":
         with (legal / "intel-openmp/NOTICE.md").open("ab") as notice:
             notice.write(b" Intel terms also apply to the Qt libraries.")
+    notice_file = legal / "intel-openmp/NOTICE.md"
+    if fault == "coordinated-notice-and-hash":
+        # The notice and the record's own hash are changed together.
+        notice_file.write_bytes(notice_file.read_bytes() + b" Altered.")
+        record["license"]["notice_sha256"] = hashlib.sha256(
+            notice_file.read_bytes()
+        ).hexdigest()
+    if fault == "substituted-filename":
+        # Another file, with its own matching hash, is named as the notice.
+        other = legal / "intel-openmp/OTHER.md"
+        other.write_bytes(b"Another notice.")
+        record["license"]["notice"] = "OTHER.md"
+        record["license"]["notice_sha256"] = hashlib.sha256(
+            other.read_bytes()
+        ).hexdigest()
+    if fault == "substituted-filename-approved-bytes":
+        # The approved bytes under another name still do not satisfy the anchor.
+        other = legal / "intel-openmp/OTHER.md"
+        other.write_bytes(notice_file.read_bytes())
+        notice_file.unlink()
+        record["license"]["notice"] = "OTHER.md"
     if fault == "changed-licence":
         (legal / "intel-openmp/INTEL-SIMPLIFIED-SOFTWARE-LICENSE.txt").write_bytes(b"x")
     path.write_text(json.dumps(record))

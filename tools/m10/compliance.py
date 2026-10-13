@@ -364,6 +364,9 @@ B4_INTEL = (
     "clause)"
 )
 INTEL_LICENSE = "Intel Simplified Software License (Version October 2022)"
+# The approved notice, anchored here so no mutable packet record can vouch for it.
+INTEL_NOTICE = "NOTICE.md"
+INTEL_NOTICE_SHA256 = "0b2787535c9271afd668b819918fe047be025da9886899164ecb3aaa89c9c5b5"
 B5 = "B5: py3langid embedded model training-corpus redistribution terms remain open."
 INTEL_FILES = ("libiomp5md.dll", "libiompstubs5md.dll")
 
@@ -1002,9 +1005,13 @@ def intel_openmp_status(
         gaps.append("the Intel OpenMP licence texts are missing or changed")
     if not nuget:
         gaps.append("the Intel OpenMP record does not name the pinned NuGet source")
-    notice_path = legal / "intel-openmp" / str(licence.get("notice", "NOTICE.md"))
-    notice = notice_path.is_file() and digest(notice_path) == licence.get(
-        "notice_sha256"
+    # Both the record's claim and the shipped file must equal the reviewed anchor.
+    notice_path = legal / "intel-openmp" / INTEL_NOTICE
+    notice = (
+        licence.get("notice") == INTEL_NOTICE
+        and licence.get("notice_sha256") == INTEL_NOTICE_SHA256
+        and notice_path.is_file()
+        and digest(notice_path) == INTEL_NOTICE_SHA256
     )
     if not notice:
         gaps.append("the Intel OpenMP notice is missing or changed")
