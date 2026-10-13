@@ -466,17 +466,32 @@ def test_release_one_does_not_imply_distribution() -> None:
         assert "`distribution_permitted` true" not in surface, name
 
 
-def test_release_two_record_keeps_b1_and_b4_open() -> None:
+def test_release_two_decisions_keep_b1_and_permit_nothing() -> None:
     record = (ROOT / "docs/V2_R2_COMPLIANCE_CLOSURE.md").read_text(encoding="utf-8")
+    text = (ROOT / "docs/V2_R2_LICENSE_DECISIONS.md").read_text(encoding="utf-8")
+    decisions = " ".join(text.split())
     receipt = json.loads(
         (ROOT / "docs/evidence/r2/r2-intel-nuget-receipt.json").read_text(
             encoding="utf-8"
         )
     )
-    assert "B1 and B4 remain legally OPEN" in record
-    assert "no record in this repository can clear B1 or B4" in record
+    check = json.loads(
+        (ROOT / "docs/evidence/r2/r2-license-decisions-packet-check.json").read_text(
+            encoding="utf-8"
+        )
+    )
     for decision in ("| LD1 |", "| LD2 |", "| LD3 |", "| LD4 |", "| LD5 |", "| LD6 |"):
-        assert decision in record
+        assert decision in record and decision in decisions
+    assert "LD1–LD6 OWNER-ASSESSED" in decisions
+    assert "not an external legal certification" in decisions
+    assert "B1 stays OPEN for one operational prerequisite" in decisions
+    assert "`distribution_permitted` stays false" in decisions
+    # The Release-2 installer predates the decisions; its record stays as built.
     assert receipt["installer"]["distribution_permitted"] is False
     assert receipt["installer"]["published"] is False
     assert receipt["frozen_build"]["packet"]["blockers"] == ["B1", "B4"]
+    assert check["result"]["blocker_codes"] == ["B1"]
+    assert check["result"]["distribution_permitted"] is False
+    assert check["result"]["license_decisions"]["public_source_hosting"] == (
+        "not operational"
+    )

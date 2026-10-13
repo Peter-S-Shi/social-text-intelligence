@@ -56,13 +56,19 @@
     "status": "no longer the recorded licensing basis; the build ships the copies taken from the pinned NuGet package. The PyTorch wheel's own copies are byte-identical and are replaced, not relied on"
   },
   "redistribution": {
-    "status": "OPEN: legal confirmation required",
-    "unresolved": [
-      "Whether shipping the two DLLs taken from Intel's author-signed NuGet package under the Intel Simplified Software License is an adequate redistribution basis, given that byte-identical copies also reach the build through PyTorch under a different Intel licence",
-      "Which copyright notice satisfies the licence's notice condition: the licence text has no copyright line; NOTICE.md reproduces the package's 'Copyright Intel Corporation.'",
-      "D4: whether the licence's no-reverse-engineering condition, scoped in NOTICE.md to the two Intel DLLs, is compatible with the LGPLv3 section 4 terms for the Qt libraries",
-      "Acceptance of the licence's disclaimer, which places responsibility for use in high-risk systems on the licensee",
-      "third-party-programs.txt refers to a separate oneTBB third-party file that the package does not contain"
+    "status": "OWNER-ASSESSED (LD3-LD6 in LICENSE_DECISIONS.json); not external legal certification",
+    "decisions": {
+      "channel": "LD4: the DLLs taken from this pinned NuGet package are redistributed under the Intel Simplified Software License; the PyTorch copies are replaced, not relied on",
+      "notice": "LD5: NOTICE.md reproduces the package's 'Copyright Intel Corporation.' with the full licence text and third-party-programs.txt",
+      "d4_scope": "LD3: the no-reverse-engineering condition is scoped in NOTICE.md to the two Intel DLLs and accepted as compatible with LGPLv3 section 4 for the Qt libraries",
+      "high_risk_use": "LD6: the owner accepts the licence's disclaimer for use in high-risk systems",
+      "onetbb_third_party_file": "LD6: not required. libiomp5md.dll statically contains oneTBB's tbbmalloc 2022.3.0, whose only third-party code (ITT Notify) and oneTBB itself are already covered by third-party-programs.txt"
+    },
+    "residual_risks": [
+      "Byte-identical copies also reach the build through PyTorch under the Developer Tools EULA",
+      "Revocation of the signing certificate was not checked",
+      "The licence text itself carries no copyright line",
+      "The oneTBB finding rests on the upstream oneTBB 2022.3.0 build definition, not on Intel's internal build"
     ]
   }
 }

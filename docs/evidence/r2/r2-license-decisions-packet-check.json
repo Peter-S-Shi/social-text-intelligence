@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "milestone": "V2 Release-2 final licence decision closure (LD1-LD6)",
+  "pull_request": 75,
+  "check": "packet re-assembled by tools/m10/compliance.py on a private copy of the existing frozen bundle; no rebuild, no installer",
+  "frozen_application_sha": "ec824bab0a058fb03a038a9663a67bad6cbdffc5",
+  "python": "3.13.16",
+  "result": {
+    "materials_valid": true,
+    "distribution_permitted": false,
+    "blocker_codes": ["B1"],
+    "b1": "B1_ASSESSED: legal subitems owner-assessed; public source access under GPLv3 section 6(d) prepared but not operational",
+    "b4_remaining": [],
+    "license_decisions": {
+      "valid": true,
+      "decisions": {
+        "LD1": "owner_assessed",
+        "LD2": "owner_assessed",
+        "LD3": "owner_assessed",
+        "LD4": "owner_assessed",
+        "LD5": "owner_assessed",
+        "LD6": "owner_assessed"
+      },
+      "public_source_hosting": "not operational"
+    },
+    "intel_openmp": {
+      "matches_provenance": true,
+      "nuget_source_recorded": true,
+      "texts_present": true,
+      "notice_present": true,
+      "owner_assessed": true
+    },
+    "installer_packet_blockers": ["B1"]
+  },
+  "not_claimed": [
+    "external legal certification",
+    "public source access",
+    "a rebuilt installer or a new clean-machine run",
+    "release or distribution permission"
+  ]
+}

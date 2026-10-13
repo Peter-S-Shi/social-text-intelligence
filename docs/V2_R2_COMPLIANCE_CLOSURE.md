@@ -1,7 +1,15 @@
 # V2 Release-2 — Distribution compliance closure (engineering)
 
-Status: **engineering complete; B1 and B4 remain legally OPEN;
+Status at PR #74: **engineering complete; B1 and B4 remain legally OPEN;
 `distribution_permitted` stays false.**
+
+> **Later decisions (PR #75).** The owner assessed LD1–LD6 (§4); see the
+> [final licence decision record](V2_R2_LICENSE_DECISIONS.md). B4 is now closed
+> in the packet derivation. B1 stays OPEN until public source access is
+> operational. `distribution_permitted` stays false. The §3.2 page now lives in
+> [`distribution/release-source-page.md`](../distribution/release-source-page.md),
+> prepared and unpublished. The rest of this record is kept as it stood at
+> PR #74.
 
 This milestone builds the smallest auditable route for each remaining blocker:
 
@@ -174,7 +182,8 @@ name this page.
 ## 4. Bounded owner/legal decision record
 
 Each item is a single question. Its answer either permits one specific change or
-blocks it. None is decided here. A favourable answer still needs a reviewed code
+blocks it. None was decided at PR #74. All six were later owner-assessed in
+[V2_R2_LICENSE_DECISIONS.md](V2_R2_LICENSE_DECISIONS.md) (PR #75). A favourable answer still needs a reviewed code
 change before any blocker or `distribution_permitted` can move.
 
 | # | Question | Blocker | If confirmed |

@@ -27,5 +27,7 @@ Intel's author-signed NuGet package `intelopenmp.redist.win` 2026.1.0.239, under
 the Intel Simplified Software License (Version October 2022). The copies that
 PyTorch's wheel brings are byte-identical; the build replaces them with the
 package's copies. The licence, Intel's third-party notices, the notice and its
-scope, and the provenance record are in `legal/intel-openmp/`. Whether this is
-an adequate redistribution basis still needs legal confirmation (B4).
+scope, and the provenance record are in `legal/intel-openmp/`. The owner has
+assessed this as an adequate redistribution basis (LD3–LD6 in
+`LICENSE_DECISIONS.json`); that is an internal compliance decision, not an
+external legal certification.
