@@ -1,15 +1,18 @@
 # V2 M10 S5 — Clean-machine completion record and Release-1 gate packet
 
-Status: **S5 raw guest evidence reviewed. H2-A, C02–C12 and C14 PASS on the
-reviewed automated evidence. The icon check is NOT DETERMINED in two of four
-places. The Release-1 gate is CONDITIONAL and unsigned.**
+Status: **Release-1 gate: OWNER-APPROVED CONDITIONAL EXIT.** S5 raw guest
+evidence reviewed. H2-A, C02–C12 and C14 PASS on the reviewed automated
+evidence. The icon check is 2 of 4 confirmed and 2 of 4 NOT DETERMINED; the
+owner accepted the two gaps as carried-forward items. This is not a release
+or distribution permission.
 
 - **Runs.** The owner ran Stage A and Stage B on an isolated VMware guest.
 - **Export.** The owner exported the raw evidence to a private host folder.
 - **Review.** The evidence was reviewed read-only (§2).
 - **No failures.** No assertion failed, and no FAIL item exists.
-- **Not upgraded.** The gate is not signed, and nothing in this record upgrades
-  it to PASS.
+- **Gate.** The owner approved a CONDITIONAL exit in the working chat (§6). No
+  handwritten signature, timestamp or other proof is claimed, and nothing in
+  this record upgrades the exit to PASS.
 
 Unchanged:
 
@@ -158,7 +161,7 @@ Columns:
 | C14 | Alternative `/DIR` refused by the real installer | Refusal "Only the fixed per-user application location is supported." in the installer log; exit code 7 recorded; target empty; no residue | n/a | PASS | None |
 | C15 | SmartScreen/signing and distribution approval | n/a | n/a | **BLOCKED** | Legal blockers B1 and B4; no signing |
 | C16 | Owner 30-minute smoke and formal Windows UAT | n/a | n/a | **NOT RUN** | Not in scope |
-| Icons | One STI icon in four places (S5-UI-001) | Five runner screenshots, reviewed visually (§3.1) | Owner sign-off not recorded | NOT DETERMINED (3 of 4 places match design A; no defect found) | Start Menu list and Settings › Apps not shown |
+| Icons | One STI icon in four places (S5-UI-001) | Five runner screenshots, reviewed visually (§3.1) | Owner accepted the two gaps as carried-forward items | 2 of 4 confirmed; 2 of 4 NOT DETERMINED; no defect found | Start Menu menu UI and Settings › Apps not shown |
 
 These definitions are limits, not results:
 
@@ -179,19 +182,26 @@ These definitions are limits, not results:
 uninstaller temporary copy in its isolated TEMP. This is outside the
 application, data, Start Menu and registry namespaces.
 
-### 3.1 Icon review (agent visual review, not owner sign-off)
+### 3.1 Icon review (agent visual review)
 
 The five screenshots were compared with the repository `sti.ico` (design A),
-rendered at 16–256 px. No other exported screenshot shows the Start Menu list or
-Settings › Apps.
+rendered at 16–256 px. No other exported screenshot shows the Start Menu menu
+UI or Settings › Apps.
 
-| Place | Finding | Determination |
-| --- | --- | --- |
-| Window title bar | The dedicated title-bar crop missed the icon. Four other screenshots show the window's and dialog's title-bar icon: the 16 px single-bar variant | Matches design A |
-| Taskbar | Blue rounded square with a two-bar speech bubble; the app's running indicator is visible | Matches design A |
-| Start Menu programs-folder shortcut | "Social Text Intelligence" shortcut shows the design A icon with the shortcut arrow | Matches design A |
-| Start Menu (menu UI) | The "Recommended" entry is cut off by the 560-pixel-high guest display | NOT DETERMINED, not FAIL |
-| Settings › Apps | The A–Z list was not scrolled to STI, so STI is not in view | NOT DETERMINED, not FAIL |
+The four formal places come from the S5-UI-001 check: the Start Menu entry,
+the window title bar, the taskbar button and Settings › Apps. The Start Menu
+programs-folder shortcut is separate supporting evidence and is not counted
+among the four.
+
+| Place | Kind | Finding | Determination |
+| --- | --- | --- | --- |
+| Window title bar | Formal (1 of 4) | The dedicated title-bar crop missed the icon. Four other screenshots show the window's and dialog's title-bar icon: the 16 px single-bar variant | Confirmed: matches design A |
+| Taskbar | Formal (2 of 4) | Blue rounded square with a two-bar speech bubble; the app's running indicator is visible | Confirmed: matches design A |
+| Start Menu (menu UI) | Formal (3 of 4) | The "Recommended" entry is cut off by the 560-pixel-high guest display | NOT DETERMINED, not FAIL |
+| Settings › Apps | Formal (4 of 4) | The A–Z list was not scrolled to STI, so STI is not in view | NOT DETERMINED, not FAIL |
+| Start Menu programs-folder shortcut | Supporting, not counted | "Social Text Intelligence" shortcut shows the design A icon with the shortcut arrow | Matches design A |
+
+**Result:** 2 of 4 formal places confirmed, 2 of 4 NOT DETERMINED.
 
 **Cause of the gaps.** The gaps come from the runner's screenshot capture: a
 small display, a misplaced crop and no scrolling. They do not show a product
@@ -301,9 +311,17 @@ owner is expected to check before running anything.
 **Governance.** M10-C keeps its rule. A future clean-machine run needs its own
 owner authorization, and this exception does not carry over.
 
-## 6. Release-1 gate decision packet (unsigned)
+## 6. Release-1 gate decision
 
-**Recommended decision: CONDITIONAL.**
+**Decision: OWNER-APPROVED CONDITIONAL EXIT.**
+
+- **Source.** The owner gave the approval explicitly in the working chat. No
+  handwritten signature, timestamp or other proof is claimed.
+- **Icon gaps.** The owner accepted the two icon evidence gaps as
+  carried-forward items.
+- **No rerun.** The owner did not require a new VMware acceptance run.
+- **Not a release permission.** A CONDITIONAL exit permits no product release
+  or distribution.
 
 Done:
 
@@ -314,14 +332,14 @@ Done:
 - C07 has the owner-reported human witness;
 - no FAIL item exists.
 
-What remains before the owner could sign PASS:
+Why CONDITIONAL and not PASS:
 
-1. **Icon decision (S5-UI-001).** For the Start Menu list and Settings › Apps,
-   the owner either accepts them as recorded evidence gaps, or authorizes a
-   short re-check at a later time. A re-check is not a rerun of the whole
+1. **Carried-forward icon gaps (S5-UI-001).** The Start Menu menu UI and
+   Settings › Apps have no visual evidence. No defect is known. A later short
+   re-check could close them, and would not be a rerun of the whole
    acceptance.
-2. **The owner's formal Release-1 gate signature.** Approval to merge a pull
-   request is not a gate signature.
+2. **Pull-request merges.** Approval to merge a pull request is separate from
+   this gate decision.
 
 **Independent of this gate:**
 
@@ -330,9 +348,9 @@ What remains before the owner could sign PASS:
 
 | Owner field | Value |
 | --- | --- |
-| Release-1 gate decision | _unsigned_ |
+| Release-1 gate decision | OWNER-APPROVED CONDITIONAL EXIT (approval given in the working chat; no handwritten signature) |
 | C07 witness | Owner-reported human witness confirmed (limited definition) |
-| Icon visual review | _unsigned_: agent review found 3 of 4 places match design A; 2 places NOT DETERMINED |
+| Icon visual review | 2 of 4 formal places confirmed; 2 of 4 NOT DETERMINED, accepted by the owner as carried-forward items |
 | Evidence export reviewed | Received and reviewed read-only (§2) |
 
 ## 7. Evidence request (fulfilled)
@@ -347,4 +365,4 @@ committed. Only the verdicts and hashes in §2–§3 enter the repository.
   candidate or the ISOs.
 - No new Windows acceptance run.
 - No guest access by the reviewer.
-- No gate signature or publication.
+- No handwritten gate signature, and no publication.

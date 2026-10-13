@@ -91,10 +91,12 @@ not published.
 ## 5. Owner Windows check (pending)
 
 Update: S5 Stage B took five icon screenshots on a fresh install of candidate
-`a16d559`. An agent visual review found design A in the title bar, the taskbar
-and the Start Menu programs-folder shortcut. The Start Menu list and
-Settings › Apps were not captured well enough and are NOT DETERMINED; no icon
-defect is known. The owner's sign-off is pending (see the
+`a16d559`. Of the four places below, an agent visual review confirmed design A
+in the title bar and the taskbar (2 of 4). The Start Menu entry (menu UI) and
+Settings › Apps were not captured well enough and are NOT DETERMINED (2 of 4);
+no icon defect is known. The Start Menu programs-folder shortcut also shows
+design A, as supporting evidence only. The owner accepted the two gaps as
+carried-forward items (see the
 [S5 completion record](V2_M10_S5_COMPLETION_RECORD.md) §3.1).
 
 On a fresh install of a later internal build (none is made by this PR), confirm
