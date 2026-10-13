@@ -495,3 +495,28 @@ def test_release_two_decisions_keep_b1_and_permit_nothing() -> None:
     assert check["result"]["license_decisions"]["public_source_hosting"] == (
         "not operational"
     )
+
+
+def test_release_four_a_narrows_b1_without_closing_it() -> None:
+    text = (ROOT / "docs/V2_R4A_PUBLIC_SOURCE_ACCESS.md").read_text(encoding="utf-8")
+    record = " ".join(text.split())
+    assert "B1 stays OPEN" in record
+    assert "B1 is never removed" in record
+    assert "`distribution_permitted` stays false" in record
+    release = json.loads(
+        (ROOT / "docs/evidence/r3/r3-source-release-receipt.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert release["immutable"] is True and release["asset_count"] == 13
+    assert "B1 closure" in release["not_claimed"]
+    check = json.loads(
+        (ROOT / "docs/evidence/r4a/r4a-packet-check.json").read_text(encoding="utf-8")
+    )
+    assert check["result"]["blocker_codes"] == ["B1"]
+    assert check["result"]["distribution_permitted"] is False
+    assert check["result"]["source_hosting"]["installer_download_page"] == "not live"
+    assert "B1 closure" in check["not_claimed"]
+    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+        surface = (ROOT / name).read_text(encoding="utf-8")
+        assert "installer-page source link" in surface, name

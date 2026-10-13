@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "milestone": "V2 Release-4A public source access integration (B1 engineering)",
+  "pull_request": 76,
+  "check": "packet re-assembled by tools/m10/compliance.py on a private copy of the existing frozen bundle; no rebuild, no installer",
+  "frozen_application_sha": "ec824bab0a058fb03a038a9663a67bad6cbdffc5",
+  "python": "3.13.16",
+  "result": {
+    "materials_valid": true,
+    "distribution_permitted": false,
+    "blocker_codes": ["B1"],
+    "b1": "B1_HOSTED: source release public and recorded; the installer download page and its verified same-page link remain",
+    "b4_remaining": [],
+    "source_hosting": {
+      "valid": true,
+      "installer_download_page": "not live",
+      "installer_page_source_link_verified": false
+    },
+    "license_decisions_valid": true,
+    "intel_openmp": {
+      "notice_pinned_by_content": true,
+      "owner_assessed": true
+    },
+    "installer_packet_blockers": ["B1"],
+    "installer_public_source_hosting_condition": "source release published and recorded (SOURCE_HOSTING.json); the installer download page does not link to it yet, and that same-page link is not verified"
+  },
+  "not_claimed": [
+    "an installer download page or its verified source link",
+    "B1 closure",
+    "a rebuilt installer or a new clean-machine run",
+    "release or distribution permission"
+  ]
+}

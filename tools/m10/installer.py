@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 from build import MICROSOFT_RUNTIME
-from compliance import digest, verify_packet
+from compliance import SH_RECORD, SH_SCHEMA_1, canonical, digest, verify_packet
 
 CONFIG = Path(__file__).resolve().parent
 INNO_VERSION = "6.7.3"
@@ -29,6 +29,10 @@ RELEASE_CONDITIONS = {
     "clean_machine_validation": "NOT RUN",
     "public_source_hosting": "not operational",
 }
+HOSTED_CONDITION = (
+    "source release published and recorded (SOURCE_HOSTING.json); the installer "
+    "download page does not link to it yet, and that same-page link is not verified"
+)
 
 
 def packet_blockers(inventory: dict[str, object]) -> tuple[list[str], list[str]]:
@@ -62,6 +66,33 @@ def packet_blockers(inventory: dict[str, object]) -> tuple[list[str], list[str]]
             "The license packet omits B1, which no reviewed record closes."
         )
     return codes, uncoded
+
+
+def public_source_hosting(bundle: Path, inventory: dict[str, object]) -> str:
+    """The release condition for source hosting, re-derived from the packet's file.
+
+    An inventory that claims a valid hosting record is not trusted: the record
+    shipped in the packet must still equal the approved content and the hash the
+    inventory recorded. Otherwise the installer is refused, never relabelled.
+    """
+    claimed = inventory.get("source_hosting")
+    if not isinstance(claimed, dict) or claimed.get("valid") is not True:
+        return RELEASE_CONDITIONS["public_source_hosting"]
+    path = bundle / "legal" / SH_RECORD
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        record = None
+    if (
+        record is None
+        or canonical(record) != canonical(SH_SCHEMA_1)
+        or digest(path) != claimed.get("record_sha256")
+        or claimed.get("problems") != []
+    ):
+        raise ValueError(
+            "The source hosting record in the packet is not the approved one."
+        )
+    return HOSTED_CONDITION
 
 
 def ordinary_path(path: Path) -> None:
@@ -111,6 +142,7 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
     if not verify_packet(bundle, inventory)["materials_valid"]:
         raise ValueError("The complete license packet failed byte/set verification.")
     legal_blockers, other_blockers = packet_blockers(inventory)
+    hosting_condition = public_source_hosting(bundle, inventory)
     sources = inventory.get("source_delivery", [])
     names = [item["filename"] for item in sources]
     if len(set(names)) != 5 or any(
@@ -196,7 +228,9 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         # As derived by the verified packet, not a fixed list.
         "legal_blockers": legal_blockers,
         "other_packet_blockers": other_blockers,
-        "release_conditions": RELEASE_CONDITIONS,
+        "release_conditions": dict(
+            RELEASE_CONDITIONS, public_source_hosting=hosting_condition
+        ),
         "clean_machine_validation": "NOT RUN",
         "owner_30_minute_smoke": "NOT RUN",
         "payload": [
