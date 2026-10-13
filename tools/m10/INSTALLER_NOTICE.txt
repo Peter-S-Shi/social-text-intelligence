@@ -1,15 +1,14 @@
 INTERNAL ENGINEERING INSTALLER - NOT APPROVED FOR DISTRIBUTION
 
 Distribution blockers remain open; legal/inventory.json lists them. B1 stays
-open until the installer download page links to the public source release
-and that link is verified. The owner's compliance decisions
+open until the release gate has verified that the release page offering
+this installer links to the public source release. The owner's compliance decisions
 (LICENSE_DECISIONS.json) are internal assessments, not an external legal
 certification. B2 and B3 are resolved: no software renderer or Microsoft
 runtime file is shipped. B5 is not derived because the language model is not
 shipped, but its corpus terms are unverified. B6 is closed only on a QtCore-only
 modified-source test. Source archives travel in this package and are also hosted in the public
-source release named in legal/SOURCE_ACCESS.md; no installer download page
-exists yet.
+source release named in legal/SOURCE_ACCESS.md.
 It requires the Microsoft Visual C++ 2015-2022 x64 runtime 14.44 or later,
 which this setup checks for but never installs. This installation
 does not imply legal clearance, signing, formal Windows UAT or release readiness.

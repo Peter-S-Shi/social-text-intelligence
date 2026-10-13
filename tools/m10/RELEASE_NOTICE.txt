@@ -1,0 +1,24 @@
+Social Text Intelligence for Windows
+
+This setup installs the application for the current user only, in
+LocalAppData/Programs/Social Text Intelligence. It never asks for administrator
+rights. Projects and external model files stay in the separate application-data
+directory. No models are bundled or downloaded by this setup; downloads inside
+the application need your explicit authorization.
+
+Licenses and source. The application is released under the MIT license. It
+includes unmodified Qt 6.11.2, PySide6-Essentials 6.11.2 and shiboken6 6.11.2
+under the GNU LGPL version 3. You may replace these libraries; see
+legal/QT_REPLACEMENT.md. Their complete source archives are installed in
+legal/sources and are also published, with build records, in an immutable
+release linked in legal/SOURCE_ACCESS.md. Two Intel OpenMP runtime files are
+covered by the Intel Simplified Software License; see legal/intel-openmp. The
+"Licenses and sources" Start Menu entry opens all notices.
+
+Requirements. The Microsoft Visual C++ 2015-2022 x64 runtime 14.44 or later must
+be installed; this setup checks for it and never installs or bundles it.
+
+Uninstall removes only the files this setup installed and logged. It does not
+remove projects, models or unrelated files.
+
+Inno Setup 6.7.3 is used without modification; its license accompanies the app.

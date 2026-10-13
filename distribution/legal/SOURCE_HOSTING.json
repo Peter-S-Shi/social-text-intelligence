@@ -28,8 +28,8 @@
     "SHA256SUMS": "4411c19e3ceb3ee19a1be27422f0425e67de224012b1e46d7959673618454705"
   },
   "verified": "public download of all 13 assets, SHA-256 checked against SHA256SUMS and the release API, GitHub release attestation verified for the release and each asset (2026-10-13)",
-  "installer_download_page": "not live",
-  "installer_page_source_link_verified": false,
-  "release_prerequisite": "the installer download page must link to the source release and that same-page link must be verified at release time",
+  "installer_release_page": "not asserted by this record",
+  "installer_page_source_link": "verified by the release gate after publication, not by this record",
+  "release_prerequisite": "every release page that offers the installer must link to the source release, checked before approval on the draft and after publication on the public page",
   "distribution_permitted": false
 }

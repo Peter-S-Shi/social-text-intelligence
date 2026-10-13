@@ -124,8 +124,7 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         "and Representative Cases, and M5.6 — Language Detection and "
         "Unsupported-Language Warning are complete on `main`; the M5 "
         "Functional Exit is PASS; M6 — Full UI Integration / Polish is "
-        "complete on `main`.**"
-        in status
+        "complete on `main`.**" in status
     )
     assert (
         "| M5.0 — Model Provisioner Function Contract & Foundation | **COMPLETE"
@@ -133,22 +132,17 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
     assert (
         "| M5.6 — Language Detection and Unsupported-Language Warning (V2-3) | "
-        "**COMPLETE"
-        in status
+        "**COMPLETE" in status
     )
     assert "| M5 Functional Exit audit | **PASS (2026-10-08)**" in status
-    assert (
-        "| M6 — Full UI Integration / Polish | **COMPLETE"
-        in status
-    )
+    assert "| M6 — Full UI Integration / Polish | **COMPLETE" in status
     assert (
         "| M7 — Pre-Release Feasibility & Risk Gate | **COMPLETE on `main` "
         "with a formally accepted CONDITIONAL exit" in status
     )
     assert (
         "| M8 — Product Hardening & UI Fidelity (shared status) | "
-        "**COMPLETE on `main` — owner overall PASS (2026-10-10).**"
-        in status
+        "**COMPLETE on `main` — owner overall PASS (2026-10-10).**" in status
     )
     assert (
         "| Next required action | Formal owner release decision on the M10-D dossier "
@@ -158,28 +152,19 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert "planned NOT RUN" in status
     assert (
         "| M5.5 — Native Insights, Context Notes, and Representative Cases | "
-        "**COMPLETE"
-        in status
+        "**COMPLETE" in status
     )
+    assert "| M5.4 — Native Human Review and Reviewed Export | **COMPLETE" in status
+    assert "| M5.3 — Native Project Workflow | **COMPLETE" in status
     assert (
-        "| M5.4 — Native Human Review and Reviewed Export | **COMPLETE"
-        in status
-    )
-    assert (
-        "| M5.3 — Native Project Workflow | **COMPLETE"
-        in status
-    )
-    assert (
-        "| M5.2 — Native Desktop Shell + Model Provisioning UI | **COMPLETE"
-        in status
+        "| M5.2 — Native Desktop Shell + Model Provisioning UI | **COMPLETE" in status
     )
     assert (
         "| M5.1 — Model Provisioning UI/UX Design | **COMPLETE — Human Gate PASS"
         in status
     )
     assert (
-        "| First V2 Persistent Project Foundation milestone (M4) | **COMPLETE"
-        in status
+        "| First V2 Persistent Project Foundation milestone (M4) | **COMPLETE" in status
     )
     assert (
         "| V1 final lifecycle phase (historical, immutable) | "
@@ -219,12 +204,12 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
 
     track_a = (ROOT / "docs" / "V2_M8_TRACK_A_LEDGER.md").read_text(encoding="utf-8")
     track_b = (ROOT / "docs" / "V2_M8_TRACK_B_FIDELITY.md").read_text(encoding="utf-8")
-    walkthrough = (
-        ROOT / "manual-qa" / "owner-trial" / "WALKTHROUGH.md"
-    ).read_text(encoding="utf-8")
-    friction_log = (
-        ROOT / "manual-qa" / "owner-trial" / "FRICTION_LOG.md"
-    ).read_text(encoding="utf-8")
+    walkthrough = (ROOT / "manual-qa" / "owner-trial" / "WALKTHROUGH.md").read_text(
+        encoding="utf-8"
+    )
+    friction_log = (ROOT / "manual-qa" / "owner-trial" / "FRICTION_LOG.md").read_text(
+        encoding="utf-8"
+    )
     assert "OWNER DECISION or NOT VERIFIED items" in track_a
     assert "M8 overall manual acceptance: PASS (2026-10-10)" in track_b
     assert "This is not formal accessibility" in track_b
@@ -242,10 +227,7 @@ def test_m9_owner_gate_pass_does_not_imply_evaluation_or_uat() -> None:
         "No acquisition, labels, model runs, formal UAT or V2 release "
         "readiness is implied" in status
     )
-    assert (
-        "M9.1 infrastructure is complete; M9.2–M9.4 are deferred by owner"
-        in status
-    )
+    assert "M9.1 infrastructure is complete; M9.2–M9.4 are deferred by owner" in status
     assert "all initially NOT RUN" in status
     assert "formal UAT steps remain NOT RUN" in status
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -307,9 +289,7 @@ def test_all_tracked_relative_markdown_links_resolve() -> None:
                 continue
             resolved = (document.parent / relative).resolve()
             if not resolved.exists():
-                failures.append(
-                    f"{document.relative_to(ROOT)} -> {target}"
-                )
+                failures.append(f"{document.relative_to(ROOT)} -> {target}")
     assert failures == []
 
 
@@ -386,7 +366,6 @@ def test_m10e2_closes_only_evidenced_blockers_and_keeps_gates() -> None:
         assert data["distribution_permitted"] is False
 
 
-
 def test_m10_s1_record_keeps_the_b5_claim_narrow() -> None:
     record = (ROOT / "docs/V2_M10_S1_OPTIONAL_LANGUAGE_MODEL.md").read_text(
         encoding="utf-8"
@@ -405,11 +384,12 @@ def test_m10_s1_record_keeps_the_b5_claim_narrow() -> None:
     assert receipt["installer"]["payload_model_files"] == []
     assert receipt["distribution_permitted"] is False
 
+
 def test_m10d_dossier_stratifies_readiness_and_leaves_release_pending() -> None:
     status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
-    dossier = (
-        ROOT / "docs" / "V2_M10_D_RELEASE_DOSSIER.md"
-    ).read_text(encoding="utf-8")
+    dossier = (ROOT / "docs" / "V2_M10_D_RELEASE_DOSSIER.md").read_text(
+        encoding="utf-8"
+    )
     for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
         assert "M10-D release readiness dossier" in surface
@@ -434,9 +414,7 @@ def table_rows(text: str, *ids: str) -> dict[str, str]:
 
 
 def test_m10_s5_record_keeps_its_evidence_boundaries() -> None:
-    record = (ROOT / "docs/V2_M10_S5_COMPLETION_RECORD.md").read_text(
-        encoding="utf-8"
-    )
+    record = (ROOT / "docs/V2_M10_S5_COMPLETION_RECORD.md").read_text(encoding="utf-8")
     # Reviewed PASS needs the exported hash chains to have been recomputed.
     assert "`EVIDENCE-SHA256.txt` entries recomputed and equal" in record
     # C07 keeps its limited definition and only the owner's reported witness.
@@ -520,3 +498,31 @@ def test_release_four_a_narrows_b1_without_closing_it() -> None:
     for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
         assert "installer-page source link" in surface, name
+
+
+def test_release_four_b_keeps_publication_and_decisions_with_the_owner() -> None:
+    record = " ".join(
+        (ROOT / "docs/V2_R4B_RELEASE_GATE.md").read_text(encoding="utf-8").split()
+    )
+    assert "B1 stays OPEN" in record
+    assert "`distribution_permitted` stays false" in record
+    assert "No application tag, GitHub Release" in record
+    assert "Owner decisions (surfaced, not made)" in record
+    assert "only the public phase" in record.lower() or "Yes**, and only for" in record
+    receipt = json.loads(
+        (ROOT / "docs/evidence/r4b/r4b-candidate-receipt.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert receipt["published"] is False
+    assert receipt["private_storage_only"] is True
+    assert receipt["distribution_permitted"] is False
+    assert receipt["candidate"]["legal_blockers"] == ["B1"]
+    assert receipt["owner_decisions_pending"] == [
+        "application version",
+        "application tag",
+    ]
+    assert "B1 operational closure" in " ".join(receipt["not_claimed"])
+    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+        surface = (ROOT / name).read_text(encoding="utf-8")
+        assert "two-phase publication gate" in surface, name

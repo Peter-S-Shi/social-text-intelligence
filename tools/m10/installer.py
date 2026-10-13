@@ -9,12 +9,30 @@ import shutil
 import stat
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
-from build import MICROSOFT_RUNTIME
+from build import MICROSOFT_RUNTIME, ROOT, source_revision
 from compliance import SH_RECORD, SH_SCHEMA_1, canonical, digest, verify_packet
 
 CONFIG = Path(__file__).resolve().parent
+# The internal profile is the engineering installer and is unchanged. The
+# candidate profile is the release-facing path: it renders a release notice
+# and name, and refuses unless every packet condition except the post-
+# publication page check holds. Neither profile permits distribution.
+PROFILES = {
+    "internal": {
+        "app_name": "Social Text Intelligence (internal engineering)",
+        "suffix": "internal-x64",
+        "notice": "INSTALLER_NOTICE.txt",
+    },
+    "candidate": {
+        "app_name": "Social Text Intelligence",
+        "suffix": "x64-setup",
+        "notice": "RELEASE_NOTICE.txt",
+    },
+}
+VERSION = re.compile(r"[0-9]+\.[0-9]+\.[0-9]+")
 INNO_VERSION = "6.7.3"
 ISCC_SHA256 = "0a8757031b33777e4c9cbffee40f11a5062b36d25cbe144c1db73b6102b80ad7"
 LICENSE_SHA256 = "3df23505b7ec00dc007a1e1e9ba32ee3895e7ce90043bcd1ac1b9b47155921a7"
@@ -30,8 +48,9 @@ RELEASE_CONDITIONS = {
     "public_source_hosting": "not operational",
 }
 HOSTED_CONDITION = (
-    "source release published and recorded (SOURCE_HOSTING.json); the installer "
-    "download page does not link to it yet, and that same-page link is not verified"
+    "source release published and recorded (SOURCE_HOSTING.json); the same-page "
+    "link on the installer's release page is checked by the release gate, "
+    "not by this packet"
 )
 
 
@@ -95,6 +114,40 @@ def public_source_hosting(bundle: Path, inventory: dict[str, object]) -> str:
     return HOSTED_CONDITION
 
 
+def application_version() -> str:
+    """The version pyproject.toml declares; the installer never invents one."""
+    data = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    version = data["project"]["version"]
+    if not isinstance(version, str) or VERSION.fullmatch(version) is None:
+        raise ValueError("The application version must be MAJOR.MINOR.PATCH.")
+    return version
+
+
+def candidate_gate(
+    inventory: dict[str, object], blockers: list[str], other: list[str]
+) -> None:
+    """Refuse a release candidate unless the packet is ready for the release gate.
+
+    Only B1 may remain, and only because the same-page link is checked after
+    publication. Every earlier condition must hold on the verified packet itself.
+    """
+    decisions = inventory.get("license_decisions")
+    hosting = inventory.get("source_hosting")
+    coverage = inventory.get("b4_coverage")
+    if blockers != ["B1"] or other:
+        raise ValueError("A release candidate may carry only blocker B1.")
+    if not isinstance(decisions, dict) or decisions.get("valid") is not True:
+        raise ValueError("A release candidate needs the valid licence decisions.")
+    if not isinstance(hosting, dict) or hosting.get("valid") is not True:
+        raise ValueError("A release candidate needs the valid source hosting record.")
+    if not isinstance(coverage, dict) or coverage.get("remaining") != []:
+        raise ValueError("A release candidate cannot carry open B4 items.")
+    if source_revision() != inventory.get("application_revision"):
+        raise ValueError(
+            "A release candidate must be built from the committed checked-out revision."
+        )
+
+
 def ordinary_path(path: Path) -> None:
     for entry in (path, *path.parents):
         if not entry.exists() and not entry.is_symlink():
@@ -110,7 +163,10 @@ def quoted(value: str) -> str:
     return value.replace('"', '""').replace("{", "{{")
 
 
-def prepare(bundle: Path, output: Path) -> dict[str, object]:
+def prepare(bundle: Path, output: Path, profile: str = "internal") -> dict[str, object]:
+    if profile not in PROFILES:
+        raise ValueError("Unknown installer profile.")
+    settings = PROFILES[profile]
     ordinary_path(bundle)
     ordinary_path(output)
     required = (
@@ -143,6 +199,11 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         raise ValueError("The complete license packet failed byte/set verification.")
     legal_blockers, other_blockers = packet_blockers(inventory)
     hosting_condition = public_source_hosting(bundle, inventory)
+    if profile == "candidate":
+        candidate_gate(inventory, legal_blockers, other_blockers)
+    version = application_version()
+    base = f"STI-{version}-{settings['suffix']}"
+    notice = CONFIG / settings["notice"]
     sources = inventory.get("source_delivery", [])
     names = [item["filename"] for item in sources]
     if len(set(names)) != 5 or any(
@@ -209,8 +270,11 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         .replace("@@COLLISIONS@@", "\n".join(checks))
         .replace("@@UNINSTALL_CHECKS@@", "\n".join(uninstall_checks))
         .replace("@@OUTPUT@@", quoted(str(output / "compiled")))
+        .replace("@@APPNAME@@", settings["app_name"])
+        .replace("@@VERSION@@", version)
+        .replace("@@OUTBASE@@", base)
     )
-    script = script.replace("@@WARNING@@", quoted(str(CONFIG / "INSTALLER_NOTICE.txt")))
+    script = script.replace("@@WARNING@@", quoted(str(notice)))
     (output / "installer.iss").write_text(script, encoding="utf-8-sig")
     receipt: dict[str, object] = {
         "schema_version": 1,
@@ -220,7 +284,12 @@ def prepare(bundle: Path, output: Path) -> dict[str, object]:
         "input_inventory_sha256": digest(bundle / "legal/inventory.json"),
         "installer_template_sha256": digest(CONFIG / "installer.iss"),
         "installer_generator_sha256": digest(CONFIG / "installer.py"),
-        "installer_notice_sha256": digest(CONFIG / "INSTALLER_NOTICE.txt"),
+        "installer_notice_sha256": digest(notice),
+        "profile": profile,
+        "release_candidate": profile == "candidate",
+        "published": False,
+        "version": version,
+        "installer_filename": base + ".exe",
         "inno_version": INNO_VERSION,
         "inno_license_sha256": LICENSE_SHA256,
         "models_bundled": False,
@@ -245,6 +314,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--profile", choices=sorted(PROFILES), default="internal")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--prepare-only", action="store_true")
     mode.add_argument("--iscc", type=Path)
@@ -254,7 +324,7 @@ def main() -> int:
             raise ValueError(
                 "The verified Windows Inno Setup 6.7.3 compiler is required."
             )
-        receipt = prepare(args.bundle, args.output)
+        receipt = prepare(args.bundle, args.output, args.profile)
         if args.iscc:
             with (args.output / "compiler-private.log").open(
                 "w", encoding="utf-8"
@@ -275,12 +345,16 @@ def main() -> int:
             for filename, key in (
                 ("installer.iss", "installer_template_sha256"),
                 ("installer.py", "installer_generator_sha256"),
-                ("INSTALLER_NOTICE.txt", "installer_notice_sha256"),
+                (PROFILES[args.profile]["notice"], "installer_notice_sha256"),
             ):
                 if digest(CONFIG / filename) != receipt[key]:
                     raise ValueError("Installer recipe changed during compilation.")
-            installer = args.output / "compiled/STI-0.10.0-internal-x64.exe"
-            receipt.update(compiled=True, installer_sha256=digest(installer))
+            installer = args.output / "compiled" / str(receipt["installer_filename"])
+            receipt.update(
+                compiled=True,
+                installer_sha256=digest(installer),
+                installer_bytes=installer.stat().st_size,
+            )
         (args.output / "installer-receipt.json").write_text(
             json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
         )

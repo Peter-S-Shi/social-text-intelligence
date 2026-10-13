@@ -658,13 +658,16 @@ B1_HOSTED = (
     "unproven binding producer-source correspondence as a disclosed residual "
     "risk. The pinned source archives and records are publicly hosted in the "
     "immutable GitHub release " + SH_RELEASE_URL + " (SOURCE_HOSTING.json). "
-    "Remaining before release: the installer download page must link to that "
-    "release, and that same-page link must be verified; no such page is live."
+    "Remaining before release: every release page that offers this installer "
+    "must link to that source release, and the release gate verifies that "
+    "same-page link after publication; this packet asserts neither that such "
+    "a page exists nor that the link was verified."
 )
 # The owner-approved content of the source hosting record, schema version 1,
-# exactly. It states only what Release-3 published. It cannot say that an
-# installer download page exists or that its link was verified, and it cannot
-# permit distribution; that needs a reviewed new version.
+# exactly. It states only what Release-3 published. An installer carries it
+# unchanged and cannot know its own release page, so it asserts neither that
+# such a page exists nor that it does not; the release gate verifies the
+# same-page link after publication. It cannot permit distribution.
 SH_SCHEMA_1: dict[str, object] = {
     "schema_version": 1,
     "record": "STI V2 Release-3 public source hosting (GPLv3 section 6(d))",
@@ -723,10 +726,12 @@ SH_SCHEMA_1: dict[str, object] = {
     "verified": "public download of all 13 assets, SHA-256 checked against "
     "SHA256SUMS and the release API, GitHub release attestation verified for "
     "the release and each asset (2026-10-13)",
-    "installer_download_page": "not live",
-    "installer_page_source_link_verified": False,
-    "release_prerequisite": "the installer download page must link to the "
-    "source release and that same-page link must be verified at release time",
+    "installer_release_page": "not asserted by this record",
+    "installer_page_source_link": "verified by the release gate after "
+    "publication, not by this record",
+    "release_prerequisite": "every release page that offers the installer "
+    "must link to the source release, checked before approval on the draft "
+    "and after publication on the public page",
     "distribution_permitted": False,
 }
 
@@ -795,10 +800,8 @@ def source_hosting(
         "schema_version": 1,
         "record_sha256": digest(path),
         "release_url": release.get("url") if isinstance(release, dict) else None,
-        "installer_download_page": record.get("installer_download_page"),
-        "installer_page_source_link_verified": record.get(
-            "installer_page_source_link_verified"
-        ),
+        "installer_release_page": record.get("installer_release_page"),
+        "installer_page_source_link": record.get("installer_page_source_link"),
     }, problems
 
 

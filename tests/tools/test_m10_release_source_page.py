@@ -36,17 +36,18 @@ def test_the_page_names_only_the_published_source_release() -> None:
         (ROOT / "distribution/legal/SOURCE_HOSTING.json").read_text(encoding="utf-8")
     )
     url = hosting["release"]["url"]
-    assert f"> Source location: <{url}>" in text
-    # The installer page is a template: its release-specific parts stay unfilled,
-    # and the page does not claim that it is live.
-    for placeholder in (
-        "{{INSTALLER_FILENAME}}",
-        "{{RELEASE_TAG}}",
-        "{{RELEASE_VERSION}}",
-    ):
-        assert placeholder in text
-    assert "does not exist yet" in text
-    assert "Verify that same-page link" in text
+    content = text.split("## Page content", 1)[1]
+    assert f"<{url}>" in content
+    # The page is a template: every release-specific part stays a placeholder,
+    # and it asserts nothing about a page being live or its link verified.
+    assert set(re.findall(r"\{\{([A-Z0-9_]+)\}\}", content)) == {
+        "RELEASE_VERSION",
+        "INSTALLER_FILENAME",
+        "INSTALLER_BYTES",
+        "INSTALLER_SHA256",
+        "RELEASE_TAG",
+    }
+    assert "refuses" in text and "placeholder is unfilled" in " ".join(text.split())
     # Every URL on the page is the source release; no other hosting is invented.
     assert set(re.findall(r"https?://[^\s>)]+", text)) == {url}
     # It is a release step, not a packet file.
