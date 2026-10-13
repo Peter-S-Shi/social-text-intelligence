@@ -22,7 +22,10 @@ maps each crate to its texts, which are stored by SHA-256.
 
 ## Intel OpenMP runtime
 
-PyTorch ships `torch/lib/libiomp5md.dll` and `libiompstubs5md.dll`. They are
-byte-identical to Intel's `intel-openmp` 2026.1.0 package. Intel's licence and
-third-party notices are in `legal/intel-openmp/`, with the provenance record.
-Redistribution under that licence still needs an owner/legal decision (B4).
+`torch/lib/libiomp5md.dll` and `libiompstubs5md.dll` are taken unmodified from
+Intel's author-signed NuGet package `intelopenmp.redist.win` 2026.1.0.239, under
+the Intel Simplified Software License (Version October 2022). The copies that
+PyTorch's wheel brings are byte-identical; the build replaces them with the
+package's copies. The licence, Intel's third-party notices, the notice and its
+scope, and the provenance record are in `legal/intel-openmp/`. Whether this is
+an adequate redistribution basis still needs legal confirmation (B4).

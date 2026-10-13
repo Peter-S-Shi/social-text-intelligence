@@ -59,7 +59,8 @@ producer source correspondence remains unproven.
 
   Legal confirmation is **pending**. D4, the compatibility of an Intel-only
   anti-reverse-engineering term with LGPL v3 §4, is unresolved together with B4.
-  B1 stays open.
+  Intel's term is scoped to its two OpenMP runtime files in
+  `intel-openmp/NOTICE.md`. B1 stays open.
 - **Future source hosting (approved policy, not operational).** For a future
   release, the same archives are to be offered beside the installer on its
   download page. GPL v3 §6(d) requires equivalent access, which may also be

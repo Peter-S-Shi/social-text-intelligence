@@ -12,6 +12,10 @@ the accompanying notices preserve upstream copyright statements.
 You may modify the LGPL libraries and replace them with interface-compatible
 versions. No application term restricts reverse engineering for debugging such
 modifications. The application itself remains under its separate MIT license.
+Intel's terms for its two OpenMP runtime files (libiomp5md.dll and
+libiompstubs5md.dll) forbid reverse engineering those two files only; they do
+not apply to the Qt libraries or limit these LGPL rights. See
+intel-openmp/NOTICE.md.
 
 The distribution's legal folder contains GNU-LGPL-3.0.txt and GNU-GPL-3.0.txt,
 component license texts, a versioned inventory and preserved attribution notices.

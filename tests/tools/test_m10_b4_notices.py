@@ -126,23 +126,184 @@ def test_rust_coverage_fails_closed(tmp_path: Path) -> None:
     )
 
 
-def test_intel_record_pins_the_shipped_dlls_and_keeps_terms_open() -> None:
+def test_intel_record_pins_the_nuget_package_and_keeps_terms_open() -> None:
     record = json.loads((LEGAL / "intel-openmp" / "provenance.json").read_text())
-    assert record["provenance"]["wheel"].startswith("intel_openmp-2026.1.0-")
+    source = record["source"]
+    assert (source["channel"], source["package_id"], source["version"]) == (
+        "nuget",
+        "intelopenmp.redist.win",
+        "2026.1.0.239",
+    )
+    assert source["sha512_base64"] and source["sha256"]
+    assert "proof of origin" in source["author_signature"]["commitment"]
     assert set(record["files"]) == {
         "_internal/torch/lib/libiomp5md.dll",
         "_internal/torch/lib/libiompstubs5md.dll",
     }
+    for item in record["files"].values():
+        assert source["entries"][item["package_entry"]] == item["sha256"]
     licence = record["license"]
+    assert licence["name"] == load("compliance").INTEL_LICENSE
+    assert source["entries"]["license.txt"] == licence["text_sha256"]
     for key in ("text", "third_party_notices"):
         data = (LEGAL / "intel-openmp" / licence[key]).read_bytes()
         assert hashlib.sha256(data).hexdigest() == licence[key + "_sha256"]
+    # The old wheel EULA is recorded only as superseded, never as the basis.
+    assert "Developer Tools" in record["superseded"]["basis"]
+    assert not (LEGAL / "intel-openmp" / "LICENSE.txt").exists()
+    assert "Developer Tools" not in licence["name"]
     assert record["redistribution"]["status"].startswith("OPEN")
 
 
-@pytest.mark.parametrize("matching", [True, False])
-def test_intel_status_matches_dlls_but_never_settles_the_terms(
-    tmp_path: Path, matching: bool
+def test_intel_notice_scopes_the_reverse_engineering_term_to_intel_files() -> None:
+    notice = (LEGAL / "intel-openmp" / "NOTICE.md").read_text(encoding="utf-8")
+    assert "Copyright Intel Corporation." in notice
+    assert "only to these two Intel files" in notice
+    assert "do not limit the rights the GNU LGPL version 3 gives you" in notice
+    assert "intel-openmp/NOTICE.md" in (LEGAL / "QT_NOTICE.md").read_text(
+        encoding="utf-8"
+    )
+    from social_text_intelligence.desktop.license_notice import qt_notice_text
+
+    text = qt_notice_text("6.11.2")
+    assert "forbid reverse engineering those two files only" in text
+
+
+def synthetic_package(
+    path: Path, entries: dict[str, bytes], extra: tuple[str, bytes] | None = None
+) -> dict[str, Any]:
+    import base64
+    import zipfile
+
+    with zipfile.ZipFile(path, "w") as archive:
+        for name, data in entries.items():
+            archive.writestr(name, data)
+        if extra:
+            archive.writestr(*extra)
+    data = path.read_bytes()
+    return {
+        "channel": "nuget",
+        "package_id": "synthetic.redist",
+        "version": "1.0.0",
+        "filename": path.name,
+        "bytes": len(data),
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "sha512_base64": base64.b64encode(hashlib.sha512(data).digest()).decode(),
+        "entries": {n: hashlib.sha256(d).hexdigest() for n, d in entries.items()},
+    }
+
+
+DLL = "runtimes/win-x64/native/libiomp5md.dll"
+STUBS = "runtimes/win-x64/native/libiompstubs5md.dll"
+PACKAGE = {DLL: b"synthetic runtime", STUBS: b"synthetic stubs", "license.txt": b"L"}
+
+
+def test_the_pinned_package_yields_its_entries(tmp_path: Path) -> None:
+    compliance = load("compliance")
+    source = synthetic_package(tmp_path / "p.nupkg", PACKAGE)
+    assert compliance.intel_package_entries(tmp_path / "p.nupkg", source) == PACKAGE
+
+
+@pytest.mark.filterwarnings("ignore:Duplicate name")
+@pytest.mark.parametrize(
+    "fault", ["missing", "size", "sha256", "sha512", "entry", "absent", "duplicate"]
+)
+def test_an_unpinned_or_altered_package_is_refused(tmp_path: Path, fault: str) -> None:
+    compliance = load("compliance")
+    package = tmp_path / "p.nupkg"
+    source = synthetic_package(package, PACKAGE)
+    if fault == "missing":
+        package.unlink()
+    elif fault == "size":
+        source["bytes"] += 1
+    elif fault == "sha256":
+        source["sha256"] = "0" * 64
+    elif fault == "sha512":
+        source["sha512_base64"] = "A" * 88
+    elif fault == "entry":
+        source["entries"][DLL] = "0" * 64
+    elif fault == "absent":
+        source["entries"]["runtimes/win-x64/native/other.dll"] = "0" * 64
+    else:
+        source = synthetic_package(package, PACKAGE, (DLL, b"second copy"))
+    with pytest.raises(ValueError):
+        compliance.intel_package_entries(package, source)
+
+
+def synthetic_record(tmp_path: Path) -> Path:
+    source = synthetic_package(tmp_path / "p.nupkg", PACKAGE)
+    record = {
+        "files": {
+            "_internal/torch/lib/libiomp5md.dll": {
+                "sha256": source["entries"][DLL],
+                "package_entry": DLL,
+            },
+            "_internal/torch/lib/libiompstubs5md.dll": {
+                "sha256": source["entries"][STUBS],
+                "package_entry": STUBS,
+            },
+        },
+        "source": source,
+    }
+    path = tmp_path / "provenance.json"
+    path.write_text(json.dumps(record), encoding="utf-8")
+    return path
+
+
+def torch_lib(tmp_path: Path, runtime: bytes = PACKAGE[DLL]) -> Path:
+    lib = tmp_path / "bundle/_internal/torch/lib"
+    lib.mkdir(parents=True)
+    (lib / "libiomp5md.dll").write_bytes(runtime)
+    (lib / "libiompstubs5md.dll").write_bytes(PACKAGE[STUBS])
+    return tmp_path / "bundle"
+
+
+def test_the_build_ships_the_nuget_copies(tmp_path: Path) -> None:
+    build = load("build")
+    record = synthetic_record(tmp_path)
+    bundle = torch_lib(tmp_path)
+    receipts = build.source_intel_openmp(bundle, tmp_path, record)
+    assert [r["source"].split(": ")[1] for r in receipts] == [DLL, STUBS]
+    assert (bundle / "_internal/torch/lib/libiomp5md.dll").read_bytes() == PACKAGE[DLL]
+
+
+@pytest.mark.parametrize("fault", ["different-torch-build", "no-package", "absent"])
+def test_the_build_stops_rather_than_mixing_intel_builds(
+    tmp_path: Path, fault: str
+) -> None:
+    build = load("build")
+    record = synthetic_record(tmp_path)
+    bundle = torch_lib(
+        tmp_path, b"other build" if fault == "different-torch-build" else PACKAGE[DLL]
+    )
+    if fault == "no-package":
+        (tmp_path / "p.nupkg").unlink()
+    if fault == "absent":
+        (bundle / "_internal/torch/lib/libiompstubs5md.dll").unlink()
+    with pytest.raises(ValueError):
+        build.source_intel_openmp(bundle, tmp_path, record)
+    if fault == "different-torch-build":
+        shipped = bundle / "_internal/torch/lib/libiomp5md.dll"
+        assert shipped.read_bytes() == b"other build"
+
+
+@pytest.mark.parametrize("copy", ["nuget", "other"])
+def test_the_packet_accepts_only_the_nuget_copies(tmp_path: Path, copy: str) -> None:
+    compliance = load("compliance")
+    record = synthetic_record(tmp_path)
+    (tmp_path / "legal/intel-openmp").mkdir(parents=True)
+    shutil.copyfile(record, tmp_path / "legal/intel-openmp/provenance.json")
+    bundle = torch_lib(tmp_path, PACKAGE[DLL] if copy == "nuget" else b"other")
+    if copy == "nuget":
+        compliance.verify_intel_source(bundle, tmp_path, tmp_path / "legal")
+    else:
+        with pytest.raises(ValueError):
+            compliance.verify_intel_source(bundle, tmp_path, tmp_path / "legal")
+
+
+@pytest.mark.parametrize("variant", ["nuget", "wheel-eula", "mismatch"])
+def test_intel_status_keeps_b4_open_whatever_the_record_says(
+    tmp_path: Path, variant: str
 ) -> None:
     compliance = load("compliance")
     bundle, legal = tmp_path / "bundle", tmp_path / "legal"
@@ -154,17 +315,23 @@ def test_intel_status_matches_dlls_but_never_settles_the_terms(
         "Intel OpenMP has no recorded provenance or licence text"
     ]
     shutil.copytree(LEGAL / "intel-openmp", legal / "intel-openmp")
-    record = json.loads((legal / "intel-openmp/provenance.json").read_text())
-    if matching:
+    path = legal / "intel-openmp/provenance.json"
+    record = json.loads(path.read_text())
+    if variant != "mismatch":
         record["files"]["_internal/torch/lib/libiomp5md.dll"]["sha256"] = (
             hashlib.sha256(b"synthetic runtime").hexdigest()
         )
-    (legal / "intel-openmp/provenance.json").write_text(json.dumps(record))
+        record["source"]["entries"][DLL] = hashlib.sha256(
+            b"synthetic runtime"
+        ).hexdigest()
+    if variant == "wheel-eula":
+        record["source"]["channel"] = "pypi"
+    path.write_text(json.dumps(record))
     status, gaps = compliance.intel_openmp_status(bundle, legal)
-    assert status["matches_provenance"] is matching
-    assert status["texts_present"] is True
+    assert status["matches_provenance"] is (variant != "mismatch")
+    assert status["nuget_source_recorded"] is (variant != "wheel-eula")
     assert gaps[-1] == compliance.B4_INTEL
-    assert len(gaps) == (1 if matching else 2)
+    assert len(gaps) == (1 if variant == "nuget" else 2)
 
 
 def crate(files: dict[str, bytes]) -> bytes:
