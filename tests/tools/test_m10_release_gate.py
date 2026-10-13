@@ -103,12 +103,19 @@ def source_api(gate: Any) -> dict[str, Any]:
 
 def run(gate: Any, manifest: dict[str, Any], phase: str, api: Any, **kw: Any) -> Any:
     html = kw.pop("html", f"<a href='{gate.SH_RELEASE_URL}'>source</a>")
+    pinned = gate.SH_SCHEMA_1["release"]["target_commit"]
+    if phase == "draft":
+        tags: dict[str, str | None] = {BODY_TAG: None}
+    else:
+        tags = {BODY_TAG: SHA, gate.SOURCE_TAG: pinned}
+    tags.update(kw.pop("tags", {}))
     return gate.verify(
         manifest,
         VERSION,
         BODY_TAG,
         phase,
         lambda: copy.deepcopy(api),
+        lambda tag: tags[tag],
         kw.pop("source", lambda: source_api(gate)),
         lambda: html,
     )
@@ -283,7 +290,121 @@ def test_the_public_phase_needs_the_source_release_and_the_page(
     gate = load("release_gate")
     with pytest.raises(ValueError):
         gate.verify(
-            manifest, VERSION, BODY_TAG, "public", lambda: public(gate, manifest)
+            manifest,
+            VERSION,
+            BODY_TAG,
+            "public",
+            lambda: public(gate, manifest),
+            lambda tag: SHA,
         )
     with pytest.raises(ValueError):
-        gate.verify(manifest, VERSION, BODY_TAG, "other", lambda: {})
+        gate.verify(manifest, VERSION, BODY_TAG, "other", lambda: {}, lambda tag: None)
+
+
+ELSEWHERE = "c" * 40
+
+
+def test_a_draft_without_a_tag_keeps_its_planned_target_check(
+    manifest: dict[str, Any],
+) -> None:
+    gate = load("release_gate")
+    result = run(gate, manifest, "draft", draft_api(gate, manifest))
+    assert result["checks"]["tag_points_to_candidate_revision"] is True
+    assert result["resolved_tag_commits"] == {"application": None}
+    wrong = run(
+        gate, manifest, "draft", draft_api(gate, manifest, target_commitish="main")
+    )
+    assert wrong["checks"]["target_is_candidate_revision"] is False
+
+
+def test_a_draft_whose_existing_tag_points_elsewhere_is_refused(
+    manifest: dict[str, Any],
+) -> None:
+    gate = load("release_gate")
+    # The release says the right target, but GitHub ignores it for an existing tag.
+    api = draft_api(gate, manifest)
+    assert api["target_commitish"] == SHA
+    result = run(gate, manifest, "draft", api, tags={BODY_TAG: ELSEWHERE})
+    assert result["checks"]["target_is_candidate_revision"] is True
+    assert result["checks"]["tag_points_to_candidate_revision"] is False
+    assert result["all_checks_passed"] is False
+    assert result["ready_for_owner_approval"] is False
+    ok = run(gate, manifest, "draft", api, tags={BODY_TAG: SHA})
+    assert ok["ready_for_owner_approval"] is True
+
+
+def test_a_public_tag_must_exist_and_point_to_the_candidate_revision(
+    manifest: dict[str, Any],
+) -> None:
+    gate = load("release_gate")
+    api = public(gate, manifest)
+    assert api["target_commitish"] == SHA
+    for tags in ({BODY_TAG: ELSEWHERE}, {BODY_TAG: None}):
+        result = run(gate, manifest, "public", api, tags=tags)
+        assert result["checks"]["target_is_candidate_revision"] is True
+        assert result["checks"]["tag_points_to_candidate_revision"] is False
+        assert result["b1_operational_closure"] is False
+    good = run(gate, manifest, "public", api)
+    assert good["resolved_tag_commits"]["application"] == SHA
+    assert good["b1_operational_closure"] is True
+
+
+def test_the_source_tag_must_still_point_to_the_pinned_commit(
+    manifest: dict[str, Any],
+) -> None:
+    gate = load("release_gate")
+    api = public(gate, manifest)
+    # The source release response still looks right (tag, target, assets).
+    for moved in (ELSEWHERE, None):
+        result = run(gate, manifest, "public", api, tags={gate.SOURCE_TAG: moved})
+        assert result["checks"]["source_release_target"] is True
+        assert result["checks"]["source_tag_points_to_pinned_commit"] is False
+        assert result["b1_operational_closure"] is False
+    pinned = gate.SH_SCHEMA_1["release"]["target_commit"]
+    assert (
+        run(gate, manifest, "public", api)["resolved_tag_commits"]["source"] == pinned
+    )
+
+
+def refs(objects: dict[str, dict[str, Any]]) -> Any:
+    def get(path: str) -> dict[str, Any] | None:
+        return objects.get(path)
+
+    return get
+
+
+def test_resolve_tag_follows_annotated_tags_to_the_commit() -> None:
+    gate = load("release_gate")
+    commit, tag_object = "1" * 40, "2" * 40
+    light = refs({"git/ref/tags/v": {"object": {"type": "commit", "sha": commit}}})
+    assert gate.resolve_tag(light, "v") == commit
+    annotated = refs(
+        {
+            "git/ref/tags/v": {"object": {"type": "tag", "sha": tag_object}},
+            f"git/tags/{tag_object}": {"object": {"type": "commit", "sha": commit}},
+        }
+    )
+    assert gate.resolve_tag(annotated, "v") == commit
+    assert gate.resolve_tag(refs({}), "v") is None
+
+
+@pytest.mark.parametrize(
+    "objects",
+    [
+        {"git/ref/tags/v": {"object": {"type": "tree", "sha": "1" * 40}}},
+        {"git/ref/tags/v": {"object": {"type": "tag", "sha": "2" * 40}}},
+        {"git/ref/tags/v": {"object": {"type": "commit", "sha": "short"}}},
+        {"git/ref/tags/v": {"object": "bad"}},
+        {"git/ref/tags/v": {}},
+        {
+            "git/ref/tags/v": {"object": {"type": "tag", "sha": "2" * 40}},
+            f"git/tags/{'2' * 40}": {"object": {"type": "tag", "sha": "2" * 40}},
+        },
+    ],
+)
+def test_resolve_tag_refuses_malformed_or_non_commit_targets(
+    objects: dict[str, dict[str, Any]],
+) -> None:
+    gate = load("release_gate")
+    with pytest.raises(ValueError):
+        gate.resolve_tag(refs(objects), "v")

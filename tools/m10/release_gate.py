@@ -26,6 +26,7 @@ import json
 import re
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 from collections.abc import Callable
 from pathlib import Path
@@ -41,6 +42,9 @@ PLACEHOLDER = re.compile(r"\{\{[A-Z0-9_]+\}\}")
 SHA = re.compile(r"[0-9a-f]{40}")
 HEX64 = re.compile(r"[0-9a-f]{64}")
 Fetch = Callable[[], dict[str, object]]
+# Resolves a tag name through Git itself to a commit SHA, or None if it is absent.
+TagCommit = Callable[[str], str | None]
+MAX_TAG_DEPTH = 5
 CRLF, LF = chr(13) + chr(10), chr(10)
 
 
@@ -222,27 +226,77 @@ def source_release_checks(state: dict[str, object]) -> dict[str, bool]:
     }
 
 
+def resolve_tag(get: Callable[[str], dict[str, object] | None], tag: str) -> str | None:
+    """The commit a tag really points to, from the Git refs API.
+
+    A release's `target_commitish` says nothing once the tag exists, because
+    GitHub ignores it then. An annotated tag is followed to its commit; any
+    other target type, a loop or a too-deep chain is refused.
+    """
+    ref = get(f"git/ref/tags/{tag}")
+    if ref is None:
+        return None
+    for _ in range(MAX_TAG_DEPTH):
+        target = ref.get("object")
+        if not isinstance(target, dict):
+            raise ValueError("The tag reference is malformed.")
+        kind, sha = target.get("type"), target.get("sha")
+        if not isinstance(sha, str) or SHA.fullmatch(sha) is None:
+            raise ValueError("The tag reference is malformed.")
+        if kind == "commit":
+            return sha
+        if kind != "tag":
+            raise ValueError("The tag does not point to a commit.")
+        followed = get(f"git/tags/{sha}")
+        if followed is None:
+            raise ValueError("An annotated tag object is missing.")
+        ref = followed
+    raise ValueError("The tag chain is too deep.")
+
+
 def verify(
     manifest: dict[str, object],
     version: str,
     tag: str,
     phase: str,
     release: Fetch,
+    tag_commit: TagCommit,
     source: Fetch | None = None,
     page: Callable[[], str] | None = None,
 ) -> dict[str, object]:
-    """Run one phase. Only the public phase can report operational closure."""
+    """Run one phase. Only the public phase can report operational closure.
+
+    `tag_commit` resolves a tag through Git refs, not through the release
+    response. A draft may have no tag yet, so its planned target is checked;
+    a tag that already exists must point to the expected commit, and the
+    public phase requires the tag to exist and to point there.
+    """
     if phase not in ("draft", "public"):
         raise ValueError("The phase must be draft or public.")
     expected = plan(manifest, version, tag)
     api = release()
     checks = release_checks(normalize(api), expected, phase)
     digests = {"release_api_sha256": sha256_text(json.dumps(api, sort_keys=True))}
+    resolved = tag_commit(tag)
+    expected_commit = expected["target_commit"]
+    checks["tag_points_to_candidate_revision"] = (
+        resolved == expected_commit
+        if phase == "public"
+        else resolved in (None, expected_commit)
+    )
+    resolved_tags: dict[str, str | None] = {"application": resolved}
     if phase == "public":
         if source is None or page is None:
             raise ValueError("The public phase needs the source release and the page.")
         source_api = source()
         checks.update(source_release_checks(normalize(source_api)))
+        release_pin = SH_SCHEMA_1["release"]
+        assert isinstance(release_pin, dict)
+        source_resolved = tag_commit(SOURCE_TAG)
+        checks["source_tag_points_to_pinned_commit"] = (
+            source_resolved == release_pin["target_commit"]
+        )
+        resolved_tags["source"] = source_resolved
         html = page()
         checks["page_links_source_release"] = SH_RELEASE_URL in html
         digests["source_release_api_sha256"] = sha256_text(
@@ -261,6 +315,7 @@ def verify(
         "checks": checks,
         "all_checks_passed": passed,
         "response_digests": digests,
+        "resolved_tag_commits": resolved_tags,
         # A draft proves readiness only. B1's operational prerequisite is met by
         # the public phase alone, and only for this release; the packet inside
         # the installer was fixed before publication and is not changed by it.
@@ -293,6 +348,21 @@ def public_get(url: str) -> bytes:
     with urllib.request.urlopen(request, timeout=60) as response:
         data: bytes = response.read()
         return data
+
+
+def git_get(path: str) -> dict[str, object] | None:
+    """A Git API object from the public API, or None when GitHub says 404."""
+    try:
+        data = public_get(f"https://api.github.com/repos/{REPO}/{path}")
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            return None
+        raise
+    return dict(json.loads(data))
+
+
+def git_tag_commit(tag: str) -> str | None:
+    return resolve_tag(git_get, tag)
 
 
 def public_release(tag: str) -> Fetch:
@@ -345,7 +415,12 @@ def main() -> int:
             return 0
         if args.phase == "draft":
             result = verify(
-                manifest, args.version, args.tag, "draft", gh_draft(args.tag)
+                manifest,
+                args.version,
+                args.tag,
+                "draft",
+                gh_draft(args.tag),
+                git_tag_commit,
             )
         else:
             result = verify(
@@ -354,6 +429,7 @@ def main() -> int:
                 args.tag,
                 "public",
                 public_release(args.tag),
+                git_tag_commit,
                 public_release(SOURCE_TAG),
                 public_page(args.tag),
             )
