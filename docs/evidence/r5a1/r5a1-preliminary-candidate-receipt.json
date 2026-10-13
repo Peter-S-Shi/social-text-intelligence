@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "milestone": "V2 Release-5A-1 version freeze and private candidate validation",
+  "pull_request": 78,
+  "private_storage_only": true,
+  "preliminary_not_the_release_installer": true,
+  "published": false,
+  "distribution_permitted": false,
+  "version": "2.0.0",
+  "planned_tag": "v2.0.0",
+  "planned_tag_created": false,
+  "github_release_or_draft_created": false,
+  "application_sha": "4414c8887f2f8ab676f13982270e214624754c87",
+  "python": "3.13.16",
+  "candidate": {
+    "profile": "candidate",
+    "installer_filename": "STI-2.0.0-x64-setup.exe",
+    "installer_bytes": 726695342,
+    "installer_sha256": "4a0fe46e11bb9fd0f53594c79ff74b08c7f8009e69e72348ab945fd4c19e8c96",
+    "inno_script_app_version": "2.0.0",
+    "frozen_module_version": "2.0.0",
+    "legal_blockers": ["B1"],
+    "other_packet_blockers": [],
+    "b4_remaining": [],
+    "license_decisions_valid": true,
+    "source_hosting_record_valid": true
+  },
+  "checks": {
+    "frozen_verify_runtime": 0,
+    "frozen_smoke": 0,
+    "frozen_license_info": 0,
+    "opt_in_frozen_pytest": "3 passed",
+    "receipt_facts_function": "Get-StiReceiptFacts accepted the receipt (blockers B1)",
+    "release_gate_candidate_manifest": "produced; status awaiting-owner-decisions",
+    "release_gate_render": "version 2.0.0 and tag v2.0.0 fill every placeholder locally; version 0.10.0 refused; no draft checked or created"
+  },
+  "must_be_rebuilt_from_main": true,
+  "not_claimed": [
+    "the release installer",
+    "a final-main rebuild",
+    "a tag, Draft or public Release",
+    "draft verification or B1 operational closure",
+    "an Owner Release Gate decision",
+    "release or distribution permission"
+  ]
+}

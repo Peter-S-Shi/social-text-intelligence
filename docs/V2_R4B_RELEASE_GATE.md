@@ -3,6 +3,8 @@
 Status: **engineering complete; B1 stays OPEN; `distribution_permitted` stays
 false.** No application tag, GitHub Release or installer publication was made.
 
+> **Later (PR #78).** The Owner approved application version `2.0.0` and the planned tag `v2.0.0`; Release-5A-1 set the version (see [V2_R5A1_VERSION_FREEZE.md](V2_R5A1_VERSION_FREEZE.md)). The `0.10.0` names and the pending-decision wording below are the record as it stood at PR #77 and are kept as history.
+
 ## 1. The circular dependency
 
 Release-4A left one B1 prerequisite: the page that offers the installer must
