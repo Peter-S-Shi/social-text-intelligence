@@ -6,6 +6,7 @@ import argparse
 import base64
 import hashlib
 import importlib.metadata
+import io
 import json
 import re
 import shutil
@@ -592,6 +593,8 @@ def intel_package_entries(package: Path, source: dict[str, object]) -> dict[str,
     """The pinned entries of Intel's NuGet package, or an error; nothing is guessed."""
     if package.is_symlink() or not package.is_file():
         raise ValueError("The pinned Intel OpenMP NuGet package is missing.")
+    if package.stat().st_size != source["bytes"]:
+        raise ValueError("The Intel OpenMP NuGet package does not match its pin.")
     data = package.read_bytes()
     sha512 = base64.b64encode(hashlib.sha512(data).digest()).decode("ascii")
     if (
@@ -603,7 +606,8 @@ def intel_package_entries(package: Path, source: dict[str, object]) -> dict[str,
     entries = source["entries"]
     assert isinstance(entries, dict)
     found: dict[str, bytes] = {}
-    with zipfile.ZipFile(package) as archive:
+    # Parse the very bytes that were hashed, not the file a second time.
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
         names = [info.filename for info in archive.infolist()]
         for name, expected in entries.items():
             member = PurePosixPath(name)
@@ -651,6 +655,7 @@ def intel_openmp_status(
         and source.get("channel") == "nuget"
         and licence["name"] == INTEL_LICENSE
         and entries.get("license.txt") == licence["text_sha256"]
+        and licence["third_party_notices_sha256"] in entries.values()
         and all(
             entries.get(item["package_entry"]) == item["sha256"]
             for item in record["files"].values()
@@ -682,7 +687,9 @@ def verify_intel_source(bundle: Path, source_dir: Path, legal: Path) -> None:
     shipped = [bundle / "_internal/torch/lib" / name for name in INTEL_FILES]
     if not any(path.is_file() for path in shipped):
         return
-    record = json.loads((legal / "intel-openmp/provenance.json").read_text())
+    record = json.loads(
+        (legal / "intel-openmp/provenance.json").read_text(encoding="utf-8")
+    )
     entries = intel_package_entries(
         source_dir / record["source"]["filename"], record["source"]
     )

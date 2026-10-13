@@ -26,7 +26,7 @@ Unchanged:
 
 ### 1.1 Evidence
 
-The evidence was gathered on 2026-10-13. The single package download was
+The evidence was gathered on 2026-10-13 UTC. The single package download was
 approved by the owner. The raw evidence stays private on the host.
 
 | Fact | Result |
@@ -56,7 +56,9 @@ names that package's licence.
   3. writes the package's bytes over them, and records the result in
      `build-evidence.json` under `intel_openmp_from_nuget`.
 - **Packet assembly (`compliance.py`, `verify_intel_source`).** It independently
-  refuses a bundle whose Intel DLLs are not the package's copies.
+  refuses Intel DLLs whose bytes differ from the pinned package's entries. Where
+  the shipped bytes came from is shown by the build's replacement step and
+  `build-evidence.json`.
 - **B4 status (`intel_openmp_status`).**
   - It adds a gap if the record does not name the pinned NuGet source, or names
     another licence.
@@ -101,10 +103,10 @@ The engineering response sets the boundary in writing, in three places:
 
 Each states that Intel's terms cover only `libiomp5md.dll` and
 `libiompstubs5md.dll`, do not apply to Qt, PySide6, shiboken6 or the
-application, and do not limit the LGPL rights.
+application, and are not intended to limit the LGPL rights.
 
 The Intel DLLs are loaded by PyTorch, not by the Qt libraries. Whether this
-scoping is legally sufficient is decision L3 below. It is not decided here.
+scoping is legally sufficient is decision LD3 below. It is not decided here.
 
 ## 3. B1: review and release-facing source-access materials
 
@@ -124,7 +126,7 @@ demonstrates a need.
 ### 3.2 Release-facing source-access page (draft; not published)
 
 This is the exact content for the download page under D2. It goes live only
-after legal confirmation (L1, L2) and a separate release decision. It does not
+after legal confirmation (LD1, LD2) and a separate release decision. It does not
 replace `legal/SOURCE_ACCESS.md`. That file must change at the same time to
 name this page.
 
@@ -177,12 +179,12 @@ change before any blocker or `distribution_permitted` can move.
 
 | # | Question | Blocker | If confirmed |
 | --- | --- | --- | --- |
-| L1 | Are the hash-pinned upstream Qt/PySide6 release sources and build scripts the Corresponding Source of the unmodified official binaries, with binding producer correspondence unproven (D1)? | B1 | B1's source question is answered |
-| L2 | Is in-package delivery plus the §3.2 page adequate equivalent access (D2), and is Installation Information not triggered for download-only distribution (D3)? | B1 | The §3.2 page can be published with the release |
-| L3 | Is Intel's no-reverse-engineering term, scoped in writing to the two Intel DLLs (§2), compatible with LGPLv3 §4 for the Qt libraries (D4)? | B1, B4 | D4 closes |
-| L4 | Is shipping the two DLLs taken from Intel's author-signed NuGet package under the ISSL an adequate redistribution basis, given that byte-identical copies also reach the build through PyTorch under the Developer Tools EULA? | B4 | The Intel route is accepted |
-| L5 | Does `NOTICE.md` (the nuspec copyright line plus the full ISSL text and third-party notices) satisfy the ISSL notice condition, given that the licence text has no copyright line? | B4 | The notice content is final |
-| L6 | Does the owner accept the ISSL disclaimer, which places responsibility for use in high-risk systems on the licensee? Is the oneTBB third-party file that `third-party-programs.txt` refers to (absent from the package) needed? | B4 | B4's Intel item can close |
+| LD1 | Are the hash-pinned upstream Qt/PySide6 release sources and build scripts the Corresponding Source of the unmodified official binaries, with binding producer correspondence unproven (D1)? | B1 | B1's source question is answered |
+| LD2 | Is in-package delivery plus the §3.2 page adequate equivalent access (D2), and is Installation Information not triggered for download-only distribution (D3)? | B1 | The §3.2 page can be published with the release |
+| LD3 | Is Intel's no-reverse-engineering term, scoped in writing to the two Intel DLLs (§2), compatible with LGPLv3 §4 for the Qt libraries (D4)? | B1, B4 | D4 closes |
+| LD4 | Is shipping the two DLLs taken from Intel's author-signed NuGet package under the ISSL an adequate redistribution basis, given that byte-identical copies also reach the build through PyTorch under the Developer Tools EULA? | B4 | The Intel route is accepted |
+| LD5 | Does `NOTICE.md` (the nuspec copyright line plus the full ISSL text and third-party notices) satisfy the ISSL notice condition, given that the licence text has no copyright line? | B4 | The notice content is final |
+| LD6 | Does the owner accept the ISSL disclaimer, which places responsibility for use in high-risk systems on the licensee? Is the oneTBB third-party file that `third-party-programs.txt` refers to (absent from the package) needed? | B4 | B4's Intel item can close |
 
 Outside these items, distribution also stays blocked on C15 (signing and
 SmartScreen) and on the owner's release decision.
@@ -196,7 +198,7 @@ SmartScreen) and on the owner's release decision.
 | Private frozen build at `67ab5e9` (official CPython 3.13.16) | Exit 0; 5,364 files. `build-evidence.json` records both DLLs as taken from `intelopenmp.redist.win 2026.1.0.239`. The packet is valid, with blockers **B1** and **B4**; B4's only remaining item is the Intel legal confirmation. `legal/intel-openmp/` holds the ISSL text, the notice, the provenance record and the third-party notices, and no EULA |
 | Frozen checks | `--verify-runtime`, `--smoke` (including `application_icon: true`) and `--license-info` exit 0; the opt-in frozen pytest passes 3 tests |
 | Private internal installer | Compiled with Inno Setup 6.7.3: 726,685,464 bytes, SHA-256 `6a36df49ae7715a231bb8c15daec6c005bfcab449e61e24ecf657a79925a546a`; receipt checked by the harness's `Get-StiReceiptFacts` (blockers B1, B4); 5,366 payload entries, including the two DLLs and the four `legal/intel-openmp/` files. Not published |
-| PR CI | One run on the final head of PR #74 |
+| PR CI | One run on the PR's final code head; the result is recorded in the PR, not here |
 
 The installer is a private validation artifact, not a release candidate for
 distribution.

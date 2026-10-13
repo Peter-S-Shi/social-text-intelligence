@@ -37,7 +37,7 @@
       "certificate_sha256": "69fce007b873e429769dcd7dc7c849328fc03a417f404f9f905c1407d08cb5fa",
       "certificate_validity": "2026-01-13 to 2027-01-13",
       "signing_time": "2026-06-18T05:40:12Z",
-      "verified": "2026-10-13: CMS signature valid; signed package hash equals the recomputed unsigned-package hash; chain verified to Windows trusted roots; revocation not checked",
+      "verified": "2026-10-13 UTC: CMS signature valid; signed package hash equals the recomputed unsigned-package hash; chain verified to Windows trusted roots; revocation not checked",
       "binding": "the build accepts only the package whose SHA-512 and SHA-256 are pinned here"
     },
     "repository_countersignature": "NuGet.org Repository by Microsoft, proof of receipt, 2026-07-01T15:12:12Z; structure inspected, cryptography not independently verified"

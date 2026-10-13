@@ -159,7 +159,7 @@ def test_intel_notice_scopes_the_reverse_engineering_term_to_intel_files() -> No
     notice = (LEGAL / "intel-openmp" / "NOTICE.md").read_text(encoding="utf-8")
     assert "Copyright Intel Corporation." in notice
     assert "only to these two Intel files" in notice
-    assert "do not limit the rights the GNU LGPL version 3 gives you" in notice
+    assert "not intended to limit the rights the GNU LGPL version 3" in notice
     assert "intel-openmp/NOTICE.md" in (LEGAL / "QT_NOTICE.md").read_text(
         encoding="utf-8"
     )

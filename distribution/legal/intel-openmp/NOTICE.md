@@ -23,8 +23,8 @@ Intel's terms do not apply to anything else in this distribution:
 - this application;
 - any other component.
 
-They do not limit the rights the GNU LGPL version 3 gives you for the Qt
-libraries. Those rights include modifying the Qt libraries and reverse
+They are not intended to limit the rights the GNU LGPL version 3 gives you
+for the Qt libraries. Those rights include modifying the Qt libraries and reverse
 engineering the combined work to debug such modifications, as described in
 `QT_NOTICE.md`.
 

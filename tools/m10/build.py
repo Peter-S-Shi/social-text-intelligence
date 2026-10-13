@@ -508,6 +508,7 @@ def main() -> int:
         return 2
     except (
         OSError,
+        KeyError,
         subprocess.CalledProcessError,
         importlib.metadata.PackageNotFoundError,
     ):
