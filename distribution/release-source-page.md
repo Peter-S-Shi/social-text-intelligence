@@ -1,42 +1,37 @@
-# Release source page (installer-page template)
+# Release page template (installer release body)
 
-This is the GPL v3 §6(d) equivalent-access page for B1. The owner approved this
+This is the body template for the GitHub release that will offer the Windows
+installer, with the GPL v3 §6(d) equivalent access for B1. The owner approved the
 route as D2 and assessed it as LD2 (`docs/V2_R2_LICENSE_DECISIONS.md`).
 
-The source archives and records are **published** in the immutable GitHub
-release <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2> (Release-3; `distribution/legal/SOURCE_HOSTING.json` pins its 13
-assets). **The installer's download page does not exist yet.** The page content
-below is the template for it: the installer release carries it, with the
-`{{...}}` placeholders filled in at release time, next to the installer
-download. Publishing the installer page needs its own Owner Release Gate. Filling
-it in does not, on its own, permit distribution.
+The source archives and records are already published in the immutable release
+<https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2>
+(Release-3; `distribution/legal/SOURCE_HOSTING.json` pins its 13 assets).
+
+`tools/m10/release_gate.py` renders everything under "Page content" and refuses
+to render while any `{{...}}` placeholder is unfilled. It fills the five
+placeholders from the private candidate manifest and the Owner's version and tag
+decisions. The rendered body is then checked on the unpublished draft before
+approval and on the public page after publication (`docs/V2_R4B_RELEASE_GATE.md`).
+Nothing here permits distribution.
 
 `tests/tools/test_m10_release_source_page.py` checks every filename and SHA-256
 below against `distribution/source-manifest.json` and
 `distribution/qt-binary-provenance.json`.
 
-## Remaining release prerequisites
-
-1. The installer's download page carries this content and links each file to the
-   source release above, next to the installer download. The release stays
-   available for as long as the installer is offered.
-2. **Verify that same-page link** on the live page, from the public URL, before
-   the release. This is the explicit final B1 prerequisite; no record states it
-   done.
-3. The release-facing notices already name the source release. After step 2,
-   add a reviewed record of the verification and rebuild. Only that can let B1
-   close; no current schema expresses it.
-4. Pass the separate Owner Release Gate. Signing and SmartScreen (C15) and the
-   remaining clean-machine items (C16) are outside this page.
-
 ## Page content
 
-> **Source for Social Text Intelligence {{RELEASE_VERSION}}**
+> **Social Text Intelligence {{RELEASE_VERSION}} for Windows**
 >
-> The installer `{{INSTALLER_FILENAME}}` includes unmodified Qt 6.11.2,
-> PySide6-Essentials 6.11.2 and shiboken6 6.11.2 under the GNU LGPL version 3.
-> The same archives are inside the installer, in `legal/sources/`, byte for
-> byte, and are offered here as well.
+> Installer: `{{INSTALLER_FILENAME}}` ({{INSTALLER_BYTES}} bytes, SHA-256
+> `{{INSTALLER_SHA256}}`). The application source is at tag `{{RELEASE_TAG}}`.
+>
+> **Source for the included libraries.** This installer includes unmodified
+> Qt 6.11.2, PySide6-Essentials 6.11.2 and shiboken6 6.11.2 under the GNU LGPL
+> version 3. Their complete source archives and build records are in the
+> immutable source release
+> <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2>.
+> The same archives are inside the installer, in `legal/sources/`, byte for byte.
 >
 > | Archive | Bytes | SHA-256 |
 > | --- | --- | --- |
@@ -55,13 +50,8 @@ below against `distribution/source-manifest.json` and
 > | `qtimageformats-6.11.2.spdx.json` | 155,646 | `1678c477dcdf320fb04b8de1b6305278081f86b45ed72eda677fde0de9ec8b8e` |
 > | `qttranslations-6.11.2.spdx.json` | 1,025,716 | `44b904f44127ce246c3fada6d759fd2759ae0dfa03375f1a413aa0c0ba2a60ee` |
 >
-> Also provided here:
->
-> - `qt-binary-provenance.json`;
-> - the Social Text Intelligence source at tag `{{RELEASE_TAG}}`;
-> - the build receipt;
-> - `SOURCE_ACCESS.md` and `QT_REPLACEMENT.md`.
->
-> Source location: <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2>
+> The source release also holds `qt-binary-provenance.json`,
+> `source-manifest.json`, `QT_REPLACEMENT.md` and `SHA256SUMS`. The installed
+> `legal/` folder holds `SOURCE_ACCESS.md` and the licence texts.
 >
 > These files stay available for as long as this installer is offered.

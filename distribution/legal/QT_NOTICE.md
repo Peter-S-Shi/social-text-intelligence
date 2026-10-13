@@ -24,8 +24,8 @@ compliance decisions LD1–LD6, with their residual risks: these are internal
 assessments, not an external legal certification. Exact producer-source
 correspondence for the PySide6/shiboken6 binaries is unproven, and the
 modified-source experiment covered QtCore only. The source archives are
-publicly hosted for GPL v3 §6(d) in an immutable release at <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2>;
-the installer download page does not yet link to it and is not live.
+publicly hosted for GPL v3 §6(d) in an immutable release at <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2>.
+Each release page that offers this installer links to that release.
 `inventory.json` records the remaining blockers. No release readiness is
 claimed.
 

@@ -1,8 +1,8 @@
 ; Rendered only into ignored local build output by installer.py.
 [Setup]
 AppId={{DB272C58-19C3-48E1-A88B-040CD5D88E35}
-AppName=Social Text Intelligence (internal engineering)
-AppVersion=0.10.0
+AppName=@@APPNAME@@
+AppVersion=@@VERSION@@
 DefaultDirName={localappdata}\Programs\Social Text Intelligence
 DisableDirPage=yes
 DefaultGroupName=Social Text Intelligence
@@ -12,7 +12,7 @@ ArchitecturesAllowed=x64os
 ArchitecturesInstallIn64BitMode=x64os
 MinVersion=10.0
 OutputDir=@@OUTPUT@@
-OutputBaseFilename=STI-0.10.0-internal-x64
+OutputBaseFilename=@@OUTBASE@@
 Compression=none
 UninstallDisplayIcon={app}\sti-desktop.exe
 InfoBeforeFile=@@WARNING@@

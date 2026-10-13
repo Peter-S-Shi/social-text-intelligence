@@ -66,8 +66,8 @@ producer source correspondence remains unproven.
   - LD3 (D4): Intel's term, scoped to its two OpenMP runtime files in
     `intel-openmp/NOTICE.md`, is compatible with LGPL v3 §4.
 
-  B1 stays open until the installer download page links to the public
-  source release below and that link is verified at release time.
+  B1 stays open until the release gate has verified that the release page
+  offering the installer links to the public source release below.
 - **Public source hosting (GPL v3 §6(d) equivalent access).** The same archives
   and records are publicly hosted in an immutable GitHub release:
   <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2>.
@@ -76,10 +76,11 @@ producer source correspondence remains unproven.
   checks against `source-manifest.json`, `qt-binary-provenance.json` and
   `QT_REPLACEMENT.md`. The release stays available for as long as any installer
   that includes these libraries is offered.
-- **Not yet live: the installer download page.** The installer's download page,
-  which must link to that release next to the installer, does not exist yet, and
-  its same-page link has not been verified. That is a prerequisite for any
-  release. This file is not a written offer.
+- **Same-page link.** Each release page that offers this installer links to
+  that source release next to the installer download. The release gate checks
+  it on the unpublished draft before approval and on the public page after
+  publication; this packet is fixed before publication and does not assert the
+  result. This file is not a written offer.
 - Installation Information is not triggered by a standalone download onto a
   user's own PC, because no User Product is transferred (LD2). No signing or
   device lock is introduced.

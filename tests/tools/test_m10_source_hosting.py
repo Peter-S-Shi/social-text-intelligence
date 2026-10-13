@@ -73,10 +73,13 @@ def test_committed_record_matches_the_evidence_and_claims_no_installer_page() ->
     assert data["release"]["immutable"] is True
     assert data["release"]["url"].endswith("/releases/tag/sources-qt-6.11.2")
     assert len(data["assets"]) == 13
-    assert data["installer_download_page"] == "not live"
-    assert data["installer_page_source_link_verified"] is False
+    # An installer carries the record unchanged, so it asserts nothing about
+    # its own release page: neither that one exists nor that it does not.
+    assert data["installer_release_page"] == "not asserted by this record"
+    assert "not by this record" in data["installer_page_source_link"]
+    assert "not live" not in json.dumps(data)
     assert data["distribution_permitted"] is False
-    # The notices name the same release and say that no installer page is live.
+    # The notices name the same release and make no time-dependent page claim.
     url = data["release"]["url"]
     for name in ("SOURCE_ACCESS.md", "QT_NOTICE.md"):
         assert url in (LEGAL / name).read_text(encoding="utf-8")
@@ -92,8 +95,9 @@ def test_a_valid_record_narrows_b1_to_the_installer_page_link_only() -> None:
         VERIFIED, **EVIDENCE, **common, hosting_problems=[]
     )
     assert hosted == [compliance.B1_HOSTED]
-    assert "same-page link must be verified" in hosted[0]
-    assert "no such page is live" in hosted[0]
+    assert "release gate verifies that same-page link after publication" in hosted[0]
+    assert "asserts neither that such a page exists" in hosted[0]
+    assert "not live" not in hosted[0]
     # Without a record check the earlier wording stays.
     unchecked = compliance.distribution_blockers(VERIFIED, **EVIDENCE, **common)
     assert unchecked == [compliance.B1_ASSESSED]
@@ -151,10 +155,10 @@ def mutate(path: tuple[str, ...], value: object) -> Callable[[dict[str, Any]], N
     ("change", "expected"),
     [
         (mutate(("distribution_permitted",), True), "distribution_permitted"),
-        (mutate(("installer_download_page",), "live"), "installer_download_page"),
+        (mutate(("installer_release_page",), "live"), "installer_release_page"),
         (
-            mutate(("installer_page_source_link_verified",), True),
-            "installer_page_source_link_verified",
+            mutate(("installer_page_source_link",), "verified by this record"),
+            "installer_page_source_link",
         ),
         (mutate(("release", "immutable"), False), "release"),
         (mutate(("release", "tag"), "v1.0.0"), "release"),
@@ -214,8 +218,8 @@ def test_the_installer_rederives_the_hosting_condition(tmp_path: Path) -> None:
     assert installer.public_source_hosting(bundle, invalid) == "not operational"
     hosted = installer.public_source_hosting(bundle, inventory)
     assert hosted == installer.HOSTED_CONDITION
-    assert "does not link to it yet" in hosted
-    assert "not verified" in hosted
+    assert "checked by the release gate, not by this packet" in hosted
+    assert "not live" not in hosted
 
 
 @pytest.mark.parametrize(
@@ -231,7 +235,7 @@ def test_a_forged_hosting_claim_refuses_the_installer(
     inventory = inventory_with(comp, legal)
     if forgery == "altered-record":
         data = record()
-        data["installer_page_source_link_verified"] = True
+        data["installer_page_source_link"] = "verified by this record"
         (legal / "SOURCE_HOSTING.json").write_text(json.dumps(data), encoding="utf-8")
         inventory["source_hosting"]["record_sha256"] = comp.digest(
             legal / "SOURCE_HOSTING.json"
