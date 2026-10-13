@@ -527,3 +527,29 @@ def test_release_four_b_keeps_publication_and_decisions_with_the_owner() -> None
     for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
         assert "two-phase publication gate" in surface, name
+
+
+def test_release_five_a1_freezes_the_version_without_a_tag_or_release() -> None:
+    record = " ".join(
+        (ROOT / "docs/V2_R5A1_VERSION_FREEZE.md").read_text(encoding="utf-8").split()
+    )
+    assert "planned and not created" in record
+    assert "not the release installer" in record
+    assert "built fresh from the resulting `main` commit" in record
+    assert "`distribution_permitted` stays false" in record
+    receipt = json.loads(
+        (ROOT / "docs/evidence/r5a1/r5a1-preliminary-candidate-receipt.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert receipt["version"] == "2.0.0" and receipt["planned_tag"] == "v2.0.0"
+    assert receipt["planned_tag_created"] is False
+    assert receipt["github_release_or_draft_created"] is False
+    assert receipt["published"] is False and receipt["distribution_permitted"] is False
+    assert receipt["must_be_rebuilt_from_main"] is True
+    assert receipt["candidate"]["legal_blockers"] == ["B1"]
+    assert receipt["candidate"]["installer_filename"] == "STI-2.0.0-x64-setup.exe"
+    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+        surface = (ROOT / name).read_text(encoding="utf-8")
+        assert "Release-5A-1" in surface, name
+        assert "undecided Owner decisions" not in surface, name
