@@ -8,6 +8,8 @@ This milestone changes no product behaviour and builds no installer. It records
 Release-3 and teaches the packet checks to tell satisfied B1 conditions from
 missing, inconsistent or substituted evidence.
 
+> **Later (PR #77).** Release-4B replaced the packaged "not live" wording with neutral text and moved the same-page link check into a two-phase release gate. See [V2_R4B_RELEASE_GATE.md](V2_R4B_RELEASE_GATE.md). This record is kept as it stood at PR #76.
+
 ## 1. What is public (Release-3)
 
 | Fact | Value |
