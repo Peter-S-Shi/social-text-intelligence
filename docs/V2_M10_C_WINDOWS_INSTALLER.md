@@ -123,7 +123,7 @@ and running the reviewed local script under the guest's permitted script policy:
 ```powershell
 'STI M10-C disposable Windows validation v1' | Set-Content C:\STI-M10C-VM.txt
 & C:\STIInput\validate_installer.ps1 `
-  -Installer C:\STIInput\STI-0.10.0-internal-x64.exe `
+  -Installer C:\STIInput\STI-2.0.0-internal-x64.exe `
   -Receipt C:\STIInput\installer-receipt.json `
   -Output C:\STIValidation -EnvironmentKind DisposableVM -RuntimeExpectation Present
 ```

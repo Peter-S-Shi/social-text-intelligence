@@ -7,8 +7,8 @@ planning. Stable product principles and engineering boundaries remain in the
 
 ## Completed feature milestones
 
-Milestones 1–10 form the completed feature boundary for the current `0.10.0`
-version:
+Milestones 1–10 form the completed feature boundary of the V1 `0.10.0`
+baseline (the application version is now `2.0.0`; see Release-5A-1):
 
 1. independent local project foundation;
 2. normalized text-analysis contracts and provider boundaries;
@@ -82,7 +82,7 @@ presented natively. M8 product hardening is complete with the owner's overall
 PASS; outstanding item-level risks remain as recorded in its ledgers. Formal
 accessibility acceptance, the representative-domain evaluation, the pre-distribution
 LGPL gate, packaging, and release work remain separate later gates. V2 is not
-release-ready. The package version stays `0.10.0`.
+release-ready. The package version stayed `0.10.0` through V2 development until Release-5A-1 set `2.0.0`.
 
 ### M9 — Evidence & Formal Acceptance
 

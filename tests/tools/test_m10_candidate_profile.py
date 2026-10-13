@@ -51,7 +51,7 @@ def test_the_profiles_differ_only_in_name_and_notice() -> None:
     assert module.PROFILES["internal"]["suffix"] == "internal-x64"
     assert module.PROFILES["internal"]["notice"] == "INSTALLER_NOTICE.txt"
     assert module.PROFILES["candidate"]["suffix"] == "x64-setup"
-    assert module.application_version() == "0.10.0"
+    assert module.application_version() == "2.0.0"
     internal = (ROOT / "tools/m10/INSTALLER_NOTICE.txt").read_text(encoding="utf-8")
     assert "NOT APPROVED FOR DISTRIBUTION" in internal
     release = (ROOT / "tools/m10/RELEASE_NOTICE.txt").read_text(encoding="utf-8")
@@ -158,3 +158,27 @@ def test_the_cli_refuses_a_candidate_from_an_unready_packet(tmp_path: Path) -> N
     )
     assert result.returncode == 2
     assert not output.exists()
+
+
+def test_the_application_version_is_one_value_everywhere_it_is_declared() -> None:
+    import tomllib
+
+    import social_text_intelligence
+
+    module = load("installer")
+    declared = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    version = declared["project"]["version"]
+    assert (
+        version == social_text_intelligence.__version__ == module.application_version()
+    )
+    assert version == "2.0.0"
+    # The installer template carries no literal version; both profiles derive it.
+    assert version not in (ROOT / "tools/m10/installer.iss").read_text(encoding="utf-8")
+    for profile, suffix in (("internal", "internal-x64"), ("candidate", "x64-setup")):
+        assert module.PROFILES[profile]["suffix"] == suffix
+    # No release-facing source or packaging file still names the V1 version.
+    for folder in ("src", "tools/m10", "distribution"):
+        for path in (ROOT / folder).rglob("*"):
+            if path.suffix in {".py", ".iss", ".txt", ".json", ".md", ".spec"}:
+                text = path.read_text(encoding="utf-8", errors="ignore")
+                assert "0.10.0" not in text, path.relative_to(ROOT).as_posix()

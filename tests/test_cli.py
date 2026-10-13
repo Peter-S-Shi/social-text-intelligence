@@ -29,7 +29,7 @@ class CliTests(unittest.TestCase):
             exit_code = main(["about"])
 
         self.assertEqual(exit_code, 0)
-        self.assertIn("Version: 0.10.0", output.getvalue())
+        self.assertIn("Version: 2.0.0", output.getvalue())
         self.assertIn("Milestone: 10", output.getvalue())
         self.assertIn("Analysis contracts available: yes", output.getvalue())
         self.assertIn("Local sentiment inference available: yes", output.getvalue())

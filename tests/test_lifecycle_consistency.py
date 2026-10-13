@@ -106,7 +106,8 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         assert phrase not in combined
 
     status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
-    assert "| Current version | `0.10.0` |" in status
+    assert "| Current version | `2.0.0`" in status
+    assert "v2.0.0` is planned and not created" in status
     assert "| Feature milestone status | Milestones 1–10 complete |" in status
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
