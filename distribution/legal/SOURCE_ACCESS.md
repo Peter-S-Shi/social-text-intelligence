@@ -66,13 +66,20 @@ producer source correspondence remains unproven.
   - LD3 (D4): Intel's term, scoped to its two OpenMP runtime files in
     `intel-openmp/NOTICE.md`, is compatible with LGPL v3 §4.
 
-  B1 stays open until the equivalent public access below is operational.
-- **Future source hosting (approved policy, not operational).** For a future
-  release, the same archives are to be offered beside the installer on its
-  download page. GPL v3 §6(d) requires equivalent access, which may also be
-  another server with clear directions next to the object code, kept available
-  for as long as the object code is. **No public download exists yet.** This
-  file is not a written offer.
+  B1 stays open until the installer download page links to the public
+  source release below and that link is verified at release time.
+- **Public source hosting (GPL v3 §6(d) equivalent access).** The same archives
+  and records are publicly hosted in an immutable GitHub release:
+  <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2>.
+  It holds source-access materials only, no application binary. It lists
+  13 assets, whose SHA-256 values `SOURCE_HOSTING.json` pins and the build
+  checks against `source-manifest.json`, `qt-binary-provenance.json` and
+  `QT_REPLACEMENT.md`. The release stays available for as long as any installer
+  that includes these libraries is offered.
+- **Not yet live: the installer download page.** The installer's download page,
+  which must link to that release next to the installer, does not exist yet, and
+  its same-page link has not been verified. That is a prerequisite for any
+  release. This file is not a written offer.
 - Installation Information is not triggered by a standalone download onto a
   user's own PC, because no User Product is transferred (LD2). No signing or
   device lock is introduced.

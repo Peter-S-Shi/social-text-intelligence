@@ -26,6 +26,7 @@ application data when checking compatibility.
 
 LICENSE_DECISIONS.json records the project owner's compliance decisions and
 their residual risks. They are internal assessments, not an external legal
-certification. Public source access is not yet operational, and public binary
-distribution is not authorized.
+certification. The source archives are publicly available at
+https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2
+Public binary distribution is not authorized.
 """

@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "record": "STI V2 Release-3 public source hosting (GPLv3 section 6(d))",
+  "recorded": "2026-10-13",
+  "release": {
+    "host": "github.com/Peter-S-Shi/social-text-intelligence",
+    "url": "https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2",
+    "tag": "sources-qt-6.11.2",
+    "target_commit": "de247c5569f31f3a95c4c6249785e6e491622179",
+    "release_id": 411620298,
+    "published_at": "2026-10-13T11:58:19Z",
+    "immutable": true,
+    "contents": "source-access materials only; no application binary"
+  },
+  "assets": {
+    "pyside-setup-everywhere-src-6.11.2.tar.xz": "cba47efbaad1bedd529725cbc14e21f156c7a19366f07b3edfbb076ffd7afdf8",
+    "qtbase-everywhere-src-6.11.2.tar.xz": "5b2e00eccaf5a4d8c14134ffa0ea8dfd0a35ae1ffc7f8d87fa4305a1ed23cf22",
+    "qtimageformats-everywhere-src-6.11.2.tar.xz": "cecd8900f34b6550076309bc94f62f828008b633a4239e0a08c86788f41001f8",
+    "qtsvg-everywhere-src-6.11.2.tar.xz": "d594337feca84c26fb67fe87b85e6a5c12fda404b611d905f9d138210c311876",
+    "qttranslations-everywhere-src-6.11.2.tar.xz": "021684c1a7937a9fabc3b056a6698ad5978794caf9ac190fd6cc11399e67c014",
+    "qtbase-6.11.2.spdx.json": "a5c6018dd0b4096e66f697ce98b83f0ac3f8c9424720e090a1d5b00125179a24",
+    "qtimageformats-6.11.2.spdx.json": "1678c477dcdf320fb04b8de1b6305278081f86b45ed72eda677fde0de9ec8b8e",
+    "qtsvg-6.11.2.spdx.json": "eabd595e394dfb7a9d2fd3735096fe5390377f2bee5349b02a4311ff9471e8c5",
+    "qttranslations-6.11.2.spdx.json": "44b904f44127ce246c3fada6d759fd2759ae0dfa03375f1a413aa0c0ba2a60ee",
+    "qt-binary-provenance.json": "22a92d6219e507243e2c9ebf5489fa4103c44412a9445c393ac3478af5e7bf17",
+    "source-manifest.json": "44aa784173ff642f7f576901206b4cf1e9ad4cb1b5918580edd4e0dd5fe6a73d",
+    "QT_REPLACEMENT.md": "51af42612dc9c6941a381902e7df5c7667390d64a3e1bc990e60513fb2049415",
+    "SHA256SUMS": "4411c19e3ceb3ee19a1be27422f0425e67de224012b1e46d7959673618454705"
+  },
+  "verified": "public download of all 13 assets, SHA-256 checked against SHA256SUMS and the release API, GitHub release attestation verified for the release and each asset (2026-10-13)",
+  "installer_download_page": "not live",
+  "installer_page_source_link_verified": false,
+  "release_prerequisite": "the installer download page must link to the source release and that same-page link must be verified at release time",
+  "distribution_permitted": false
+}

@@ -347,7 +347,7 @@ def test_intel_item_closes_only_on_decisions_for_matching_nuget_copies(
 
 
 @pytest.mark.parametrize(
-    "fault", ["none", "other-package", "no-notice", "changed-licence"]
+    "fault", ["none", "other-package", "no-notice", "changed-notice", "changed-licence"]
 )
 def test_decisions_do_not_cover_another_package_or_missing_notices(
     tmp_path: Path, fault: str
@@ -367,6 +367,9 @@ def test_decisions_do_not_cover_another_package_or_missing_notices(
         record["source"]["sha256"] = "0" * 64
     if fault == "no-notice":
         (legal / "intel-openmp/NOTICE.md").unlink()
+    if fault == "changed-notice":
+        with (legal / "intel-openmp/NOTICE.md").open("ab") as notice:
+            notice.write(b" Intel terms also apply to the Qt libraries.")
     if fault == "changed-licence":
         (legal / "intel-openmp/INTEL-SIMPLIFIED-SOFTWARE-LICENSE.txt").write_bytes(b"x")
     path.write_text(json.dumps(record))

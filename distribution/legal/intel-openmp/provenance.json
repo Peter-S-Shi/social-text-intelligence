@@ -49,7 +49,8 @@
     "third_party_notices": "third-party-programs.txt",
     "third_party_notices_sha256": "f8ce918fe7311ce279e68380a2e233f8a42b1cd3dda8f4c48d6de97a0255c1d7",
     "notice": "NOTICE.md",
-    "source": "license.txt and share/doc/compiler/licensing/openmp/third-party-programs.txt in the pinned NuGet package, byte for byte"
+    "source": "license.txt and share/doc/compiler/licensing/openmp/third-party-programs.txt in the pinned NuGet package, byte for byte",
+    "notice_sha256": "0b2787535c9271afd668b819918fe047be025da9886899164ecb3aaa89c9c5b5"
   },
   "superseded": {
     "basis": "intel-openmp 2026.1.0 PyPI wheel (via PyTorch 2.13.0) under the Intel End User License Agreement for Developer Tools (Version August 2024)",

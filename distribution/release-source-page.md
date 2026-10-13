@@ -1,30 +1,32 @@
-# Release source page (prepared; not published)
+# Release source page (installer-page template)
 
-This is the prepared GPL v3 §6(d) equivalent-access page for B1. The owner
-approved this route as D2 and assessed it as LD2 (`docs/V2_R2_LICENSE_DECISIONS.md`).
-It is **not published**. No hosting exists yet, so every `{{...}}` placeholder
-stays unfilled. Publishing it is a release step that needs its own Owner Release
-Gate. Filling it in does not, on its own, permit distribution.
+This is the GPL v3 §6(d) equivalent-access page for B1. The owner approved this
+route as D2 and assessed it as LD2 (`docs/V2_R2_LICENSE_DECISIONS.md`).
+
+The source archives and records are **published** in the immutable GitHub
+release <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2> (Release-3; `distribution/legal/SOURCE_HOSTING.json` pins its 13
+assets). **The installer's download page does not exist yet.** The page content
+below is the template for it: the installer release carries it, with the
+`{{...}}` placeholders filled in at release time, next to the installer
+download. Publishing the installer page needs its own Owner Release Gate. Filling
+it in does not, on its own, permit distribution.
 
 `tests/tools/test_m10_release_source_page.py` checks every filename and SHA-256
 below against `distribution/source-manifest.json` and
 `distribution/qt-binary-provenance.json`.
 
-## Publication checklist
+## Remaining release prerequisites
 
-Each item is a release step. None is done.
-
-1. Host every file listed below at `{{SOURCE_LOCATION}}`. That is either the
-   installer's download page or another server, with clear directions next to
-   the installer download, kept available for as long as the installer is
-   offered.
-2. Re-check every hash on this page against the files actually hosted.
-3. In the same change, replace the "Future source hosting" paragraph in
-   `distribution/legal/SOURCE_ACCESS.md` with a pointer to this page. Then
-   rebuild, so the packet and installer say where the page is.
-4. Add a reviewed record that public source access is operational. Only such a
-   record can let B1 close, and no current schema can express it.
-5. Pass the separate Owner Release Gate. Signing and SmartScreen (C15) and the
+1. The installer's download page carries this content and links each file to the
+   source release above, next to the installer download. The release stays
+   available for as long as the installer is offered.
+2. **Verify that same-page link** on the live page, from the public URL, before
+   the release. This is the explicit final B1 prerequisite; no record states it
+   done.
+3. The release-facing notices already name the source release. After step 2,
+   add a reviewed record of the verification and rebuild. Only that can let B1
+   close; no current schema expresses it.
+4. Pass the separate Owner Release Gate. Signing and SmartScreen (C15) and the
    remaining clean-machine items (C16) are outside this page.
 
 ## Page content
@@ -59,5 +61,7 @@ Each item is a release step. None is done.
 > - the Social Text Intelligence source at tag `{{RELEASE_TAG}}`;
 > - the build receipt;
 > - `SOURCE_ACCESS.md` and `QT_REPLACEMENT.md`.
+>
+> Source location: <https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2>
 >
 > These files stay available for as long as this installer is offered.

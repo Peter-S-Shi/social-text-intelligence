@@ -643,6 +643,162 @@ def license_decisions(
     }, problems
 
 
+SH_RECORD = "SOURCE_HOSTING.json"
+SH_RELEASE_URL = (
+    "https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/"
+    "sources-qt-6.11.2"
+)
+B1_HOSTED = (
+    "B1: the owner assessed the unmodified official Qt/PySide6/shiboken6 binaries "
+    "with upstream release-source delivery as compliant (LD1-LD3 in "
+    "LICENSE_DECISIONS.json; not external legal certification), accepting the "
+    "unproven binding producer-source correspondence as a disclosed residual "
+    "risk. The pinned source archives and records are publicly hosted in the "
+    "immutable GitHub release " + SH_RELEASE_URL + " (SOURCE_HOSTING.json). "
+    "Remaining before release: the installer download page must link to that "
+    "release, and that same-page link must be verified; no such page is live."
+)
+# The owner-approved content of the source hosting record, schema version 1,
+# exactly. It states only what Release-3 published. It cannot say that an
+# installer download page exists or that its link was verified, and it cannot
+# permit distribution; that needs a reviewed new version.
+SH_SCHEMA_1: dict[str, object] = {
+    "schema_version": 1,
+    "record": "STI V2 Release-3 public source hosting (GPLv3 section 6(d))",
+    "recorded": "2026-10-13",
+    "release": {
+        "host": "github.com/Peter-S-Shi/social-text-intelligence",
+        "url": SH_RELEASE_URL,
+        "tag": "sources-qt-6.11.2",
+        "target_commit": "de247c5569f31f3a95c4c6249785e6e491622179",
+        "release_id": 411620298,
+        "published_at": "2026-10-13T11:58:19Z",
+        "immutable": True,
+        "contents": "source-access materials only; no application binary",
+    },
+    "assets": {
+        "pyside-setup-everywhere-src-6.11.2.tar.xz": (
+            "cba47efbaad1bedd529725cbc14e21f156c7a19366f07b3edfbb076ffd7afdf8"
+        ),
+        "qtbase-everywhere-src-6.11.2.tar.xz": (
+            "5b2e00eccaf5a4d8c14134ffa0ea8dfd0a35ae1ffc7f8d87fa4305a1ed23cf22"
+        ),
+        "qtimageformats-everywhere-src-6.11.2.tar.xz": (
+            "cecd8900f34b6550076309bc94f62f828008b633a4239e0a08c86788f41001f8"
+        ),
+        "qtsvg-everywhere-src-6.11.2.tar.xz": (
+            "d594337feca84c26fb67fe87b85e6a5c12fda404b611d905f9d138210c311876"
+        ),
+        "qttranslations-everywhere-src-6.11.2.tar.xz": (
+            "021684c1a7937a9fabc3b056a6698ad5978794caf9ac190fd6cc11399e67c014"
+        ),
+        "qtbase-6.11.2.spdx.json": (
+            "a5c6018dd0b4096e66f697ce98b83f0ac3f8c9424720e090a1d5b00125179a24"
+        ),
+        "qtimageformats-6.11.2.spdx.json": (
+            "1678c477dcdf320fb04b8de1b6305278081f86b45ed72eda677fde0de9ec8b8e"
+        ),
+        "qtsvg-6.11.2.spdx.json": (
+            "eabd595e394dfb7a9d2fd3735096fe5390377f2bee5349b02a4311ff9471e8c5"
+        ),
+        "qttranslations-6.11.2.spdx.json": (
+            "44b904f44127ce246c3fada6d759fd2759ae0dfa03375f1a413aa0c0ba2a60ee"
+        ),
+        "qt-binary-provenance.json": (
+            "22a92d6219e507243e2c9ebf5489fa4103c44412a9445c393ac3478af5e7bf17"
+        ),
+        "source-manifest.json": (
+            "44aa784173ff642f7f576901206b4cf1e9ad4cb1b5918580edd4e0dd5fe6a73d"
+        ),
+        "QT_REPLACEMENT.md": (
+            "51af42612dc9c6941a381902e7df5c7667390d64a3e1bc990e60513fb2049415"
+        ),
+        "SHA256SUMS": (
+            "4411c19e3ceb3ee19a1be27422f0425e67de224012b1e46d7959673618454705"
+        ),
+    },
+    "verified": "public download of all 13 assets, SHA-256 checked against "
+    "SHA256SUMS and the release API, GitHub release attestation verified for "
+    "the release and each asset (2026-10-13)",
+    "installer_download_page": "not live",
+    "installer_page_source_link_verified": False,
+    "release_prerequisite": "the installer download page must link to the "
+    "source release and that same-page link must be verified at release time",
+    "distribution_permitted": False,
+}
+
+
+def source_hosting(
+    legal: Path, project: Path, definition: dict[str, object]
+) -> tuple[dict[str, object], list[str]]:
+    """Validate the source hosting record against the evidence it points at.
+
+    The record must equal the approved schema 1 content exactly. Its archive
+    hashes must be the source manifest's, its SBOM and provenance hashes the
+    repository's, and its manifest and replacement-guide hashes those of the
+    files this packet carries. A record that merely states hosting is not
+    enough: any substituted, missing or inconsistent evidence is a problem.
+    """
+    path = legal / SH_RECORD
+    if not path.is_file():
+        return {"present": False}, ["the source hosting record is missing"]
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {"present": True, "valid": False}, [
+            "the source hosting record is malformed"
+        ]
+    if not isinstance(record, dict) or canonical(record.get("schema_version")) != "1":
+        return {"present": True, "valid": False}, [
+            "the source hosting record is not schema version 1"
+        ]
+    problems = sorted(
+        f"{key} differs from the approved schema 1 content"
+        for key in set(SH_SCHEMA_1) | set(record)
+        if key not in record
+        or key not in SH_SCHEMA_1
+        or canonical(record[key]) != canonical(SH_SCHEMA_1[key])
+    )
+    expected: dict[str, str] = {
+        item["filename"]: item["sha256"]
+        for item in definition["archives"]  # type: ignore[union-attr]
+    }
+    provenance = json.loads(
+        (project / "distribution/qt-binary-provenance.json").read_text(encoding="utf-8")
+    )
+    expected.update(
+        {item["filename"]: item["sha256"] for item in provenance["documents"]}
+    )
+    for name, source in (
+        ("source-manifest.json", project / "distribution/source-manifest.json"),
+        (
+            "qt-binary-provenance.json",
+            project / "distribution/qt-binary-provenance.json",
+        ),
+        ("QT_REPLACEMENT.md", legal / "QT_REPLACEMENT.md"),
+    ):
+        expected[name] = digest(source)
+    assets = SH_SCHEMA_1["assets"]
+    assert isinstance(assets, dict)
+    problems += sorted(
+        f"hosted asset {name} differs from the packet's evidence"
+        for name, value in expected.items()
+        if assets.get(name) != value
+    )
+    release = record.get("release")
+    return {
+        "present": True,
+        "valid": not problems,
+        "schema_version": 1,
+        "record_sha256": digest(path),
+        "release_url": release.get("url") if isinstance(release, dict) else None,
+        "installer_download_page": record.get("installer_download_page"),
+        "installer_page_source_link_verified": record.get(
+            "installer_page_source_link_verified"
+        ),
+    }, problems
+
+
 def distribution_blockers(
     provenance: dict[str, object],
     software_renderer: bool,
@@ -652,6 +808,7 @@ def distribution_blockers(
     b4_remaining: Sequence[str] | None = None,
     b1_record_problems: Sequence[str] | None = None,
     decision_problems: Sequence[str] | None = None,
+    hosting_problems: Sequence[str] | None = None,
 ) -> list[str]:
     """Each blocker stays until its own evidence closes it; none grants permission.
 
@@ -660,7 +817,9 @@ def distribution_blockers(
     A valid owner-decision record (`b1_record_problems == []`) only narrows its
     wording; a missing or invalid one is named and never narrows it. A valid
     licence decision record (`decision_problems == []`) narrows it further to
-    the public source access still missing; it never removes B1.
+    the public source access still missing; a valid source hosting record
+    (`hosting_problems == []`) narrows it to the installer-page link; none
+    removes B1.
     """
     if not provenance["qt_libraries_verified"]:
         b1 = B1_UNVERIFIED
@@ -682,8 +841,17 @@ def distribution_blockers(
             + "; ".join(decision_problems)
             + "."
         )
-    else:
+    elif hosting_problems is None:
         b1 = B1_ASSESSED
+    elif hosting_problems:
+        b1 = (
+            B1_ASSESSED
+            + " Source hosting record rejected: "
+            + "; ".join(hosting_problems)
+            + "."
+        )
+    else:
+        b1 = B1_HOSTED
     blockers = [b1]
     if software_renderer:
         blockers.append(B2)
@@ -834,9 +1002,12 @@ def intel_openmp_status(
         gaps.append("the Intel OpenMP licence texts are missing or changed")
     if not nuget:
         gaps.append("the Intel OpenMP record does not name the pinned NuGet source")
-    notice = (legal / "intel-openmp" / licence.get("notice", "NOTICE.md")).is_file()
+    notice_path = legal / "intel-openmp" / str(licence.get("notice", "NOTICE.md"))
+    notice = notice_path.is_file() and digest(notice_path) == licence.get(
+        "notice_sha256"
+    )
     if not notice:
-        gaps.append("the Intel OpenMP notice is missing")
+        gaps.append("the Intel OpenMP notice is missing or changed")
     package = {
         "id": source.get("package_id"),
         "version": source.get("version"),
@@ -1132,6 +1303,8 @@ def assemble(
     rust_notices, rust_gaps = rust_notice_coverage(legal, versions)
     decisions, decision_problems = license_decisions(legal, definition)
     decisions["problems"] = decision_problems
+    hosting, hosting_problems = source_hosting(legal, project, definition)
+    hosting["problems"] = hosting_problems
     intel_openmp, intel_gaps = intel_openmp_status(
         bundle, legal, decided=not decision_problems
     )
@@ -1172,6 +1345,7 @@ def assemble(
         b4_remaining=b4_remaining,
         b1_record_problems=b1_problems,
         decision_problems=decision_problems,
+        hosting_problems=hosting_problems,
     )
     if any(item["owner"] == "UNRESOLVED native ownership" for item in native):
         blockers.append(
@@ -1201,6 +1375,7 @@ def assemble(
         "b4_coverage": b4,
         "b1_owner_decision": b1_decision,
         "license_decisions": decisions,
+        "source_hosting": hosting,
         "qt_source_notices": source_notices,
         "notice_scope": "source superset; not a compiled static-link SBOM",
         "materials": files,

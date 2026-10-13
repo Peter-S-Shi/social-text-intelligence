@@ -20,6 +20,8 @@ The evidence is the existing record, which this milestone does not reopen:
 - the Intel provenance and notices in `distribution/legal/intel-openmp/`;
 - the source-access materials.
 
+> **Later (PR #76).** The public source release is live and recorded; B1 is narrowed to the installer-page link. See [V2_R4A_PUBLIC_SOURCE_ACCESS.md](V2_R4A_PUBLIC_SOURCE_ACCESS.md). The decisions below are unchanged.
+
 ## 1. Decisions
 
 | # | Owner decision | Evidence basis | Residual risk accepted | Blocker effect |

@@ -30,16 +30,24 @@ def test_every_pinned_source_and_sbom_is_listed_with_its_hash() -> None:
     assert listed == expected
 
 
-def test_the_page_stays_unpublished_and_invents_no_location() -> None:
+def test_the_page_names_only_the_published_source_release() -> None:
     text = PAGE.read_text(encoding="utf-8")
-    assert "It is **not published**." in text
+    hosting = json.loads(
+        (ROOT / "distribution/legal/SOURCE_HOSTING.json").read_text(encoding="utf-8")
+    )
+    url = hosting["release"]["url"]
+    assert f"> Source location: <{url}>" in text
+    # The installer page is a template: its release-specific parts stay unfilled,
+    # and the page does not claim that it is live.
     for placeholder in (
-        "{{SOURCE_LOCATION}}",
+        "{{INSTALLER_FILENAME}}",
         "{{RELEASE_TAG}}",
         "{{RELEASE_VERSION}}",
     ):
         assert placeholder in text
-    # No hosting exists, so the page names no URL at all.
-    assert "http://" not in text and "https://" not in text
+    assert "does not exist yet" in text
+    assert "Verify that same-page link" in text
+    # Every URL on the page is the source release; no other hosting is invented.
+    assert set(re.findall(r"https?://[^\s>)]+", text)) == {url}
     # It is a release step, not a packet file.
     assert not (ROOT / "distribution/legal" / PAGE.name).exists()
