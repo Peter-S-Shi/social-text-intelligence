@@ -1,507 +1,129 @@
 # Social Text Intelligence
 
-A local-first NLP workbench that turns social text — feedback, comments,
-support messages, and similar text — into structured, licensed sentiment and
-emotion evidence, then carries that evidence through human review and
-trusted, descriptive insights. Every model runs on your own machine; text is
-not sent to an inference API. The V1 `0.10.0` baseline described below also
-contains Moderation Training and Support Triage workflows; they are retired
-from the V2 product surface but remain documented here as the unchanged V1
-baseline.
+**A local-first Windows desktop workbench for exploring English-language feedback through sentiment and emotion estimates, human review, and descriptive insights.**
 
-> **Current lifecycle phase: V2 M10 engineering priority — M10-A packaging foundation and M10-B compliance engineering established on `main`; M10-C installer engineering established on `main`; M10-D release readiness dossier established; M10-E1 distribution unblocking established (B2 resolved by removal; B1, B4 and B6 narrowed but OPEN; B3 and B5 need owner decisions); M10-E2 blocker closure engineering established (B3 CLOSED by an official CPython runtime and no Microsoft runtime redistribution; B1 and B4 narrowed but OPEN; B5 and B6 OPEN pending owner/legal decisions and the owner toolchain); Core + Optional Components strategy, R1 and plan revision 2 approved; M10 S1 optional language model COMPLETE on `main` (engineering validation passed on a real frozen build and internal installer; S5 clean-machine matrix NOT RUN; real in-app downloads were later owner-witnessed under S5-NET-001 (PR #69); the py3langid model is not in the core installer and is downloaded from upstream only on user request; language detection restored once installed; B5 not derived for the installer contents, corpus terms unverified; R2 parked in draft PR #62); M10 S2 B4 licence materials COMPLETE on `main` (PR #65; Rust crate texts complete; B4 OPEN, narrowed to Intel OpenMP redistribution authorization, which is not approved); M10 S3 COMPLETE on `main` (PR #66; E4 modified-source QtCore-only replacement PASS, so B6 CLOSED on the narrower M10-E2 criterion; the M10-E1 Gui/Widgets/plugin rebuild was not exercised); M10 S4 B1 decision memo on `main` (PR #67); M10 S4 phase 2 on `main` (PR #68: the owner's D1–D3 engineering direction is recorded and validated in the packet, and installer blockers are derived from the packet; legal confirmation pending, producer correspondence unproven, D4 unresolved with B4; B1 OPEN); M10 S5-NET-001 download certificate fix on `main` (PR #69: model downloads verify with the OS trust store through a local truststore context; owner VM re-verification of S5-NET-001 PASS at product level; S5 matrix not run at that point); M10 S5-A harness hardening on `main` (PR #70: the clean-machine harness takes blockers from the validated receipt, has explicit missing/present VC++ runtime modes, and never states clean-machine acceptance; since run in S5); M10 S5-UI-001 application icon on `main` (PR #71: the owner-approved icon is embedded in both executables and used by the window, Start Menu and uninstall entry; the owner's Windows check is pending); M10 S5 clean-machine stages A and B run by the owner on an isolated VM, with the harness junction-cleanup fix on `main` (PR #72); raw guest evidence reviewed (PR #73: H2-A, C02–C12 and C14 PASS on the reviewed automated evidence, C07 owner-witnessed under its limited definition, icons 2 of 4 confirmed and 2 of 4 NOT DETERMINED as accepted carried-forward gaps, Release-1 gate OWNER-APPROVED CONDITIONAL EXIT, not a release permission); Release-2 compliance closure engineering on `main` (PR #74: Intel OpenMP shipped from Intel's author-signed NuGet package under the Intel Simplified Software License, D4 boundary scoped in the notices, B1 source-access page drafted; B1 and B4 legally OPEN pending decisions LD1–LD6); Release-2 final licence decisions on `main` (PR #75: LD1–LD6 owner-assessed with disclosed residual risks, not an external legal certification; the oneTBB notice NOT REQUIRED; B4 closed in the packet derivation; B1 OPEN until the installer-page source link is verified (see the Release-3/4A entry); `distribution_permitted` false pending the installer-page source link and a separate Owner Release Gate); Release-3 public source access (source-only GitHub release `sources-qt-6.11.2`, immutable, 13 verified assets, source-access materials only) and Release-4A integration on `main` (PR #76: the permanent release URL is pinned in `SOURCE_HOSTING.json` and named in the packaged notices; the packet checks tell valid hosting from missing, inconsistent or substituted evidence; the Intel `NOTICE.md` is pinned by content; B1 stays OPEN, narrowed to the installer download page linking to the release with that same-page link verified, and no such page is live; `distribution_permitted` false; Release-4B private release candidate and two-phase publication gate on `main` (PR #77: `release_gate.py` checks the unpublished draft before Owner approval and the public page after publication, and only the public phase can report B1 operational closure; the packaged text no longer asserts whether an installer page exists; a candidate installer profile with a release notice and its own gates; a private candidate built and checked, not published; the application version is later set to `2.0.0` by Release-5A-1 and the planned tag `v2.0.0` is not created; no release made; B1 OPEN until a passing public-phase check; `distribution_permitted` false); Release-5A-1 version freeze on `main` (PR #78: the Owner-approved application version `2.0.0` in `pyproject.toml` and `__version__`, installer names derived from it, `STI-2.0.0-x64-setup.exe` for the candidate profile; V1 `0.10.0` and Release-4B records kept as history; a private preliminary candidate was built and checked and is not the release installer; a fresh build from the merged `main` commit is required; no tag `v2.0.0`, Draft or public Release exists; B1 OPEN; `distribution_permitted` false)); distribution gate BLOCKED; M9.2–M9.4 deferred by owner**
-> after V2 Native UI Integration, M6 complete (V2 Product
-> Scope, Architecture, and UI/IA Gates are PASS; see
-> [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md),
-> [V2 Desktop Architecture Exploration](docs/V2_DESKTOP_ARCHITECTURE_EXPLORATION.md),
-> and [V2 UI/IA Decision](docs/V2_UI_IA_DECISION.md)). The application
-> foundation (M3) and persistent project foundation (M4) milestones are complete
-> on `main`. M5 is complete (its functional exit audit is PASS): M5.0, the
-> [model provisioning contract](docs/MODEL_PROVISIONING.md) and its UI-neutral
-> foundation, M5.1 (provisioning UI/UX design), M5.2 (the minimal native
-> desktop shell and provisioning UI), M5.3 (the native project workflow), M5.4
-> (native human review and reviewed export), M5.5 (native insights, context
-> notes, and representative cases), and M5.6 (language detection and an
-> unsupported-language warning) are complete on `main`. M6 (full native UI
-> integration and polish) is complete on `main`. M7 (pre-release feasibility and
-> risk gate) is complete with a formally accepted CONDITIONAL exit and its open
-> risks retain their item-level dispositions in M8 and M10. M8 Track A and Track B
-> are merged; the owner approved the overall UI fidelity outcome and completed the
-> early exploratory trial with an overall PASS. M9.0 establishes the
-> [evidence design](docs/V2_M9_EVIDENCE_CONTRACT.md), approved by the owner
-> on 2026-10-10; real-source authorization and evaluation remain future gates.
-> M9.1 supplies a versioned [synthetic scenario pack and offline recorder](manual-qa/m9-uat/README.md),
-> with all formal UAT steps initially NOT RUN. M9.2–M9.4 are deferred by owner; M10-A packaging foundation, M10-B compliance, M10-C internal installer engineering, and M10-D release readiness dossier are established; clean-machine acceptance is NOT RUN. M10-E1 distribution unblocking resolved B2 by removal and narrowed B1, B4 and B6; M10-E2 blocker closure engineering closed B3 with an official CPython runtime and no Microsoft runtime redistribution; binary distribution gates remain BLOCKED on B1 and B4–B6 ([M10-E2 record](docs/V2_M10_E2_BLOCKER_CLOSURE.md)). The Core + Optional Components plan (revision 2 approved) and M10 S1 are complete on `main`: the core installer no longer carries the py3langid model, so its packet derives B1 and B4; B5's training-corpus terms stay unverified, and `distribution_permitted` stays false ([S1 record](docs/V2_M10_S1_OPTIONAL_LANGUAGE_MODEL.md)). M10 S3 closed B6 on the narrower QtCore-only criterion with a passing modified-source QtCore replacement (Gui, Widgets and plugins were not rebuilt) ([S3 record](docs/V2_M10_S3_E4_MODIFIED_QT.md)); B1, B4 and the clean-machine matrix remained open at S3. Release-2 (PR #75) records the owner's licence decisions LD1–LD6, which are not an external legal certification; B4 is no longer derived, and B1 stays open until the installer download page links to the public source release and that link is verified ([decisions](docs/V2_R2_LICENSE_DECISIONS.md); [public source access](docs/V2_R4A_PUBLIC_SOURCE_ACCESS.md)). The auditable [release readiness dossier](docs/V2_M10_D_RELEASE_DOSSIER.md) defines three operational surfaces: public source portfolio is SUPPORTED, controlled author demos are SUPPORTED UNDER CONTROLLED CONDITIONS, and downloadable binary distribution is PROHIBITED / BLOCKED. Formal release decision is pending repository owner. Deferral does not waive Q5 evidence for model capability claims. The optional 30-minute owner packaged-app smoke is planned NOT RUN; no installer publication, binary distribution or LGPL compliance is claimed.
-> See [Project Status](PROJECT_STATUS.md).
-> The `0.10.0` V1
-> baseline below is unchanged. V1 final phase: Public Portfolio Delivery.
-> Feature milestones 1–10 are complete, Feature Freeze is PASS, Product Hardening is complete,
-> Full Regression and Manual Acceptance is PASS, and the Release Candidate
-> Gate is PASS. The repository owner's Version / Delivery Decision approved
-> public portfolio delivery of `0.10.0`, and this repository is public. No
-> version tag or GitHub Release has been created. Live status:
-> [Project Status](PROJECT_STATUS.md).
+**Version 2.0.0** · **Windows x64** · **Open-source Python / PySide6 project** · **Conditional portfolio release**
 
-<p align="center">
-  <img src="./assets/readme/hero.svg" width="100%"
-       alt="One synthetic social-text sentence enters Social Text Intelligence and returns structured intelligence: sentiment negative at 68.7% confidence with a three-way score bar, dominant emotion neutral with a threshold explanation, three supporting emotion signals, and local, offline model provenance.">
-</p>
+[**Download the Windows installer**](https://github.com/Peter-S-Shi/social-text-intelligence/releases/download/v2.0.0/STI-2.0.0-x64-setup.exe) · [Release notes and SHA-256](https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/v2.0.0) · [Engineering case study](docs/PORTFOLIO_CASE_STUDY.md) · [Explore the architecture](docs/ARCHITECTURE.md) · [Build from source](#develop-from-source)
 
-## See it work
+> **For reviewers:** The Windows installer is publicly available alongside the source code. It is **unsigned**, and Windows may display a publisher or SmartScreen warning. The installer does **not** include model weights: users explicitly download verified models or import a pre-provisioned model folder before running inference. This is a portfolio release with [documented limitations](#scope-and-limitations), not a certification of model accuracy or full production readiness.
 
-A real Direct Analysis result from this repository's own local web interface
-(`sti-web`, offline mode) — not a mockup or a staged design comp.
+![Conceptual STI V2 workflow: local sentiment and emotion estimates, separate human review, and descriptive insights](assets/readme/sti-v2-hero.svg)
 
-<p align="center">
-  <img src="./assets/readme/direct-analysis-result.png" width="460"
-       alt="Social Text Intelligence Direct Analysis result for a synthetic support-feedback example: sentiment negative with a full positive/negative/neutral breakdown, dominant emotion neutral with a threshold-fallback explanation, the full nine-label compact emotion breakdown, and the exact pinned sentiment and emotion model identities under Models and provenance.">
-</p>
+*Conceptual workflow illustration, not a screenshot. Actual native Windows UI captures using synthetic test data appear below.*
 
-Sentiment scores, the full compact emotion breakdown, threshold semantics,
-and exact pinned model identities all render directly from the normalized
-report — nothing here is hand-written for the screenshot. Nothing about the
-submitted text is logged or persisted.
+## What the desktop app does
 
-### Reproduce it yourself
+Social Text Intelligence (STI) helps you inspect text-derived signals without giving an NLP model the final word. You can import English feedback as local projects, analyze sentiment and fine-grained emotion, review or correct individual predictions, and compare descriptive patterns across user-supplied groups. **The AI record is preserved separately from your judgment.**
 
-Same report, same pinned models, from the CLI — a shorter path to
-independently reproduce the same result:
+![STI V2 Results screen: sentiment summaries, emotion distribution, language caveats, and per-record results](manual-qa/m8-visual-evidence/after/demo_results.png)
 
-```text
-$ sti analyze "The new update finally fixed the login bug, but the app \
-  still crashes whenever I try to export a large file."
+*STI V2 native Windows Qt interface. Screenshot captured from the real UI with synthetic example records and synthetic test providers; numerical values are demonstration fixtures, **not measured model accuracy**.*
 
-Sentiment: negative           (confidence 0.687)
-Dominant emotion: neutral     (confidence 0.322)
-Emotion threshold: 0.500 (inclusive)   Secondary emotions: none
+| Workflow | What is available in the Windows app |
+| --- | --- |
+| **Local text analysis** | Analyze one text or a CSV-backed project with separate sentiment and emotion outputs, score details, and model provenance. |
+| **Projects and import** | Validate CSV rows and the text column; retain records, including rejected or failed items with their reasons; reopen local projects. |
+| **Human-in-the-loop review** | Accept, correct, or mark sentiment and emotion judgments uncertain while keeping the original AI result immutable. |
+| **Agreement and insights** | Inspect AI–human agreement with explicit denominators, compare trusted metadata groups, and record separate human-written context notes. |
+| **Operational safeguards** | Require models to be ready; expose progress and cancellation; do not commit a partially cancelled batch; use explicit exports. |
 
-Compact emotion scores:
-  joy=0.052   amusement=0.005   admiration=0.236   gratitude=0.002
-  anger=0.063 sadness=0.071     fear=0.006         disgust=0.003
-  neutral=0.322
+## A quick look at the workflow
 
-Models:
-  cardiffnlp/twitter-roberta-base-sentiment-latest@3216a57f2a0d9c45a2e6c20…
-  SamLowe/roberta-base-go_emotions@d75048347613a25d77de8cf6412eaae9fa7b26…
+The images below are **native desktop UI captures**, not mockups or benchmark results. Their records and model outputs are synthetic, so the visible percentages must not be read as measurements of real-world NLP performance.
+
+| Human review | Agreement, not accuracy |
+| --- | --- |
+| <a href="manual-qa/m8-visual-evidence/after/demo_review.png"><img src="manual-qa/m8-visual-evidence/after/demo_review.png" width="475" alt="STI V2 Review view with a read-only AI record next to separate human judgment controls"></a> | <a href="manual-qa/m8-visual-evidence/after/demo_agreement.png"><img src="manual-qa/m8-visual-evidence/after/demo_agreement.png" width="475" alt="STI V2 Agreement view with synthetic agreement summaries and label comparisons"></a> |
+| Review decisions are stored independently of the AI record; uncertainty is explicit. | Agreement is descriptive and based on eligible reviewed records, **not ground-truth model accuracy**. |
+
+| Contextual insights | More native screens |
+| --- | --- |
+| <a href="manual-qa/m8-visual-evidence/after/demo_compare.png"><img src="manual-qa/m8-visual-evidence/after/demo_compare.png" width="475" alt="STI V2 Insights screen comparing synthetic groups with small-sample warnings"></a> | [Projects](manual-qa/m8-visual-evidence/after/demo_projects.png) · [CSV import and validation](manual-qa/m8-visual-evidence/after/demo_import.png) · [Context notes and cases](manual-qa/m8-visual-evidence/after/demo_notes.png) · [Single-text analysis](manual-qa/m8-visual-evidence/after/demo_direct.png) |
+| Compare metadata-defined groups with sample-size warnings and explicit metrics. | Browse other screenshots already committed to the repository; no application installation is needed to view them. |
+
+For the capture method and UI provenance, see the [M8 visual-evidence index](manual-qa/m8-visual-evidence/README.md) and [M8 fidelity record](docs/V2_M8_TRACK_B_FIDELITY.md). The pictures document native interface behavior with test stand-ins; they are not evidence of real-model accuracy or formal accessibility acceptance.
+
+## Download and run on Windows
+
+**[Download STI 2.0.0 for Windows x64](https://github.com/Peter-S-Shi/social-text-intelligence/releases/download/v2.0.0/STI-2.0.0-x64-setup.exe)** — `STI-2.0.0-x64-setup.exe` (726,691,694 bytes).
+
+1. Review the [official GitHub Release](https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/v2.0.0), its file checksum, and the [third-party notices](THIRD_PARTY_NOTICES.md) before installing. The app installer is **not Authenticode-signed**. Do not disable Windows security controls merely to launch it.
+2. Use a **Windows x64** computer with a suitable **Microsoft Visual C++ x64 runtime (14.44 or later)**. The per-user installer checks this prerequisite; the installer does not bundle that runtime.
+3. Launch STI and follow its model setup. The two required NLP model weights are **not packaged** in the EXE. Choose the explicit verified download from the model's original host, or import an existing compatible offline model folder. Inference is unavailable until the required models are ready.
+4. Analyze one English text or import a CSV project. Results, review decisions, and notes are managed on your computer; exports are deliberate user actions.
+
+**Verify the downloaded installer in PowerShell:**
+
+```powershell
+Get-FileHash .\STI-2.0.0-x64-setup.exe -Algorithm SHA256
 ```
 
-## Core capabilities
-
-- **Analyze one text locally** — sentiment and fine-grained emotion from two
-  openly licensed models, returned as one structured report with confidence,
-  model identity, and revision. [CLI/web](#quick-start)
-- **Process a batch while preserving per-item evidence** — upload a CSV,
-  preview and validate it, analyze every row, then filter and export results;
-  one row's failure never aborts the batch. [Detail](#batch-csv-workflow)
-- **Review predictions without losing the AI record** — accept, correct, or
-  flag each sentiment/emotion prediction as uncertain, with human and AI
-  labels kept separately auditable and compared by *agreement*, not
-  "accuracy". [Detail](#human-in-the-loop-review)
-- **Compare groups with sample-size discipline** — explore sentiment/emotion
-  by source, topic, or community using only user-supplied metadata, with
-  small-sample warnings and no cultural generalization.
-  [Detail](#insights-and-community-context)
-- **Practice structured decisions** — a moderation-training workflow and a
-  support-triage workbench built on the same evidence base, where any AI
-  suggestion is explicitly labeled as a non-authoritative fixture, never a
-  live model. [Detail](#moderation-training) · [Detail](#support-triage)
-
-## How it works
-
-<p align="center">
-  <img src="./assets/readme/workflow.svg" width="100%"
-       alt="Direct text or batch CSV input flows through two local licensed models into one structured analysis report, which then feeds human review, insights, and decision-practice workflows, all inside a local-only boundary.">
-</p>
-
-Direct text or a batch CSV row becomes one normalized input record. Two
-pinned, licensed Hugging Face models — a sentiment classifier and a
-multi-label emotion classifier — run locally against the full text; if either
-model's tokenizer cannot consume the complete input within its audited
-512-token budget, the request is rejected outright rather than silently
-truncated. A successful run produces one structured `AnalysisReport` that
-downstream workflows (Review, Insights, Moderation Training, Support Triage)
-read but never mutate — every human judgment is stored as a separate,
-attributable record next to the immutable AI prediction.
-
-## Engineering evidence
-
-- **Layered architecture.** `contracts -> providers -> services -> interface`,
-  with typed contracts that keep raw provider output, normalized application
-  output, and human-reviewed output separate. See
-  [Architecture](docs/ARCHITECTURE.md).
-- **Complete-input inference contract.** Real tokenizer preflight against each
-  model's audited token budget; over-budget text gets an explicit error, never
-  a silently truncated result — enforced identically in the CLI, Direct
-  analysis, and every Batch row.
-- **Local-first privacy engineering.** The Flask server binds to `127.0.0.1`
-  only, validates Host/Origin/Referer before any state change, and returns a
-  self-only Content Security Policy with no-store caching on every response —
-  no telemetry, no CDN, no CORS. See [Privacy](docs/PRIVACY.md).
-- **Atomic workspace mutation.** Review, Insight, Moderation, and Triage state
-  all share one atomic read-modify-write primitive so concurrent actions
-  compose on the latest accepted state instead of racing to overwrite it.
-- **Gate-based hardening lifecycle.** Ten Product Hardening batches
-  (A1–A10), each with its own targeted regression, formal review, and CI run,
-  closed every approved finding ahead of a Full Regression, Manual
-  Acceptance, and Release Candidate Gate — every gate tied to a tested commit
-  SHA in [Project Status](PROJECT_STATUS.md).
-- **Transparent model governance.** Model source, exact revision, license,
-  and mapping are documented per model; with no model extras installed, a
-  Direct analysis submission fails with a clear in-page message instead of a
-  crash or traceback. See [Model Governance](docs/MODEL_GOVERNANCE.md).
-
-## Quick start
-
-Python 3.11 or newer is required.
+Expected SHA-256:
 
 ```text
-git clone <repository-url>
+da7d5d6f8b098250dca2ab35fd9c79bc5a8688a085648e28836b1dd12b914dca
+```
+
+The installer is built from the [`v2.0.0` source tag](https://github.com/Peter-S-Shi/social-text-intelligence/tree/v2.0.0). Qt/PySide6 source-access archives and build records are published separately in the [immutable `sources-qt-6.11.2` source release](https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2) and linked directly on the installer release page.
+
+## Engineering highlights
+
+This repository is a software-engineering portfolio as well as a usable desktop application. Its more interesting problems are not just text classification:
+
+- **Separation of concerns.** A framework-neutral application layer and typed contracts sit between the PySide6/Qt Widgets interface, model adapters, and SQLite-backed local persistence. [Architecture](docs/ARCHITECTURE.md) · [Contracts](docs/CONTRACTS.md)
+- **Controlled model provisioning.** Two pinned models are acquired only with an explicit user action, checked before use, and recoverable via verified import or download. The installer deliberately excludes model weights. [Provisioning contract](docs/MODEL_PROVISIONING.md) · [Model governance](docs/MODEL_GOVERNANCE.md)
+- **Auditable human review.** The app stores human decisions separately from immutable machine predictions, supports uncertainty and corrections, and reports *agreement* using the correct reviewed-record denominators. [Native acceptance inventory](docs/V2_M6_ACCEPTANCE.md)
+- **Data integrity and safe failure.** Batch cancellation does not leave partially committed analysis; malformed input, model-readiness failures, and export errors have explicit handling. [Architecture](docs/ARCHITECTURE.md) · [Manual QA materials](manual-qa/README.md)
+- **Reproducible release engineering.** The versioned Windows installer is tied to a specific source revision and SHA-256; draft and public Release gates distinguish prepublication checks from publicly verifiable source-access conditions. [Release gate design](docs/V2_R4B_RELEASE_GATE.md) · [Release](https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/v2.0.0)
+
+### Architecture at a glance
+
+```text
+Windows desktop (PySide6 / Qt Widgets)
+                 |
+        UI controllers / view models
+                 |
+     Application use cases + contracts
+                 |
+    +------------+-------------+
+    |            |             |
+Local SQLite  Model providers   Model provisioning
+projects      (sentiment /      and verified imports
+              emotion)         / explicit downloads
+```
+
+CLI and legacy local Flask interfaces remain in the repository and reuse the application/model infrastructure; the **V2 released product surface is the Windows desktop**. This simplified view is an introduction, not a replacement for the [full architecture documentation](docs/ARCHITECTURE.md).
+
+## Develop from source
+
+For developers who want to inspect or run the current Windows desktop code, rather than use the prebuilt installer:
+
+```powershell
+git clone https://github.com/Peter-S-Shi/social-text-intelligence.git
 cd social-text-intelligence
 python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e ".[desktop,sentiment,emotion]"
+.\.venv\Scripts\sti-desktop.exe
 ```
 
-Activate the virtual environment using the command appropriate for your
-shell, then install the package:
+Python **3.11–3.13** is the project's tested CI range; model dependencies and supported versions are defined in [`pyproject.toml`](pyproject.toml). As in the packaged application, model weights are obtained separately through the app's explicit setup process. See [development instructions](docs/DEVELOPMENT.md) and [model provisioning](docs/MODEL_PROVISIONING.md) for the fuller engineering workflow.
 
-```text
-python -m pip install --upgrade pip
-python -m pip install -e .
-sti about
-sti contracts
-```
+The repository also retains command-line (`sti`) and localhost Web (`sti-web`) entry points from V1. They are useful for source-level exploration, but the old Web interface is **not** the Windows V2 screenshot gallery. V1's synthetic Moderation Training and Support Triage workflows were **retired from the V2 desktop surface**; their historical documentation remains in [Moderation Training](docs/MODERATION_TRAINING.md) and [Support Triage](docs/SUPPORT_TRIAGE.md).
 
-Install the optional local sentiment runtime when you want real inference:
+For repository contributors, the existing automated checks are documented under [Development](docs/DEVELOPMENT.md); the project has CI jobs for Python 3.11, 3.12 and 3.13 plus the UAT companion. The image gallery itself does not validate executable behavior or model quality.
 
-```text
-python -m pip install -e ".[sentiment]"
-sti sentiment "I am pleased with this synthetic example."
-```
+## Scope and limitations
 
-Install both model extras for a combined single-text report:
+- **English-focused model inference.** The approved sentiment and emotion models are English-language models. Language detection/warnings do not imply multilingual sentiment or emotion quality.
+- **Estimates are not ground truth.** Sentiment/emotion scores and AI–human agreement are descriptive signals, not proof of intent, psychological state, calibrated probabilities, or real-world classification accuracy. Representative-domain model evaluation under M9.2 is not completed.
+- **Local-first, not zero-network setup.** Input text is processed locally and is not submitted to a remote inference API. Explicit model acquisition connects to the model host. Projects and exports remain the user's local responsibility. [Privacy](docs/PRIVACY.md)
+- **Conditional portfolio release.** The owner reported a passing packaged-app smoke test and accepted the unsigned-installation risk and two remaining icon-observation evidence gaps. Full formal Windows UAT, accessibility acceptance, and the M9 consolidated evaluation are **not claimed complete**. [M9 exit criteria](docs/V2_M9_EXIT_GATE.md) · [Clean-machine evidence scope](docs/V2_M10_S5_COMPLETION_RECORD.md)
+- **No claims of enterprise deployment or model certification.** No hosted service, accounts, team workflow, cloud synchronization, or independently established benchmark accuracy is presented as part of V2.
 
-```text
-python -m pip install -e ".[sentiment,emotion]"
-sti analyze "Thank you so much for the thoughtful help!"
-```
+## Licensing and project records
 
-The first command invocation downloads the approved model revision from its
-original Hugging Face repository into the ignored `model_cache/` directory.
-Inference then runs on the local machine; input text is not sent to an
-inference API. Use `--offline` after both models are cached to forbid network
-retrieval. Both model commands reject an input that the pinned
-tokenizer/model cannot consume in full — they never silently truncate or
-present partial-text inference as a whole-text result.
+The **project's own source code** is under the [MIT License](LICENSE). Third-party libraries, Qt/PySide6, data and model weights have separate terms; MIT does not relicense them. Consult [Third-Party Notices](THIRD_PARTY_NOTICES.md), [Model Governance](docs/MODEL_GOVERNANCE.md), and the [Qt/PySide6 source-access release](https://github.com/Peter-S-Shi/social-text-intelligence/releases/tag/sources-qt-6.11.2).
 
-Run the local interface after installing the web and model extras:
-
-```text
-python -m pip install -e ".[web,sentiment,emotion]"
-sti-web
-```
-
-Open `http://127.0.0.1:5000`. Use `sti-web --offline` after both pinned model
-revisions are cached. On Windows, after the environment and both models are
-installed, double-click `start_social_text_intelligence.bat` in the project
-folder to start the same offline, loopback-only server and open the browser
-automatically.
-
-Run the native desktop shell (development preview, Windows only for now):
-
-```text
-python -m pip install -e ".[desktop,sentiment,emotion]"
-sti-desktop
-```
-
-On launch the shell checks the two approved models and opens a setup window if
-either is missing. Nothing downloads until you press a button that states its
-size; you can also import a models folder you already have, which is checked
-read-only before anything is copied. The sidebar always shows the Models status.
-The shell also supports the project path: import one CSV as a project (choosing
-the text column when the file has no `text` column), analyse it with visible row
-progress and Cancel (a cancelled or failed run saves nothing), reopen it later, and
-delete it (removal from this application's data files). Analysis, including
-Analyze one text, needs the `sentiment` and `emotion` extras installed above.
-The desktop also provides human Review and reviewed CSV export, filtered Results
-and normalized CSV export, detailed Agreement views, and Insights with context
-notes, representative cases, and CSV export. The desktop shell uses Qt (LGPL-3.0);
-see [Third-party notices](THIRD_PARTY_NOTICES.md).
-
-Run the dependency-free test suite:
-
-```text
-python -m unittest discover -s tests -v
-python -m compileall -q src tests
-```
-
-For the complete contributor workflow, see [Development](docs/DEVELOPMENT.md).
-
-## Capability details
-
-<details>
-<summary>Expand for a milestone-by-milestone technical description of every workflow (sentiment, emotion, batch, review, insights, moderation training, support triage, core contracts)</summary>
-
-### Local sentiment analysis
-
-Milestone 3 adds a single-text English workflow through the existing
-normalized contracts and provider boundary. Each result includes negative,
-neutral, and positive scores, the selected label, confidence, model identity,
-and immutable revision. Output is an estimate that still requires contextual
-human judgment.
-
-The selected model, alternatives, license evidence, mapping, supply-chain
-controls, and limitations are documented in the
-[Milestone 3 Model Audit](docs/MODEL_AUDIT.md).
-
-### Fine-grained emotion analysis
-
-Milestone 4 adds an immutable English GoEmotions provider and connects it to
-the sentiment provider through the existing `AnalysisService`. The combined
-report preserves all 28 native emotion probabilities, compact scores, an
-inclusive threshold, dominant emotion, ordered secondary emotions, model
-identities, and revisions.
-
-Compact neutral means no mapped non-neutral emotion reached the threshold. It
-is not a psychological conclusion. Scores are independent multi-label
-probabilities and do not sum to one. See the
-[Milestone 4 Emotion Model Audit](docs/EMOTION_MODEL_AUDIT.md) for the full
-candidate review, mapping, threshold rules, licenses, and limitations.
-
-### Local analysis interface
-
-Milestone 5 presents the combined analysis through a small, accessible Flask
-interface. It shows all sentiment scores, compact and optional native emotion
-scores, threshold semantics, immutable model identities, operating mode, and
-prominent limitations. Both providers load only on first analysis and are
-reused for later requests in the same process. User text is neither logged
-nor stored by the application.
-
-### Batch CSV workflow
-
-Milestone 6 adds a separate Batch CSV mode:
-
-1. upload a UTF-8 CSV for preview and validation;
-2. select the text column if `text` is absent;
-3. explicitly start local analysis;
-4. inspect distinct sentiment, dominant-emotion, and multi-label activation
-   aggregates;
-5. filter row outcomes and explicitly export normalized CSV results.
-
-The default limits are 2 MiB, 500 rows, and a 20,000-character application
-safety ceiling per text. Separately, each pinned model enforces its audited
-512-token encoded-input budget after real tokenizer encoding, including
-special tokens. If either required model cannot consume a row in full, that
-row receives an explicit `model_input_too_long` error; no partial inference
-is run, other valid rows continue, and exports leave model scores and
-provenance blank for the failed row. Required and supported metadata fields
-are documented in [Contracts](docs/CONTRACTS.md). Duplicate supplied IDs,
-invalid metadata, empty text, and provider failures remain row-level outcomes
-and do not abort the batch. A text in a language the approved English models do
-not support is still analysed and carries a visible language warning (see
-[Language detection](docs/LANGUAGE_DETECTION.md)). Uploaded content is
-held only in bounded, expiring process memory; there is no database,
-automatic save, or upload history. Native emotion scores are an optional
-export. Use `sti-web --help` to configure the file-byte, row-count, and
-per-text limits for a local session.
-
-### Human-in-the-loop review
-
-Milestone 7 adds a focused queue for successfully analyzed batch rows.
-Sentiment and emotion are judged independently as `accept`, `correct`, or
-`uncertain`. Human labels and notes remain separate from immutable AI
-predictions and pinned model provenance. A row becomes reviewed only after
-both dimensions have a judgment; partially reviewed and uncertain dimensions
-do not enter formal agreement denominators.
-
-The review page supports previous, save-and-next, next-unreviewed,
-per-record Accept Both, and All/Unreviewed/Reviewed/Corrected/Uncertain
-filters. Its summary reports progress, sentiment confusion, exact
-emotion-set agreement, label additions/removals, and a descriptive
-confidence-band comparison only after five definitive reviews. It uses the
-term agreement rather than accuracy and makes no confidence-calibration
-claim.
-
-Reviewed CSV export preserves every original AI field, errors,
-provider/model revisions, separate human fields, timestamps, and
-true/false/blank agreement semantics. Native emotion scores are optional.
-Reviews remain in bounded, expiring process memory until the user exports
-them; there is no review database, background save, import, training, or
-reviewer account system.
-
-### Insights and community context
-
-Milestone 8 adds a local descriptive insight layer over the existing frozen
-batch results and separate review state. Group Explorer and Distribution
-Comparison use only trusted user-supplied `source_type`, `source_label`,
-`topic`, `community`, `language`, or valid timestamp-month metadata. The
-application does not infer groups from text, names, slang, locations, or
-model output.
-
-AI prediction, definitive human-reviewed, and AI-human agreement
-perspectives remain separate. Every metric displays raw counts, its eligible
-denominator, review coverage where relevant, and a per-group sample warning.
-Fewer than five eligible records suppress comparative percentage emphasis;
-five through nine show a prominent small-sample warning. No view produces
-rankings, composite scores, causal claims, cultural generalizations, or
-psychological conclusions.
-
-Phrase and Context Notes are written manually by the user and remain
-separate from AI and human labels. Representative Cases are selected by
-explicit rules such as low confidence, definitive disagreement, correction,
-uncertainty, or note presence, and always state why each case appears.
-Insight CSV export is an explicit action. Its audit row records UTC export
-time, metric definition, sample thresholds, complete input/analysis/review
-counts, selection, filters, model provenance, and emotion-threshold
-semantics. Group summaries distinguish successful and failed rows; failures
-are grouped only from independently valid supported metadata and otherwise
-remain explicitly unassigned. Notes include a UTC creation time, while
-supporting records and model-native scores are optional. All insight state
-remains in the same bounded, expiring process-memory workspace and is
-cleared with the batch.
-
-Clearing a batch requires explicit confirmation and explains that its linked
-review and insight state will also be removed. Filter submissions return to
-the Results section without changing their semantics.
-
-### Moderation training
-
-Milestone 9 adds a separate three-area workflow for preparing cases,
-recording structured training decisions, and reviewing feedback. The
-repository includes a versioned synthetic moderation policy, 20 synthetic
-cases, frozen built-in references, and an explicitly labeled fixture-based
-mock recommendation. The mock is not a live moderation model, expert
-opinion, or accuracy ground truth.
-
-Structural contract errors reject a decision: required fields, escalation
-and unclear reasons, category exclusivity, complete reasoning, and reviewer
-note must be valid. Policy-guidance departures remain non-blocking. They are
-displayed and retained with the first and final decisions, comparison, and
-export without rewriting the user's judgment. Workspace-authored references
-are labeled `self_authored` and are never presented as independent review.
-
-Prepared workspace cases snapshot only successful batch records after an
-explicit action. Training sessions freeze their policy and reference
-versions, preserve immutable first decisions plus explicit final revisions,
-and keep cancelled or restarted attempts separate. Summaries show
-field-level raw counts, eligible denominators, exclusions, and sample
-warnings rather than a composite score or certification claim.
-
-The configurable defaults are 100 prepared cases, 50 cases per session, and
-20 retained session attempts. All state is bounded, expiring process memory.
-Limits block new creation without silently deleting older cases or
-summaries. CSV export is explicit and auditable; user-derived source text,
-model signals, context notes, and trusted metadata are excluded by default
-and require separate opt-in. See [Moderation Training](docs/MODERATION_TRAINING.md)
-for the full contract.
-
-### Support Triage
-
-Milestone 10 adds a separate local Support Triage workbench with three
-areas: Source & Routing Guide, Triage Workspace, and Summary & Export. It
-uses a versioned project-authored synthetic guide and 22 synthetic tickets.
-Users may also explicitly snapshot successfully parsed batch records,
-including records whose sentiment or emotion inference failed. Source
-provenance remains visible, and no triage decision writes back into batch,
-review, insight, or moderation state.
-
-Human decisions keep primary and secondary intents, issue category, urgency,
-recommended queue, escalation, recommended next actions, reasons, and notes
-separate. Incomplete but legal drafts are explicit. Finalization is atomic,
-freezes guide provenance, and preserves the immutable first decision; later
-changes are explicit revisions. Structural errors block invalid state, while
-synthetic-guide warnings remain non-blocking and auditable.
-
-Independent mode hides any deterministic fixture mock before first
-finalize. The assisted simulation may show a mock first but never prefills
-the human form. Human–mock agreement and override counts are descriptive,
-not accuracy, quality, causality, or operator performance.
-
-Triage state is bounded, expiring process memory: 200 tickets per
-workspace, eight concurrent workspaces, and 30-minute sliding inactivity
-expiry by default. Limits block creation rather than evicting existing
-work. CSV export is explicit, formula-safe, and `no-store`. See
-[Support Triage](docs/SUPPORT_TRIAGE.md) for the complete contract and
-limitations.
-
-Milestone 10 is the last completed feature milestone for the current
-version. Deferred next-version candidates remain outside the `0.10.0`
-feature boundary. Detailed live execution state is maintained only in
-[Project Status](PROJECT_STATUS.md).
-
-### Core contracts
-
-Milestone 2 introduces a model-library-independent core:
-
-- `NormalizedTextInput` for platform-neutral text and safe metadata;
-- compact sentiment and emotion taxonomies;
-- normalized and model-native scores kept separately;
-- traceable provider/model/revision metadata;
-- `SentimentProvider` and `EmotionProvider` protocols;
-- deterministic mock providers for fast tests;
-- `AnalysisService` for provider-neutral orchestration.
-
-The mock providers remain available for fast tests. They do not inspect
-meaning and must never be presented as real predictions. See
-[Core Contracts](docs/CONTRACTS.md) for the contract boundaries.
-
-</details>
-
-## Limitations
-
-- **Local, single-user, English-only.** The shipped V1 `0.10.0` runtime has no
-  hosted demo, accounts, or persistence (state is bounded, expiring process
-  memory). A durable local-project repository now exists in the codebase (V2
-  M4), but no shipped surface uses it yet, so user-facing persistent projects
-  are still not available; see
-  [V2 Product Discovery](docs/V2_PRODUCT_DISCOVERY.md). French or
-  multilingual support is not a current claim and remains conditional on a
-  future licence-and-evaluation spike.
-- **Estimate, not diagnosis.** Sentiment and emotion output are model
-  estimates; they do not reveal a person's true feelings, intent, or
-  psychological state, and are not a substitute for human judgment.
-- **Moderation and triage "mock" suggestions are fixtures**, not live
-  classifiers, accuracy ground truth, or expert opinion — the interface
-  labels them as such everywhere they appear.
-- **Public portfolio delivery, not a formal release.** The repository owner
-  approved public portfolio delivery of `0.10.0` and the repository is
-  public, but no version tag or GitHub Release has been created; see
-  [Project Status](PROJECT_STATUS.md) for the live gate state.
-
-## Privacy and data
-
-Do not commit real messages, platform exports, personal notes, databases,
-credentials, model weights, or generated analysis results. The committed
-`data/README.md` is documentation only; all other contents of `data/` are
-ignored by default. Public examples must be synthetic and free of personal
-information.
-
-See [Privacy](docs/PRIVACY.md) and [Security](SECURITY.md) before working
-with real text.
-
-## Licensing
-
-Project source code is licensed under the [MIT License](LICENSE). That
-license does not apply to third-party model weights, datasets, or
-dependencies. Those assets require separate review and attribution as
-described in [Model Governance](docs/MODEL_GOVERNANCE.md) and
-[Third-Party Notices](THIRD_PARTY_NOTICES.md).
-
-## Learn more
-
-The stable product and engineering direction is defined in the
-[Project Charter](PROJECT_CHARTER.md). Mutable planning and current
-execution state are maintained separately:
-
-- [Product Roadmap](ROADMAP.md)
-- [Project Status](PROJECT_STATUS.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Feature Complete Manual Audit](docs/FEATURE_COMPLETE_MANUAL_AUDIT.md)
-- [Manual Acceptance Gate Standard](docs/MANUAL_ACCEPTANCE_GATE.md)
-- [Living Manual QA](manual-qa/manual_review_questionnaire.html)
-
-### Internal Windows installer engineering
-
-[M10-C installer and isolated validation](docs/V2_M10_C_WINDOWS_INSTALLER.md)
-wraps the existing Windows onedir/license packet. Development-host lifecycle
-checks PASS; clean-machine and missing-model UI checks remain NOT RUN.
-Installers are local internal evidence, not published downloads or distribution
-permission. B1 and B4–B6 remain BLOCKED after M10-E2; V2 is not release-ready.
+**Lifecycle:** V2 feature and packaging development completed; `v2.0.0` was publicly delivered on **2026-10-13** as a *conditional career-portfolio release*. Current portfolio work is presentation/documentation (PP), not a claim that all formal M9 acceptance streams passed. Detailed chronological engineering and owner decisions remain in [Project Status](PROJECT_STATUS.md), [Roadmap](ROADMAP.md), and the [Project Charter](PROJECT_CHARTER.md); historical milestone records should be read in their own time context.
