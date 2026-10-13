@@ -84,7 +84,6 @@ def test_m10c_engineering_does_not_close_acceptance_or_distribution_gates() -> N
     record = (ROOT / "docs/V2_M10_C_WINDOWS_INSTALLER.md").read_text(encoding="utf-8")
     for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
-        assert "M10-C installer engineering established" in surface
         for stale in (
             "no installer, binary distribution",
             "no installer or distributed build exists",
@@ -92,6 +91,8 @@ def test_m10c_engineering_does_not_close_acceptance_or_distribution_gates() -> N
             "Next scope is a later M10 engineering gate",
         ):
             assert stale not in surface
+    roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+    assert "M10-C installer engineering established" in roadmap
     assert "| M10-C clean-machine acceptance | **Evidence reviewed" in status
     assert "B1–B6 remain BLOCKED" in record
     assert "B2 and B3 are closed and B1 and\nB4–B6 remain BLOCKED" in record
@@ -106,27 +107,27 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
         assert phrase not in combined
 
     status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
-    assert "| Current version | `2.0.0`" in status
-    assert "v2.0.0` is planned and not created" in status
+    assert "| Current version | 2.0.0 — **PUBLISHED (2026-10-13)**" in status
+    assert "v2.0.0` is planned and not created" not in status
+    assert "releases/tag/v2.0.0" in status
+    assert "819e048c399799ed78da83c5711ed3b40d5c4caf" in status
+    assert "da7d5d6f8b098250dca2ab35fd9c79bc5a8688a085648e28836b1dd12b914dca" in status
     assert "| Feature milestone status | Milestones 1–10 complete |" in status
     assert "| Feature Complete Review status | **Completed** |" in status
     assert "| Feature Freeze status | **PASS" in status
-    assert "| Current lifecycle phase | **V2 M10 engineering priority" in status
-    assert "M10-A packaging foundation and M10-B compliance engineering" in status
-    assert "distribution gate BLOCKED" in status
-    assert "M9.0 historical approved design and M9.1 COMPLETE retained" in status
-    assert "M9.2–M9.4 deferred by owner" in status
+    assert "| Current lifecycle phase | **PP — Portfolio Packaging" in status
+    assert "**conditional career-portfolio release**" in status
+    assert "STI_PP4_CURRENT_STATE_2026_10_13" in status
+    assert "Public Gate 17/17 PASS" in status
+    assert "B1 **operational source-access prerequisite**" in status
+    assert "sources-qt-6.11.2" in status
+    assert "unsigned/SmartScreen risk" in status
+    assert "formal Windows UAT and accessibility remain unverified" in status
+    assert "M9.2 representative-domain evaluation" in status
+    assert "are **not complete**" in status
+    assert "Two S5 icon evidence gaps" in status
+    assert "`distribution_permitted=false` remains unchanged" in status
     assert "| V2 UI/IA Gate | **PASS — 2026-10-07.**" in status
-    assert (
-        "**M5.0 — Model Provisioner Function Contract & Foundation, M5.1 — "
-        "Model Provisioning UI/UX Design, M5.2 — Native Desktop Shell + Model "
-        "Provisioning UI, M5.3 — Native Project Workflow, M5.4 — Native Human "
-        "Review and Reviewed Export, M5.5 — Native Insights, Context Notes, "
-        "and Representative Cases, and M5.6 — Language Detection and "
-        "Unsupported-Language Warning are complete on `main`; the M5 "
-        "Functional Exit is PASS; M6 — Full UI Integration / Polish is "
-        "complete on `main`.**" in status
-    )
     assert (
         "| M5.0 — Model Provisioner Function Contract & Foundation | **COMPLETE"
         in status
@@ -187,7 +188,17 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     )
 
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    assert "**Current phase: M10 engineering priority" in roadmap
+    assert "<!-- STI_PP4_CURRENT_STATE_2026_10_13 -->" in roadmap
+    assert "V2 development COMPLETE" in roadmap
+    assert "CONDITIONAL PORTFOLIO RELEASE PUBLISHED" in roadmap
+    assert "PP delivery COMPLETE" in roadmap
+    assert "17 release-gate checks passing" in roadmap
+    assert "two S5 icon-evidence gaps" in roadmap
+    assert (
+        "**Historical milestone snapshot (pre-Release-5B/5C): "
+        "M10 engineering priority" in roadmap
+    )
+    assert "**Current phase: M10 engineering priority" not in roadmap
     assert "M9.2–M9.4 are deferred by owner" in roadmap
     assert "M7 CONDITIONAL risks are preserved" in roadmap
     assert "**V1 final phase: Public Portfolio Delivery**" in roadmap
@@ -197,11 +208,18 @@ def test_current_surfaces_share_one_lifecycle_truth() -> None:
     assert roadmap.count("**Status: PASS — 2026-08-14.**") == 2
     assert roadmap.count("**Status: Not started.**") == 0
 
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "> **Current lifecycle phase: V2 M10 engineering priority" in readme
-    assert "M9.2–M9.4 deferred by owner" in readme
-    assert "Deferral does not waive Q5 evidence" in readme
-    assert "formally accepted CONDITIONAL exit" in readme
+    readme = " ".join((ROOT / "README.md").read_text(encoding="utf-8").split())
+    assert "Current lifecycle phase: V2 M10 engineering priority" not in readme
+    assert "releases/download/v2.0.0/STI-2.0.0-x64-setup.exe" in readme
+    assert "releases/tag/v2.0.0" in readme
+    assert "releases/tag/sources-qt-6.11.2" in readme
+    assert "da7d5d6f8b098250dca2ab35fd9c79bc5a8688a085648e28836b1dd12b914dca" in readme
+    assert "conditional career-portfolio release" in readme
+    assert "**unsigned**" in readme
+    assert "SmartScreen" in readme
+    assert "synthetic" in readme
+    assert "two remaining icon-observation evidence gaps" in readme
+    assert "[Project Status](PROJECT_STATUS.md)" in readme
 
     track_a = (ROOT / "docs" / "V2_M8_TRACK_A_LEDGER.md").read_text(encoding="utf-8")
     track_b = (ROOT / "docs" / "V2_M8_TRACK_B_FIDELITY.md").read_text(encoding="utf-8")
@@ -230,7 +248,10 @@ def test_m9_owner_gate_pass_does_not_imply_evaluation_or_uat() -> None:
     )
     assert "M9.1 infrastructure is complete; M9.2–M9.4 are deferred by owner" in status
     assert "all initially NOT RUN" in status
-    assert "formal UAT steps remain NOT RUN" in status
+    # PP-4 replaced the live lifecycle row; the limitation stays enforced.
+    assert "M9.3 formal UAT/accessibility" in status
+    assert "M9.4 consolidated formal acceptance" in status
+    assert "formal Windows UAT and accessibility remain unverified" in status
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "M9.1–M9.4 and M10 have not started" not in readme
     for name in (
@@ -251,10 +272,13 @@ def test_source_of_truth_responsibilities_are_explicit() -> None:
     assert "The Charter does not\nrecord the live phase" in charter
     assert "maintained only in\n[PROJECT_STATUS.md](PROJECT_STATUS.md)" in charter
     assert "`PROJECT_STATUS.md` is the only live execution ledger" in development
-    readme_status_pointer = (
-        "Detailed live execution state is maintained only in\n[Project Status]"
+    # The recruiter README points to the ledgers; it is not a ledger itself.
+    assert "[Project Status](PROJECT_STATUS.md)" in readme
+    assert "[Roadmap](ROADMAP.md)" in readme
+    assert (
+        "historical milestone records should be read in their own time context"
+        in readme
     )
-    assert readme_status_pointer in readme
 
 
 def test_canonical_manual_qa_path_is_used() -> None:
@@ -308,9 +332,8 @@ def test_m10e1_narrows_blockers_without_granting_distribution() -> None:
     record = (ROOT / "docs/V2_M10_E1_DISTRIBUTION_UNBLOCKING.md").read_text(
         encoding="utf-8"
     )
-    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
-        surface = (ROOT / name).read_text(encoding="utf-8")
-        assert "M10-E1 distribution unblocking" in surface
+    roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+    assert "M10-E1 distribution unblocking" in roadmap
     assert "| M10-E1 — Practical Binary Distribution Unblocking |" in status
     for row in (
         "| B1 | **OPEN",
@@ -341,8 +364,9 @@ def test_m10e2_closes_only_evidenced_blockers_and_keeps_gates() -> None:
     record = (ROOT / "docs/V2_M10_E2_BLOCKER_CLOSURE.md").read_text(encoding="utf-8")
     for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
-        assert "M10-E2 blocker closure engineering" in surface
         assert "B1 and B3–B6 remain BLOCKED" not in surface
+    roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+    assert "M10-E2 blocker closure engineering" in roadmap
     assert "| M10-E2 — Distribution Blocker Closure Engineering |" in status
     for row in (
         "| B1 | **OPEN",
@@ -391,9 +415,8 @@ def test_m10d_dossier_stratifies_readiness_and_leaves_release_pending() -> None:
     dossier = (ROOT / "docs" / "V2_M10_D_RELEASE_DOSSIER.md").read_text(
         encoding="utf-8"
     )
-    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
-        surface = (ROOT / name).read_text(encoding="utf-8")
-        assert "M10-D release readiness dossier" in surface
+    roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+    assert "M10-D release readiness dossier" in roadmap
     assert "| M10-D — Release Readiness Dossier and Decision Gate |" in status
     assert "RECOMMENDATION IS NO-GO" in dossier
     assert "RECOMMENDATION IS GO" in dossier
@@ -440,9 +463,13 @@ def test_m10_s5_record_keeps_its_evidence_boundaries() -> None:
 def test_release_one_does_not_imply_distribution() -> None:
     for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
-        assert "distribution gate BLOCKED" in surface, name
         assert "distribution_permitted=true" not in surface, name
         assert "`distribution_permitted` true" not in surface, name
+
+
+def test_release_one_gate_wording_is_preserved_in_the_roadmap() -> None:
+    roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
+    assert "distribution gate BLOCKED" in roadmap
 
 
 def test_release_two_decisions_keep_b1_and_permit_nothing() -> None:
@@ -496,7 +523,7 @@ def test_release_four_a_narrows_b1_without_closing_it() -> None:
     assert check["result"]["distribution_permitted"] is False
     assert check["result"]["source_hosting"]["installer_download_page"] == "not live"
     assert "B1 closure" in check["not_claimed"]
-    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+    for name in ("PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
         assert "installer-page source link" in surface, name
 
@@ -524,7 +551,7 @@ def test_release_four_b_keeps_publication_and_decisions_with_the_owner() -> None
         "application tag",
     ]
     assert "B1 operational closure" in " ".join(receipt["not_claimed"])
-    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+    for name in ("PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
         assert "two-phase publication gate" in surface, name
 
@@ -549,7 +576,7 @@ def test_release_five_a1_freezes_the_version_without_a_tag_or_release() -> None:
     assert receipt["must_be_rebuilt_from_main"] is True
     assert receipt["candidate"]["legal_blockers"] == ["B1"]
     assert receipt["candidate"]["installer_filename"] == "STI-2.0.0-x64-setup.exe"
-    for name in ("README.md", "PROJECT_STATUS.md", "ROADMAP.md"):
+    for name in ("PROJECT_STATUS.md", "ROADMAP.md"):
         surface = (ROOT / name).read_text(encoding="utf-8")
         assert "Release-5A-1" in surface, name
         assert "undecided Owner decisions" not in surface, name
