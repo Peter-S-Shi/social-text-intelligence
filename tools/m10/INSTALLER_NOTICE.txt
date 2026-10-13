@@ -1,8 +1,9 @@
 INTERNAL ENGINEERING INSTALLER - NOT APPROVED FOR DISTRIBUTION
 
-Distribution blockers remain open; legal/inventory.json lists them (B1 and B4
-for this build configuration). B1 has an owner engineering direction but no
-legal confirmation. B2 and B3 are resolved: no software renderer or Microsoft
+Distribution blockers remain open; legal/inventory.json lists them. B1 stays
+open until public source access is operational. The owner's compliance decisions
+(LICENSE_DECISIONS.json) are internal assessments, not an external legal
+certification. B2 and B3 are resolved: no software renderer or Microsoft
 runtime file is shipped. B5 is not derived because the language model is not
 shipped, but its corpus terms are unverified. B6 is closed only on a QtCore-only
 modified-source test. Source archives travel in this package; no public source

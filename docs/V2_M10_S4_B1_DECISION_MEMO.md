@@ -1,5 +1,10 @@
 # V2 M10 S4 — B1 source-delivery decision memo
 
+> **Later decisions (PR #75).** The owner assessed this memo's questions as
+> LD1–LD3 in [V2_R2_LICENSE_DECISIONS.md](V2_R2_LICENSE_DECISIONS.md). These are
+> internal compliance decisions, not an external legal certification. B1 stays
+> OPEN only until public source access is operational.
+
 Status: **decision memo for the owner; B1 stays OPEN.** This is a read-only
 review from `main@bf044be9`. No release asset, compliance code, binding rebuild
 or publication was made. It is an engineering reading of the licences, not legal

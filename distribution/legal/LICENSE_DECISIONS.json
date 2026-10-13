@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "record": "STI V2 Release-2 owner-assessed licence decisions LD1-LD6",
+  "decided": "2026-10-13",
+  "basis": "docs/V2_R2_LICENSE_DECISIONS.md",
+  "assessment": "Owner-assessed internal compliance decisions with disclosed residual risks. Not an external legal certification and not a special permission from any rights holder.",
+  "supplements": "B1_OWNER_DECISION.json",
+  "scope": {
+    "qt_version": "6.11.2",
+    "components": {
+      "PySide6_Essentials": "6.11.2",
+      "shiboken6": "6.11.2"
+    },
+    "source_archives": {
+      "qtbase-everywhere-src-6.11.2.tar.xz": "5b2e00eccaf5a4d8c14134ffa0ea8dfd0a35ae1ffc7f8d87fa4305a1ed23cf22",
+      "qtsvg-everywhere-src-6.11.2.tar.xz": "d594337feca84c26fb67fe87b85e6a5c12fda404b611d905f9d138210c311876",
+      "qtimageformats-everywhere-src-6.11.2.tar.xz": "cecd8900f34b6550076309bc94f62f828008b633a4239e0a08c86788f41001f8",
+      "qttranslations-everywhere-src-6.11.2.tar.xz": "021684c1a7937a9fabc3b056a6698ad5978794caf9ac190fd6cc11399e67c014",
+      "pyside-setup-everywhere-src-6.11.2.tar.xz": "cba47efbaad1bedd529725cbc14e21f156c7a19366f07b3edfbb076ffd7afdf8"
+    },
+    "intel_openmp_package": {
+      "id": "intelopenmp.redist.win",
+      "version": "2026.1.0.239",
+      "sha256": "2a0f9fcdb51d8ac9fa535b67f013fd9341338355679261a39b946ef5e3f399fe"
+    }
+  },
+  "decisions": {
+    "LD1": {
+      "status": "owner_assessed",
+      "blocker": "B1",
+      "decision": "The hash-pinned upstream Qt 6.11.2 and pyside-setup 6.11.2 release sources and build scripts are delivered as the Corresponding Source of the unmodified official binaries (D1).",
+      "residual_risk": "Exact binding producer-source correspondence is unproven; the binding wheels carry no producer build record."
+    },
+    "LD2": {
+      "status": "owner_assessed",
+      "blocker": "B1",
+      "decision": "In-package source archives plus GPLv3 section 6(d) equivalent access from the download location are the delivery route (D2). Download-only distribution to users' own PCs does not trigger Installation Information (D3).",
+      "residual_risk": "The equivalent public access is not operational until it is published with a release."
+    },
+    "LD3": {
+      "status": "owner_assessed",
+      "blocker": "B1, B4",
+      "decision": "Intel's no-reverse-engineering term, scoped in writing to libiomp5md.dll and libiompstubs5md.dll, is compatible with LGPLv3 section 4 for the Qt libraries (D4).",
+      "residual_risk": "The scope rests on the written notices; Intel has not confirmed it."
+    },
+    "LD4": {
+      "status": "owner_assessed",
+      "blocker": "B4",
+      "decision": "The two DLLs taken from Intel's pinned, author-signed NuGet package are redistributed under the Intel Simplified Software License (Version October 2022).",
+      "residual_risk": "Byte-identical copies also reach the build through PyTorch under the Developer Tools EULA; certificate revocation was not checked."
+    },
+    "LD5": {
+      "status": "owner_assessed",
+      "blocker": "B4",
+      "decision": "intel-openmp/NOTICE.md with the package's copyright line, the full licence text and third-party-programs.txt satisfies the licence's notice condition.",
+      "residual_risk": "The licence text itself carries no copyright line."
+    },
+    "LD6": {
+      "status": "owner_assessed",
+      "blocker": "B4",
+      "decision": "The owner accepts the licence's high-risk-use disclaimer. The oneTBB third-party file that third-party-programs.txt refers to is not required.",
+      "residual_risk": "The oneTBB finding rests on the upstream oneTBB 2022.3.0 build definition, not on Intel's internal build."
+    }
+  },
+  "b1_effect": "legal_subitems_closed_remains_open_for_public_source_access",
+  "b4_effect": "intel_item_closed_for_the_pinned_package_only",
+  "public_source_hosting": "not operational",
+  "release_gate": "separate owner release gate required",
+  "distribution_permitted": false
+}

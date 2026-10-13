@@ -24,7 +24,8 @@ QT_REPLACEMENT.md provides library replacement, build and installation instructi
 Do not replace files in a running application; use a separate copy and temporary
 application data when checking compatibility.
 
-The engineering checks do not establish definitive legal compliance. Unresolved
-source correspondence and third-party redistribution obligations are documented
-in the distribution materials. Public binary distribution is not authorized.
+LICENSE_DECISIONS.json records the project owner's compliance decisions and
+their residual risks. They are internal assessments, not an external legal
+certification. Public source access is not yet operational, and public binary
+distribution is not authorized.
 """

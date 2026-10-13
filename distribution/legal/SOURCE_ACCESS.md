@@ -49,27 +49,32 @@ producer source correspondence remains unproven.
 
 - **In this package now:** the archives in `sources/`, delivered with the object
   code.
-- **Owner engineering direction (not legal clearance).** `B1_OWNER_DECISION.json`
-  records the owner's approval of decisions D1–D3 as an engineering direction:
+- **Owner engineering direction.** `B1_OWNER_DECISION.json` records the
+  owner's approval of decisions D1–D3 as an engineering direction:
   - keep the official, unmodified binaries with this upstream release-source
     route;
   - plan the in-package archives plus equivalent access from the download
     location;
   - keep the Qt libraries replaceable, with no signature or integrity lock.
+- **Owner compliance decisions (not external legal certification).**
+  `LICENSE_DECISIONS.json` records the owner's assessment of LD1–LD3:
+  - LD1: these upstream release sources and build scripts are delivered as the
+    Corresponding Source, with the unproven binding producer correspondence
+    accepted as a residual risk;
+  - LD2: in-package archives plus equivalent access are the delivery route, and
+    download-only distribution does not trigger Installation Information;
+  - LD3 (D4): Intel's term, scoped to its two OpenMP runtime files in
+    `intel-openmp/NOTICE.md`, is compatible with LGPL v3 §4.
 
-  Legal confirmation is **pending**. D4, the compatibility of an Intel-only
-  anti-reverse-engineering term with LGPL v3 §4, is unresolved together with B4.
-  Intel's term is scoped to its two OpenMP runtime files in
-  `intel-openmp/NOTICE.md`. B1 stays open.
+  B1 stays open until the equivalent public access below is operational.
 - **Future source hosting (approved policy, not operational).** For a future
   release, the same archives are to be offered beside the installer on its
   download page. GPL v3 §6(d) requires equivalent access, which may also be
   another server with clear directions next to the object code, kept available
   for as long as the object code is. **No public download exists yet.** This
   file is not a written offer.
-- Installation Information is unlikely to be triggered by a standalone
-  download onto a user's own PC, because no User Product is transferred. That
-  reading is still subject to the pending legal confirmation. No signing or
+- Installation Information is not triggered by a standalone download onto a
+  user's own PC, because no User Product is transferred (LD2). No signing or
   device lock is introduced.
 
 For rebuilding, unpack the sources in a separate workspace with a trusted

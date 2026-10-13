@@ -1,4 +1,4 @@
-"""B4 narrows only on recorded licence texts; Intel OpenMP terms stay open."""
+"""B4 narrows on recorded licence texts; the Intel item closes only on decisions."""
 
 from __future__ import annotations
 
@@ -126,7 +126,7 @@ def test_rust_coverage_fails_closed(tmp_path: Path) -> None:
     )
 
 
-def test_intel_record_pins_the_nuget_package_and_keeps_terms_open() -> None:
+def test_intel_record_pins_the_nuget_package_and_records_the_decisions() -> None:
     record = json.loads((LEGAL / "intel-openmp" / "provenance.json").read_text())
     source = record["source"]
     assert (source["channel"], source["package_id"], source["version"]) == (
@@ -152,7 +152,13 @@ def test_intel_record_pins_the_nuget_package_and_keeps_terms_open() -> None:
     assert "Developer Tools" in record["superseded"]["basis"]
     assert not (LEGAL / "intel-openmp" / "LICENSE.txt").exists()
     assert "Developer Tools" not in licence["name"]
-    assert record["redistribution"]["status"].startswith("OPEN")
+    redistribution = record["redistribution"]
+    assert redistribution["status"].startswith("OWNER-ASSESSED")
+    assert "not external legal certification" in redistribution["status"]
+    assert redistribution["decisions"]["onetbb_third_party_file"].startswith(
+        "LD6: not required"
+    )
+    assert redistribution["residual_risks"]
 
 
 def test_intel_notice_scopes_the_reverse_engineering_term_to_intel_files() -> None:
@@ -302,8 +308,9 @@ def test_the_packet_accepts_only_the_nuget_copies(tmp_path: Path, copy: str) -> 
 
 
 @pytest.mark.parametrize("variant", ["nuget", "wheel-eula", "mismatch"])
-def test_intel_status_keeps_b4_open_whatever_the_record_says(
-    tmp_path: Path, variant: str
+@pytest.mark.parametrize("decided", [False, True])
+def test_intel_item_closes_only_on_decisions_for_matching_nuget_copies(
+    tmp_path: Path, variant: str, decided: bool
 ) -> None:
     compliance = load("compliance")
     bundle, legal = tmp_path / "bundle", tmp_path / "legal"
@@ -327,11 +334,47 @@ def test_intel_status_keeps_b4_open_whatever_the_record_says(
     if variant == "wheel-eula":
         record["source"]["channel"] = "pypi"
     path.write_text(json.dumps(record))
-    status, gaps = compliance.intel_openmp_status(bundle, legal)
+    status, gaps = compliance.intel_openmp_status(bundle, legal, decided=decided)
     assert status["matches_provenance"] is (variant != "mismatch")
     assert status["nuget_source_recorded"] is (variant != "wheel-eula")
-    assert gaps[-1] == compliance.B4_INTEL
-    assert len(gaps) == (1 if variant == "nuget" else 2)
+    closes = decided and variant == "nuget"
+    assert status["owner_assessed"] is closes
+    if closes:
+        assert gaps == []
+    else:
+        assert gaps[-1] == compliance.B4_INTEL
+        assert len(gaps) == (1 if variant == "nuget" else 2)
+
+
+@pytest.mark.parametrize(
+    "fault", ["none", "other-package", "no-notice", "changed-licence"]
+)
+def test_decisions_do_not_cover_another_package_or_missing_notices(
+    tmp_path: Path, fault: str
+) -> None:
+    compliance = load("compliance")
+    bundle, legal = tmp_path / "bundle", tmp_path / "legal"
+    shutil.copytree(LEGAL / "intel-openmp", legal / "intel-openmp")
+    path = legal / "intel-openmp/provenance.json"
+    record = json.loads(path.read_text())
+    lib = bundle / "_internal/torch/lib"
+    lib.mkdir(parents=True)
+    for shipped, item in record["files"].items():
+        item["sha256"] = hashlib.sha256(shipped.encode()).hexdigest()
+        record["source"]["entries"][item["package_entry"]] = item["sha256"]
+        (bundle / shipped).write_bytes(shipped.encode())
+    if fault == "other-package":
+        record["source"]["sha256"] = "0" * 64
+    if fault == "no-notice":
+        (legal / "intel-openmp/NOTICE.md").unlink()
+    if fault == "changed-licence":
+        (legal / "intel-openmp/INTEL-SIMPLIFIED-SOFTWARE-LICENSE.txt").write_bytes(b"x")
+    path.write_text(json.dumps(record))
+    status, gaps = compliance.intel_openmp_status(bundle, legal, decided=True)
+    assert status["owner_assessed"] is (fault == "none")
+    assert (gaps == []) is (fault == "none")
+    if fault != "none":
+        assert gaps[-1] == compliance.B4_INTEL
 
 
 def crate(files: dict[str, bytes]) -> bytes:

@@ -30,6 +30,8 @@ engineering the combined work to debug such modifications, as described in
 
 ## Status
 
-Whether this arrangement is an adequate redistribution basis still needs legal
-confirmation (blocker B4). The open points are listed in `provenance.json`. Public
-binary distribution is not authorized.
+The project owner has assessed this arrangement as an adequate redistribution
+basis (decisions LD3–LD6 in `LICENSE_DECISIONS.json`), with the residual risks
+listed in `provenance.json`. This is an internal compliance decision, not an
+external legal certification or a special permission from Intel. Public binary
+distribution is not authorized.

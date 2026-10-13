@@ -420,6 +420,98 @@ B1_SCHEMA_1: dict[str, object] = {
 }
 B1_SCHEMA_1_COMPONENTS = {"PySide6_Essentials": "6.11.2", "shiboken6": "6.11.2"}
 
+B1_ASSESSED = (
+    "B1: the owner assessed the unmodified official Qt/PySide6/shiboken6 binaries "
+    "with upstream release-source delivery as compliant (LD1-LD3 in "
+    "LICENSE_DECISIONS.json; not external legal certification), accepting the "
+    "unproven binding producer-source correspondence as a disclosed residual "
+    "risk. Public source access under GPLv3 section 6(d) is prepared but not "
+    "operational."
+)
+LD_RECORD = "LICENSE_DECISIONS.json"
+LD_ASSESSED = "owner_assessed"
+INTEL_PACKAGE = {
+    "id": "intelopenmp.redist.win",
+    "version": "2026.1.0.239",
+    "sha256": "2a0f9fcdb51d8ac9fa535b67f013fd9341338355679261a39b946ef5e3f399fe",
+}
+# The owner-approved content of the licence decision record, schema version 1,
+# exactly. It answers legal questions only. It cannot record public source
+# hosting as operational or permit distribution; that needs a reviewed new
+# version and a separate Owner Release Gate.
+LD_SCHEMA_1: dict[str, object] = {
+    "schema_version": 1,
+    "record": "STI V2 Release-2 owner-assessed licence decisions LD1-LD6",
+    "decided": "2026-10-13",
+    "basis": "docs/V2_R2_LICENSE_DECISIONS.md",
+    "assessment": "Owner-assessed internal compliance decisions with disclosed "
+    "residual risks. Not an external legal certification and not a special "
+    "permission from any rights holder.",
+    "supplements": B1_RECORD,
+    "decisions": {
+        "LD1": {
+            "status": LD_ASSESSED,
+            "blocker": "B1",
+            "decision": "The hash-pinned upstream Qt 6.11.2 and pyside-setup "
+            "6.11.2 release sources and build scripts are delivered as the "
+            "Corresponding Source of the unmodified official binaries (D1).",
+            "residual_risk": "Exact binding producer-source correspondence is "
+            "unproven; the binding wheels carry no producer build record.",
+        },
+        "LD2": {
+            "status": LD_ASSESSED,
+            "blocker": "B1",
+            "decision": "In-package source archives plus GPLv3 section 6(d) "
+            "equivalent access from the download location are the delivery "
+            "route (D2). Download-only distribution to users' own PCs does not "
+            "trigger Installation Information (D3).",
+            "residual_risk": "The equivalent public access is not operational "
+            "until it is published with a release.",
+        },
+        "LD3": {
+            "status": LD_ASSESSED,
+            "blocker": "B1, B4",
+            "decision": "Intel's no-reverse-engineering term, scoped in writing "
+            "to libiomp5md.dll and libiompstubs5md.dll, is compatible with "
+            "LGPLv3 section 4 for the Qt libraries (D4).",
+            "residual_risk": "The scope rests on the written notices; Intel has "
+            "not confirmed it.",
+        },
+        "LD4": {
+            "status": LD_ASSESSED,
+            "blocker": "B4",
+            "decision": "The two DLLs taken from Intel's pinned, author-signed "
+            "NuGet package are redistributed under the Intel Simplified "
+            "Software License (Version October 2022).",
+            "residual_risk": "Byte-identical copies also reach the build through "
+            "PyTorch under the Developer Tools EULA; certificate revocation was "
+            "not checked.",
+        },
+        "LD5": {
+            "status": LD_ASSESSED,
+            "blocker": "B4",
+            "decision": "intel-openmp/NOTICE.md with the package's copyright "
+            "line, the full licence text and third-party-programs.txt satisfies "
+            "the licence's notice condition.",
+            "residual_risk": "The licence text itself carries no copyright line.",
+        },
+        "LD6": {
+            "status": LD_ASSESSED,
+            "blocker": "B4",
+            "decision": "The owner accepts the licence's high-risk-use "
+            "disclaimer. The oneTBB third-party file that "
+            "third-party-programs.txt refers to is not required.",
+            "residual_risk": "The oneTBB finding rests on the upstream oneTBB "
+            "2022.3.0 build definition, not on Intel's internal build.",
+        },
+    },
+    "b1_effect": "legal_subitems_closed_remains_open_for_public_source_access",
+    "b4_effect": "intel_item_closed_for_the_pinned_package_only",
+    "public_source_hosting": "not operational",
+    "release_gate": "separate owner release gate required",
+    "distribution_permitted": False,
+}
+
 
 def canonical(value: object) -> str:
     """JSON text that keeps types apart (true is not 1), for exact comparison."""
@@ -494,6 +586,63 @@ def b1_owner_decision(
     }, problems
 
 
+def license_decisions(
+    legal: Path, definition: dict[str, object]
+) -> tuple[dict[str, object], list[str]]:
+    """Validate the shipped licence decision record (LD1-LD6) against its pins.
+
+    Schema 1 must equal the approved content exactly, scoped to the source
+    manifest's Qt version and archives, the two binding packages and the pinned
+    Intel package. A valid record closes legal subitems only; it never removes
+    B1 and never permits distribution.
+    """
+    path = legal / LD_RECORD
+    if not path.is_file():
+        return {"present": False}, ["the licence decision record is missing"]
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return {"present": True, "valid": False}, [
+            "the licence decision record is malformed"
+        ]
+    if not isinstance(record, dict) or canonical(record.get("schema_version")) != "1":
+        return {"present": True, "valid": False}, [
+            "the licence decision record is not schema version 1"
+        ]
+    expected = dict(
+        LD_SCHEMA_1,
+        scope={
+            "qt_version": definition["version"],
+            "components": B1_SCHEMA_1_COMPONENTS,
+            "source_archives": {
+                item["filename"]: item["sha256"]
+                for item in definition["archives"]  # type: ignore[union-attr]
+            },
+            "intel_openmp_package": INTEL_PACKAGE,
+        },
+    )
+    problems = sorted(
+        f"{key} differs from the approved schema 1 content"
+        for key in set(expected) | set(record)
+        if key not in record
+        or key not in expected
+        or canonical(record[key]) != canonical(expected[key])
+    )
+    decisions = record.get("decisions")
+    return {
+        "present": True,
+        "valid": not problems,
+        "schema_version": 1,
+        "record_sha256": digest(path),
+        "decided": record.get("decided"),
+        "decisions": {
+            key: value.get("status") if isinstance(value, dict) else None
+            for key, value in (decisions.items() if isinstance(decisions, dict) else ())
+        },
+        "public_source_hosting": record.get("public_source_hosting"),
+    }, problems
+
+
 def distribution_blockers(
     provenance: dict[str, object],
     software_renderer: bool,
@@ -502,13 +651,16 @@ def distribution_blockers(
     language_model_bundled: bool = True,
     b4_remaining: Sequence[str] | None = None,
     b1_record_problems: Sequence[str] | None = None,
+    decision_problems: Sequence[str] | None = None,
 ) -> list[str]:
     """Each blocker stays until its own evidence closes it; none grants permission.
 
     B4 fails closed: without a coverage check (`b4_remaining` is None) it keeps its
     general wording; with one, it names what is still open. B1 is always derived.
     A valid owner-decision record (`b1_record_problems == []`) only narrows its
-    wording; a missing or invalid one is named and never narrows it.
+    wording; a missing or invalid one is named and never narrows it. A valid
+    licence decision record (`decision_problems == []`) narrows it further to
+    the public source access still missing; it never removes B1.
     """
     if not provenance["qt_libraries_verified"]:
         b1 = B1_UNVERIFIED
@@ -521,8 +673,17 @@ def distribution_blockers(
             + "; ".join(b1_record_problems)
             + "."
         )
-    else:
+    elif decision_problems is None:
         b1 = B1_DECIDED
+    elif decision_problems:
+        b1 = (
+            B1_DECIDED
+            + " Licence decision record rejected: "
+            + "; ".join(decision_problems)
+            + "."
+        )
+    else:
+        b1 = B1_ASSESSED
     blockers = [b1]
     if software_renderer:
         blockers.append(B2)
@@ -621,9 +782,14 @@ def intel_package_entries(package: Path, source: dict[str, object]) -> dict[str,
 
 
 def intel_openmp_status(
-    bundle: Path, legal: Path
+    bundle: Path, legal: Path, decided: bool = False
 ) -> tuple[dict[str, object], list[str]]:
-    """The shipped Intel OpenMP DLLs must be the ones whose terms are recorded."""
+    """The shipped Intel OpenMP DLLs must be the ones whose terms are recorded.
+
+    The B4 Intel item closes only when `decided` (a valid licence decision
+    record) and the shipped bytes, texts, notice and NuGet source all match the
+    package that record names. Any other state keeps it.
+    """
     record_path = legal / "intel-openmp" / "provenance.json"
     shipped = {
         name: bundle / "_internal/torch/lib" / name
@@ -668,8 +834,19 @@ def intel_openmp_status(
         gaps.append("the Intel OpenMP licence texts are missing or changed")
     if not nuget:
         gaps.append("the Intel OpenMP record does not name the pinned NuGet source")
-    # Engineering evidence cannot settle the licence's redistribution conditions.
-    gaps.append(B4_INTEL)
+    notice = (legal / "intel-openmp" / licence.get("notice", "NOTICE.md")).is_file()
+    if not notice:
+        gaps.append("the Intel OpenMP notice is missing")
+    package = {
+        "id": source.get("package_id"),
+        "version": source.get("version"),
+        "sha256": source.get("sha256"),
+    }
+    # Engineering evidence cannot settle the licence's redistribution conditions;
+    # only the owner's decisions on this exact package can (LD3-LD6).
+    assessed = decided and package == INTEL_PACKAGE and not gaps
+    if not assessed:
+        gaps.append(B4_INTEL)
     return {
         "bundled": True,
         "recorded": True,
@@ -678,6 +855,8 @@ def intel_openmp_status(
         "source_package": f"{source.get('package_id')} {source.get('version')}",
         "license": licence["name"],
         "texts_present": texts,
+        "notice_present": notice,
+        "owner_assessed": assessed,
         "redistribution": record["redistribution"]["status"],
     }, gaps
 
@@ -951,7 +1130,11 @@ def assemble(
     language_model = language_model_status(bundle)
     versions = {str(item["name"]).lower(): str(item["version"]) for item in components}
     rust_notices, rust_gaps = rust_notice_coverage(legal, versions)
-    intel_openmp, intel_gaps = intel_openmp_status(bundle, legal)
+    decisions, decision_problems = license_decisions(legal, definition)
+    decisions["problems"] = decision_problems
+    intel_openmp, intel_gaps = intel_openmp_status(
+        bundle, legal, decided=not decision_problems
+    )
     b1_decision, b1_problems = b1_owner_decision(legal, definition, versions)
     b1_decision["problems"] = b1_problems
     torch_notices = next(
@@ -988,6 +1171,7 @@ def assemble(
         language_model_bundled=bool(language_model["bundled"]),
         b4_remaining=b4_remaining,
         b1_record_problems=b1_problems,
+        decision_problems=decision_problems,
     )
     if any(item["owner"] == "UNRESOLVED native ownership" for item in native):
         blockers.append(
@@ -1016,6 +1200,7 @@ def assemble(
         "language_model": language_model,
         "b4_coverage": b4,
         "b1_owner_decision": b1_decision,
+        "license_decisions": decisions,
         "qt_source_notices": source_notices,
         "notice_scope": "source superset; not a compiled static-link SBOM",
         "materials": files,
