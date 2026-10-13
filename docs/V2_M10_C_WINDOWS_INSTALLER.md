@@ -128,6 +128,11 @@ and running the reviewed local script under the guest's permitted script policy:
   -Output C:\STIValidation -EnvironmentKind DisposableVM -RuntimeExpectation Present
 ```
 
+M10 S5 recorded one owner-authorized exception to the sentence above: each stage
+launcher started one child Windows PowerShell process with `-ExecutionPolicy
+Bypass` after verifying the frozen input. It applied to that run only; the rule is
+unchanged. See the [S5 completion record](V2_M10_S5_COMPLETION_RECORD.md).
+
 Since M10 S5-A (see [the S5-A record](V2_M10_S5A_HARNESS_HARDENING.md)):
 
 - `validate_installer_lib.ps1` must sit beside the script, so copy it to

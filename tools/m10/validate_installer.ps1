@@ -15,6 +15,27 @@ Set-StrictMode -Version Latest
 
 function Hash([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
 function Assert([bool]$Condition, [string]$Message) { if (-not $Condition) { throw $Message } }
+function RemoveVerifiedJunction([string]$LinkPath, [string]$ExpectedTarget) {
+    $junction = Get-Item -LiteralPath $LinkPath -Force
+    Assert ($junction.LinkType -eq 'Junction' -and
+        (($junction.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) -and
+        $junction.Target -eq $ExpectedTarget) 'Unexpected link: stop and inspect manually.'
+    if (-not ('StiS5JunctionNative' -as [type])) {
+        Add-Type -TypeDefinition @"
+using System.Runtime.InteropServices;
+public static class StiS5JunctionNative {
+    [DllImport("kernel32.dll", EntryPoint = "RemoveDirectoryW", CharSet = CharSet.Unicode, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool RemoveDirectory(string path);
+}
+"@ -ErrorAction Stop
+    }
+    # RemoveDirectoryW removes the verified junction itself, never its target contents.
+    if (-not [StiS5JunctionNative]::RemoveDirectory($LinkPath)) {
+        throw ('Verified junction removal failed: Win32 ' + [Runtime.InteropServices.Marshal]::GetLastWin32Error())
+    }
+    Assert (-not (Test-Path -LiteralPath $LinkPath)) 'Junction still exists after removal.'
+}
 function RunProcess([string]$Path, [string[]]$Arguments) {
     $process = Start-Process -FilePath $Path -ArgumentList $Arguments -WindowStyle Hidden -PassThru
     if (-not $process.WaitForExit(120000)) { throw 'Owned validation process timed out; inspect locally.' }
@@ -146,10 +167,7 @@ try {
         Assert ((Hash $externalFile) -eq $externalHash) 'External sentinel changed.'
         Assert (Test-Path -LiteralPath (Join-Path $install 'sti-desktop.exe')) 'Refused uninstall removed application files.'
     } finally {
-        $junction = Get-Item -LiteralPath $legal
-        Assert ($junction.LinkType -eq 'Junction' -and $junction.Target -eq $external) 'Unexpected link: stop and inspect manually.'
-        # Removing this verified junction without recursion removes the link only.
-        Remove-Item -LiteralPath $legal -Force
+        RemoveVerifiedJunction $legal $external
         Assert ((Hash $externalFile) -eq $externalHash) 'External sentinel changed while removing link.'
         Move-Item -LiteralPath $held -Destination $legal
     }

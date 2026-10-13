@@ -1,8 +1,9 @@
 # V2 M10 S5-A — Clean-machine harness hardening (H1–H3)
 
-Status: **COMPLETE on `main` (PR #70).** The harness is hardened, but it has
-**not been run**: no S5 clean-machine stage has been executed with it. S5 is
-not complete, and no C01–C16 item changes status.
+Status: **COMPLETE on `main` (PR #70).** At the time of this PR the harness
+had not been run. It has since been run in S5 Stages A and B, with a later
+junction-cleanup fix (§5). The S5 verdict is NOT DETERMINED: see the
+[S5 completion record](V2_M10_S5_COMPLETION_RECORD.md).
 
 - B1 and B4 stay OPEN.
 - B6 stays closed only on its QtCore-only criterion.
@@ -113,7 +114,14 @@ reported as not passed.
 The guest's script policy still applies. M10-C does not authorize a policy
 bypass, so if policy blocks the script, the owner decides how to proceed.
 
-## 5. Not done
+## 5. Later fix: junction cleanup (S5 closure)
+
+Stage B showed that `Remove-Item -Force` on the verified test junction asks for
+recursion confirmation on Windows PowerShell 5.1. `RemoveVerifiedJunction` now
+verifies the link type, reparse attribute and target, then removes only the link
+with `RemoveDirectoryW`. See the [S5 completion record](V2_M10_S5_COMPLETION_RECORD.md) §4.
+
+## 6. Not done
 
 - S5-UI-001 (the application icon) is a separate open item.
 - C14 (`/DIR` refusal) is not automated here.
