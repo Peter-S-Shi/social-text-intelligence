@@ -2,7 +2,8 @@
 
 Status: **COMPLETE on `main` (PR #70).** At the time of this PR the harness
 had not been run. It has since been run in S5 Stages A and B, with a later
-junction-cleanup fix (§5). The S5 verdict is NOT DETERMINED: see the
+junction-cleanup fix (§5). Its reviewed observations support H2-A and
+C02–C12; the Release-1 gate is unsigned. See the
 [S5 completion record](V2_M10_S5_COMPLETION_RECORD.md).
 
 - B1 and B4 stay OPEN.

@@ -91,8 +91,11 @@ not published.
 ## 5. Owner Windows check (pending)
 
 Update: S5 Stage B took five icon screenshots on a fresh install of candidate
-`a16d559`. They await the owner's visual review (see the
-[S5 completion record](V2_M10_S5_COMPLETION_RECORD.md)).
+`a16d559`. An agent visual review found design A in the title bar, the taskbar
+and the Start Menu programs-folder shortcut. The Start Menu list and
+Settings › Apps were not captured well enough and are NOT DETERMINED; no icon
+defect is known. The owner's sign-off is pending (see the
+[S5 completion record](V2_M10_S5_COMPLETION_RECORD.md) §3.1).
 
 On a fresh install of a later internal build (none is made by this PR), confirm
 that one icon appears in all four places:
