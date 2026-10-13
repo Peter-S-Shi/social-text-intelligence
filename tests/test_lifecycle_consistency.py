@@ -92,7 +92,10 @@ def test_m10c_engineering_does_not_close_acceptance_or_distribution_gates() -> N
             "Next scope is a later M10 engineering gate",
         ):
             assert stale not in surface
-    assert "| M10-C clean-machine acceptance | **NOT DETERMINED**" in status
+    assert (
+        "| M10-C clean-machine acceptance | **Evidence reviewed; gate unsigned**"
+        in status
+    )
     assert "B1–B6 remain BLOCKED" in record
     assert "B2 and B3 are closed and B1 and\nB4–B6 remain BLOCKED" in record
     assert "M9.2–M9.4 remain DEFERRED" in record
@@ -424,21 +427,28 @@ def test_m10d_dossier_stratifies_readiness_and_leaves_release_pending() -> None:
     assert (ROOT / "docs" / "V2_M10_D_RELEASE_DOSSIER.md").is_file()
 
 
-def test_m10_s5_record_does_not_accept_unreviewed_guest_evidence() -> None:
+def test_m10_s5_record_keeps_the_gate_unsigned_and_icons_undetermined() -> None:
     status = (ROOT / "PROJECT_STATUS.md").read_text(encoding="utf-8")
     record = (ROOT / "docs/V2_M10_S5_COMPLETION_RECORD.md").read_text(
         encoding="utf-8"
     )
-    assert "S5 clean-machine verdict NOT DETERMINED" in record
     assert "Recommended decision: CONDITIONAL." in record
     assert "| Release-1 gate decision | _unsigned_ |" in record
-    assert "| C07 witness | _unsigned_ |" in record
+    assert "Approval to merge a pull\n   request is not a gate signature." in record
     assert "No Cancel interaction is claimed." in record
     assert "`distribution_permitted` stays false" in record
+    assert "22 of 22" in record and "8 of 8" in record
+    reviewed = ("| H2-A |", "| C02 |", "| C07 |", "| C09 |", "| C12 |", "| C14 |")
     for row in record.splitlines():
-        if row.startswith(("| C02 |", "| C07 |", "| C09 |", "| C14 |", "| H2-A |")):
-            assert "| NOT DETERMINED |" in row, row
+        if row.startswith(reviewed):
+            assert "| PASS" in row, row
+        if row.startswith("| C07 |"):
+            assert "Owner-reported human witness confirmed" in row, row
         if row.startswith("| Icons |"):
-            assert "| NEEDS REVIEW |" in row, row
-    assert "| C15 |" in record and "**BLOCKED**" in record
-    assert "verdict NOT DETERMINED; Release-1 gate unsigned" in status
+            assert "| NOT DETERMINED (3 of 4 places" in row, row
+            assert "| PASS" not in row, row
+        if row.startswith("| C15 |"):
+            assert "**BLOCKED**" in row, row
+        if row.startswith("| C16 |"):
+            assert "**NOT RUN**" in row, row
+    assert "Release-1 gate CONDITIONAL and unsigned (PR #72, #73)" in status
