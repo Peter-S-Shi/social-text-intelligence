@@ -194,10 +194,10 @@ SmartScreen) and on the owner's release decision.
 | Check | Result |
 | --- | --- |
 | Focused tests (`tests/tools`, licence notice) | 216 passed, 3 opt-in skipped. They cover the real pinned record, the package verifier against a synthetic package (positive; missing, size, SHA-256, SHA-512, changed, absent and duplicated entries), the build's replacement (positive; different PyTorch build, missing package, absent DLL), the packet check (NuGet copy accepted, other bytes refused) and the B4 status (a NuGet record, a PyPI-channel record and a mismatch all keep B4 open) |
-| Local full suite (Windows, Python 3.12) | 1,393 passed, 7 opt-in skipped; Ruff and strict MyPy (253 files) pass |
-| Private frozen build at `67ab5e9` (official CPython 3.13.16) | Exit 0; 5,364 files. `build-evidence.json` records both DLLs as taken from `intelopenmp.redist.win 2026.1.0.239`. The packet is valid, with blockers **B1** and **B4**; B4's only remaining item is the Intel legal confirmation. `legal/intel-openmp/` holds the ISSL text, the notice, the provenance record and the third-party notices, and no EULA |
+| Local full suite (Windows, Python 3.12) | 1,394 passed, 7 opt-in skipped; Ruff and strict MyPy (253 files) pass |
+| Private frozen build at `ec824ba` (official CPython 3.13.16) | Exit 0; 5,364 files. `build-evidence.json` records both DLLs as taken from `intelopenmp.redist.win 2026.1.0.239`. The packet is valid, with blockers **B1** and **B4**; B4's only remaining item is the Intel legal confirmation. `legal/intel-openmp/` holds the ISSL text, the notice, the provenance record and the third-party notices, and no EULA |
 | Frozen checks | `--verify-runtime`, `--smoke` (including `application_icon: true`) and `--license-info` exit 0; the opt-in frozen pytest passes 3 tests |
-| Private internal installer | Compiled with Inno Setup 6.7.3: 726,685,464 bytes, SHA-256 `6a36df49ae7715a231bb8c15daec6c005bfcab449e61e24ecf657a79925a546a`; receipt checked by the harness's `Get-StiReceiptFacts` (blockers B1, B4); 5,366 payload entries, including the two DLLs and the four `legal/intel-openmp/` files. Not published |
+| Private internal installer | Compiled with Inno Setup 6.7.3: 726,685,457 bytes, SHA-256 `b1295763a31591bddd7bd848cbeee47facfa243775ad4cdaf16dbbb19bd547ff`; receipt checked by the harness's `Get-StiReceiptFacts` (blockers B1, B4); 5,366 payload entries, including the two DLLs and the four `legal/intel-openmp/` files. Not published |
 | PR CI | One run on the PR's final code head; the result is recorded in the PR, not here |
 
 The installer is a private validation artifact, not a release candidate for

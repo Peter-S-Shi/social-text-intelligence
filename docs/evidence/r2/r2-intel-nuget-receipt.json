@@ -2,7 +2,7 @@
   "schema_version": 1,
   "milestone": "V2 Release-2 distribution compliance closure (engineering)",
   "pull_request": 74,
-  "application_sha": "67ab5e9e8b5d76d20eeabd9a2eb3ddf6e8672065",
+  "application_sha": "ec824bab0a058fb03a038a9663a67bad6cbdffc5",
   "intel_package": {
     "id": "intelopenmp.redist.win",
     "version": "2026.1.0.239",
@@ -46,15 +46,15 @@
   "installer": {
     "compiled": true,
     "inno_version": "6.7.3",
-    "bytes": 726685464,
-    "sha256": "6a36df49ae7715a231bb8c15daec6c005bfcab449e61e24ecf657a79925a546a",
+    "bytes": 726685457,
+    "sha256": "b1295763a31591bddd7bd848cbeee47facfa243775ad4cdaf16dbbb19bd547ff",
     "payload_entries": 5366,
     "legal_blockers": ["B1", "B4"],
     "distribution_permitted": false,
     "published": false
   },
   "validation": {
-    "local_full_suite": "1393 passed, 7 opt-in skipped (Windows, Python 3.12)",
+    "local_full_suite": "1394 passed, 7 opt-in skipped (Windows, Python 3.12)",
     "ruff": "pass",
     "mypy_strict": "pass"
   },
